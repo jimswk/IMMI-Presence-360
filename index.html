@@ -716,6 +716,9 @@
                         <p class="mt-4 text-center text-sm">
                             <a class="font-medium text-blue-500 cursor-pointer" id="forgotPasswordLink">Lupa Kata Laluan?</a>
                         </p>
+                        <div class="mt-4 text-center text-xs text-gray-500">
+                            <p>Superadmin: superadmin@jim.gov.my / superadmin123</p>
+                        </div>
                     </div>
                 </div>
 
@@ -1046,7 +1049,7 @@
                                             <th>Nama</th>
                                             <th>Email</th>
                                             <th>Jabatan</th>
-                                            <th>Lokasi Terkini</th>
+                                            <th>Status</th>
                                             <th>Tindakan</th>
                                         </tr>
                                     </thead>
@@ -1072,30 +1075,31 @@
                         <div id="superadminEditAdminModal" class="modal-overlay" style="display: none;">
                             <div class="modal max-w-lg">
                                 <div class="modal-header">
-                                    <h3 class="font-bold text-xl text-white">Tambah/Edit Admin</h3>
+                                    <h3 class="font-bold text-xl text-white">Tambah Admin Baru</h3>
                                 </div>
                                 <div class="modal-body">
                                     <input type="hidden" id="superadminEditAdminId">
                                     <div class="mb-3">
                                         <label class="block text-sm font-medium text-gray-400 mb-1">Nama</label>
-                                        <input type="text" id="superadminEditName" class="input-field py-2 px-3 min-h-[40px]">
+                                        <input type="text" id="superadminEditName" class="input-field py-2 px-3 min-h-[40px]" placeholder="Nama penuh admin">
                                     </div>
                                     <div class="mb-3">
                                         <label class="block text-sm font-medium text-gray-400 mb-1">Email</label>
-                                        <input type="email" id="superadminEditEmail" class="input-field py-2 px-3 min-h-[40px]">
+                                        <input type="email" id="superadminEditEmail" class="input-field py-2 px-3 min-h-[40px]" placeholder="admin@jim.gov.my">
                                     </div>
                                     <div class="mb-3">
                                         <label class="block text-sm font-medium text-gray-400 mb-1">Jabatan</label>
-                                        <input type="text" id="superadminEditDepartment" class="input-field py-2 px-3 min-h-[40px]">
+                                        <input type="text" id="superadminEditDepartment" class="input-field py-2 px-3 min-h-[40px]" placeholder="Cth: ICT, Operasi">
                                     </div>
                                     <div class="mb-3">
                                         <label class="block text-sm font-medium text-gray-400 mb-1">Kata Laluan</label>
                                         <input type="password" id="superadminEditPassword" class="input-field py-2 px-3 min-h-[40px]" placeholder="Minimum 6 aksara">
+                                        <p class="text-xs text-gray-500 mt-1">Kata laluan untuk admin log masuk</p>
                                     </div>
                                 </div>
                                 <div class="modal-footer flex-row gap-2">
                                     <button class="btn-secondary flex-1" onclick="hideSuperadminEditModal()">Batal</button>
-                                    <button class="btn-primary flex-1" id="superadminSaveAdminBtn">Simpan</button>
+                                    <button class="btn-primary flex-1" id="superadminSaveAdminBtn">Tambah Admin</button>
                                 </div>
                             </div>
                         </div>
@@ -1106,6 +1110,7 @@
                             <h2 class="text-xl font-bold text-white mb-4">Log Perubahan Lokasi</h2>
                             
                             <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-400 mb-1">Tapis Admin</label>
                                 <select id="superadminAuditAdminFilter" class="input-field py-2 px-3 min-h-[40px]">
                                     <option value="all">Semua Admin</option>
                                 </select>
@@ -1177,7 +1182,6 @@
         let todayAttendance = null;
         let isClockedIn = false;
         let isClockedOut = false;
-        let isPortraitMode = true;
         
         // Role variables
         let userRole = null;
@@ -1193,7 +1197,7 @@
         // DOM Elements
         let loginPageDiv, forgotPasswordPageDiv, faceRegistrationPageDiv, dashboardDiv, adminDashboardDiv, superadminDashboardDiv;
         let statusMessageDiv, videoElement, scanVideoElement, attendanceTableBody, clockInBtn, clockOutBtn;
-        let attendanceStatusValue, locationStatusEl, startDateInput, endDateInput, realTimeClock;
+        let attendanceStatusValue, locationStatusEl, realTimeClock;
         let livenessInstructions, faceOverlay, modalOverlay, modalIcon, modalTitle, modalMessage;
         let modalCancelBtn, modalConfirmBtn, modalOkBtn, successNotification, successNotifTitle, successNotifTime;
         let failNotification, failNotifTitle, failNotifTime;
@@ -1341,27 +1345,53 @@
         // ========== SUPERADMIN FUNCTIONS ==========
         async function initializeSuperadmin() {
             try {
+                // First check if superadmin already exists
                 const superadminRef = doc(db, 'artifacts', 'default-app-id', 'users', 'superadmin', 'profile', 'data');
-                const superadminSnap = await getDoc(superadminRef);
                 
-                if (!superadminSnap.exists()) {
-                    await setDoc(superadminRef, {
-                        name: 'Super Administrator',
-                        email: SUPERADMIN_EMAIL,
-                        department: 'System Administration',
-                        role: 'superadmin',
-                        faceDescriptor: null,
-                        createdAt: new Date()
-                    });
+                try {
+                    const superadminSnap = await getDoc(superadminRef);
                     
-                    try {
-                        await createUserWithEmailAndPassword(auth, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
-                    } catch (e) {
-                        console.log('Superadmin may already exist in Auth');
+                    if (!superadminSnap.exists()) {
+                        console.log('Creating superadmin profile...');
+                        
+                        // Try to create the superadmin profile
+                        await setDoc(superadminRef, {
+                            name: 'Super Administrator',
+                            email: SUPERADMIN_EMAIL,
+                            department: 'System Administration',
+                            role: 'superadmin',
+                            faceDescriptor: null,
+                            createdAt: new Date(),
+                            isActive: true
+                        });
+                        
+                        console.log('Superadmin profile created successfully');
+                    } else {
+                        console.log('Superadmin profile already exists');
+                    }
+                } catch (profileError) {
+                    console.error('Error creating superadmin profile:', profileError);
+                    // If permission denied, we'll just continue - superadmin might already exist
+                    if (profileError.code === 'permission-denied') {
+                        console.log('Permission denied - superadmin may already exist in Auth');
                     }
                 }
+                
+                // Try to create Auth user if needed (this might fail if user exists, that's ok)
+                try {
+                    await createUserWithEmailAndPassword(auth, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
+                    console.log('Superadmin Auth user created');
+                } catch (authError) {
+                    if (authError.code === 'auth/email-already-in-use') {
+                        console.log('Superadmin Auth user already exists');
+                    } else {
+                        console.error('Error creating superadmin Auth:', authError);
+                    }
+                }
+                
             } catch (error) {
-                console.error('Error initializing superadmin:', error);
+                console.error('Error in superadmin initialization:', error);
+                // Don't throw - we want the app to continue even if superadmin init fails
             }
         }
 
@@ -1435,6 +1465,11 @@
             
             tbody.innerHTML = '';
             
+            if (allAdmins.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500">Tiada admin didaftarkan</td></tr>';
+                return;
+            }
+            
             allAdmins.forEach(admin => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -1468,7 +1503,7 @@
                 return;
             }
             
-            filteredLogs.forEach(async (log) => {
+            filteredLogs.forEach((log) => {
                 const row = document.createElement('tr');
                 const date = log.updatedAt?.toDate() || new Date();
                 const adminName = allAdmins.find(a => a.id === log.updatedBy)?.name || log.updatedBy;
@@ -1644,6 +1679,11 @@
             if (!tbody) return;
             
             tbody.innerHTML = '';
+            
+            if (allUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500">Tiada pengguna didaftarkan</td></tr>';
+                return;
+            }
             
             allUsers.forEach(user => {
                 const row = document.createElement('tr');
@@ -2585,8 +2625,6 @@
             clockOutBtn = document.getElementById('clockOutBtn');
             attendanceStatusValue = document.getElementById('attendanceStatusValue');
             locationStatusEl = document.getElementById('locationStatus');
-            startDateInput = document.getElementById('startDateInput');
-            endDateInput = document.getElementById('endDateInput');
             realTimeClock = document.getElementById('realTimeClock');
             livenessInstructions = document.getElementById('livenessInstructions');
             faceOverlay = document.getElementById('faceOverlay');
@@ -2752,45 +2790,6 @@
                 );
             });
 
-            document.getElementById('superadminAddAdminBtn').addEventListener('click', () => {
-                document.getElementById('superadminEditAdminId').value = '';
-                document.getElementById('superadminEditName').value = '';
-                document.getElementById('superadminEditEmail').value = '';
-                document.getElementById('superadminEditDepartment').value = '';
-                document.getElementById('superadminEditPassword').value = '';
-                document.getElementById('superadminEditAdminModal').style.display = 'flex';
-            });
-
-            document.getElementById('superadminSaveAdminBtn').addEventListener('click', async () => {
-                const name = document.getElementById('superadminEditName').value;
-                const email = document.getElementById('superadminEditEmail').value;
-                const department = document.getElementById('superadminEditDepartment').value;
-                const password = document.getElementById('superadminEditPassword').value;
-                
-                if (!name || !email || !department || !password) {
-                    showModal('Ralat', 'Sila isi semua maklumat', 'error');
-                    return;
-                }
-                
-                try {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const newAdminId = userCredential.user.uid;
-                    
-                    await setDoc(doc(db, 'artifacts', 'default-app-id', 'users', newAdminId, 'profile', 'data'), {
-                        name, email, department, role: 'admin',
-                        createdAt: new Date(),
-                        faceDescriptor: null
-                    });
-                    
-                    showNotification('Admin baru ditambah', new Date().toLocaleTimeString(), 'success');
-                    hideSuperadminEditModal();
-                    loadAllAdmins();
-                } catch (error) {
-                    console.error('Error saving admin:', error);
-                    showModal('Ralat', 'Gagal menyimpan: ' + error.message, 'error');
-                }
-            });
-
             document.getElementById('adminSaveLocationBtn').addEventListener('click', saveOfficeLocation);
             
             document.getElementById('adminGeneratePdfBtn').addEventListener('click', async () => {
@@ -2849,6 +2848,45 @@
                 loadLocationAuditLogs();
             });
 
+            document.getElementById('superadminAddAdminBtn').addEventListener('click', () => {
+                document.getElementById('superadminEditAdminId').value = '';
+                document.getElementById('superadminEditName').value = '';
+                document.getElementById('superadminEditEmail').value = '';
+                document.getElementById('superadminEditDepartment').value = '';
+                document.getElementById('superadminEditPassword').value = '';
+                document.getElementById('superadminEditAdminModal').style.display = 'flex';
+            });
+
+            document.getElementById('superadminSaveAdminBtn').addEventListener('click', async () => {
+                const name = document.getElementById('superadminEditName').value;
+                const email = document.getElementById('superadminEditEmail').value;
+                const department = document.getElementById('superadminEditDepartment').value;
+                const password = document.getElementById('superadminEditPassword').value;
+                
+                if (!name || !email || !department || !password) {
+                    showModal('Ralat', 'Sila isi semua maklumat', 'error');
+                    return;
+                }
+                
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const newAdminId = userCredential.user.uid;
+                    
+                    await setDoc(doc(db, 'artifacts', 'default-app-id', 'users', newAdminId, 'profile', 'data'), {
+                        name, email, department, role: 'admin',
+                        createdAt: new Date(),
+                        faceDescriptor: null
+                    });
+                    
+                    showNotification('Admin baru ditambah', new Date().toLocaleTimeString(), 'success');
+                    hideSuperadminEditModal();
+                    loadAllAdmins();
+                } catch (error) {
+                    console.error('Error saving admin:', error);
+                    showModal('Ralat', 'Gagal menyimpan: ' + error.message, 'error');
+                }
+            });
+
             document.getElementById('superadminAuditAdminFilter').addEventListener('change', renderAuditTable);
             
             document.getElementById('loginEmailInput')?.addEventListener('keypress', (e) => {
@@ -2897,9 +2935,6 @@
                     const day = String(date.getDate()).padStart(2, '0');
                     return `${year}-${month}-${day}`;
                 };
-                
-                if (startDateInput) startDateInput.value = formatDate(firstDay);
-                if (endDateInput) endDateInput.value = formatDate(lastDay);
                 
                 const adminReportStartDate = document.getElementById('adminReportStartDate');
                 const adminReportEndDate = document.getElementById('adminReportEndDate');
@@ -2994,25 +3029,21 @@
                             await checkTodayAttendance();
                             
                             try {
-                                if (startDateInput && endDateInput) {
-                                    const attendanceQuery = query(
-                                        collection(db, 'artifacts', 'default-app-id', 'users', firestoreUserId, 'attendance'),
-                                        where('__name__', '>=', startDateInput.value.split('-').slice(0, 2).join('-') + '-01'),
-                                        where('__name__', '<=', endDateInput.value),
-                                        orderBy('__name__', 'desc'),
-                                        limit(30)
-                                    );
-                                    
-                                    onSnapshot(attendanceQuery, 
-                                        (snap) => {
-                                            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                                            updateAttendanceTable(data);
-                                        },
-                                        (error) => {
-                                            console.error('Attendance listener error:', error);
-                                        }
-                                    );
-                                }
+                                const attendanceQuery = query(
+                                    collection(db, 'artifacts', 'default-app-id', 'users', firestoreUserId, 'attendance'),
+                                    orderBy('__name__', 'desc'),
+                                    limit(30)
+                                );
+                                
+                                onSnapshot(attendanceQuery, 
+                                    (snap) => {
+                                        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                                        updateAttendanceTable(data);
+                                    },
+                                    (error) => {
+                                        console.error('Attendance listener error:', error);
+                                    }
+                                );
                             } catch (e) {
                                 console.error('Error setting up attendance listener:', e);
                             }
@@ -3024,9 +3055,11 @@
                             } else if (userRole === 'admin') {
                                 showPage('adminDashboard');
                                 await loadAllUsers();
-                            } else {
+                            } else if (userRole === 'user') {
                                 showPage('dashboard');
                                 handleGeolocationCheck();
+                            } else {
+                                showPage('dashboard');
                             }
                         } else {
                             console.log('No user profile found');
