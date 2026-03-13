@@ -1379,50 +1379,61 @@
             }
         }
 
-        async function loadAllAdmins() {
-            if (userRole !== 'superadmin') return;
+async function loadAllAdmins() {
+    if (userRole !== 'superadmin') return;
+    
+    try {
+        console.log('Loading all admins...');
+        const usersRef = collection(db, 'artifacts', 'default-app-id', 'users');
+        const usersSnap = await getDocs(usersRef);
+        
+        allAdmins = [];
+        
+        for (const userDoc of usersSnap.docs) {
+            const uid = userDoc.id;
+            
+            // Skip if it's the superadmin document ID
+            if (uid === 'superadmin') continue;
             
             try {
-                console.log('Loading all admins...');
-                const usersRef = collection(db, 'artifacts', 'default-app-id', 'users');
-                const usersSnap = await getDocs(usersRef);
+                const profileRef = doc(db, 'artifacts', 'default-app-id', 'users', uid, 'profile', 'data');
+                const profileSnap = await getDoc(profileRef);
                 
-                allAdmins = [];
-                
-                for (const userDoc of usersSnap.docs) {
-                    const uid = userDoc.id;
-                    if (uid === 'superadmin') continue;
+                if (profileSnap.exists()) {
+                    const data = profileSnap.data();
                     
-                    try {
-                        const profileRef = doc(db, 'artifacts', 'default-app-id', 'users', uid, 'profile', 'data');
-                        const profileSnap = await getDoc(profileRef);
-                        
-                        if (profileSnap.exists()) {
-                            const data = profileSnap.data();
-                            if (data.role === 'admin') {
-                                allAdmins.push({
-                                    id: uid,
-                                    name: data.name || 'Tiada nama',
-                                    email: data.email || 'Tiada email',
-                                    department: data.department || 'Tiada'
-                                });
-                            }
-                        }
-                    } catch (e) {
-                        console.error(`Error loading admin profile for ${uid}:`, e);
+                    // Only include users with role 'admin'
+                    if (data.role === 'admin') {
+                        allAdmins.push({
+                            id: uid,
+                            name: data.name || 'Tiada nama',
+                            email: data.email || 'Tiada email',
+                            department: data.department || 'Tiada'
+                        });
                     }
                 }
-                
-                console.log(`Found ${allAdmins.length} admins`);
-                renderAdminsTable();
-                updateAuditFilter();
-                
-                document.getElementById('superadminTotalAdmins').textContent = allAdmins.length;
-                
-            } catch (error) {
-                console.error('Error loading admins:', error);
+            } catch (profileError) {
+                console.error(`Error loading profile for ${uid}:`, profileError);
+                // Continue to next
             }
         }
+        
+        console.log(`Found ${allAdmins.length} admins`);
+        renderAdminsTable();
+        updateAuditFilter();
+        
+        document.getElementById('superadminTotalAdmins').textContent = allAdmins.length;
+        
+    } catch (error) {
+        console.error('Error loading admins:', error);
+        
+        if (error.code === 'permission-denied') {
+            showModal('Ralat', 'Kebenaran ditolak. Sila pastikan anda log masuk sebagai superadmin.', 'error');
+        } else {
+            showModal('Ralat', 'Gagal memuatkan senarai admin: ' + error.message, 'error');
+        }
+    }
+}
 
         async function loadLocationAuditLogs() {
             if (userRole !== 'superadmin') return;
@@ -1619,48 +1630,81 @@
             }
         }
 
-        async function loadAllUsers() {
-            if (userRole !== 'admin') return;
+async function loadAllUsers() {
+    if (userRole !== 'admin') return;
+    
+    try {
+        console.log('Loading all users...');
+        const usersRef = collection(db, 'artifacts', 'default-app-id', 'users');
+        
+        // Try to get all users
+        const usersSnap = await getDocs(usersRef);
+        
+        allUsers = [];
+        
+        // For each user document ID, get their profile
+        for (const userDoc of usersSnap.docs) {
+            const uid = userDoc.id;
+            
+            // Skip superadmin if needed
+            if (uid === 'superadmin') continue;
             
             try {
-                const usersRef = collection(db, 'artifacts', 'default-app-id', 'users');
-                const usersSnap = await getDocs(usersRef);
+                // Get the profile data
+                const profileRef = doc(db, 'artifacts', 'default-app-id', 'users', uid, 'profile', 'data');
+                const profileSnap = await getDoc(profileRef);
                 
-                allUsers = [];
-                
-                for (const userDoc of usersSnap.docs) {
-                    const uid = userDoc.id;
-                    if (uid === 'superadmin') continue;
+                if (profileSnap.exists()) {
+                    const data = profileSnap.data();
                     
-                    try {
-                        const profileRef = doc(db, 'artifacts', 'default-app-id', 'users', uid, 'profile', 'data');
-                        const profileSnap = await getDoc(profileRef);
-                        
-                        if (profileSnap.exists()) {
-                            const data = profileSnap.data();
-                            if (data.role === 'user') {
-                                allUsers.push({
-                                    id: uid,
-                                    name: data.name || 'Tiada nama',
-                                    email: data.email || 'Tiada email',
-                                    department: data.department || 'Tiada',
-                                    faceDescriptor: data.faceDescriptor
-                                });
-                            }
-                        }
-                    } catch (e) {
-                        console.error(`Error loading profile for ${uid}:`, e);
+                    // Only include users with role 'user' (not admins)
+                    if (data.role === 'user') {
+                        allUsers.push({
+                            id: uid,
+                            name: data.name || 'Tiada nama',
+                            email: data.email || 'Tiada email',
+                            department: data.department || 'Tiada',
+                            faceDescriptor: data.faceDescriptor || null
+                        });
                     }
                 }
-                
-                renderUsersTable();
-                updateUserSelect();
-                
-            } catch (error) {
-                console.error('Error loading users:', error);
-                showModal('Ralat', 'Gagal memuatkan senarai pengguna: ' + error.message, 'error');
+            } catch (profileError) {
+                console.error(`Error loading profile for user ${uid}:`, profileError);
+                // Continue to next user even if this one fails
             }
         }
+        
+        console.log(`Found ${allUsers.length} users`);
+        renderUsersTable();
+        updateUserSelect();
+        
+    } catch (error) {
+        console.error('Error loading users:', error);
+        
+        // If permission denied, try alternative method
+        if (error.code === 'permission-denied') {
+            console.log('Permission denied, trying alternative method...');
+            await loadUsersAlternative();
+        } else {
+            showModal('Ralat', 'Gagal memuatkan senarai pengguna: ' + error.message, 'error');
+        }
+    }
+}
+
+// Alternative method if direct listing fails
+async function loadUsersAlternative() {
+    try {
+        // This is a fallback - you might need to adjust based on your needs
+        showModal('Info', 'Mencuba kaedah alternatif...', 'info');
+        
+        // You could try to query users by role if you have a users collection
+        // But this depends on your data structure
+        
+    } catch (error) {
+        console.error('Alternative method also failed:', error);
+        showModal('Ralat', 'Tidak dapat memuatkan pengguna. Sila semak kebenaran.', 'error');
+    }
+}
 
         function renderUsersTable() {
             const tbody = document.getElementById('adminUsersTableBody');
