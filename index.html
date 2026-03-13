@@ -670,7 +670,7 @@
                     </div>
                     <span class="official-badge">RASMI</span>
                 </div>
-                <div class="mt-3 sm:mt-0 flex items-center">
+                <div class="mt-3 sm:mt-0 flex items-center" id="headerButtons">
                     <button class="flex items-center gap-2 rounded-lg h-10 px-4 bg-purple-600 hover:bg-purple-700 text-sm font-medium text-white mr-2" id="superadminPanelBtn" style="display: none;">
                         <span class="material-symbols-outlined text-sm">security</span>
                         <span class="hidden sm:inline">Superadmin</span>
@@ -691,6 +691,7 @@
             <div>
                 <div id="statusMessage" class="message-box hidden"></div>
                 
+                <!-- Login Page -->
                 <div id="loginPage">
                     <div class="card max-w-md mx-auto">
                         <div class="text-center mb-6">
@@ -722,6 +723,7 @@
                     </div>
                 </div>
 
+                <!-- Forgot Password Page -->
                 <div id="forgotPasswordPage" class="hidden">
                     <div class="card max-w-md mx-auto">
                         <div class="text-center mb-6">
@@ -746,6 +748,7 @@
                     </div>
                 </div>
                 
+                <!-- Face Registration Page -->
                 <div id="faceRegistrationPage" class="hidden">
                     <div class="card max-w-lg mx-auto">
                         <div class="text-center">
@@ -783,6 +786,7 @@
                     </div>
                 </div>
 
+                <!-- User Dashboard -->
                 <div id="dashboard" class="hidden">
                     <div class="card mb-6">
                         <div class="attendance-status-container">
@@ -851,6 +855,7 @@
                     </div>
                 </div>
 
+                <!-- Admin Dashboard -->
                 <div id="adminDashboard" class="hidden">
                     <div class="flex border-b border-gray-700 mb-4 overflow-x-auto hide-scrollbar">
                         <button class="admin-tab px-4 py-2 font-medium text-sm whitespace-nowrap border-b-2 border-blue-500 text-blue-400" data-tab="users">
@@ -1013,6 +1018,7 @@
                     </div>
                 </div>
 
+                <!-- SUPERADMIN DASHBOARD -->
                 <div id="superadminDashboard" class="hidden">
                     <div class="flex border-b border-gray-700 mb-4 overflow-x-auto hide-scrollbar">
                         <button class="superadmin-tab px-4 py-2 font-medium text-sm whitespace-nowrap border-b-2 border-purple-500 text-purple-400" data-tab="admins">
@@ -1053,7 +1059,9 @@
                                             <th>Tindakan</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="superadminAdminsTableBody"></tbody>
+                                    <tbody id="superadminAdminsTableBody">
+                                        <tr><td colspan="5" class="text-center text-gray-500">Loading...</td></tr>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -1129,7 +1137,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="superadminAuditTableBody">
-                                        <tr><td colspan="6" class="text-center text-gray-500">Tiada rekod</td></tr>
+                                        <tr><td colspan="6" class="text-center text-gray-500">Loading...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -1343,38 +1351,39 @@
         }
 
         // ========== SUPERADMIN FUNCTIONS ==========
-async function initializeSuperadmin() {
-    try {
-        console.log('Checking superadmin existence...');
-        
-        // Don't try to write - just check if we can read
-        // This will fail with permission denied but that's OK
-        const superadminRef = doc(db, 'artifacts', 'default-app-id', 'users', 'superadmin', 'profile', 'data');
-        
-        try {
-            const superadminSnap = await getDoc(superadminRef);
-            if (superadminSnap.exists()) {
-                console.log('Superadmin profile exists');
-            } else {
-                console.log('Superadmin profile not found - but we may not have permission to create');
+        async function initializeSuperadmin() {
+            try {
+                console.log('Checking superadmin existence...');
+                
+                // Don't try to write - just check if we can read
+                // This will fail with permission denied but that's OK
+                const superadminRef = doc(db, 'artifacts', 'default-app-id', 'users', 'superadmin', 'profile', 'data');
+                
+                try {
+                    const superadminSnap = await getDoc(superadminRef);
+                    if (superadminSnap.exists()) {
+                        console.log('Superadmin profile exists');
+                    } else {
+                        console.log('Superadmin profile not found - but we may not have permission to create');
+                    }
+                } catch (readError) {
+                    // Permission denied is expected - superadmin might exist but rules block reading
+                    console.log('Cannot read superadmin profile (permission denied) - this is OK');
+                }
+                
+                // Don't try to create auth user - it should already exist
+                console.log('Superadmin initialization complete - assuming superadmin exists');
+                
+            } catch (error) {
+                console.error('Error in superadmin initialization:', error);
             }
-        } catch (readError) {
-            // Permission denied is expected - superadmin might exist but rules block reading
-            console.log('Cannot read superadmin profile (permission denied) - this is OK');
         }
-        
-        // Don't try to create auth user - it should already exist
-        console.log('Superadmin initialization complete - assuming superadmin exists');
-        
-    } catch (error) {
-        console.error('Error in superadmin initialization:', error);
-    }
-}
 
         async function loadAllAdmins() {
             if (userRole !== 'superadmin') return;
             
             try {
+                console.log('Loading all admins...');
                 const usersRef = collection(db, 'artifacts', 'default-app-id', 'users');
                 const usersSnap = await getDocs(usersRef);
                 
@@ -1404,6 +1413,7 @@ async function initializeSuperadmin() {
                     }
                 }
                 
+                console.log(`Found ${allAdmins.length} admins`);
                 renderAdminsTable();
                 updateAuditFilter();
                 
@@ -1418,6 +1428,7 @@ async function initializeSuperadmin() {
             if (userRole !== 'superadmin') return;
             
             try {
+                console.log('Loading audit logs...');
                 const logsRef = collection(db, 'artifacts', 'default-app-id', 'config', 'office', 'logs');
                 const logsQuery = query(logsRef, orderBy('updatedAt', 'desc'), limit(50));
                 const logsSnap = await getDocs(logsQuery);
@@ -1427,6 +1438,7 @@ async function initializeSuperadmin() {
                     ...doc.data()
                 }));
                 
+                console.log(`Found ${locationChangeLogs.length} audit logs`);
                 document.getElementById('superadminLocationChanges').textContent = locationChangeLogs.length;
                 renderAuditTable();
                 
@@ -2933,8 +2945,17 @@ async function initializeSuperadmin() {
                                 role: 'superadmin'
                             };
                             
-                            document.getElementById('superadminPanelBtn').style.display = 'flex';
-                            document.getElementById('adminPanelBtn').style.display = 'none';
+                            // FORCE SHOW SUPERADMIN BUTTON
+                            const superadminBtn = document.getElementById('superadminPanelBtn');
+                            const adminBtn = document.getElementById('adminPanelBtn');
+                            
+                            if (superadminBtn) {
+                                superadminBtn.style.display = 'flex';
+                                console.log('Superadmin button displayed');
+                            }
+                            if (adminBtn) {
+                                adminBtn.style.display = 'none';
+                            }
                             
                             showPage('superadminDashboard');
                             await loadAllAdmins();
@@ -2990,6 +3011,10 @@ async function initializeSuperadmin() {
                             
                             if (userRole === 'admin') {
                                 adminBtn.style.display = 'flex';
+                                console.log('Admin button displayed');
+                            } else if (userRole === 'superadmin') {
+                                superadminBtn.style.display = 'flex';
+                                console.log('Superadmin button displayed');
                             }
                             
                             if (userData.faceDescriptor) {
