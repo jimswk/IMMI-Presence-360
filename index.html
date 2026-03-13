@@ -1343,57 +1343,50 @@
         }
 
         // ========== SUPERADMIN FUNCTIONS ==========
-        async function initializeSuperadmin() {
-            try {
-                // First check if superadmin already exists
-                const superadminRef = doc(db, 'artifacts', 'default-app-id', 'users', 'superadmin', 'profile', 'data');
+async function initializeSuperadmin() {
+    try {
+        console.log('Checking superadmin existence...');
+        
+        // First check if superadmin profile exists
+        const superadminRef = doc(db, 'artifacts', 'default-app-id', 'users', 'superadmin', 'profile', 'data');
+        
+        try {
+            const superadminSnap = await getDoc(superadminRef);
+            
+            if (!superadminSnap.exists()) {
+                console.log('Superadmin profile not found, attempting to create...');
                 
-                try {
-                    const superadminSnap = await getDoc(superadminRef);
-                    
-                    if (!superadminSnap.exists()) {
-                        console.log('Creating superadmin profile...');
-                        
-                        // Try to create the superadmin profile
-                        await setDoc(superadminRef, {
-                            name: 'Super Administrator',
-                            email: SUPERADMIN_EMAIL,
-                            department: 'System Administration',
-                            role: 'superadmin',
-                            faceDescriptor: null,
-                            createdAt: new Date(),
-                            isActive: true
-                        });
-                        
-                        console.log('Superadmin profile created successfully');
-                    } else {
-                        console.log('Superadmin profile already exists');
-                    }
-                } catch (profileError) {
-                    console.error('Error creating superadmin profile:', profileError);
-                    // If permission denied, we'll just continue - superadmin might already exist
-                    if (profileError.code === 'permission-denied') {
-                        console.log('Permission denied - superadmin may already exist in Auth');
-                    }
-                }
+                // Try to create superadmin profile
+                await setDoc(superadminRef, {
+                    name: 'Super Administrator',
+                    email: SUPERADMIN_EMAIL,
+                    department: 'System Administration',
+                    role: 'superadmin',
+                    faceDescriptor: null,
+                    createdAt: new Date(),
+                    isActive: true
+                });
                 
-                // Try to create Auth user if needed (this might fail if user exists, that's ok)
-                try {
-                    await createUserWithEmailAndPassword(auth, SUPERADMIN_EMAIL, SUPERADMIN_PASSWORD);
-                    console.log('Superadmin Auth user created');
-                } catch (authError) {
-                    if (authError.code === 'auth/email-already-in-use') {
-                        console.log('Superadmin Auth user already exists');
-                    } else {
-                        console.error('Error creating superadmin Auth:', authError);
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Error in superadmin initialization:', error);
-                // Don't throw - we want the app to continue even if superadmin init fails
+                console.log('Superadmin profile created successfully');
+            } else {
+                console.log('Superadmin profile already exists');
+            }
+        } catch (profileError) {
+            console.error('Error accessing superadmin profile:', profileError);
+            // If permission denied, superadmin might already exist - that's fine
+            if (profileError.code === 'permission-denied') {
+                console.log('Permission denied - superadmin profile may already exist');
             }
         }
+        
+        // Don't try to create auth user - it likely already exists
+        // Just log the status
+        console.log('Superadmin initialization complete');
+        
+    } catch (error) {
+        console.error('Error in superadmin initialization:', error);
+    }
+}
 
         async function loadAllAdmins() {
             if (userRole !== 'superadmin') return;
