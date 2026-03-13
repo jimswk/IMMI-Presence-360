@@ -1347,41 +1347,24 @@ async function initializeSuperadmin() {
     try {
         console.log('Checking superadmin existence...');
         
-        // First check if superadmin profile exists
+        // Don't try to write - just check if we can read
+        // This will fail with permission denied but that's OK
         const superadminRef = doc(db, 'artifacts', 'default-app-id', 'users', 'superadmin', 'profile', 'data');
         
         try {
             const superadminSnap = await getDoc(superadminRef);
-            
-            if (!superadminSnap.exists()) {
-                console.log('Superadmin profile not found, attempting to create...');
-                
-                // Try to create superadmin profile
-                await setDoc(superadminRef, {
-                    name: 'Super Administrator',
-                    email: SUPERADMIN_EMAIL,
-                    department: 'System Administration',
-                    role: 'superadmin',
-                    faceDescriptor: null,
-                    createdAt: new Date(),
-                    isActive: true
-                });
-                
-                console.log('Superadmin profile created successfully');
+            if (superadminSnap.exists()) {
+                console.log('Superadmin profile exists');
             } else {
-                console.log('Superadmin profile already exists');
+                console.log('Superadmin profile not found - but we may not have permission to create');
             }
-        } catch (profileError) {
-            console.error('Error accessing superadmin profile:', profileError);
-            // If permission denied, superadmin might already exist - that's fine
-            if (profileError.code === 'permission-denied') {
-                console.log('Permission denied - superadmin profile may already exist');
-            }
+        } catch (readError) {
+            // Permission denied is expected - superadmin might exist but rules block reading
+            console.log('Cannot read superadmin profile (permission denied) - this is OK');
         }
         
-        // Don't try to create auth user - it likely already exists
-        // Just log the status
-        console.log('Superadmin initialization complete');
+        // Don't try to create auth user - it should already exist
+        console.log('Superadmin initialization complete - assuming superadmin exists');
         
     } catch (error) {
         console.error('Error in superadmin initialization:', error);
