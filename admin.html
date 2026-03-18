@@ -879,28 +879,19 @@
         // FACE MODELS
         // ============================================
         async function loadFaceModels() {
-            if (modelsLoaded) return;
+            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
             try {
-                const MODEL_URL = '/models';
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-                modelsLoaded = true;
-                console.log("✅ Face models loaded from local");
-            } catch (e) {
-                console.error("❌ Gagal muat model wajah", e);
-                try {
-                    const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-                    await faceapi.nets.tinyFaceDetector.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceLandmark68Net.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceRecognitionNet.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceExpressionNet.loadFromUri(BACKUP_URL);
-                    modelsLoaded = true;
-                    console.log("✅ Face models loaded from backup");
-                } catch (e2) {
-                    console.error("❌ Semua percubaan gagal", e2);
-                }
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+                ]);
+                return true;
+            } catch (error) {
+                console.error('Failed to load models:', error);
+                showStatusMessage('Gagal memuatkan model wajah', 'error');
+                return false;
             }
         }
 
