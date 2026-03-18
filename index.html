@@ -191,6 +191,35 @@
             width: 0%;
             transition: width 0.3s;
         }
+
+        /* Status Badge Styles */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        .status-badge.success {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.warning {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.info {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-badge.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
     </style>
 </head>
 <body>
@@ -232,7 +261,7 @@
         <div class="dashboard-header">
             <div class="max-w-md mx-auto flex justify-between items-start">
                 <div>
-                    <span class="bg-yellow-400 text-blue-900 px-3 py-1 rounded-full text-xs font-bold">AKTIF</span>
+                    <span class="bg-yellow-400 text-blue-900 px-3 py-1 rounded-full text-xs font-bold" id="statusBadge">AKTIF</span>
                     <h2 class="text-2xl font-extrabold text-white mt-2" id="userName">-</h2>
                     <p class="text-sm text-blue-200 mt-1" id="userDetail">-</p>
                 </div>
@@ -251,7 +280,7 @@
                         <span class="material-symbols-rounded text-blue-600">event_available</span>
                         <span class="font-bold">Kehadiran Hari Ini</span>
                     </div>
-                    <div id="attendanceStatus" class="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold">
+                    <div id="attendanceStatus" class="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold status-badge">
                         BELUM MASUK
                     </div>
                 </div>
@@ -263,10 +292,10 @@
                 </div>
 
                 <!-- Location Card -->
-                <div class="bg-gray-50 p-4 rounded-2xl">
+                <div class="bg-gray-50 p-4 rounded-2xl" id="locationCard">
                     <div class="flex gap-3">
                         <span class="material-symbols-rounded text-blue-600">location_on</span>
-                        <div>
+                        <div class="flex-1">
                             <p class="text-sm font-bold" id="locationStatus">Mengesan lokasi...</p>
                             <p class="text-xs text-gray-400" id="distanceStatus">-</p>
                         </div>
@@ -438,79 +467,10 @@
         }
 
         // ============================================
-        // LOGIN
-        // ============================================
-        window.handleLogin = async function() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const btn = document.getElementById('loginBtn');
-
-            if (!email || !password) {
-                showNotification('Ralat', 'Sila isi email dan kata laluan', true);
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading mx-auto"></div>';
-
-            try {
-                const result = await callAPI('userLogin', { email, password });
-                
-                if (result.success) {
-                    currentUser = result.user;
-                    
-                    // Create face matcher if face descriptor exists
-                    if (currentUser.faceDescriptor && currentUser.faceDescriptor !== '') {
-                        try {
-                            const descriptor = JSON.parse(currentUser.faceDescriptor);
-                            const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
-                                currentUser.uid, 
-                                [new Float32Array(descriptor)]
-                            );
-                            faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
-                            console.log('✅ Face matcher created');
-                        } catch (e) {
-                            console.error('❌ Failed to create face matcher:', e);
-                        }
-                    }
-                    
-                    document.getElementById('userName').innerText = currentUser.name;
-                    document.getElementById('userDetail').innerText = `${currentUser.branch} • ${currentUser.unit}`;
-                    
-                    document.getElementById('loginPage').classList.add('hidden');
-                    document.getElementById('dashboard').classList.remove('hidden');
-                    
-                    await loadFaceModels();
-                    checkTodayAttendance();
-                    startLocationTracking();
-                    loadAttendanceHistory();
-                    startClock();
-                    
-                    showNotification('Selamat Datang', `Log masuk berjaya`);
-                } else {
-                    showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true);
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Log Masuk';
-            }
-        };
-
-        window.handleLogout = function() {
-            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
-            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
-            document.getElementById('dashboard').classList.add('hidden');
-            document.getElementById('loginPage').classList.remove('hidden');
-        };
-
-        // ============================================
-        // LOCATION
+        // LOCATION FUNCTIONS
         // ============================================
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
+            const R = 6371e3; // metres
             const φ1 = lat1 * Math.PI/180;
             const φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180;
@@ -524,38 +484,76 @@
             return R * c;
         }
 
-        function startLocationTracking() {
-            if (!navigator.geolocation) {
-                document.getElementById('locationStatus').innerText = 'GPS tidak disokong';
+        function updateLocationDisplay() {
+            if (!currentUser || !currentUser.lat || !currentUser.lng || !userLocation) {
+                document.getElementById('locationStatus').innerHTML = '<span class="text-gray-500">Mengesan lokasi...</span>';
+                document.getElementById('distanceStatus').innerText = '-';
                 return;
             }
             
+            const distance = calculateDistance(
+                userLocation.lat,
+                userLocation.lng,
+                parseFloat(currentUser.lat),
+                parseFloat(currentUser.lng)
+            );
+            
+            const radius = parseInt(currentUser.radius) || 500;
+            const within = distance <= radius;
+            
+            // Update location status with appropriate color
+            const locationEl = document.getElementById('locationStatus');
+            const distanceEl = document.getElementById('distanceStatus');
+            
+            if (within) {
+                locationEl.innerHTML = '<span class="text-green-600 font-bold">✓ DALAM KAWASAN BERTUGAS</span>';
+            } else {
+                locationEl.innerHTML = '<span class="text-red-500 font-bold">✗ LUAR KAWASAN BERTUGAS</span>';
+            }
+            
+            distanceEl.innerText = `${Math.round(distance)}m / ${radius}m`;
+            
+            // Log untuk debugging
+            console.log(`📍 Distance: ${Math.round(distance)}m, Radius: ${radius}m, Within: ${within}`);
+        }
+
+        function startLocationTracking() {
+            if (!navigator.geolocation) {
+                document.getElementById('locationStatus').innerHTML = '<span class="text-red-500">GPS tidak disokong</span>';
+                return;
+            }
+            
+            // Get initial position immediately
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    updateLocationDisplay();
+                },
+                (error) => {
+                    console.error('GPS error:', error);
+                    document.getElementById('locationStatus').innerHTML = '<span class="text-red-500">Gagal mengesan GPS</span>';
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+            
+            // Then watch for changes
             locationWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     userLocation = {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude
                     };
-                    
-                    if (currentUser && currentUser.lat && currentUser.lng) {
-                        const distance = calculateDistance(
-                            userLocation.lat,
-                            userLocation.lng,
-                            parseFloat(currentUser.lat),
-                            parseFloat(currentUser.lng)
-                        );
-                        
-                        const within = distance <= (parseInt(currentUser.radius) || 500);
-                        
-                        document.getElementById('locationStatus').innerHTML = within ? 
-                            '<span class="text-green-600">✓ DALAM KAWASAN BERTUGAS</span>' : 
-                            '<span class="text-red-500">✗ LUAR KAWASAN BERTUGAS</span>';
-                        document.getElementById('distanceStatus').innerText = `${Math.round(distance)}m / ${currentUser.radius || 500}m`;
-                    }
+                    updateLocationDisplay();
                 },
                 (error) => {
-                    console.error('GPS error:', error);
-                    document.getElementById('locationStatus').innerText = 'Gagal mengesan GPS';
+                    console.error('GPS watch error:', error);
                 },
                 {
                     enableHighAccuracy: true,
@@ -566,38 +564,91 @@
         }
 
         // ============================================
-        // ATTENDANCE
+        // ATTENDANCE FUNCTIONS
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
             
             const today = new Date().toISOString().split('T')[0];
-            const result = await callAPI('getAttendance', { 
-                uid: currentUser.uid, 
-                startDate: today, 
-                endDate: today 
-            });
+            console.log('🔍 Checking attendance for date:', today);
             
-            if (result.success && result.data && result.data.length > 0) {
-                const record = result.data[0];
-                if (record.clockIn && (!record.clockOut || record.clockOut === '')) {
-                    document.getElementById('attendanceStatus').innerText = 'DALAM BERTUGAS';
-                    document.getElementById('clockInBtn').disabled = true;
-                    document.getElementById('clockOutBtn').disabled = false;
-                    document.getElementById('clockOutBtn').className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
-                } else if (record.clockIn && record.clockOut) {
-                    document.getElementById('attendanceStatus').innerText = 'SELESAI';
-                    document.getElementById('clockInBtn').disabled = true;
-                    document.getElementById('clockOutBtn').disabled = true;
+            try {
+                const result = await callAPI('getAttendance', { 
+                    uid: currentUser.uid, 
+                    startDate: today, 
+                    endDate: today 
+                });
+                
+                console.log('📊 Attendance result:', result);
+                
+                const statusEl = document.getElementById('attendanceStatus');
+                const clockInBtn = document.getElementById('clockInBtn');
+                const clockOutBtn = document.getElementById('clockOutBtn');
+                
+                if (result.success && result.data && result.data.length > 0) {
+                    const record = result.data[0];
+                    console.log('📅 Today record:', record);
+                    console.log('⏰ clockIn:', record.clockIn);
+                    console.log('⏰ clockOut:', record.clockOut);
+                    
+                    // Check if clock in exists and clock out is empty/null
+                    if (record.clockIn && (!record.clockOut || record.clockOut === '' || record.clockOut === 'null')) {
+                        // Clocked in but not clocked out
+                        statusEl.innerText = 'DALAM BERTUGAS';
+                        statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
+                        
+                        clockInBtn.disabled = true;
+                        clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                        
+                        clockOutBtn.disabled = false;
+                        clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
+                        
+                        console.log('✅ Status updated: DALAM BERTUGAS');
+                        
+                    } else if (record.clockIn && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null') {
+                        // Both clock in and clock out exist
+                        statusEl.innerText = 'SELESAI';
+                        statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
+                        
+                        clockInBtn.disabled = true;
+                        clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                        
+                        clockOutBtn.disabled = true;
+                        clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                        
+                        console.log('✅ Status updated: SELESAI');
+                    } else {
+                        // Should not happen, but handle just in case
+                        statusEl.innerText = 'BELUM MASUK';
+                        statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+                        
+                        clockInBtn.disabled = false;
+                        clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
+                        
+                        clockOutBtn.disabled = true;
+                        clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
+                    }
+                } else {
+                    // No record for today
+                    console.log('📅 No record for today');
+                    statusEl.innerText = 'BELUM MASUK';
+                    statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+                    
+                    clockInBtn.disabled = false;
+                    clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
+                    
+                    clockOutBtn.disabled = true;
+                    clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
                 }
+            } catch (error) {
+                console.error('❌ Error checking attendance:', error);
             }
         }
 
         // ============================================
-        // FACE VERIFICATION - SENYUM SAHAJA (VERSI DIPERBAIKI)
+        // FACE VERIFICATION FUNCTIONS
         // ============================================
         
-        // Function to detect smile using geometry
         function isSmiling(landmarks) {
             if (!landmarks) return false;
             
@@ -621,12 +672,11 @@
             
             const smileRatio = mouthWidth / (mouthHeight + 0.1);
             
-            console.log('Smile ratio:', smileRatio);
+            console.log('😊 Smile ratio:', smileRatio.toFixed(2));
             
             return smileRatio > 2.0;
         }
 
-        // Helper function to get face descriptor
         async function getFaceDescriptor(video) {
             try {
                 const detection = await faceapi
@@ -636,12 +686,11 @@
                 
                 return detection;
             } catch (error) {
-                console.error('Error getting face descriptor:', error);
+                console.error('❌ Error getting face descriptor:', error);
                 return null;
             }
         }
 
-        // Main verification function
         async function verifyFace() {
             if (isVerifying) return false;
             isVerifying = true;
@@ -663,14 +712,11 @@
             clockInBtn.disabled = true;
             clockOutBtn.disabled = true;
             
-            // Initialize face overlay
             faceOverlay = document.getElementById('faceOverlay');
             
             try {
-                // Ensure models are loaded
                 await loadFaceModels();
                 
-                // Start camera
                 scanStatus.innerText = 'Mengakses kamera...';
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
@@ -683,7 +729,6 @@
                 scanVideo.srcObject = stream;
                 videoStream = stream;
                 
-                // Wait for camera to stabilize
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 // Start face detection overlay
@@ -714,15 +759,14 @@
                     }
                 }, 100);
                 
-                // TEST 1: Smile detection
+                // Smile detection
                 updateProgress(30);
                 challengeDisplay.innerText = '😊 SILA SENYUM';
-                scanStatus.innerText = 'Sila senyum lebar...';
+                scanStatus.innerText = 'Sila senyum...';
                 
                 let smileDetected = false;
                 let smileStartTime = Date.now();
                 
-                // Check for smile for 5 seconds
                 while (Date.now() - smileStartTime < 5000) {
                     updateProgress(30 + ((Date.now() - smileStartTime) / 5000) * 40);
                     
@@ -732,14 +776,12 @@
                         .withFaceExpressions();
                     
                     if (detection) {
-                        // Method 1: Using expression
                         if (detection.expressions && detection.expressions.happy > 0.5) {
                             smileDetected = true;
                             console.log('😊 Smile detected via expression!');
                             break;
                         }
                         
-                        // Method 2: Using geometry (fallback)
                         if (detection.landmarks && isSmiling(detection.landmarks)) {
                             smileDetected = true;
                             console.log('😊 Smile detected via geometry!');
@@ -756,14 +798,13 @@
                     throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
                 }
                 
-                // TEST 2: Face Matching
+                // Face Matching
                 updateProgress(80);
                 challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
                 scanStatus.innerText = 'Memadankan wajah dengan rekod...';
                 
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                // Gunakan helper function untuk dapatkan descriptor
                 const detection = await getFaceDescriptor(scanVideo);
                 
                 if (!detection) {
@@ -775,7 +816,7 @@
                 }
                 
                 const match = faceMatcher.findBestMatch(detection.descriptor);
-                console.log(`Face match distance: ${match.distance}`);
+                console.log(`🎯 Face match distance: ${match.distance.toFixed(3)}`);
                 
                 if (match.label !== currentUser.uid || match.distance >= 0.65) {
                     throw new Error('Wajah tidak sepadan dengan rekod');
@@ -788,7 +829,6 @@
                 
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Stop camera
                 videoStream.getTracks().forEach(t => t.stop());
                 videoStream = null;
                 scanContainer.classList.add('hidden');
@@ -797,9 +837,8 @@
                 return true;
                 
             } catch (error) {
-                console.error('Verification error:', error);
+                console.error('❌ Verification error:', error);
                 
-                // Stop camera
                 if (videoStream) {
                     videoStream.getTracks().forEach(t => t.stop());
                     videoStream = null;
@@ -818,7 +857,77 @@
             }
         }
 
-        // Clock In
+        // ============================================
+        // LOGIN
+        // ============================================
+        window.handleLogin = async function() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!email || !password) {
+                showNotification('Ralat', 'Sila isi email dan kata laluan', true);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading mx-auto"></div>';
+
+            try {
+                const result = await callAPI('userLogin', { email, password });
+                
+                if (result.success) {
+                    currentUser = result.user;
+                    
+                    if (currentUser.faceDescriptor && currentUser.faceDescriptor !== '') {
+                        try {
+                            const descriptor = JSON.parse(currentUser.faceDescriptor);
+                            const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+                                currentUser.uid, 
+                                [new Float32Array(descriptor)]
+                            );
+                            faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
+                            console.log('✅ Face matcher created');
+                        } catch (e) {
+                            console.error('❌ Failed to create face matcher:', e);
+                        }
+                    }
+                    
+                    document.getElementById('userName').innerText = currentUser.name;
+                    document.getElementById('userDetail').innerText = `${currentUser.branch} • ${currentUser.unit}`;
+                    
+                    document.getElementById('loginPage').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    
+                    await loadFaceModels();
+                    await checkTodayAttendance();
+                    startLocationTracking();
+                    loadAttendanceHistory();
+                    startClock();
+                    
+                    showNotification('Selamat Datang', `Log masuk berjaya`);
+                } else {
+                    showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true);
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Log Masuk';
+            }
+        };
+
+        window.handleLogout = function() {
+            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('loginPage').classList.remove('hidden');
+        };
+
+        // ============================================
+        // CLOCK IN / OUT
+        // ============================================
         window.handleClockIn = async function() {
             if (!userLocation) {
                 showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true);
@@ -845,19 +954,31 @@
             btn.innerHTML = '<div class="loading mx-auto"></div>';
             
             try {
+                console.log('📤 Sending clock in request...');
                 const result = await callAPI('clockIn', { 
                     uid: currentUser.uid, 
                     location: JSON.stringify(userLocation)
                 });
                 
+                console.log('📥 Clock in result:', result);
+                
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan');
+                    
+                    // Update attendance status immediately
                     await checkTodayAttendance();
+                    
+                    // Refresh history
                     await loadAttendanceHistory();
+                    
+                    // Update location display
+                    updateLocationDisplay();
+                    
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock in', true);
                 }
             } catch (error) {
+                console.error('Clock in error:', error);
                 showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
             } finally {
                 btn.disabled = false;
@@ -865,7 +986,6 @@
             }
         };
 
-        // Clock Out
         window.handleClockOut = async function() {
             if (!userLocation) {
                 showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true);
@@ -882,19 +1002,31 @@
             btn.innerHTML = '<div class="loading mx-auto"></div>';
             
             try {
+                console.log('📤 Sending clock out request...');
                 const result = await callAPI('clockOut', { 
                     uid: currentUser.uid, 
                     location: JSON.stringify(userLocation)
                 });
                 
+                console.log('📥 Clock out result:', result);
+                
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan');
+                    
+                    // Update attendance status immediately
                     await checkTodayAttendance();
+                    
+                    // Refresh history
                     await loadAttendanceHistory();
+                    
+                    // Update location display
+                    updateLocationDisplay();
+                    
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock out', true);
                 }
             } catch (error) {
+                console.error('Clock out error:', error);
                 showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
             } finally {
                 btn.disabled = false;
@@ -902,7 +1034,9 @@
             }
         };
 
-        // Load Attendance History
+        // ============================================
+        // ATTENDANCE HISTORY
+        // ============================================
         async function loadAttendanceHistory() {
             if (!currentUser) return;
             
@@ -936,8 +1070,11 @@
                 
                 const totalHours = record.totalHours ? parseFloat(record.totalHours).toFixed(1) : '-';
                 
+                const isToday = record.date === new Date().toISOString().split('T')[0];
+                const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
+                
                 html += `
-                    <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow">
+                    <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow ${todayClass}">
                         <div class="flex justify-between items-center mb-2">
                             <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
                                 ${record.weekday || '-'}
@@ -988,7 +1125,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadFaceModels();
             
-            // Create face overlay if not exists
             if (!document.getElementById('faceOverlay')) {
                 const overlay = document.createElement('div');
                 overlay.id = 'faceOverlay';
