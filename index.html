@@ -320,44 +320,55 @@
         }
 
         // ============================================
-        // FACE API MODELS
+        // FACE API MODELS - VERSI DIPERBAIKI
         // ============================================
         async function loadFaceModels() {
-            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
-            try {
-                await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-                ]);
-                return true;
-            } catch (error) {
-                console.error('Failed to load models:', error);
-                showStatusMessage('Gagal memuatkan model wajah', 'error');
-                return false;
-            }
-        }
-
-        function createFaceMatcher(descriptor) {
-            try {
-                const parsed = JSON.parse(descriptor);
-                const labeledDescriptors = [
-                    new faceapi.LabeledFaceDescriptors(userId, [new Float32Array(parsed)])
-                ];
-                faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
-            } catch (e) {
-                console.error('Face matcher error:', e);
-            }
-        }
-
-        async function registerFaceAndGetDescriptor() {
-            const detections = await faceapi.detectSingleFace(videoElement, 
-                new faceapi.TinyFaceDetectorOptions())
-                .withFaceLandmarks()
-                .withFaceDescriptor();
+            if (modelsLoaded) return true;
             
-            return detections ? Array.from(detections.descriptor) : null;
+            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
+            
+            try {
+                console.log('🔄 Loading face models...');
+                
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                console.log('✅ TinyFaceDetector loaded');
+                
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                console.log('✅ FaceLandmark68Net loaded');
+                
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                console.log('✅ FaceRecognitionNet loaded');
+                
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                console.log('✅ FaceExpressionNet loaded');
+                
+                modelsLoaded = true;
+                console.log('✅ All face models loaded successfully');
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Failed to load models:', error);
+                
+                // Try backup CDN
+                try {
+                    console.log('🔄 Trying backup CDN...');
+                    const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+                    
+                    await faceapi.nets.tinyFaceDetector.loadFromUri(BACKUP_URL);
+                    await faceapi.nets.faceLandmark68Net.loadFromUri(BACKUP_URL);
+                    await faceapi.nets.faceRecognitionNet.loadFromUri(BACKUP_URL);
+                    await faceapi.nets.faceExpressionNet.loadFromUri(BACKUP_URL);
+                    
+                    modelsLoaded = true;
+                    console.log('✅ Face models loaded from backup');
+                    return true;
+                    
+                } catch (backupError) {
+                    console.error('❌ Backup also failed:', backupError);
+                    showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true);
+                    return false;
+                }
+            }
         }
 
         // ============================================
@@ -516,172 +527,179 @@
             }
         }
 
-// ============================================
-// LIVENESS DETECTION - SENYUM SAHAJA (VERSI DIPERBAIKI)
-// ============================================
-function isSmiling(landmarks) {
-    if (!landmarks) return false;
-    
-    const mouth = landmarks.getMouth();
-    if (!mouth || mouth.length < 20) return false;
-    
-    const leftMouthCorner = mouth[0];
-    const rightMouthCorner = mouth[6];
-    const upperLip = mouth[3];
-    const lowerLip = mouth[9];
-    
-    const mouthWidth = Math.hypot(
-        rightMouthCorner.x - leftMouthCorner.x,
-        rightMouthCorner.y - leftMouthCorner.y
-    );
-    
-    const mouthHeight = Math.hypot(
-        lowerLip.x - upperLip.x,
-        lowerLip.y - upperLip.y
-    );
-    
-    const smileRatio = mouthWidth / (mouthHeight + 0.1);
-    
-    console.log('Smile ratio:', smileRatio);
-    
-    // AMBANG 2.0 - lebih mudah dicapai
-    return smileRatio > 2.0;
-}
+        // ============================================
+        // LIVENESS DETECTION - SENYUM SAHAJA
+        // ============================================
+        
+        // Function to detect smile using geometry
+        function isSmiling(landmarks) {
+            if (!landmarks) return false;
+            
+            const mouth = landmarks.getMouth();
+            if (!mouth || mouth.length < 20) return false;
+            
+            const leftMouthCorner = mouth[0];
+            const rightMouthCorner = mouth[6];
+            const upperLip = mouth[3];
+            const lowerLip = mouth[9];
+            
+            const mouthWidth = Math.hypot(
+                rightMouthCorner.x - leftMouthCorner.x,
+                rightMouthCorner.y - leftMouthCorner.y
+            );
+            
+            const mouthHeight = Math.hypot(
+                lowerLip.x - upperLip.x,
+                lowerLip.y - upperLip.y
+            );
+            
+            const smileRatio = mouthWidth / (mouthHeight + 0.1);
+            
+            console.log('Smile ratio:', smileRatio);
+            
+            return smileRatio > 2.0;
+        }
 
-// Main verification function - SENYUM SAHAJA (TANPA NEUTRAL FACE)
-async function verifyFace() {
-    if (isVerifying) return false;
-    isVerifying = true;
-    
-    if (!faceMatcher) {
-        showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true);
-        isVerifying = false;
-        return false;
-    }
-    
-    const scanContainer = document.getElementById('scanContainer');
-    const scanVideo = document.getElementById('scanVideo');
-    const scanStatus = document.getElementById('scanStatus');
-    const challengeDisplay = document.getElementById('challengeDisplay');
-    const clockInBtn = document.getElementById('clockInBtn');
-    const clockOutBtn = document.getElementById('clockOutBtn');
-    
-    scanContainer.classList.remove('hidden');
-    clockInBtn.disabled = true;
-    clockOutBtn.disabled = true;
-    
-    try {
-        // Mula kamera
-        scanStatus.innerText = 'Mengakses kamera...';
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: 'user',
-                width: { ideal: 640 },
-                height: { ideal: 480 }
-            } 
-        });
-        
-        scanVideo.srcObject = stream;
-        videoStream = stream;
-        
-        // Tunggu kamera siap
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // TEST 1: Smile detection sahaja (tanpa neutral face)
-        updateProgress(30);
-        challengeDisplay.innerText = '😊 SILA SENYUM';
-        scanStatus.innerText = 'Sila senyum lebar...';
-        
-        let smileDetected = false;
-        let smileStartTime = Date.now();
-        
-        // Check for smile selama 5 saat
-        while (Date.now() - smileStartTime < 5000) {
-            updateProgress(30 + ((Date.now() - smileStartTime) / 5000) * 40);
+        // Main verification function
+        async function verifyFace() {
+            if (isVerifying) return false;
+            isVerifying = true;
             
-            const detection = await faceapi.detectSingleFace(scanVideo, 
-                new faceapi.TinyFaceDetectorOptions())
-                .withFaceLandmarks()
-                .withFaceExpressions();
-            
-            if (detection) {
-                // Method 1: Guna expression
-                if (detection.expressions && detection.expressions.happy > 0.5) {
-                    smileDetected = true;
-                    console.log('😊 Smile detected via expression!');
-                    break;
-                }
-                
-                // Method 2: Guna geometric (fallback)
-                if (detection.landmarks && isSmiling(detection.landmarks)) {
-                    smileDetected = true;
-                    console.log('😊 Smile detected via geometry!');
-                    break;
-                }
+            if (!faceMatcher) {
+                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true);
+                isVerifying = false;
+                return false;
             }
             
-            await new Promise(resolve => setTimeout(resolve, 100));
+            const scanContainer = document.getElementById('scanContainer');
+            const scanVideo = document.getElementById('scanVideo');
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            const clockInBtn = document.getElementById('clockInBtn');
+            const clockOutBtn = document.getElementById('clockOutBtn');
+            
+            scanContainer.classList.remove('hidden');
+            clockInBtn.disabled = true;
+            clockOutBtn.disabled = true;
+            
+            try {
+                // Ensure models are loaded
+                await loadFaceModels();
+                
+                // Start camera
+                scanStatus.innerText = 'Mengakses kamera...';
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                
+                scanVideo.srcObject = stream;
+                videoStream = stream;
+                
+                // Wait for camera to stabilize
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // TEST 1: Smile detection
+                updateProgress(30);
+                challengeDisplay.innerText = '😊 SILA SENYUM';
+                scanStatus.innerText = 'Sila senyum lebar...';
+                
+                let smileDetected = false;
+                let smileStartTime = Date.now();
+                
+                // Check for smile for 5 seconds
+                while (Date.now() - smileStartTime < 5000) {
+                    updateProgress(30 + ((Date.now() - smileStartTime) / 5000) * 40);
+                    
+                    const detection = await faceapi.detectSingleFace(scanVideo, 
+                        new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks()
+                        .withFaceExpressions();
+                    
+                    if (detection) {
+                        // Method 1: Using expression
+                        if (detection.expressions && detection.expressions.happy > 0.5) {
+                            smileDetected = true;
+                            console.log('😊 Smile detected via expression!');
+                            break;
+                        }
+                        
+                        // Method 2: Using geometry (fallback)
+                        if (detection.landmarks && isSmiling(detection.landmarks)) {
+                            smileDetected = true;
+                            console.log('😊 Smile detected via geometry!');
+                            break;
+                        }
+                    }
+                    
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                if (!smileDetected) {
+                    throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
+                }
+                
+                // TEST 2: Face Matching
+                updateProgress(80);
+                challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
+                scanStatus.innerText = 'Memadankan wajah dengan rekod...';
+                
+                // Add a small delay to ensure camera is stable
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const detection = await faceapi.detectSingleFace(scanVideo, 
+                    new faceapi.TinyFaceDetectorOptions())
+                    .withFaceDescriptor();
+                
+                if (!detection || !detection.descriptor) {
+                    throw new Error('Wajah tidak dikesan');
+                }
+                
+                const match = faceMatcher.findBestMatch(detection.descriptor);
+                console.log(`Face match distance: ${match.distance}`);
+                
+                if (match.label !== currentUser.uid || match.distance >= 0.65) {
+                    throw new Error('Wajah tidak sepadan dengan rekod');
+                }
+                
+                // All tests passed
+                updateProgress(100);
+                challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
+                scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Stop camera
+                videoStream.getTracks().forEach(t => t.stop());
+                videoStream = null;
+                scanContainer.classList.add('hidden');
+                
+                showNotification('Berjaya', 'Pengesahan wajah berjaya');
+                return true;
+                
+            } catch (error) {
+                console.error('Verification error:', error);
+                
+                // Stop camera
+                if (videoStream) {
+                    videoStream.getTracks().forEach(t => t.stop());
+                    videoStream = null;
+                }
+                
+                scanContainer.classList.add('hidden');
+                showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true);
+                return false;
+                
+            } finally {
+                isVerifying = false;
+                clockInBtn.disabled = false;
+                clockOutBtn.disabled = false;
+                updateProgress(0);
+            }
         }
-        
-        if (!smileDetected) {
-            throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
-        }
-        
-        // TEST 2: Face Matching (ambil gambar sekarang)
-        updateProgress(80);
-        challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
-        scanStatus.innerText = 'Memadankan wajah dengan rekod...';
-        
-        const detection = await faceapi.detectSingleFace(scanVideo, 
-            new faceapi.TinyFaceDetectorOptions())
-            .withFaceDescriptor();
-        
-        if (!detection || !detection.descriptor) {
-            throw new Error('Wajah tidak dikesan');
-        }
-        
-        const match = faceMatcher.findBestMatch(detection.descriptor);
-        console.log(`Face match distance: ${match.distance}`);
-        
-        if (match.label !== currentUser.uid || match.distance >= 0.65) {
-            throw new Error('Wajah tidak sepadan dengan rekod');
-        }
-        
-        // Semua test lulus
-        updateProgress(100);
-        challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
-        scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Tutup kamera
-        videoStream.getTracks().forEach(t => t.stop());
-        videoStream = null;
-        scanContainer.classList.add('hidden');
-        
-        showNotification('Berjaya', 'Pengesahan wajah berjaya');
-        return true;
-        
-    } catch (error) {
-        console.error('Verification error:', error);
-        
-        // Tutup kamera
-        if (videoStream) {
-            videoStream.getTracks().forEach(t => t.stop());
-            videoStream = null;
-        }
-        
-        scanContainer.classList.add('hidden');
-        showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true);
-        return false;
-        
-    } finally {
-        isVerifying = false;
-        clockInBtn.disabled = false;
-        clockOutBtn.disabled = false;
-        updateProgress(0);
-    }
-}
 
         // Clock In
         window.handleClockIn = async function() {
@@ -690,7 +708,6 @@ async function verifyFace() {
                 return;
             }
             
-            // Check geofencing
             const distance = calculateDistance(
                 userLocation.lat, userLocation.lng,
                 parseFloat(currentUser.lat), parseFloat(currentUser.lng)
@@ -701,13 +718,11 @@ async function verifyFace() {
                 return;
             }
             
-            // Liveness verification (senyum)
             const verified = await verifyFace();
             if (!verified) {
                 return;
             }
             
-            // Proceed with clock in
             const btn = document.getElementById('clockInBtn');
             btn.disabled = true;
             btn.innerHTML = '<div class="loading mx-auto"></div>';
@@ -740,13 +755,11 @@ async function verifyFace() {
                 return;
             }
             
-            // Liveness verification (senyum)
             const verified = await verifyFace();
             if (!verified) {
                 return;
             }
             
-            // Proceed with clock out
             const btn = document.getElementById('clockOutBtn');
             btn.disabled = true;
             btn.innerHTML = '<div class="loading mx-auto"></div>';
@@ -855,17 +868,14 @@ async function verifyFace() {
         // ============================================
         // INITIALIZATION
         // ============================================
-        // Preload face models when page loads
         document.addEventListener('DOMContentLoaded', () => {
             loadFaceModels();
         });
 
-        // Enter key for login
         document.getElementById('loginPassword').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
         });
 
-        // Clean up on page unload
         window.addEventListener('beforeunload', () => {
             if (videoStream) {
                 videoStream.getTracks().forEach(t => t.stop());
