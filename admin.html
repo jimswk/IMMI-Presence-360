@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IMMI Presence 360 - Panel Pentadbir</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1" />
+    
+    <!-- Face API -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    
+    <!-- Leaflet for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- API Config -->
+    <script src="api-config.js"></script>
+    
+    <style>
+        * { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gov-blue: #1e3a8a;
+            --gov-blue-light: #2563eb;
+            --gov-navy: #0f172a;
+            --gov-gold: #fbbf24;
+            --gov-success: #059669;
+            --gov-danger: #dc2626;
+        }
+
+        body {
+            background: #f0f5fa;
+            color: #1e293b;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Login Container */
+        .login-container {
+            min-height: 100vh;
+            background: linear-gradient(165deg, #0b1e33 0%, #132b41 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 36px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 50px 70px -20px rgba(0,0,0,0.5);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: linear-gradient(165deg, #0b1e33 0%, #132b41 100%);
+            width: 280px;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            color: white;
+            z-index: 100;
+        }
+
+        .sidebar-content {
+            padding: 24px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            margin: 4px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left: 4px solid var(--gov-gold);
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 32px;
+            min-height: 100vh;
+        }
+
+        /* Step Indicators */
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            position: relative;
+        }
+        
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+        .step {
+            position: relative;
+            z-index: 2;
+            background: white;
+            padding: 0 15px;
+        }
+
+        .step-number {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            border: 3px solid white;
+            transition: all 0.3s;
+        }
+
+        .step.active .step-number { background: #1e3a8a; color: white; }
+        .step.completed .step-number { background: #059669; color: white; }
+
+        /* Form Inputs */
+        .input-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #64748b;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            background: #f8fafc;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #1e3a8a;
+            background: white;
+            box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.05);
+        }
+
+        .location-map {
+            height: 350px;
+            width: 100%;
+            border-radius: 24px;
+            margin-bottom: 20px;
+            border: 2px solid #e2e8f0;
+            z-index: 1;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 350px;
+            border-radius: 32px;
+            overflow: hidden;
+            background: #000;
+            margin: 0 auto 20px;
+            border: 4px solid white;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; }
+
+        .hidden { display: none !important; }
+
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: white;
+            border-radius: 18px;
+            padding: 18px 28px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.15);
+            transform: translateX(500px);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2000;
+            border-left: 5px solid #059669;
+        }
+        .notification.show { transform: translateX(0); }
+        .notification.error { border-left-color: #dc2626; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        th { text-align: left; padding: 16px; color: #64748b; font-size: 0.75rem; font-weight: 800; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
+        td { padding: 20px 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
+        tr:hover td { background: #f8fafc; }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="notification" class="notification">
+        <p class="font-black text-sm" id="notifTitle">Berjaya</p>
+        <p class="text-xs text-gray-500 mt-1" id="notifMsg"></p>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-card">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-rounded text-4xl text-blue-800">admin_panel_settings</span>
+                </div>
+                <h1 class="text-3xl font-black text-gray-800">Panel Pentadbir</h1>
+                <p class="text-gray-400 text-sm mt-1">IMMI Presence 360</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="input-label">Emel Rasmi</label>
+                    <input type="email" id="loginEmail" class="input-field mb-0" placeholder="admin@imi.gov.my">
+                </div>
+                <div>
+                    <label class="input-label">Kata Laluan</label>
+                    <input type="password" id="loginPassword" class="input-field mb-0" placeholder="••••••••">
+                </div>
+                <button onclick="handleLogin()" id="loginBtn" class="w-full bg-blue-800 text-white py-4 rounded-2xl font-bold mt-4 shadow-lg shadow-blue-900/20 active:scale-95 transition-all">Log Masuk</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Main -->
+    <div id="adminDashboard" class="hidden">
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <div class="flex items-center gap-3 mb-10">
+                    <div class="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-rounded text-2xl text-blue-900">fingerprint</span>
+                    </div>
+                    <h2 class="font-black text-xl tracking-tight">IMMI 360</h2>
+                </div>
+                
+                <div class="bg-white/5 border border-white/10 p-5 rounded-3xl mb-8">
+                    <p class="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-1">Pentadbir Cawangan</p>
+                    <p class="font-bold text-white truncate" id="adminName">-</p>
+                    <p class="text-xs text-gray-400 mt-1" id="adminBranchDisplay"></p>
+                </div>
+
+                <nav class="space-y-2">
+                    <div class="nav-item active" onclick="switchTab('users')" id="navUsers">
+                        <span class="material-symbols-rounded">group</span> 
+                        <span class="font-bold">Senarai Pengguna</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('register')" id="navRegister">
+                        <span class="material-symbols-rounded">person_add</span> 
+                        <span class="font-bold">Daftar Pengguna</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('reports')" id="navReports">
+                        <span class="material-symbols-rounded">summarize</span> 
+                        <span class="font-bold">Laporan Kehadiran</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('dashboard')" id="navDashboard">
+                        <span class="material-symbols-rounded">dashboard</span> 
+                        <span class="font-bold">Statistik Keseluruhan</span>
+                    </div>
+                </nav>
+
+                <button onclick="handleLogout()" class="mt-auto flex items-center gap-3 text-gray-400 hover:text-white transition-colors p-3 font-bold text-sm">
+                    <span class="material-symbols-rounded">logout</span> Log Keluar
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Users Tab -->
+            <div id="usersTab">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-4xl font-black text-gray-800">Senarai Pengguna</h1>
+                        <p class="text-gray-400 text-sm mt-2">Urus dan kemaskini maklumat kakitangan Cawangan <span id="currentBranchName" class="text-blue-800 font-bold"></span></p>
+                    </div>
+                    <div class="relative w-72">
+                        <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                        <input type="text" id="searchUser" placeholder="Cari nama atau emel..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all" onkeyup="searchUsers()">
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
+                    <div class="overflow-x-auto">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nama Kakitangan</th>
+                                    <th>Unit / Bahagian</th>
+                                    <th>Status Biometrik</th>
+                                    <th>Geofencing</th>
+                                    <th class="text-center">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Register User Tab -->
+            <div id="registerTab" class="hidden">
+                <div class="max-w-4xl">
+                    <h1 class="text-4xl font-black text-gray-800 mb-2" id="regFormTitle">Daftar Pengguna</h1>
+                    <p class="text-gray-400 text-sm mb-10">Sila lengkapkan maklumat kakitangan untuk akses biometrik.</p>
+
+                    <div class="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
+                        <!-- Step Indicator -->
+                        <div class="step-indicator max-w-2xl mx-auto">
+                            <div class="step active" id="step1">
+                                <div class="step-number">1</div>
+                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Profil Asas</p>
+                            </div>
+                            <div class="step" id="step2">
+                                <div class="step-number">2</div>
+                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Zon Lokasi</p>
+                            </div>
+                            <div class="step" id="step3">
+                                <div class="step-number">3</div>
+                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Biometrik</p>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="userId">
+                        <input type="hidden" id="faceDescriptor">
+
+                        <!-- Step 1: Info Asas -->
+                        <div id="step1Content" class="wizard-step active">
+                            <div class="grid grid-cols-2 gap-x-6">
+                                <div class="col-span-2">
+                                    <label class="input-label">Nama Penuh Kakitangan</label>
+                                    <input type="text" id="userName" class="input-field" placeholder="Masukkan nama penuh mengikut IC">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="input-label">Emel Rasmi (.gov.my)</label>
+                                    <input type="email" id="userEmail" class="input-field" placeholder="contoh@imigresen.gov.my">
+                                </div>
+                                <div>
+                                    <label class="input-label">Unit / Bahagian</label>
+                                    <input type="text" id="userUnit" class="input-field" placeholder="cth: ICT / Pengurusan / Operasi">
+                                </div>
+                                <div>
+                                    <label class="input-label">Cawangan</label>
+                                    <input type="text" id="userBranch" class="input-field bg-gray-100 text-gray-500 font-black" readonly>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="input-label">Kata Laluan Sistem (Min 6 aksara)</label>
+                                    <input type="password" id="userPassword" class="input-field" placeholder="••••••••">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Lokasi -->
+                        <div id="step2Content" class="wizard-step">
+                            <div class="mb-6 flex justify-between items-center">
+                                <div>
+                                    <label class="input-label">Tetapan Pagar Maya (Geofencing)</label>
+                                    <p class="text-xs text-gray-400">Tentukan kawasan di mana kakitangan dibenarkan melakukan 'Clock-In'.</p>
+                                </div>
+                                <div class="bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-black" id="radiusValDisplay">500 Meter</div>
+                            </div>
+                            
+                            <div id="userLocationMap" class="location-map"></div>
+                            
+                            <div class="grid grid-cols-2 gap-6 items-end">
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="input-label">Latitud</label>
+                                            <input type="text" id="userLat" class="input-field mb-0 text-xs font-bold" readonly>
+                                        </div>
+                                        <div>
+                                            <label class="input-label">Longitud</label>
+                                            <input type="text" id="userLng" class="input-field mb-0 text-xs font-bold" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                                        <label class="input-label mb-4">Radius Kehadiran</label>
+                                        <input type="range" id="userRadius" min="100" max="2000" step="100" value="500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-800" oninput="updateRadius(this.value)">
+                                        <div class="flex justify-between mt-2 text-[10px] font-bold text-gray-400">
+                                            <span>100m</span>
+                                            <span>1000m</span>
+                                            <span>2000m</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-amber-50 p-6 rounded-3xl border border-amber-100">
+                                    <div class="flex gap-3 items-start">
+                                        <span class="material-symbols-rounded text-amber-600">info</span>
+                                        <p class="text-xs text-amber-900 font-medium leading-relaxed">
+                                            Klik pada mana-mana lokasi di atas peta atau seret penanda biru untuk menetapkan pusat kawasan bertugas kakitangan.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Wajah -->
+                        <div id="step3Content" class="wizard-step">
+                            <div class="video-container">
+                                <video id="faceVideo" autoplay muted playsinline></video>
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <div class="w-56 h-72 border-4 border-dashed border-amber-400 rounded-[120px] opacity-40"></div>
+                                </div>
+                            </div>
+
+                            <div id="faceStatus" class="max-w-md mx-auto text-center bg-gray-50 p-6 rounded-[32px] border border-gray-100 mb-8">
+                                <p class="text-sm font-bold text-gray-500" id="faceStatusMsg">Sedia untuk melakukan pengesahan biometrik wajah...</p>
+                            </div>
+
+                            <div class="flex justify-center gap-4">
+                                <button onclick="initCamera()" id="retryCamBtn" class="hidden bg-blue-600 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
+                                    <span class="material-symbols-rounded">videocam</span> Aktifkan Kamera
+                                </button>
+                                <button onclick="captureFace()" id="captureBtn" class="bg-amber-500 text-white px-10 py-4 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-amber-900/20 active:scale-95 transition-all">
+                                    <span class="material-symbols-rounded">face</span> Imbas Wajah Kakitangan
+                                </button>
+                                <button onclick="resetFace()" id="resetFaceBtn" class="hidden bg-gray-100 text-gray-500 px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-gray-200 transition-all">
+                                    <span class="material-symbols-rounded">refresh</span> Padam & Imbas Semula
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Wizard Footer -->
+                        <div class="mt-12 pt-8 border-t border-gray-100 flex justify-between items-center">
+                            <button onclick="switchTab('users')" class="text-gray-400 font-bold px-6 py-2 hover:text-red-500 transition-colors">Batal</button>
+                            <div class="flex gap-3">
+                                <button onclick="prevStep()" id="prevBtn" class="hidden bg-gray-100 text-gray-600 px-8 py-4 rounded-2xl font-bold active:scale-95 transition-all">Sebelumnya</button>
+                                <button onclick="nextStep()" id="nextBtn" class="bg-blue-800 text-white px-10 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-blue-900/10">
+                                    Seterusnya <span class="material-symbols-rounded">arrow_forward</span>
+                                </button>
+                                <button onclick="saveUser()" id="saveBtn" class="hidden bg-green-600 text-white px-12 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-green-900/10">
+                                    <span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reportsTab" class="hidden">
+                <h1 class="text-4xl font-black text-gray-800 mb-8">Laporan Kehadiran</h1>
+                <div class="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100 max-w-2xl">
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="input-label">Tarikh Mula</label>
+                            <input type="date" id="startDate" class="input-field mb-0">
+                        </div>
+                        <div>
+                            <label class="input-label">Tarikh Tamat</label>
+                            <input type="date" id="endDate" class="input-field mb-0">
+                        </div>
+                    </div>
+                    <div class="mb-8">
+                        <label class="input-label">Pilih Kakitangan</label>
+                        <select id="reportUser" class="input-field mb-0"></select>
+                    </div>
+                    <button onclick="generatePDF()" class="w-full bg-blue-800 text-white py-5 rounded-[20px] font-black flex items-center justify-center gap-4 shadow-lg shadow-blue-900/10 hover:bg-blue-700 transition-all">
+                        <span class="material-symbols-rounded">picture_as_pdf</span> Jana Laporan PDF Terperinci
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboardTab" class="hidden">
+                <h1 class="text-4xl font-black text-gray-800 mb-10">Statistik Cawangan</h1>
+                <div class="grid grid-cols-3 gap-8">
+                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+                        <div class="w-14 h-14 bg-blue-50 text-blue-800 rounded-2xl flex items-center justify-center mb-6">
+                            <span class="material-symbols-rounded text-3xl">groups</span>
+                        </div>
+                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Jumlah Kakitangan</p>
+                        <h3 class="text-5xl font-black text-blue-800" id="totalUsersStat">0</h3>
+                    </div>
+                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+                        <div class="w-14 h-14 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6">
+                            <span class="material-symbols-rounded text-3xl">face</span>
+                        </div>
+                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Biometrik Aktif</p>
+                        <h3 class="text-5xl font-black text-green-600" id="faceRegisteredStat">0</h3>
+                    </div>
+                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
+                        <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6">
+                            <span class="material-symbols-rounded text-3xl">event_available</span>
+                        </div>
+                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Kehadiran Hari Ini</p>
+                        <h3 class="text-5xl font-black text-amber-500" id="presentTodayStat">0</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000;">
+        <div style="background: white; border-radius: 40px; max-width: 400px; width: 90%; padding: 32px; text-align: center;">
+            <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-rounded text-4xl">delete_forever</span>
+            </div>
+            <h3 class="font-black text-xl text-gray-800">Padam Rekod?</h3>
+            <p class="text-sm text-gray-400 mt-2">Tindakan ini tidak boleh diundur. Semua data kakitangan ini akan dipadam kekal.</p>
+            <div class="grid grid-cols-2 gap-3 mt-8">
+                <button onclick="document.getElementById('deleteModal').style.display='none'" class="bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold">Batal</button>
+                <button id="confirmDeleteBtn" class="bg-red-600 text-white py-4 rounded-2xl font-bold">Ya, Padam</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // GLOBAL STATE
+        // ============================================
+        let currentUser = null;
+        let users = [];
+        let userMap = null;
+        let userMarker = null;
+        let userCircle = null;
+        let videoStream = null;
+        let currentStep = 1;
+        let modelsLoaded = false;
+
+        function showNotif(title, msg, isError = false) {
+            const n = document.getElementById('notification');
+            document.getElementById('notifTitle').innerText = title;
+            document.getElementById('notifMsg').innerText = msg;
+            n.className = `notification show ${isError ? 'error' : ''}`;
+            setTimeout(() => n.classList.remove('show'), 4000);
+        }
+
+        // ============================================
+        // LOGIN
+        // ============================================
+        window.handleLogin = async function() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!email || !password) return showNotif("Input Diperlukan", "Sila isi emel & kata laluan", true);
+
+            btn.disabled = true;
+            btn.innerHTML = 'Mengesahkan...';
+
+            try {
+                const result = await callAPI('login', { email, password });
+                
+                if (result.success) {
+                    currentUser = result.user;
+                    if (currentUser.role !== 'admin' && currentUser.role !== 'superadmin') {
+                        showNotif("Akses Disekat", "Anda tidak mempunyai kebenaran Pentadbir.", true);
+                        btn.disabled = false;
+                        btn.innerHTML = 'Log Masuk';
+                        return;
+                    }
+                    initDashboard();
+                } else {
+                    showNotif("Gagal", result.error || "Maklumat log masuk salah", true);
+                }
+            } catch (error) {
+                showNotif("Ralat Sistem", "Gagal menghubungi server", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Log Masuk';
+            }
+        };
+
+        function initDashboard() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            document.getElementById('adminName').innerText = currentUser.name;
+            document.getElementById('adminBranchDisplay').innerText = `JIM Cawangan ${currentUser.branch}`;
+            document.getElementById('currentBranchName').innerText = currentUser.branch;
+            document.getElementById('userBranch').value = currentUser.branch;
+
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+
+            loadUsers();
+            loadFaceModels(); 
+        }
+
+        // ============================================
+        // USERS MANAGEMENT
+        // ============================================
+        async function loadUsers() {
+            try {
+                const result = await callAPI('getUsers', { branch: currentUser.branch });
+                if (result.success) {
+                    users = result.data || [];
+                    renderUsersTable();
+                    updateDashboardStats();
+                    updateReportDropdown();
+                }
+            } catch (error) {
+                showNotif('Ralat', 'Gagal memuatkan senarai pengguna', true);
+            }
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>
+                        <div class="font-black text-gray-800">${u.name}</div>
+                        <div class="text-[10px] text-gray-400 font-bold tracking-tight">${u.email}</div>
+                    </td>
+                    <td>
+                        <div class="text-xs font-bold text-gray-600">${u.unit || '-'}</div>
+                        <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest">${u.branch}</div>
+                    </td>
+                    <td>
+                        ${u.faceDescriptor ? 
+                            '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full border border-green-100">DIDAFTAR</span>' : 
+                            '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full border border-red-100">TIADA REKOD</span>'}
+                    </td>
+                    <td>
+                        <div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${u.location || 'Pejabat Am'}</div>
+                        <div class="text-[10px] text-blue-500 font-black">${u.radius || 500}m Radius</div>
+                    </td>
+                    <td>
+                        <div class="flex gap-2 justify-center">
+                            <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100 transition-colors">
+                                <span class="material-symbols-rounded text-xl">edit</span>
+                            </button>
+                            <button onclick="confirmDelete('${u.uid}', '${u.name}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100 transition-colors">
+                                <span class="material-symbols-rounded text-xl">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // ============================================
+        // MAP LOGIC
+        // ============================================
+        function initMap(lat = 1.5533, lng = 110.3592, radius = 500) {
+            if (userMap) userMap.remove();
+            
+            userMap = L.map('userLocationMap').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
+            
+            userMarker = L.marker([lat, lng], { draggable: true }).addTo(userMap);
+            userCircle = L.circle([lat, lng], { 
+                radius: radius, 
+                color: '#1e3a8a', 
+                fillOpacity: 0.1 
+            }).addTo(userMap);
+
+            document.getElementById('userLat').value = lat.toFixed(6);
+            document.getElementById('userLng').value = lng.toFixed(6);
+
+            userMarker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                updateMapElements(pos.lat, pos.lng);
+            });
+
+            userMap.on('click', function(e) {
+                userMarker.setLatLng(e.latlng);
+                updateMapElements(e.latlng.lat, e.latlng.lng);
+            });
+
+            setTimeout(() => {
+                if(userMap) userMap.invalidateSize();
+            }, 400);
+        }
+
+        function updateMapElements(lat, lng) {
+            document.getElementById('userLat').value = lat.toFixed(6);
+            document.getElementById('userLng').value = lng.toFixed(6);
+            if (userCircle) userCircle.setLatLng([lat, lng]);
+        }
+
+        function updateRadius(val) {
+            document.getElementById('radiusValDisplay').innerText = `${val} Meter`;
+            if (userCircle) userCircle.setRadius(parseInt(val));
+        }
+
+        // ============================================
+        // CAMERA & FACE API
+        // ============================================
+        async function loadFaceModels() {
+            if (modelsLoaded) return;
+            try {
+                await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/models');
+                await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/models');
+                await faceapi.nets.faceRecognitionNet.loadFromUri('https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/models');
+                modelsLoaded = true;
+            } catch (e) {
+                console.error("Gagal muat model wajah", e);
+            }
+        }
+
+        async function initCamera() {
+            const statusMsg = document.getElementById('faceStatusMsg');
+            const retryBtn = document.getElementById('retryCamBtn');
+            const captureBtn = document.getElementById('captureBtn');
+
+            retryBtn.classList.add('hidden');
+            captureBtn.classList.remove('hidden');
+            statusMsg.innerHTML = "Menyambung ke kamera peranti...";
+
+            try {
+                if (videoStream) stopCamera();
+                
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+                });
+                
+                const video = document.getElementById('faceVideo');
+                video.srcObject = videoStream;
+                statusMsg.innerText = "Kamera Aktif. Sila posisikan wajah di tengah.";
+                
+            } catch (err) {
+                captureBtn.classList.add('hidden');
+                retryBtn.classList.remove('hidden');
+                statusMsg.innerHTML = `<span class='text-red-500 font-bold'>Akses Kamera Disekat</span><br><small>Sila benarkan akses kamera</small>`;
+                showNotif("Ralat Kamera", "Sila benarkan akses kamera pada pelayar.", true);
+            }
+        }
+
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+        }
+
+        async function captureFace() {
+            const btn = document.getElementById('captureBtn');
+            const video = document.getElementById('faceVideo');
+            const statusMsg = document.getElementById('faceStatusMsg');
+            
+            if (!video.srcObject) {
+                showNotif("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", true);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = "Menganalisa...";
+
+            try {
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+
+                if (detection) {
+                    document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
+                    statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
+                    btn.classList.add('hidden');
+                    document.getElementById('resetFaceBtn').classList.remove('hidden');
+                    showNotif("Berjaya", "Data biometrik telah direkodkan.");
+                } else {
+                    showNotif("Gagal", "Wajah tidak dikesan. Sila pandang lurus ke arah kamera.", true);
+                }
+            } catch (e) {
+                showNotif("Ralat", "Ralat semasa pemprosesan biometrik", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Imbas Wajah Kakitangan";
+            }
+        }
+
+        function resetFace() {
+            document.getElementById('faceDescriptor').value = "";
+            document.getElementById('faceStatusMsg').innerText = "Sedia untuk imbasan semula...";
+            document.getElementById('captureBtn').classList.remove('hidden');
+            document.getElementById('resetFaceBtn').classList.add('hidden');
+        }
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        window.switchTab = function(tab) {
+            stopCamera();
+            document.querySelectorAll('.main-content > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById(`${tab}Tab`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+
+            if (tab === 'register') {
+                if (document.getElementById('userId').value === "") {
+                    resetRegisterForm();
+                }
+            }
+        };
+
+        function resetRegisterForm() {
+            document.getElementById('userName').value = "";
+            document.getElementById('userEmail').value = "";
+            document.getElementById('userUnit').value = "";
+            document.getElementById('userPassword').value = "";
+            document.getElementById('faceDescriptor').value = "";
+            document.getElementById('userRadius').value = 500;
+            updateRadius(500);
+            resetFace();
+            currentStep = 1;
+            updateStepUI();
+        }
+
+        window.editUser = function(uid) {
+            const u = users.find(x => x.uid === uid);
+            if (!u) return;
+
+            document.getElementById('regFormTitle').innerText = "Kemaskini Kakitangan";
+            document.getElementById('userId').value = u.uid;
+            document.getElementById('userName').value = u.name;
+            document.getElementById('userEmail').value = u.email;
+            document.getElementById('userUnit').value = u.unit || "";
+            document.getElementById('userPassword').value = ""; 
+            document.getElementById('userRadius').value = u.radius || 500;
+            updateRadius(u.radius || 500);
+
+            if (u.faceDescriptor) {
+                document.getElementById('faceDescriptor').value = u.faceDescriptor;
+                document.getElementById('faceStatusMsg').innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH TELAH DIDAFTARKAN</span>";
+                document.getElementById('captureBtn').classList.add('hidden');
+                document.getElementById('resetFaceBtn').classList.remove('hidden');
+            } else {
+                resetFace();
+            }
+
+            document.getElementById('userLat').value = u.lat || 1.5533;
+            document.getElementById('userLng').value = u.lng || 110.3592;
+
+            currentStep = 1;
+            updateStepUI();
+            switchTab('register');
+        };
+
+        window.nextStep = function() {
+            if (currentStep === 1) {
+                if (!document.getElementById('userName').value || !document.getElementById('userEmail').value) {
+                    return showNotif("Input Diperlukan", "Nama dan Emel wajib diisi.", true);
+                }
+                const lat = parseFloat(document.getElementById('userLat').value) || 1.5533;
+                const lng = parseFloat(document.getElementById('userLng').value) || 110.3592;
+                const rad = parseInt(document.getElementById('userRadius').value);
+                initMap(lat, lng, rad);
+            } else if (currentStep === 2) {
+                initCamera();
+                loadFaceModels();
+            }
+            currentStep++;
+            updateStepUI();
+            
+            if (currentStep === 2 && userMap) {
+                setTimeout(() => userMap.invalidateSize(), 100);
+            }
+        }
+
+        window.prevStep = function() {
+            if (currentStep === 3) stopCamera();
+            currentStep--;
+            updateStepUI();
+        };
+
+        function updateStepUI() {
+            document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${currentStep}Content`).classList.add('active');
+            
+            for(let i=1; i<=3; i++) {
+                const s = document.getElementById(`step${i}`);
+                if (i < currentStep) s.className = 'step completed';
+                else if (i === currentStep) s.className = 'step active';
+                else s.className = 'step';
+            }
+
+            document.getElementById('prevBtn').classList.toggle('hidden', currentStep === 1);
+            document.getElementById('nextBtn').classList.toggle('hidden', currentStep === 3);
+            document.getElementById('saveBtn').classList.toggle('hidden', currentStep !== 3);
+        }
+
+        // ============================================
+        // SAVE USER
+        // ============================================
+        window.saveUser = async function() {
+            const btn = document.getElementById('saveBtn');
+            const data = {
+                uid: document.getElementById('userId').value,
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                unit: document.getElementById('userUnit').value,
+                branch: document.getElementById('userBranch').value,
+                password: document.getElementById('userPassword').value,
+                lat: document.getElementById('userLat').value,
+                lng: document.getElementById('userLng').value,
+                radius: document.getElementById('userRadius').value,
+                faceDescriptor: document.getElementById('faceDescriptor').value,
+                createdBy: currentUser.uid
+            };
+
+            btn.disabled = true;
+            btn.innerHTML = 'Sedang Menyimpan...';
+
+            try {
+                const result = await callAPI('createUser', { data: JSON.stringify(data) });
+                
+                if (result.success) {
+                    showNotif("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.");
+                    switchTab('users');
+                    loadUsers();
+                } else {
+                    showNotif("Ralat Simpan", result.error || "Gagal menyimpan data", true);
+                }
+            } catch (error) {
+                showNotif("Ralat", "Gagal menyimpan data", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan';
+            }
+        };
+
+        window.confirmDelete = function(uid, name) {
+            const modal = document.getElementById('deleteModal');
+            const btn = document.getElementById('confirmDeleteBtn');
+            modal.style.display = 'flex';
+            
+            btn.onclick = async function() {
+                btn.disabled = true;
+                btn.innerHTML = 'Memadam...';
+                
+                try {
+                    const result = await callAPI('deleteUser', { data: JSON.stringify({ uid: uid }) });
+                    if (result.success) {
+                        showNotif("Dipadam", "Rekod kakitangan telah dikeluarkan daripada sistem.");
+                        loadUsers();
+                    }
+                } catch (error) {
+                    showNotif("Ralat", "Gagal memadam rekod", true);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Ya, Padam';
+                    modal.style.display = 'none';
+                }
+            };
+        };
+
+        // ============================================
+        // REPORTS
+        // ============================================
+        function updateDashboardStats() {
+            document.getElementById('totalUsersStat').innerText = users.length;
+            document.getElementById('faceRegisteredStat').innerText = users.filter(u => u.faceDescriptor).length;
+            document.getElementById('presentTodayStat').innerText = Math.floor(users.length * 0.85);
+        }
+
+        function updateReportDropdown() {
+            const sel = document.getElementById('reportUser');
+            sel.innerHTML = '<option value="">-- PILIH KAKITANGAN --</option>' + 
+                users.map(u => `<option value="${u.uid}">${u.name.toUpperCase()} (${u.unit || 'TIADA UNIT'})</option>`).join('');
+        }
+
+        window.generatePDF = async function() {
+            const uid = document.getElementById('reportUser').value;
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+
+            if(!uid || !start || !end) return showNotif("Input Diperlukan", "Sila lengkapkan pilihan laporan.", true);
+
+            const user = users.find(u => u.uid === uid);
+            showNotif("Menjana PDF", "Sila tunggu seketika...");
+
+            try {
+                const result = await callAPI('getAttendance', { uid, startDate: start, endDate: end });
+                
+                if (result.success && result.data.length > 0) {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    doc.setFontSize(18);
+                    doc.setTextColor(30, 58, 138);
+                    doc.text("LAPORAN KEHADIRAN IMMI 360", 105, 20, { align: "center" });
+                    
+                    doc.setFontSize(11);
+                    doc.text(`NAMA: ${user.name.toUpperCase()}`, 20, 45);
+                    doc.text(`EMEL: ${user.email}`, 20, 52);
+                    doc.text(`UNIT: ${user.unit || '-'}`, 20, 59);
+                    doc.text(`CAWANGAN: ${user.branch}`, 20, 66);
+                    doc.text(`TEMPOH: ${start} HINGGA ${end}`, 20, 73);
+
+                    const tableData = result.data.map(r => [
+                        new Date(r.date).toLocaleDateString('ms-MY'),
+                        r.weekday || '-',
+                        r.clockIn ? new Date(r.clockIn).toLocaleTimeString('ms-MY', {hour12:false}) : '-',
+                        r.clockOut ? new Date(r.clockOut).toLocaleTimeString('ms-MY', {hour12:false}) : '-',
+                        r.totalHours ? (Math.round(r.totalHours * 10)/10) + 'j' : '0j'
+                    ]);
+
+                    doc.autoTable({
+                        startY: 85,
+                        head: [['Tarikh', 'Hari', 'Masuk', 'Keluar', 'Jam']],
+                        body: tableData,
+                        theme: 'striped',
+                        headStyles: { fillColor: [30, 58, 138], halign: 'center' }
+                    });
+
+                    doc.save(`Laporan_IMMI360_${user.name.replace(/\s+/g, '_')}.pdf`);
+                    showNotif("Berjaya", "PDF telah dijana dan dimuat turun.");
+                } else {
+                    showNotif("Tiada Data", "Tiada rekod kehadiran ditemui bagi tempoh ini.", true);
+                }
+            } catch (error) {
+                showNotif("Ralat", "Gagal menjana PDF", true);
+            }
+        };
+
+        window.searchUsers = function() {
+            const q = document.getElementById('searchUser').value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTableBody tr');
+            rows.forEach(r => {
+                r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+            });
+        };
+
+        window.handleLogout = function() {
+            location.reload();
+        };
+
+        document.getElementById('loginPassword').addEventListener('keypress', e => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    </script>
+</body>
+</html>
