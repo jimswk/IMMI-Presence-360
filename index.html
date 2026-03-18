@@ -313,7 +313,10 @@
         }
 
         function updateProgress(percent) {
-            document.getElementById('progressFill').style.width = percent + '%';
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) {
+                progressFill.style.width = percent + '%';
+            }
         }
 
         // ============================================
@@ -345,251 +348,6 @@
                 }
             }
         }
-
-        // ============================================
-        // LIVENESS DETECTION FUNCTIONS
-        // ============================================
-        
-        // Kira Eye Aspect Ratio (EAR) untuk blink detection
-        function calculateEAR(eye) {
-            const p1 = eye[1];
-            const p2 = eye[5];
-            const p3 = eye[2];
-            const p4 = eye[4];
-            
-            const height1 = Math.hypot(p2.x - p4.x, p2.y - p4.y);
-            const height2 = Math.hypot(p3.x - p5.x, p3.y - p5.y);
-            const width = Math.hypot(p1.x - p4.x, p1.y - p4.y);
-            
-            return (height1 + height2) / (2 * width);
-
-async function testEyeBlink(video) {
-    const scanStatus = document.getElementById('scanStatus');
-    const challengeDisplay = document.getElementById('challengeDisplay');
-    
-    challengeDisplay.innerText = '👁️ TEST 1/3: Kejap mata 2 kali';
-    scanStatus.innerText = 'Mengesan kejapan mata...';
-    
-    let blinks = 0;
-    let prevEAR = null;
-    const BLINK_THRESHOLD = 0.22; // TURUNKAN sedikit
-    
-    for (let i = 0; i < 30; i++) { // KURANGKAN kepada 30
-        updateProgress((i / 30) * 33);
-        
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        const detection = await faceapi.detectSingleFace(video, 
-            new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks();
-        
-        if (detection && detection.landmarks) {
-            const landmarks = detection.landmarks;
-            const leftEye = landmarks.getLeftEye();
-            const rightEye = landmarks.getRightEye();
-            
-            // Kira EAR untuk kedua-dua mata
-            const leftEAR = (Math.hypot(leftEye[1].x - leftEye[5].x, leftEye[1].y - leftEye[5].y) +
-                            Math.hypot(leftEye[2].x - leftEye[4].x, leftEye[2].y - leftEye[4].y)) /
-                            (2 * Math.hypot(leftEye[0].x - leftEye[3].x, leftEye[0].y - leftEye[3].y));
-            
-            const rightEAR = (Math.hypot(rightEye[1].x - rightEye[5].x, rightEye[1].y - rightEye[5].y) +
-                             Math.hypot(rightEye[2].x - rightEye[4].x, rightEye[2].y - rightEye[4].y)) /
-                             (2 * Math.hypot(rightEye[0].x - rightEye[3].x, rightEye[0].y - rightEye[3].y));
-            
-            const ear = (leftEAR + rightEAR) / 2;
-            
-            if (prevEAR !== null && prevEAR > BLINK_THRESHOLD && ear < BLINK_THRESHOLD) {
-                blinks++;
-                console.log(`Blink detected! Count: ${blinks}`);
-            }
-            
-            prevEAR = ear;
-        }
-    }
-    
-    return blinks >= 1; // KURANGKAN kepada 1 kejapan
-}
-
-// Test 2: Head Movement Detection (DIBETULKAN)
-async function testHeadMovement(video) {
-    const scanStatus = document.getElementById('scanStatus');
-    const challengeDisplay = document.getElementById('challengeDisplay');
-    
-    challengeDisplay.innerText = '🔄 TEST 2/3: Gerak kepala perlahan';
-    scanStatus.innerText = 'Mengesan pergerakan kepala...';
-    
-    let positions = [];
-    let previousX = null;
-    let direction = 0;
-    let directionChanges = 0;
-    
-    for (let i = 0; i < 25; i++) { // KURANGKAN kepada 25
-        updateProgress(33 + (i / 25) * 33);
-        
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        try {
-            const detection = await faceapi.detectSingleFace(video, 
-                new faceapi.TinyFaceDetectorOptions());
-            
-            // PEMBETULAN UTAMA: Check structure dengan betul
-            if (detection && detection.detection && detection.detection.box) {
-                const box = detection.detection.box;
-                const centerX = box.x + box.width/2;
-                
-                positions.push(centerX);
-                
-                if (previousX !== null) {
-                    const newDirection = centerX > previousX ? 1 : -1;
-                    if (direction !== 0 && newDirection !== direction) {
-                        directionChanges++;
-                    }
-                    direction = newDirection;
-                }
-                
-                previousX = centerX;
-            }
-        } catch (e) {
-            console.log('Head movement detection error:', e);
-        }
-    }
-    
-    // Kira pergerakan
-    if (positions.length < 3) {
-        console.log('Head movement: Not enough positions');
-        return false;
-    }
-    
-    const maxPos = Math.max(...positions);
-    const minPos = Math.min(...positions);
-    const totalMovement = maxPos - minPos;
-    
-    console.log(`Head movement: ${totalMovement}px, Direction changes: ${directionChanges}`);
-    
-    // AMBANG RENDAH untuk mudahkan
-    return totalMovement > 10; // Hanya perlu gerak sikit
-}
-
-// Test 3: Face Matching (DIBETULKAN)
-async function testFaceMatch(video) {
-    const scanStatus = document.getElementById('scanStatus');
-    const challengeDisplay = document.getElementById('challengeDisplay');
-    
-    challengeDisplay.innerText = '👤 TEST 3/3: Mengesan wajah';
-    scanStatus.innerText = 'Memadankan wajah dengan rekod...';
-    
-    updateProgress(90);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const detection = await faceapi.detectSingleFace(video, 
-        new faceapi.TinyFaceDetectorOptions())
-        .withFaceDescriptor();
-    
-    if (!detection || !detection.descriptor) {
-        throw new Error('Wajah tidak dikesan');
-    }
-    
-    const match = faceMatcher.findBestMatch(detection.descriptor);
-    console.log(`Face match distance: ${match.distance}`);
-    
-    // TINGKATKAN ambang kepada 0.65
-    if (match.label !== currentUser.uid || match.distance >= 0.65) {
-        throw new Error('Wajah tidak sepadan dengan rekod');
-    }
-    
-    return true;
-}
-
-// Main verification function (DIBETULKAN)
-async function verifyFace() {
-    if (isVerifying) return false;
-    isVerifying = true;
-    
-    if (!faceMatcher) {
-        showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true);
-        isVerifying = false;
-        return false;
-    }
-    
-    const scanContainer = document.getElementById('scanContainer');
-    const scanVideo = document.getElementById('scanVideo');
-    const scanStatus = document.getElementById('scanStatus');
-    const challengeDisplay = document.getElementById('challengeDisplay');
-    const clockInBtn = document.getElementById('clockInBtn');
-    const clockOutBtn = document.getElementById('clockOutBtn');
-    
-    scanContainer.classList.remove('hidden');
-    clockInBtn.disabled = true;
-    clockOutBtn.disabled = true;
-    
-    try {
-        // Mula kamera
-        scanStatus.innerText = 'Mengakses kamera...';
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { 
-                facingMode: 'user',
-                width: { ideal: 640 },
-                height: { ideal: 480 }
-            } 
-        });
-        
-        scanVideo.srcObject = stream;
-        videoStream = stream;
-        
-        // Tunggu kamera siap
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // TEST 1: Eye Blink Detection
-        const blinkPassed = await testEyeBlink(scanVideo);
-        if (!blinkPassed) {
-            throw new Error('Gagal test kejapan mata. Sila kejap mata dengan jelas.');
-        }
-        
-        // TEST 2: Head Movement Detection
-        const headPassed = await testHeadMovement(scanVideo);
-        if (!headPassed) {
-            throw new Error('Gagal test pergerakan kepala. Sila gerak kepala perlahan.');
-        }
-        
-        // TEST 3: Face Matching
-        await testFaceMatch(scanVideo);
-        
-        // Semua test lulus
-        updateProgress(100);
-        challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
-        scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // Tutup kamera
-        videoStream.getTracks().forEach(t => t.stop());
-        videoStream = null;
-        scanContainer.classList.add('hidden');
-        
-        showNotification('Berjaya', 'Pengesahan wajah berjaya');
-        return true;
-        
-    } catch (error) {
-        console.error('Verification error:', error);
-        
-        // Tutup kamera
-        if (videoStream) {
-            videoStream.getTracks().forEach(t => t.stop());
-            videoStream = null;
-        }
-        
-        scanContainer.classList.add('hidden');
-        showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true);
-        return false;
-        
-    } finally {
-        isVerifying = false;
-        clockInBtn.disabled = false;
-        clockOutBtn.disabled = false;
-        updateProgress(0);
-    }
-}
 
         // ============================================
         // LOGIN
@@ -723,6 +481,8 @@ async function verifyFace() {
         // ATTENDANCE
         // ============================================
         async function checkTodayAttendance() {
+            if (!currentUser) return;
+            
             const today = new Date().toISOString().split('T')[0];
             const result = await callAPI('getAttendance', { 
                 uid: currentUser.uid, 
@@ -745,6 +505,250 @@ async function verifyFace() {
             }
         }
 
+        // ============================================
+        // LIVENESS DETECTION FUNCTIONS
+        // ============================================
+        
+        // Kira Eye Aspect Ratio (EAR) untuk blink detection
+        function calculateEAR(eye) {
+            if (!eye || eye.length < 6) return 0.3; // Default value
+            
+            const p1 = eye[1];
+            const p2 = eye[5];
+            const p3 = eye[2];
+            const p4 = eye[4];
+            
+            const height1 = Math.hypot(p2.x - p4.x, p2.y - p4.y);
+            const height2 = Math.hypot(p3.x - p4.x, p3.y - p4.y);
+            const width = Math.hypot(p1.x - p4.x, p1.y - p4.y);
+            
+            if (width === 0) return 0.3;
+            return (height1 + height2) / (2 * width);
+        }
+
+        // Test 1: Eye Blink Detection
+        async function testEyeBlink(video) {
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            
+            challengeDisplay.innerText = '👁️ TEST 1/3: Kejap mata 2 kali';
+            scanStatus.innerText = 'Mengesan kejapan mata...';
+            
+            let blinks = 0;
+            let prevEAR = null;
+            const BLINK_THRESHOLD = 0.22;
+            
+            for (let i = 0; i < 30; i++) {
+                updateProgress((i / 30) * 33);
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                try {
+                    const detection = await faceapi.detectSingleFace(video, 
+                        new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks();
+                    
+                    if (detection && detection.landmarks) {
+                        const landmarks = detection.landmarks;
+                        const leftEye = landmarks.getLeftEye();
+                        const rightEye = landmarks.getRightEye();
+                        
+                        const leftEAR = calculateEAR(leftEye);
+                        const rightEAR = calculateEAR(rightEye);
+                        const ear = (leftEAR + rightEAR) / 2;
+                        
+                        if (prevEAR !== null && prevEAR > BLINK_THRESHOLD && ear < BLINK_THRESHOLD) {
+                            blinks++;
+                            console.log(`Blink detected! Count: ${blinks}`);
+                        }
+                        
+                        prevEAR = ear;
+                    }
+                } catch (e) {
+                    console.log('Eye blink detection error:', e);
+                }
+            }
+            
+            return blinks >= 1;
+        }
+
+        // Test 2: Head Movement Detection
+        async function testHeadMovement(video) {
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            
+            challengeDisplay.innerText = '🔄 TEST 2/3: Gerak kepala perlahan';
+            scanStatus.innerText = 'Mengesan pergerakan kepala...';
+            
+            let positions = [];
+            let previousX = null;
+            let direction = 0;
+            let directionChanges = 0;
+            
+            for (let i = 0; i < 25; i++) {
+                updateProgress(33 + (i / 25) * 33);
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                try {
+                    const detection = await faceapi.detectSingleFace(video, 
+                        new faceapi.TinyFaceDetectorOptions());
+                    
+                    if (detection && detection.detection && detection.detection.box) {
+                        const box = detection.detection.box;
+                        const centerX = box.x + box.width/2;
+                        
+                        positions.push(centerX);
+                        
+                        if (previousX !== null) {
+                            const newDirection = centerX > previousX ? 1 : -1;
+                            if (direction !== 0 && newDirection !== direction) {
+                                directionChanges++;
+                            }
+                            direction = newDirection;
+                        }
+                        
+                        previousX = centerX;
+                    }
+                } catch (e) {
+                    console.log('Head movement detection error:', e);
+                }
+            }
+            
+            if (positions.length < 3) {
+                console.log('Head movement: Not enough positions');
+                return false;
+            }
+            
+            const maxPos = Math.max(...positions);
+            const minPos = Math.min(...positions);
+            const totalMovement = maxPos - minPos;
+            
+            console.log(`Head movement: ${totalMovement}px, Direction changes: ${directionChanges}`);
+            
+            return totalMovement > 10;
+        }
+
+        // Test 3: Face Matching
+        async function testFaceMatch(video) {
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            
+            challengeDisplay.innerText = '👤 TEST 3/3: Mengesan wajah';
+            scanStatus.innerText = 'Memadankan wajah dengan rekod...';
+            
+            updateProgress(90);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const detection = await faceapi.detectSingleFace(video, 
+                new faceapi.TinyFaceDetectorOptions())
+                .withFaceDescriptor();
+            
+            if (!detection || !detection.descriptor) {
+                throw new Error('Wajah tidak dikesan');
+            }
+            
+            const match = faceMatcher.findBestMatch(detection.descriptor);
+            console.log(`Face match distance: ${match.distance}`);
+            
+            if (match.label !== currentUser.uid || match.distance >= 0.65) {
+                throw new Error('Wajah tidak sepadan dengan rekod');
+            }
+            
+            return true;
+        }
+
+        // Main verification function
+        async function verifyFace() {
+            if (isVerifying) return false;
+            isVerifying = true;
+            
+            if (!faceMatcher) {
+                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true);
+                isVerifying = false;
+                return false;
+            }
+            
+            const scanContainer = document.getElementById('scanContainer');
+            const scanVideo = document.getElementById('scanVideo');
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            const clockInBtn = document.getElementById('clockInBtn');
+            const clockOutBtn = document.getElementById('clockOutBtn');
+            
+            scanContainer.classList.remove('hidden');
+            clockInBtn.disabled = true;
+            clockOutBtn.disabled = true;
+            
+            try {
+                // Mula kamera
+                scanStatus.innerText = 'Mengakses kamera...';
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                
+                scanVideo.srcObject = stream;
+                videoStream = stream;
+                
+                // Tunggu kamera siap
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // TEST 1: Eye Blink Detection
+                const blinkPassed = await testEyeBlink(scanVideo);
+                if (!blinkPassed) {
+                    throw new Error('Gagal test kejapan mata. Sila kejap mata dengan jelas.');
+                }
+                
+                // TEST 2: Head Movement Detection
+                const headPassed = await testHeadMovement(scanVideo);
+                if (!headPassed) {
+                    throw new Error('Gagal test pergerakan kepala. Sila gerak kepala perlahan.');
+                }
+                
+                // TEST 3: Face Matching
+                await testFaceMatch(scanVideo);
+                
+                // Semua test lulus
+                updateProgress(100);
+                challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
+                scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Tutup kamera
+                videoStream.getTracks().forEach(t => t.stop());
+                videoStream = null;
+                scanContainer.classList.add('hidden');
+                
+                showNotification('Berjaya', 'Pengesahan wajah berjaya');
+                return true;
+                
+            } catch (error) {
+                console.error('Verification error:', error);
+                
+                // Tutup kamera
+                if (videoStream) {
+                    videoStream.getTracks().forEach(t => t.stop());
+                    videoStream = null;
+                }
+                
+                scanContainer.classList.add('hidden');
+                showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true);
+                return false;
+                
+            } finally {
+                isVerifying = false;
+                clockInBtn.disabled = false;
+                clockOutBtn.disabled = false;
+                updateProgress(0);
+            }
+        }
+
+        // Clock In
         window.handleClockIn = async function() {
             if (!userLocation) {
                 showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true);
@@ -765,7 +769,7 @@ async function verifyFace() {
             // Liveness verification
             const verified = await verifyFace();
             if (!verified) {
-                return; // Error message already shown in verifyFace
+                return;
             }
             
             // Proceed with clock in
@@ -794,6 +798,7 @@ async function verifyFace() {
             }
         };
 
+        // Clock Out
         window.handleClockOut = async function() {
             if (!userLocation) {
                 showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true);
@@ -803,7 +808,7 @@ async function verifyFace() {
             // Liveness verification
             const verified = await verifyFace();
             if (!verified) {
-                return; // Error message already shown in verifyFace
+                return;
             }
             
             // Proceed with clock out
@@ -832,7 +837,10 @@ async function verifyFace() {
             }
         };
 
+        // Load Attendance History
         async function loadAttendanceHistory() {
+            if (!currentUser) return;
+            
             const today = new Date();
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -851,7 +859,7 @@ async function verifyFace() {
             }
             
             let html = '';
-            result.data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+            result.data.sort((a, b) => new Date(b.date) - new Date(a.date));
             
             result.data.forEach(record => {
                 const date = new Date(record.date);
