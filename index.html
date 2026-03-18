@@ -111,6 +111,24 @@
             border-radius: 80px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
         }
+
+        .face-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .face-box {
+            position: absolute;
+            border: 3px solid #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            border-radius: 10px;
+            pointer-events: none;
+        }
         
         .hidden { display: none !important; }
         
@@ -255,7 +273,7 @@
                     </div>
                 </div>
 
-                <!-- Camera Scanner with Liveness (Senyum) -->
+                <!-- Camera Scanner with Liveness -->
                 <div id="scanContainer" class="hidden mt-4">
                     <div id="challengeDisplay" class="challenge-box">
                         Sedia untuk pengesahan...
@@ -266,6 +284,7 @@
                     <div class="video-wrapper">
                         <video id="scanVideo" autoplay muted playsinline></video>
                         <div class="face-guide"></div>
+                        <div id="faceOverlay" class="face-overlay"></div>
                     </div>
                     <p class="text-center mt-3 text-sm text-blue-600" id="scanStatus">Menyediakan kamera...</p>
                 </div>
@@ -300,6 +319,7 @@
         let locationWatchId = null;
         let modelsLoaded = false;
         let isVerifying = false;
+        let faceOverlay = null;
 
         // ============================================
         // UTILITY FUNCTIONS
@@ -320,7 +340,53 @@
         }
 
         // ============================================
-        // FACE API MODELS - VERSI DIPERBAIKI
+        // VIDEO DIMENSIONS HELPER
+        // ============================================
+        function getVideoDimensions(videoEl) {
+            const videoWidth = videoEl.videoWidth;
+            const videoHeight = videoEl.videoHeight;
+            const containerWidth = videoEl.clientWidth;
+            const containerHeight = videoEl.clientHeight;
+            
+            const videoAspectRatio = videoWidth / videoHeight;
+            const containerAspectRatio = containerWidth / containerHeight;
+            
+            let displayWidth, displayHeight;
+            
+            if (containerAspectRatio > videoAspectRatio) {
+                displayHeight = containerHeight;
+                displayWidth = videoAspectRatio * displayHeight;
+            } else {
+                displayWidth = containerWidth;
+                displayHeight = displayWidth / videoAspectRatio;
+            }
+            
+            const offsetX = (containerWidth - displayWidth) / 2;
+            const offsetY = (containerHeight - displayHeight) / 2;
+            
+            return {
+                videoWidth,
+                videoHeight,
+                displayWidth,
+                displayHeight,
+                offsetX,
+                offsetY,
+                scaleX: displayWidth / videoWidth,
+                scaleY: displayHeight / videoHeight
+            };
+        }
+
+        function adjustFaceBox(box, dims) {
+            return {
+                x: box.x * dims.scaleX + dims.offsetX,
+                y: box.y * dims.scaleY + dims.offsetY,
+                width: box.width * dims.scaleX,
+                height: box.height * dims.scaleY
+            };
+        }
+
+        // ============================================
+        // FACE API MODELS
         // ============================================
         async function loadFaceModels() {
             if (modelsLoaded) return true;
@@ -528,7 +594,7 @@
         }
 
         // ============================================
-        // LIVENESS DETECTION - SENYUM SAHAJA
+        // FACE VERIFICATION - SENYUM SAHAJA (VERSI DIPERBAIKI)
         // ============================================
         
         // Function to detect smile using geometry
@@ -560,6 +626,21 @@
             return smileRatio > 2.0;
         }
 
+        // Helper function to get face descriptor
+        async function getFaceDescriptor(video) {
+            try {
+                const detection = await faceapi
+                    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
+                
+                return detection;
+            } catch (error) {
+                console.error('Error getting face descriptor:', error);
+                return null;
+            }
+        }
+
         // Main verification function
         async function verifyFace() {
             if (isVerifying) return false;
@@ -582,6 +663,9 @@
             clockInBtn.disabled = true;
             clockOutBtn.disabled = true;
             
+            // Initialize face overlay
+            faceOverlay = document.getElementById('faceOverlay');
+            
             try {
                 // Ensure models are loaded
                 await loadFaceModels();
@@ -601,6 +685,34 @@
                 
                 // Wait for camera to stabilize
                 await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Start face detection overlay
+                let faceDetectionInterval = setInterval(async () => {
+                    if (!scanVideo || !scanVideo.srcObject) return;
+                    
+                    try {
+                        const dims = getVideoDimensions(scanVideo);
+                        const detections = await faceapi.detectAllFaces(scanVideo, 
+                            new faceapi.TinyFaceDetectorOptions());
+                        
+                        if (faceOverlay) faceOverlay.innerHTML = '';
+                        
+                        if (detections.length > 0) {
+                            const box = detections[0].detection.box;
+                            const adjustedBox = adjustFaceBox(box, dims);
+                            
+                            const faceBox = document.createElement('div');
+                            faceBox.className = 'face-box';
+                            faceBox.style.left = `${adjustedBox.x}px`;
+                            faceBox.style.top = `${adjustedBox.y}px`;
+                            faceBox.style.width = `${adjustedBox.width}px`;
+                            faceBox.style.height = `${adjustedBox.height}px`;
+                            faceOverlay.appendChild(faceBox);
+                        }
+                    } catch (e) {
+                        // Ignore detection errors
+                    }
+                }, 100);
                 
                 // TEST 1: Smile detection
                 updateProgress(30);
@@ -638,6 +750,8 @@
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
                 
+                clearInterval(faceDetectionInterval);
+                
                 if (!smileDetected) {
                     throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
                 }
@@ -647,15 +761,17 @@
                 challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
                 scanStatus.innerText = 'Memadankan wajah dengan rekod...';
                 
-                // Add a small delay to ensure camera is stable
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                const detection = await faceapi.detectSingleFace(scanVideo, 
-                    new faceapi.TinyFaceDetectorOptions())
-                    .withFaceDescriptor();
+                // Gunakan helper function untuk dapatkan descriptor
+                const detection = await getFaceDescriptor(scanVideo);
                 
-                if (!detection || !detection.descriptor) {
-                    throw new Error('Wajah tidak dikesan');
+                if (!detection) {
+                    throw new Error('Wajah tidak dapat dikesan. Sila pastikan wajah dalam bingkai.');
+                }
+                
+                if (!detection.descriptor) {
+                    throw new Error('Deskriptor wajah tidak dapat dijana');
                 }
                 
                 const match = faceMatcher.findBestMatch(detection.descriptor);
@@ -698,6 +814,7 @@
                 clockInBtn.disabled = false;
                 clockOutBtn.disabled = false;
                 updateProgress(0);
+                if (faceOverlay) faceOverlay.innerHTML = '';
             }
         }
 
@@ -870,6 +987,17 @@
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
             loadFaceModels();
+            
+            // Create face overlay if not exists
+            if (!document.getElementById('faceOverlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'faceOverlay';
+                overlay.className = 'face-overlay';
+                const videoContainer = document.querySelector('.video-wrapper');
+                if (videoContainer) {
+                    videoContainer.appendChild(overlay);
+                }
+            }
         });
 
         document.getElementById('loginPassword').addEventListener('keypress', (e) => {
