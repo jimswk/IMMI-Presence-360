@@ -339,15 +339,29 @@
         // ============================================
         // FACE API
         // ============================================
-        async function loadFaceModels() {
-            try {
-                await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-                await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-                await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-            } catch (error) {
-                console.error('Face model error:', error);
+            async function loadFaceModels() {
+                if (modelsLoaded) return;
+                try {
+                    const MODEL_URL = '/models';
+                    await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                    modelsLoaded = true;
+                    console.log("✅ Face models loaded from local");
+                } catch (e) {
+                    console.error("❌ Gagal muat model wajah", e);
+                    try {
+                        const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+                        await faceapi.nets.tinyFaceDetector.loadFromUri(BACKUP_URL);
+                        await faceapi.nets.faceLandmark68Net.loadFromUri(BACKUP_URL);
+                        await faceapi.nets.faceRecognitionNet.loadFromUri(BACKUP_URL);
+                        modelsLoaded = true;
+                        console.log("✅ Face models loaded from backup");
+                    } catch (e2) {
+                        console.error("❌ Semua percubaan gagal", e2);
+                    }
+                }
             }
-        }
 
         // ============================================
         // LOCATION
