@@ -1102,128 +1102,113 @@
         }
 
         // Enhanced capture face with smile detection
-        async function captureFace() {
-            if (isProcessing) return;
-            isProcessing = true;
-            
-            const btn = document.getElementById('captureBtn');
-            const video = document.getElementById('faceVideo');
-            const statusMsg = document.getElementById('faceStatusMsg');
-            faceOverlay = document.getElementById('faceOverlay');
-            
-            if (!video.srcObject) {
-                showNotif("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", true);
-                isProcessing = false;
-                return;
-            }
+async function captureFace() {
+    if (isProcessing) return;
+    isProcessing = true;
+    
+    const btn = document.getElementById('captureBtn');
+    const video = document.getElementById('faceVideo');
+    const statusMsg = document.getElementById('faceStatusMsg');
+    
+    if (!video.srcObject) {
+        showNotif("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", true);
+        isProcessing = false;
+        return;
+    }
 
-            btn.disabled = true;
-            btn.innerHTML = 'Mengesan...';
+    btn.disabled = true;
+    btn.innerHTML = 'Mengesan...';
+    
+    updateProgress(20);
+    statusMsg.innerHTML = "<span class='text-blue-600 font-black'>😊 SILA SENYUM SEKARANG...</span>";
+    
+    // Check for smile selama 5 saat
+    let smileDetected = false;
+    let smileStartTime = Date.now();
+    
+    while (Date.now() - smileStartTime < 5000) {
+        updateProgress(20 + ((Date.now() - smileStartTime) / 5000) * 50);
+        
+        try {
+            const detection = await faceapi.detectSingleFace(video, 
+                new faceapi.TinyFaceDetectorOptions())
+                .withFaceExpressions()
+                .withFaceLandmarks();
             
-            // Start face detection overlay
-            let faceDetectionInterval = setInterval(async () => {
-                if (!video || !video.srcObject) return;
+            if (detection) {
+                // Method 1: Guna expression
+                if (detection.expressions && detection.expressions.happy > 0.5) {
+                    smileDetected = true;
+                    console.log('😊 Smile detected via expression!');
+                    break;
+                }
                 
-                try {
-                    const dims = getVideoDimensions(video);
-                    const detections = await faceapi.detectAllFaces(video, 
-                        new faceapi.TinyFaceDetectorOptions());
-                    
-                    if (faceOverlay) faceOverlay.innerHTML = '';
-                    
-                    if (detections.length > 0) {
-                        const box = detections[0].detection.box;
-                        const adjustedBox = adjustFaceBox(box, dims);
+                // Method 2: Guna geometric (fallback)
+                if (detection.landmarks) {
+                    const mouth = detection.landmarks.getMouth();
+                    if (mouth && mouth.length > 10) {
+                        const leftMouth = mouth[0];
+                        const rightMouth = mouth[6];
+                        const width = Math.hypot(rightMouth.x - leftMouth.x, rightMouth.y - leftMouth.y);
+                        const height = Math.hypot(mouth[9].x - mouth[3].x, mouth[9].y - mouth[3].y);
+                        const ratio = width / (height + 0.1);
                         
-                        const faceBox = document.createElement('div');
-                        faceBox.className = 'face-box';
-                        faceBox.style.left = `${adjustedBox.x}px`;
-                        faceBox.style.top = `${adjustedBox.y}px`;
-                        faceBox.style.width = `${adjustedBox.width}px`;
-                        faceBox.style.height = `${adjustedBox.height}px`;
-                        faceOverlay.appendChild(faceBox);
+                        if (ratio > 2.0) {
+                            smileDetected = true;
+                            console.log('😊 Smile detected via geometry!');
+                            break;
+                        }
                     }
-                } catch (e) {
-                    // Ignore detection errors
                 }
-            }, 100);
-
-            // LIVENESS TEST: Smile detection
-            updateProgress(30);
-            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>😊 SILA SENYUM SEKARANG...</span>";
-            
-            let smileDetected = false;
-            let smileCheckInterval = setInterval(async () => {
-                try {
-                    const detection = await faceapi.detectSingleFace(video, 
-                        new faceapi.TinyFaceDetectorOptions())
-                        .withFaceExpressions();
-                    
-                    if (detection && detection.expressions && detection.expressions.happy > 0.6) {
-                        smileDetected = true;
-                        statusMsg.innerHTML = "<span class='text-green-600 font-black'>✅ SENYUM DIKESAN!</span>";
-                    }
-                } catch (e) {
-                    // Ignore errors
-                }
-            }, 200);
-            
-            // Wait for smile (max 5 seconds)
-            let startTime = Date.now();
-            while (Date.now() - startTime < 5000) {
-                if (smileDetected) break;
-                await new Promise(resolve => setTimeout(resolve, 100));
             }
-            
-            clearInterval(faceDetectionInterval);
-            clearInterval(smileCheckInterval);
-            
-            if (!smileDetected) {
-                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ SENYUM TIDAK DIKESAN</span>";
-                showNotif("Gagal", "Sila senyum untuk pengesahan", true);
-                btn.disabled = false;
-                btn.innerHTML = "Imbas Wajah Kakitangan";
-                updateProgress(0);
-                isProcessing = false;
-                return;
-            }
-            
-            // Capture face descriptor
-            updateProgress(70);
-            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 MEREKOD DATA WAJAH...</span>";
-            
-            try {
-                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
-
-                if (detection) {
-                    document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
-                    statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
-                    btn.classList.add('hidden');
-                    document.getElementById('resetFaceBtn').classList.remove('hidden');
-                    updateProgress(100);
-                    showNotif("Berjaya", "Data biometrik telah direkodkan.");
-                } else {
-                    statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ WAJAH TIDAK DIKESAN</span>";
-                    showNotif("Gagal", "Wajah tidak dikesan. Sila pandang lurus ke arah kamera.", true);
-                    updateProgress(0);
-                }
-            } catch (e) {
-                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
-                showNotif("Ralat", "Ralat semasa pemprosesan biometrik", true);
-                updateProgress(0);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = "Imbas Wajah Kakitangan";
-                isProcessing = false;
-                
-                // Clear overlay after 2 seconds
-                setTimeout(() => {
-                    if (faceOverlay) faceOverlay.innerHTML = '';
-                }, 2000);
-            }
+        } catch (e) {
+            console.log('Smile detection error:', e);
         }
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    if (!smileDetected) {
+        statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ SENYUM TIDAK DIKESAN</span>";
+        showNotif("Gagal", "Sila senyum untuk pendaftaran", true);
+        btn.disabled = false;
+        btn.innerHTML = "Imbas Wajah Kakitangan";
+        updateProgress(0);
+        isProcessing = false;
+        return;
+    }
+    
+    // Capture face descriptor
+    updateProgress(80);
+    statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 MEREKOD DATA WAJAH...</span>";
+    
+    try {
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceDescriptor();
+
+        if (detection) {
+            document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
+            statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
+            btn.classList.add('hidden');
+            document.getElementById('resetFaceBtn').classList.remove('hidden');
+            updateProgress(100);
+            showNotif("Berjaya", "Data biometrik telah direkodkan.");
+        } else {
+            statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ WAJAH TIDAK DIKESAN</span>";
+            showNotif("Gagal", "Wajah tidak dikesan", true);
+            updateProgress(0);
+        }
+    } catch (e) {
+        statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
+        showNotif("Ralat", "Ralat semasa pemprosesan biometrik", true);
+        updateProgress(0);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = "Imbas Wajah Kakitangan";
+        isProcessing = false;
+    }
+}
 
         function resetFace() {
             document.getElementById('faceDescriptor').value = "";
