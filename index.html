@@ -142,6 +142,37 @@
         }
         
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        .challenge-box {
+            background: #1e3a8a;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 16px;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #1e3a8a;
+            width: 0%;
+            transition: width 0.3s;
+        }
     </style>
 </head>
 <body>
@@ -224,21 +255,27 @@
                     </div>
                 </div>
 
-                <!-- Camera Scanner -->
+                <!-- Camera Scanner with Liveness -->
                 <div id="scanContainer" class="hidden mt-4">
+                    <div id="challengeDisplay" class="challenge-box">
+                        Sedia untuk pengesahan...
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
                     <div class="video-wrapper">
                         <video id="scanVideo" autoplay muted playsinline></video>
                         <div class="face-guide"></div>
                     </div>
-                    <p class="text-center mt-3 text-sm text-blue-600" id="scanStatus">Mengesan wajah...</p>
+                    <p class="text-center mt-3 text-sm text-blue-600" id="scanStatus">Menyediakan kamera...</p>
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="grid grid-cols-2 gap-4 mt-6">
-                    <button onclick="handleClockIn()" id="clockInBtn" class="bg-green-600 text-white py-4 rounded-2xl font-bold">
+                    <button onclick="handleClockIn()" id="clockInBtn" class="bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors">
                         MASUK
                     </button>
-                    <button onclick="handleClockOut()" id="clockOutBtn" class="bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold" disabled>
+                    <button onclick="handleClockOut()" id="clockOutBtn" class="bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold disabled:opacity-50" disabled>
                         KELUAR
                     </button>
                 </div>
@@ -262,6 +299,7 @@
         let faceMatcher = null;
         let locationWatchId = null;
         let modelsLoaded = false;
+        let isVerifying = false;
 
         // ============================================
         // UTILITY FUNCTIONS
@@ -272,6 +310,277 @@
             document.getElementById('notifMessage').innerText = message;
             notif.className = `notification show ${isError ? 'error' : ''}`;
             setTimeout(() => notif.classList.remove('show'), 3000);
+        }
+
+        function updateProgress(percent) {
+            document.getElementById('progressFill').style.width = percent + '%';
+        }
+
+        // ============================================
+        // FACE API MODELS
+        // ============================================
+        async function loadFaceModels() {
+            if (modelsLoaded) return;
+            try {
+                // Cuba load dari local models dulu
+                const MODEL_URL = '/models';
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                modelsLoaded = true;
+                console.log("✅ Face models loaded from local");
+            } catch (e) {
+                console.error("❌ Gagal muat model wajah dari local", e);
+                try {
+                    // Backup dari CDN
+                    const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+                    await faceapi.nets.tinyFaceDetector.loadFromUri(BACKUP_URL);
+                    await faceapi.nets.faceLandmark68Net.loadFromUri(BACKUP_URL);
+                    await faceapi.nets.faceRecognitionNet.loadFromUri(BACKUP_URL);
+                    modelsLoaded = true;
+                    console.log("✅ Face models loaded from backup");
+                } catch (e2) {
+                    console.error("❌ Semua percubaan gagal", e2);
+                    showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true);
+                }
+            }
+        }
+
+        // ============================================
+        // LIVENESS DETECTION FUNCTIONS
+        // ============================================
+        
+        // Kira Eye Aspect Ratio (EAR) untuk blink detection
+        function calculateEAR(eye) {
+            const p1 = eye[1];
+            const p2 = eye[5];
+            const p3 = eye[2];
+            const p4 = eye[4];
+            
+            const height1 = Math.hypot(p2.x - p4.x, p2.y - p4.y);
+            const height2 = Math.hypot(p3.x - p5.x, p3.y - p5.y);
+            const width = Math.hypot(p1.x - p4.x, p1.y - p4.y);
+            
+            return (height1 + height2) / (2 * width);
+        }
+
+        // Test 1: Eye Blink Detection
+        async function testEyeBlink(video) {
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            
+            challengeDisplay.innerText = '👁️ TEST 1/3: Kejap mata 2 kali';
+            scanStatus.innerText = 'Mengesan kejapan mata...';
+            
+            let blinks = 0;
+            let prevEAR = null;
+            const BLINK_THRESHOLD = 0.25;
+            
+            for (let i = 0; i < 40; i++) { // Lebih kurang 4 saat
+                updateProgress((i / 40) * 33); // 33% untuk test pertama
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const detection = await faceapi.detectSingleFace(video, 
+                    new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks();
+                
+                if (detection) {
+                    const landmarks = detection.landmarks;
+                    const leftEye = landmarks.getLeftEye();
+                    const rightEye = landmarks.getRightEye();
+                    
+                    // Kira EAR untuk kedua-dua mata
+                    const leftEAR = (Math.hypot(leftEye[1].x - leftEye[5].x, leftEye[1].y - leftEye[5].y) +
+                                    Math.hypot(leftEye[2].x - leftEye[4].x, leftEye[2].y - leftEye[4].y)) /
+                                    (2 * Math.hypot(leftEye[0].x - leftEye[3].x, leftEye[0].y - leftEye[3].y));
+                    
+                    const rightEAR = (Math.hypot(rightEye[1].x - rightEye[5].x, rightEye[1].y - rightEye[5].y) +
+                                     Math.hypot(rightEye[2].x - rightEye[4].x, rightEye[2].y - rightEye[4].y)) /
+                                     (2 * Math.hypot(rightEye[0].x - rightEye[3].x, rightEye[0].y - rightEye[3].y));
+                    
+                    const ear = (leftEAR + rightEAR) / 2;
+                    
+                    if (prevEAR !== null && prevEAR > BLINK_THRESHOLD && ear < BLINK_THRESHOLD) {
+                        blinks++;
+                        console.log(`Blink detected! Count: ${blinks}`);
+                    }
+                    
+                    prevEAR = ear;
+                }
+            }
+            
+            return blinks >= 2; // Perlu sekurang-kurangnya 2 kejapan
+        }
+
+        // Test 2: Head Movement Detection
+        async function testHeadMovement(video) {
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            
+            challengeDisplay.innerText = '🔄 TEST 2/3: Geleng kepala perlahan';
+            scanStatus.innerText = 'Mengesan pergerakan kepala...';
+            
+            let positions = [];
+            let previousX = null;
+            let direction = 0;
+            let directionChanges = 0;
+            
+            for (let i = 0; i < 30; i++) { // Lebih kurang 3 saat
+                updateProgress(33 + (i / 30) * 33); // 33-66%
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                const detection = await faceapi.detectSingleFace(video, 
+                    new faceapi.TinyFaceDetectorOptions());
+                
+                if (detection) {
+                    const box = detection.detection.box;
+                    const centerX = box.x + box.width/2;
+                    
+                    positions.push(centerX);
+                    
+                    if (previousX !== null) {
+                        const newDirection = centerX > previousX ? 1 : -1;
+                        if (direction !== 0 && newDirection !== direction) {
+                            directionChanges++;
+                        }
+                        direction = newDirection;
+                    }
+                    
+                    previousX = centerX;
+                }
+            }
+            
+            // Kira pergerakan keseluruhan
+            if (positions.length < 2) return false;
+            
+            const maxPos = Math.max(...positions);
+            const minPos = Math.min(...positions);
+            const totalMovement = maxPos - minPos;
+            
+            console.log(`Head movement: ${totalMovement}px, Direction changes: ${directionChanges}`);
+            
+            return totalMovement > 30 && directionChanges >= 2; // Pergerakan ketara dan tukar arah
+        }
+
+        // Test 3: Face Matching
+        async function testFaceMatch(video) {
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            
+            challengeDisplay.innerText = '👤 TEST 3/3: Mengesan wajah';
+            scanStatus.innerText = 'Memadankan wajah dengan rekod...';
+            
+            updateProgress(90);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const detection = await faceapi.detectSingleFace(video, 
+                new faceapi.TinyFaceDetectorOptions())
+                .withFaceDescriptor();
+            
+            if (!detection) {
+                throw new Error('Wajah tidak dikesan');
+            }
+            
+            const match = faceMatcher.findBestMatch(detection.descriptor);
+            console.log(`Face match distance: ${match.distance}`);
+            
+            if (match.label !== currentUser.uid || match.distance >= 0.6) {
+                throw new Error('Wajah tidak sepadan dengan rekod');
+            }
+            
+            return true;
+        }
+
+        // Main verification function (Pilihan 3: Gabungan)
+        async function verifyFace() {
+            if (isVerifying) return false;
+            isVerifying = true;
+            
+            if (!faceMatcher) {
+                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true);
+                isVerifying = false;
+                return false;
+            }
+            
+            const scanContainer = document.getElementById('scanContainer');
+            const scanVideo = document.getElementById('scanVideo');
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            const clockInBtn = document.getElementById('clockInBtn');
+            const clockOutBtn = document.getElementById('clockOutBtn');
+            
+            scanContainer.classList.remove('hidden');
+            clockInBtn.disabled = true;
+            clockOutBtn.disabled = true;
+            
+            try {
+                // Mula kamera
+                scanStatus.innerText = 'Mengakses kamera...';
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                
+                scanVideo.srcObject = stream;
+                videoStream = stream;
+                
+                // Tunggu kamera siap
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // TEST 1: Eye Blink Detection
+                const blinkPassed = await testEyeBlink(scanVideo);
+                if (!blinkPassed) {
+                    throw new Error('Gagal test kejapan mata. Sila kejap mata dengan jelas.');
+                }
+                
+                // TEST 2: Head Movement Detection
+                const headPassed = await testHeadMovement(scanVideo);
+                if (!headPassed) {
+                    throw new Error('Gagal test pergerakan kepala. Sila geleng kepala perlahan.');
+                }
+                
+                // TEST 3: Face Matching
+                await testFaceMatch(scanVideo);
+                
+                // Semua test lulus
+                updateProgress(100);
+                challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
+                scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Tutup kamera
+                videoStream.getTracks().forEach(t => t.stop());
+                videoStream = null;
+                scanContainer.classList.add('hidden');
+                
+                showNotification('Berjaya', 'Pengesahan wajah berjaya');
+                return true;
+                
+            } catch (error) {
+                console.error('Verification error:', error);
+                
+                // Tutup kamera
+                if (videoStream) {
+                    videoStream.getTracks().forEach(t => t.stop());
+                    videoStream = null;
+                }
+                
+                scanContainer.classList.add('hidden');
+                showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true);
+                return false;
+                
+            } finally {
+                isVerifying = false;
+                clockInBtn.disabled = false;
+                clockOutBtn.disabled = false;
+                updateProgress(0);
+            }
         }
 
         // ============================================
@@ -296,14 +605,19 @@
                 if (result.success) {
                     currentUser = result.user;
                     
-                    // Create face matcher
-                    if (currentUser.faceDescriptor) {
-                        const descriptor = JSON.parse(currentUser.faceDescriptor);
-                        const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
-                            currentUser.uid, 
-                            [new Float32Array(descriptor)]
-                        );
-                        faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
+                    // Create face matcher if face descriptor exists
+                    if (currentUser.faceDescriptor && currentUser.faceDescriptor !== '') {
+                        try {
+                            const descriptor = JSON.parse(currentUser.faceDescriptor);
+                            const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+                                currentUser.uid, 
+                                [new Float32Array(descriptor)]
+                            );
+                            faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
+                            console.log('✅ Face matcher created');
+                        } catch (e) {
+                            console.error('❌ Failed to create face matcher:', e);
+                        }
                     }
                     
                     document.getElementById('userName').innerText = currentUser.name;
@@ -312,7 +626,7 @@
                     document.getElementById('loginPage').classList.add('hidden');
                     document.getElementById('dashboard').classList.remove('hidden');
                     
-                    loadFaceModels();
+                    await loadFaceModels();
                     checkTodayAttendance();
                     startLocationTracking();
                     loadAttendanceHistory();
@@ -323,6 +637,7 @@
                     showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true);
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
             } finally {
                 btn.disabled = false;
@@ -336,33 +651,6 @@
             document.getElementById('dashboard').classList.add('hidden');
             document.getElementById('loginPage').classList.remove('hidden');
         };
-
-        // ============================================
-        // FACE API
-        // ============================================
-        async function loadFaceModels() {
-            if (modelsLoaded) return;
-            try {
-                const MODEL_URL = '/models';
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                modelsLoaded = true;
-                console.log("✅ Face models loaded from local");
-            } catch (e) {
-                console.error("❌ Gagal muat model wajah", e);
-                try {
-                    const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-                    await faceapi.nets.tinyFaceDetector.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceLandmark68Net.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceRecognitionNet.loadFromUri(BACKUP_URL);
-                    modelsLoaded = true;
-                    console.log("✅ Face models loaded from backup");
-                } catch (e2) {
-                    console.error("❌ Semua percubaan gagal", e2);
-                }
-            }
-        }
 
         // ============================================
         // LOCATION
@@ -403,16 +691,22 @@
                             parseFloat(currentUser.lng)
                         );
                         
-                        const within = distance <= (currentUser.radius || 500);
+                        const within = distance <= (parseInt(currentUser.radius) || 500);
                         
                         document.getElementById('locationStatus').innerHTML = within ? 
-                            '<span class="text-green-600">✓ DALAM KAWASAN</span>' : 
-                            '<span class="text-red-500">✗ LUAR KAWASAN</span>';
+                            '<span class="text-green-600">✓ DALAM KAWASAN BERTUGAS</span>' : 
+                            '<span class="text-red-500">✗ LUAR KAWASAN BERTUGAS</span>';
                         document.getElementById('distanceStatus').innerText = `${Math.round(distance)}m / ${currentUser.radius || 500}m`;
                     }
                 },
                 (error) => {
+                    console.error('GPS error:', error);
                     document.getElementById('locationStatus').innerText = 'Gagal mengesan GPS';
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 30000,
+                    timeout: 27000
                 }
             );
         }
@@ -428,12 +722,13 @@
                 endDate: today 
             });
             
-            if (result.success && result.data.length > 0) {
+            if (result.success && result.data && result.data.length > 0) {
                 const record = result.data[0];
-                if (record.clockIn && !record.clockOut) {
+                if (record.clockIn && (!record.clockOut || record.clockOut === '')) {
                     document.getElementById('attendanceStatus').innerText = 'DALAM BERTUGAS';
                     document.getElementById('clockInBtn').disabled = true;
                     document.getElementById('clockOutBtn').disabled = false;
+                    document.getElementById('clockOutBtn').className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
                 } else if (record.clockIn && record.clockOut) {
                     document.getElementById('attendanceStatus').innerText = 'SELESAI';
                     document.getElementById('clockInBtn').disabled = true;
@@ -442,103 +737,90 @@
             }
         }
 
-        async function verifyFace() {
-            if (!faceMatcher) {
-                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin', true);
-                return false;
-            }
-            
-            const scanContainer = document.getElementById('scanContainer');
-            const scanVideo = document.getElementById('scanVideo');
-            
-            scanContainer.classList.remove('hidden');
-            
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                scanVideo.srcObject = stream;
-                videoStream = stream;
-                
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                const detection = await faceapi.detectSingleFace(scanVideo, 
-                    new faceapi.TinyFaceDetectorOptions())
-                    .withFaceDescriptor();
-                
-                videoStream.getTracks().forEach(t => t.stop());
-                scanContainer.classList.add('hidden');
-                
-                if (detection) {
-                    const match = faceMatcher.findBestMatch(detection.descriptor);
-                    return match.label === currentUser.uid && match.distance < 0.6;
-                }
-                return false;
-            } catch (error) {
-                if (videoStream) videoStream.getTracks().forEach(t => t.stop());
-                scanContainer.classList.add('hidden');
-                showNotification('Ralat Kamera', 'Gagal mengakses kamera', true);
-                return false;
-            }
-        }
-
         window.handleClockIn = async function() {
             if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
+                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true);
                 return;
             }
             
+            // Check geofencing
             const distance = calculateDistance(
                 userLocation.lat, userLocation.lng,
                 parseFloat(currentUser.lat), parseFloat(currentUser.lng)
             );
             
-            if (distance > (currentUser.radius || 500)) {
-                showNotification('Geofencing', 'Anda berada di luar kawasan', true);
+            if (distance > (parseInt(currentUser.radius) || 500)) {
+                showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan untuk clock in', true);
                 return;
             }
             
+            // Liveness verification
             const verified = await verifyFace();
             if (!verified) {
-                showNotification('Pengesahan Gagal', 'Wajah tidak sepadan', true);
-                return;
+                return; // Error message already shown in verifyFace
             }
             
-            const result = await callAPI('clockIn', { 
-                uid: currentUser.uid, 
-                location: JSON.stringify(userLocation)
-            });
+            // Proceed with clock in
+            const btn = document.getElementById('clockInBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading mx-auto"></div>';
             
-            if (result.success) {
-                showNotification('Berjaya', 'Clock In direkodkan');
-                checkTodayAttendance();
-                loadAttendanceHistory();
-            } else {
-                showNotification('Ralat', result.error || 'Gagal clock in', true);
+            try {
+                const result = await callAPI('clockIn', { 
+                    uid: currentUser.uid, 
+                    location: JSON.stringify(userLocation)
+                });
+                
+                if (result.success) {
+                    showNotification('Berjaya', 'Clock In direkodkan');
+                    await checkTodayAttendance();
+                    await loadAttendanceHistory();
+                } else {
+                    showNotification('Ralat', result.error || 'Gagal clock in', true);
+                }
+            } catch (error) {
+                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'MASUK';
             }
         };
 
         window.handleClockOut = async function() {
             if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
+                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true);
                 return;
             }
             
+            // Liveness verification
             const verified = await verifyFace();
             if (!verified) {
-                showNotification('Pengesahan Gagal', 'Wajah tidak sepadan', true);
-                return;
+                return; // Error message already shown in verifyFace
             }
             
-            const result = await callAPI('clockOut', { 
-                uid: currentUser.uid, 
-                location: JSON.stringify(userLocation)
-            });
+            // Proceed with clock out
+            const btn = document.getElementById('clockOutBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading mx-auto"></div>';
             
-            if (result.success) {
-                showNotification('Berjaya', 'Clock Out direkodkan');
-                checkTodayAttendance();
-                loadAttendanceHistory();
-            } else {
-                showNotification('Ralat', result.error || 'Gagal clock out', true);
+            try {
+                const result = await callAPI('clockOut', { 
+                    uid: currentUser.uid, 
+                    location: JSON.stringify(userLocation)
+                });
+                
+                if (result.success) {
+                    showNotification('Berjaya', 'Clock Out direkodkan');
+                    await checkTodayAttendance();
+                    await loadAttendanceHistory();
+                } else {
+                    showNotification('Ralat', result.error || 'Gagal clock out', true);
+                }
+            } catch (error) {
+                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'KELUAR';
             }
         };
 
@@ -555,31 +837,46 @@
             
             const historyEl = document.getElementById('attendanceHistory');
             
-            if (!result.success || !result.data.length) {
-                historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada rekod</div>';
+            if (!result.success || !result.data || result.data.length === 0) {
+                historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada rekod kehadiran</div>';
                 return;
             }
             
             let html = '';
+            result.data.sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort by date descending
+            
             result.data.forEach(record => {
                 const date = new Date(record.date);
                 const clockIn = record.clockIn ? new Date(record.clockIn) : null;
                 const clockOut = record.clockOut ? new Date(record.clockOut) : null;
                 
+                const clockInTime = clockIn ? clockIn.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const clockOutTime = clockOut ? clockOut.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                
+                const totalHours = record.totalHours ? parseFloat(record.totalHours).toFixed(1) : '-';
+                
                 html += `
-                    <div class="bg-white p-4 rounded-2xl border">
-                        <div class="flex justify-between mb-2">
-                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-bold">
+                    <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
                                 ${record.weekday || '-'}
                             </span>
-                            <span class="text-xs text-gray-400">${date.toLocaleDateString('ms-MY')}</span>
+                            <span class="text-xs text-gray-400">${date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
-                        <div class="flex justify-between">
+                        <div class="flex justify-between items-center">
                             <div class="flex gap-4">
-                                <span class="text-sm">⬆️ ${clockIn ? clockIn.toLocaleTimeString('ms-MY') : '--:--'}</span>
-                                <span class="text-sm">⬇️ ${clockOut ? clockOut.toLocaleTimeString('ms-MY') : '--:--'}</span>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-rounded text-sm text-green-600">login</span>
+                                    <span class="text-sm font-bold">${clockInTime}</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="material-symbols-rounded text-sm text-red-500">logout</span>
+                                    <span class="text-sm font-bold">${clockOutTime}</span>
+                                </div>
                             </div>
-                            <span class="text-xs font-bold">${record.totalHours ? Math.round(record.totalHours) + 'j' : '-'}</span>
+                            <span class="text-xs font-bold ${totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">
+                                ${totalHours !== '-' ? totalHours + ' jam' : '-'}
+                            </span>
                         </div>
                     </div>
                 `;
@@ -604,9 +901,27 @@
             }, 1000);
         }
 
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        // Preload face models when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFaceModels();
+        });
+
         // Enter key for login
         document.getElementById('loginPassword').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
+        });
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (videoStream) {
+                videoStream.getTracks().forEach(t => t.stop());
+            }
+            if (locationWatchId) {
+                navigator.geolocation.clearWatch(locationWatchId);
+            }
         });
     </script>
 </body>
