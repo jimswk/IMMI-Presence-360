@@ -481,7 +481,6 @@
             document.getElementById('notifMessage').innerText = message;
             notif.className = `notification show ${isError ? 'error' : ''}`;
             
-            // Mainkan bunyi hanya jika playAudio = true
             if (playAudio) {
                 playSound(isError ? 'error' : 'success');
             }
@@ -494,6 +493,17 @@
             if (progressFill) {
                 progressFill.style.width = percent + '%';
             }
+        }
+
+        // Helper function untuk format jam
+        function formatJam(decimalJam) {
+            if (!decimalJam || decimalJam <= 0) return '-';
+            const jam = Math.floor(decimalJam);
+            const minit = Math.round((decimalJam - jam) * 60);
+            
+            if (minit === 0) return `${jam}j`;
+            if (minit < 10) return `${jam}j 0${minit}m`;
+            return `${jam}j ${minit}m`;
         }
 
         // ============================================
@@ -638,8 +648,6 @@
             }
             
             distanceEl.innerText = `${Math.round(distance)}m / ${radius}m`;
-            
-            console.log(`📍 Distance: ${Math.round(distance)}m, Radius: ${radius}m, Within: ${within}`);
         }
 
         function startLocationTracking() {
@@ -687,13 +695,12 @@
         }
 
         // ============================================
-        // ATTENDANCE FUNCTIONS - VERSI DIPERBAIKI DENGAN STATUS
+        // CHECK TODAY ATTENDANCE - VERSI DIPERBAIKI
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
             
             const today = new Date().toISOString().split('T')[0];
-            console.log('🔍 Menyemak kehadiran untuk tarikh:', today);
             
             try {
                 const result = await callAPI('getAttendance', { 
@@ -702,19 +709,40 @@
                     endDate: today 
                 });
                 
-                console.log('📊 Hasil attendance:', result);
-                
                 const statusEl = document.getElementById('attendanceStatus');
                 const clockInBtn = document.getElementById('clockInBtn');
                 const clockOutBtn = document.getElementById('clockOutBtn');
                 
+                // Semak rekod untuk hari ini
+                let hasTodayRecord = false;
+                let record = null;
+                
                 if (result.success && result.data && result.data.length > 0) {
-                    const record = result.data[0];
-                    console.log('📅 Rekod hari ini:', record);
+                    record = result.data[0];
+                    hasTodayRecord = true;
+                } else {
+                    // Jika tiada rekod untuk hari ini, cari rekod aktif (clocked_in) dari semalam
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+                    const yesterdayStr = yesterday.toISOString().split('T')[0];
                     
-                    // GUNAKAN STATUS dari sheet
+                    const recentResult = await callAPI('getAttendance', { 
+                        uid: currentUser.uid, 
+                        startDate: yesterdayStr, 
+                        endDate: today 
+                    });
+                    
+                    if (recentResult.success && recentResult.data) {
+                        const activeRecord = recentResult.data.find(r => r.status === 'clocked_in');
+                        if (activeRecord) {
+                            record = activeRecord;
+                            hasTodayRecord = true;
+                        }
+                    }
+                }
+                
+                if (hasTodayRecord && record) {
                     if (record.status === 'clocked_in') {
-                        // Sudah clock in tetapi belum clock out
                         statusEl.innerText = 'DALAM BERTUGAS';
                         statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
                         
@@ -724,10 +752,7 @@
                         clockOutBtn.disabled = false;
                         clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
                         
-                        console.log('✅ Status dikemaskini: DALAM BERTUGAS');
-                        
                     } else if (record.status === 'clocked_out') {
-                        // Sudah clock in dan clock out
                         statusEl.innerText = 'SELESAI';
                         statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
                         
@@ -737,10 +762,7 @@
                         clockOutBtn.disabled = true;
                         clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
                         
-                        console.log('✅ Status dikemaskini: SELESAI');
-                        
                     } else {
-                        // Fallback kepada method lama jika tiada status
                         const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
                         const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
                         
@@ -754,8 +776,6 @@
                             clockOutBtn.disabled = false;
                             clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
                             
-                            console.log('✅ Status dikemaskini (fallback): DALAM BERTUGAS');
-                            
                         } else if (hasClockIn && hasClockOut) {
                             statusEl.innerText = 'SELESAI';
                             statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
@@ -766,7 +786,6 @@
                             clockOutBtn.disabled = true;
                             clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
                             
-                            console.log('✅ Status dikemaskini (fallback): SELESAI');
                         } else {
                             statusEl.innerText = 'BELUM MASUK';
                             statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
@@ -779,8 +798,6 @@
                         }
                     }
                 } else {
-                    // Tiada rekod untuk hari ini
-                    console.log('📅 Tiada rekod untuk hari ini');
                     statusEl.innerText = 'BELUM MASUK';
                     statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     
@@ -821,8 +838,6 @@
             );
             
             const smileRatio = mouthWidth / (mouthHeight + 0.1);
-            
-            console.log('😊 Smile ratio:', smileRatio.toFixed(2));
             
             return smileRatio > 2.0;
         }
@@ -924,13 +939,11 @@
                     if (detection) {
                         if (detection.expressions && detection.expressions.happy > 0.5) {
                             smileDetected = true;
-                            console.log('😊 Smile detected via expression!');
                             break;
                         }
                         
                         if (detection.landmarks && isSmiling(detection.landmarks)) {
                             smileDetected = true;
-                            console.log('😊 Smile detected via geometry!');
                             break;
                         }
                     }
@@ -961,7 +974,6 @@
                 }
                 
                 const match = faceMatcher.findBestMatch(detection.descriptor);
-                console.log(`🎯 Face match distance: ${match.distance.toFixed(3)}`);
                 
                 if (match.label !== currentUser.uid || match.distance >= 0.65) {
                     throw new Error('Wajah tidak sepadan dengan rekod');
@@ -1030,7 +1042,6 @@
                                 [new Float32Array(descriptor)]
                             );
                             faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
-                            console.log('✅ Face matcher created');
                         } catch (e) {
                             console.error('❌ Failed to create face matcher:', e);
                         }
@@ -1099,19 +1110,15 @@
             btn.innerHTML = '<div class="loading mx-auto"></div>';
             
             try {
-                console.log('📤 Menghantar permintaan clock in...');
                 const result = await callAPI('clockIn', { 
                     uid: currentUser.uid, 
                     location: JSON.stringify(userLocation)
                 });
                 
-                console.log('📥 Hasil clock in:', result);
-                
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan', false, true);
                     
-                    // Tunggu sebentar untuk data direkod
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     
                     await checkTodayAttendance();
                     await loadAttendanceHistory();
@@ -1145,19 +1152,15 @@
             btn.innerHTML = '<div class="loading mx-auto"></div>';
             
             try {
-                console.log('📤 Menghantar permintaan clock out...');
                 const result = await callAPI('clockOut', { 
                     uid: currentUser.uid, 
                     location: JSON.stringify(userLocation)
                 });
                 
-                console.log('📥 Hasil clock out:', result);
-                
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan', false, true);
                     
-                    // Tunggu sebentar untuk data direkod
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     
                     await checkTodayAttendance();
                     await loadAttendanceHistory();
