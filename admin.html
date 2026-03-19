@@ -117,7 +117,7 @@
             min-height: 100vh;
         }
 
-        /* Step Indicators */
+        /* Step Indicators - untuk form daftar (3 step) */
         .step-indicator {
             display: flex;
             justify-content: space-between;
@@ -161,6 +161,54 @@
 
         .step.active .step-number { background: #1e3a8a; color: white; }
         .step.completed .step-number { background: #059669; color: white; }
+
+        /* Step Indicators - untuk form kemaskini (2 step) */
+        .step-indicator-2 {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            position: relative;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .step-indicator-2::before {
+            content: '';
+            position: absolute;
+            top: 18px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+        .step-2 {
+            position: relative;
+            z-index: 2;
+            background: white;
+            padding: 0 20px;
+        }
+
+        .step-number-2 {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: #64748b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            border: 3px solid white;
+            transition: all 0.3s;
+        }
+
+        .step-2.active .step-number-2 { background: #1e3a8a; color: white; }
+        .step-2.completed .step-number-2 { background: #059669; color: white; }
 
         /* Form Inputs */
         .input-label {
@@ -259,6 +307,8 @@
 
         .wizard-step { display: none; }
         .wizard-step.active { display: block; }
+        .wizard-step-2 { display: none; }
+        .wizard-step-2.active { display: block; }
 
         .hidden { display: none !important; }
 
@@ -359,6 +409,41 @@
             font-size: 0.75rem;
             font-weight: 700;
             margin-left: 8px;
+        }
+
+        /* Tab Sub-navigation */
+        .sub-tabs {
+            display: flex;
+            gap: 2px;
+            background: #e2e8f0;
+            padding: 4px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .sub-tab {
+            flex: 1;
+            padding: 12px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sub-tab.active {
+            background: white;
+            color: #1e3a8a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .sub-tab:not(.active) {
+            color: #64748b;
+        }
+
+        .sub-tab:not(.active):hover {
+            background: rgba(255,255,255,0.5);
         }
     </style>
 </head>
@@ -486,14 +571,14 @@
                 </div>
             </div>
 
-            <!-- Register User Tab -->
+            <!-- Register User Tab (3 Steps) -->
             <div id="registerTab" class="hidden">
                 <div class="max-w-4xl">
                     <h1 class="text-4xl font-black text-gray-800 mb-2" id="regFormTitle">Daftar Pengguna</h1>
                     <p class="text-gray-400 text-sm mb-10">Sila lengkapkan maklumat kakitangan untuk akses biometrik.</p>
 
                     <div class="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
-                        <!-- Step Indicator -->
+                        <!-- Step Indicator (3 steps) -->
                         <div class="step-indicator max-w-2xl mx-auto">
                             <div class="step active" id="step1">
                                 <div class="step-number">1</div>
@@ -631,6 +716,220 @@
                 </div>
             </div>
 
+            <!-- Edit User Tab (2 Steps) - BARU -->
+            <div id="editUserTab" class="hidden">
+                <div class="max-w-4xl">
+                    <h1 class="text-4xl font-black text-gray-800 mb-2" id="editFormTitle">Kemaskini Kakitangan</h1>
+                    <p class="text-gray-400 text-sm mb-10">Kemaskini maklumat asas dan lokasi kakitangan.</p>
+
+                    <div class="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
+                        <!-- Step Indicator (2 steps) -->
+                        <div class="step-indicator-2">
+                            <div class="step-2 active" id="editStep1">
+                                <div class="step-number-2">1</div>
+                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Profil Asas</p>
+                            </div>
+                            <div class="step-2" id="editStep2">
+                                <div class="step-number-2">2</div>
+                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Zon Lokasi</p>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="editUserId">
+                        <input type="hidden" id="editUserUid">
+
+                        <!-- Step 1: Info Asas -->
+                        <div id="editStep1Content" class="wizard-step-2 active">
+                            <div class="grid grid-cols-2 gap-x-6">
+                                <div class="col-span-2">
+                                    <label class="input-label">Nama Penuh Kakitangan</label>
+                                    <input type="text" id="editUserName" class="input-field" placeholder="Masukkan nama penuh mengikut IC">
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="input-label">Emel Rasmi (.gov.my)</label>
+                                    <input type="email" id="editUserEmail" class="input-field" placeholder="contoh@imigresen.gov.my">
+                                </div>
+                                <div>
+                                    <label class="input-label">Unit / Bahagian</label>
+                                    <input type="text" id="editUserUnit" class="input-field bg-gray-100 text-gray-500 font-black" readonly>
+                                </div>
+                                <div>
+                                    <label class="input-label">Cawangan</label>
+                                    <input type="text" id="editUserBranch" class="input-field bg-gray-100 text-gray-500 font-black" readonly>
+                                </div>
+                                <div class="col-span-2">
+                                    <label class="input-label">Kata Laluan (Kosongkan jika tidak mahu tukar)</label>
+                                    <input type="password" id="editUserPassword" class="input-field" placeholder="••••••••">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Lokasi -->
+                        <div id="editStep2Content" class="wizard-step-2">
+                            <div class="mb-6 flex justify-between items-center">
+                                <div>
+                                    <label class="input-label">Tetapan Pagar Maya (Geofencing)</label>
+                                    <p class="text-xs text-gray-400">Tentukan kawasan di mana kakitangan dibenarkan melakukan 'Clock-In'.</p>
+                                </div>
+                                <div class="bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-black" id="editRadiusValDisplay">500 Meter</div>
+                            </div>
+                            
+                            <div id="editUserLocationMap" class="location-map"></div>
+                            
+                            <div class="grid grid-cols-2 gap-6 items-end">
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="input-label">Latitud</label>
+                                            <input type="text" id="editUserLat" class="input-field mb-0 text-xs font-bold" readonly>
+                                        </div>
+                                        <div>
+                                            <label class="input-label">Longitud</label>
+                                            <input type="text" id="editUserLng" class="input-field mb-0 text-xs font-bold" readonly>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100">
+                                        <label class="input-label mb-4">Radius Kehadiran</label>
+                                        <input type="range" id="editUserRadius" min="100" max="2000" step="100" value="500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-800" oninput="updateEditRadius(this.value)">
+                                        <div class="flex justify-between mt-2 text-[10px] font-bold text-gray-400">
+                                            <span>100m</span>
+                                            <span>1000m</span>
+                                            <span>2000m</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-amber-50 p-6 rounded-3xl border border-amber-100">
+                                    <div class="flex gap-3 items-start">
+                                        <span class="material-symbols-rounded text-amber-600">info</span>
+                                        <p class="text-xs text-amber-900 font-medium leading-relaxed">
+                                            Klik pada mana-mana lokasi di atas peta atau seret penanda biru untuk menetapkan pusat kawasan bertugas kakitangan.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wizard Footer -->
+                        <div class="mt-12 pt-8 border-t border-gray-100 flex justify-between items-center">
+                            <button onclick="cancelEdit()" class="text-gray-400 font-bold px-6 py-2 hover:text-red-500 transition-colors">Batal</button>
+                            <div class="flex gap-3">
+                                <button onclick="prevEditStep()" id="prevEditBtn" class="hidden bg-gray-100 text-gray-600 px-8 py-4 rounded-2xl font-bold active:scale-95 transition-all">Sebelumnya</button>
+                                <button onclick="nextEditStep()" id="nextEditBtn" class="bg-blue-800 text-white px-10 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-blue-900/10">
+                                    Seterusnya <span class="material-symbols-rounded">arrow_forward</span>
+                                </button>
+                                <button onclick="updateUser()" id="updateBtn" class="hidden bg-green-600 text-white px-12 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-green-900/10">
+                                    <span class="material-symbols-rounded">save</span> Kemaskini Kakitangan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Details Tab (BARU) - untuk papar senarai kehadiran -->
+            <div id="userDetailsTab" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h1 class="text-4xl font-black text-gray-800" id="selectedUserName">-</h1>
+                        <p class="text-gray-400 text-sm mt-1" id="selectedUserInfo">-</p>
+                    </div>
+                    <button onclick="backToUsersList()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-gray-200 transition-all">
+                        <span class="material-symbols-rounded">arrow_back</span> Kembali ke Senarai
+                    </button>
+                </div>
+
+                <!-- Sub Tabs -->
+                <div class="sub-tabs">
+                    <div class="sub-tab active" onclick="switchUserSubTab('attendance')" id="subTabAttendance">Rekod Kehadiran</div>
+                    <div class="sub-tab" onclick="switchUserSubTab('info')" id="subTabInfo">Maklumat Kakitangan</div>
+                </div>
+
+                <!-- Attendance Sub Tab -->
+                <div id="userAttendanceSubTab">
+                    <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100 mb-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-black text-gray-800">Rekod Kehadiran</h2>
+                            <div class="flex gap-3">
+                                <input type="date" id="userHistoryStartDate" class="input-field mb-0 w-40">
+                                <span class="text-gray-400 self-center">hingga</span>
+                                <input type="date" id="userHistoryEndDate" class="input-field mb-0 w-40">
+                                <button onclick="loadUserAttendance()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2">
+                                    <span class="material-symbols-rounded">search</span> Cari
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table id="userAttendanceTable">
+                                <thead>
+                                    <tr>
+                                        <th>Tarikh</th>
+                                        <th>Hari</th>
+                                        <th>Jam Masuk</th>
+                                        <th>Jam Keluar</th>
+                                        <th>Jumlah Jam</th>
+                                        <th>OT</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userAttendanceBody">
+                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Sub Tab -->
+                <div id="userInfoSubTab" class="hidden">
+                    <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
+                        <div class="grid grid-cols-2 gap-8">
+                            <div>
+                                <h3 class="font-black text-lg mb-4">Maklumat Asas</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400">Nama Penuh</p>
+                                        <p class="font-bold text-gray-800" id="infoName">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400">Emel</p>
+                                        <p class="font-bold text-gray-800" id="infoEmail">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400">Unit</p>
+                                        <p class="font-bold text-gray-800" id="infoUnit">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400">Cawangan</p>
+                                        <p class="font-bold text-gray-800" id="infoBranch">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400">Status Biometrik</p>
+                                        <p class="font-bold text-gray-800" id="infoFaceStatus">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="font-black text-lg mb-4">Geofencing</h3>
+                                <div class="space-y-3">
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400">Lokasi Pejabat</p>
+                                        <p class="font-bold text-gray-800" id="infoLocation">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400">Koordinat</p>
+                                        <p class="font-bold text-gray-800" id="infoCoord">-</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-gray-400">Radius</p>
+                                        <p class="font-bold text-gray-800" id="infoRadius">-</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Reports Tab -->
             <div id="reportsTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Laporan Kehadiran</h1>
@@ -706,11 +1005,16 @@
         // ============================================
         let currentUser = null;
         let users = [];
+        let selectedUser = null; // Untuk paparan detail
         let userMap = null;
         let userMarker = null;
         let userCircle = null;
+        let editUserMap = null; // Map untuk form edit
+        let editUserMarker = null;
+        let editUserCircle = null;
         let videoStream = null;
         let currentStep = 1;
+        let currentEditStep = 1;
         let modelsLoaded = false;
         let userToReset = null;
         let faceOverlay = null;
@@ -900,11 +1204,19 @@
             
             document.getElementById('userBranch').value = currentUser.branch;
             document.getElementById('userUnit').value = currentUser.unit;
+            document.getElementById('editUserBranch').value = currentUser.branch;
+            document.getElementById('editUserUnit').value = currentUser.unit;
 
             const today = new Date();
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
             document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
             document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            
+            // Set default tarikh untuk history
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            document.getElementById('userHistoryStartDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+            document.getElementById('userHistoryEndDate').value = today.toISOString().split('T')[0];
 
             loadUsers();
             loadFaceModels(); 
@@ -1019,6 +1331,9 @@
                     </td>
                     <td>
                         <div class="flex gap-2 justify-center">
+                            <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100 transition-colors" title="Lihat Rekod Kehadiran">
+                                <span class="material-symbols-rounded text-xl">visibility</span>
+                            </button>
                             <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100 transition-colors" title="Edit Maklumat Asas">
                                 <span class="material-symbols-rounded text-xl">edit</span>
                             </button>
@@ -1040,56 +1355,352 @@
         }
 
         // ============================================
-        // EDIT USER - MAKLUMAT ASAS SAHAJA (TANPA BIOMETRIK)
+        // VIEW USER DETAILS (BARU)
+        // ============================================
+        window.viewUserDetails = function(uid) {
+            const user = users.find(u => u.uid === uid);
+            if (!user) return;
+            
+            selectedUser = user;
+            
+            // Papar maklumat asas
+            document.getElementById('selectedUserName').innerText = user.name;
+            document.getElementById('selectedUserInfo').innerText = `${user.email} • ${user.unit || 'Tiada Unit'} • ${user.branch}`;
+            
+            // Info tab
+            document.getElementById('infoName').innerText = user.name;
+            document.getElementById('infoEmail').innerText = user.email;
+            document.getElementById('infoUnit').innerText = user.unit || '-';
+            document.getElementById('infoBranch').innerText = user.branch;
+            document.getElementById('infoFaceStatus').innerHTML = user.faceDescriptor ? 
+                '<span class="text-green-600">DIDAFTAR</span>' : 
+                '<span class="text-red-500">TIADA REKOD</span>';
+            document.getElementById('infoLocation').innerText = user.location || 'Pejabat Am';
+            document.getElementById('infoCoord').innerText = user.lat ? `${parseFloat(user.lat).toFixed(6)}, ${parseFloat(user.lng).toFixed(6)}` : '-';
+            document.getElementById('infoRadius').innerText = user.radius ? `${user.radius}m` : '500m';
+            
+            // Tukar tab
+            switchTab('userDetails');
+            
+            // Load attendance
+            loadUserAttendance();
+        };
+
+        window.backToUsersList = function() {
+            switchTab('users');
+        };
+
+        window.switchUserSubTab = function(tab) {
+            document.getElementById('subTabAttendance').classList.remove('active');
+            document.getElementById('subTabInfo').classList.remove('active');
+            document.getElementById('userAttendanceSubTab').classList.add('hidden');
+            document.getElementById('userInfoSubTab').classList.add('hidden');
+            
+            if (tab === 'attendance') {
+                document.getElementById('subTabAttendance').classList.add('active');
+                document.getElementById('userAttendanceSubTab').classList.remove('hidden');
+            } else {
+                document.getElementById('subTabInfo').classList.add('active');
+                document.getElementById('userInfoSubTab').classList.remove('hidden');
+            }
+        };
+
+        async function loadUserAttendance() {
+            if (!selectedUser) return;
+            
+            const startDate = document.getElementById('userHistoryStartDate').value;
+            const endDate = document.getElementById('userHistoryEndDate').value;
+            
+            if (!startDate || !endDate) {
+                showNotif('Ralat', 'Sila pilih tarikh mula dan tamat', true);
+                return;
+            }
+            
+            try {
+                const result = await callAPI('getAttendance', { 
+                    uid: selectedUser.uid,
+                    startDate: startDate,
+                    endDate: endDate
+                });
+                
+                const tbody = document.getElementById('userAttendanceBody');
+                
+                if (!result.success || !result.data || result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                result.data.sort((a, b) => b.date.localeCompare(a.date));
+                
+                result.data.forEach(record => {
+                    const date = new Date(record.date);
+                    const tarikh = date.toLocaleDateString('ms-MY', { 
+                        day: '2-digit', 
+                        month: '2-digit', 
+                        year: 'numeric' 
+                    });
+                    
+                    const hari = date.toLocaleDateString('ms-MY', { weekday: 'long' });
+                    
+                    // Format jam masuk
+                    let jamMasuk = '-';
+                    if (record.clockIn) {
+                        try {
+                            const clockIn = new Date(record.clockIn);
+                            if (!isNaN(clockIn)) {
+                                jamMasuk = clockIn.toLocaleTimeString('ms-MY', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: false 
+                                });
+                            }
+                        } catch (e) {}
+                    }
+                    
+                    // Format jam keluar
+                    let jamKeluar = '-';
+                    if (record.clockOut) {
+                        try {
+                            const clockOut = new Date(record.clockOut);
+                            if (!isNaN(clockOut)) {
+                                jamKeluar = clockOut.toLocaleTimeString('ms-MY', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: false 
+                                });
+                            }
+                        } catch (e) {}
+                    }
+                    
+                    // Format jumlah jam
+                    let jumlahJam = '-';
+                    if (record.totalHours && record.totalHours > 0) {
+                        jumlahJam = formatJam(record.totalHours);
+                    }
+                    
+                    // Format OT
+                    let jumlahOT = '-';
+                    if (record.totalOT && record.totalOT > 0) {
+                        jumlahOT = formatJam(record.totalOT);
+                    }
+                    
+                    // Status
+                    let statusText = '';
+                    let statusClass = '';
+                    if (record.status === 'clocked_in') {
+                        statusText = 'DALAM BERTUGAS';
+                        statusClass = 'bg-blue-100 text-blue-700';
+                    } else if (record.status === 'clocked_out') {
+                        statusText = 'SELESAI';
+                        statusClass = 'bg-green-100 text-green-700';
+                    } else {
+                        statusText = '-';
+                        statusClass = 'bg-gray-100 text-gray-600';
+                    }
+                    
+                    html += `
+                        <tr>
+                            <td>${tarikh}</td>
+                            <td>${hari}</td>
+                            <td class="text-center">${jamMasuk}</td>
+                            <td class="text-center">${jamKeluar}</td>
+                            <td class="text-center">${jumlahJam}</td>
+                            <td class="text-center">${jumlahOT}</td>
+                            <td class="text-center"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Load attendance error:', error);
+                showNotif('Ralat', 'Gagal memuat rekod kehadiran', true);
+            }
+        }
+
+        // ============================================
+        // EDIT USER FUNCTIONS (2 STEPS)
         // ============================================
         window.editUser = function(uid) {
             const u = users.find(x => x.uid === uid);
             if (!u) return;
 
-            // Validation: Pastikan unit sama
             if (u.unit !== currentUser.unit) {
                 showNotif('Ralat', 'Anda hanya boleh mengedit pengguna dalam unit anda sendiri', true);
                 return;
             }
 
-            // Reset form dan pastikan dalam mode edit biasa (bukan reset mode)
-            resetFormAfterSave();
-            document.getElementById('resetMode').value = 'false';
-            document.getElementById('regFormTitle').innerText = "Kemaskini Kakitangan";
-
-            // Isi data asas pengguna
-            document.getElementById('userId').value = u.uid;
-            document.getElementById('userName').value = u.name;
-            document.getElementById('userEmail').value = u.email;
-            document.getElementById('userUnit').value = u.unit || currentUser.unit;
-            document.getElementById('userPassword').value = ""; // Kosongkan password - admin boleh reset jika perlu
+            // Reset form edit
+            document.getElementById('editUserId').value = u.uid;
+            document.getElementById('editUserName').value = u.name;
+            document.getElementById('editUserEmail').value = u.email;
+            document.getElementById('editUserUnit').value = u.unit || currentUser.unit;
+            document.getElementById('editUserBranch').value = u.branch || currentUser.branch;
+            document.getElementById('editUserPassword').value = "";
             
-            // Isi data geofencing
-            document.getElementById('userRadius').value = u.radius || 500;
-            document.getElementById('userLat').value = u.lat || 1.5533;
-            document.getElementById('userLng').value = u.lng || 110.3592;
-            updateRadius(u.radius || 500);
-
-            // PENTING: JANGAN paparkan data biometrik dalam mode edit biasa
-            // Biarkan faceDescriptor kosong dan tunjuk mesej sesuai
-            document.getElementById('faceDescriptor').value = "";
-            document.getElementById('faceStatusMsg').innerHTML = "<span class='text-gray-500'>Gunakan butang 'Reset Wajah' (ikon muka) untuk kemaskini biometrik.</span>";
+            document.getElementById('editUserRadius').value = u.radius || 500;
+            document.getElementById('editUserLat').value = u.lat || 1.5533;
+            document.getElementById('editUserLng').value = u.lng || 110.3592;
+            updateEditRadius(u.radius || 500);
             
-            // Sembunyikan butang imbas wajah dalam mode edit biasa
-            document.getElementById('captureBtn').classList.add('hidden');
-            document.getElementById('resetFaceBtn').classList.add('hidden');
-            document.getElementById('retryCamBtn').classList.add('hidden');
-
-            // Reset step ke 1 dan tukar tab
-            currentStep = 1;
-            updateStepUI();
-            switchTab('register');
+            // Reset step
+            currentEditStep = 1;
+            updateEditStepUI();
             
-            showNotif("Info", "Sila kemaskini maklumat asas sahaja. Untuk biometrik, gunakan ikon muka.", false);
+            // Tukar tab
+            switchTab('editUser');
+            
+            // Init map selepas switch tab
+            setTimeout(() => {
+                initEditMap(
+                    parseFloat(document.getElementById('editUserLat').value) || 1.5533,
+                    parseFloat(document.getElementById('editUserLng').value) || 110.3592,
+                    parseInt(document.getElementById('editUserRadius').value) || 500
+                );
+            }, 300);
+        };
+
+        function initEditMap(lat, lng, radius) {
+            if (editUserMap) editUserMap.remove();
+            
+            editUserMap = L.map('editUserLocationMap').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editUserMap);
+            
+            editUserMarker = L.marker([lat, lng], { draggable: true }).addTo(editUserMap);
+            editUserCircle = L.circle([lat, lng], { 
+                radius: radius, 
+                color: '#1e3a8a', 
+                fillOpacity: 0.1 
+            }).addTo(editUserMap);
+
+            document.getElementById('editUserLat').value = lat.toFixed(6);
+            document.getElementById('editUserLng').value = lng.toFixed(6);
+
+            editUserMarker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                updateEditMapElements(pos.lat, pos.lng);
+            });
+
+            editUserMap.on('click', function(e) {
+                editUserMarker.setLatLng(e.latlng);
+                updateEditMapElements(e.latlng.lat, e.latlng.lng);
+            });
+
+            setTimeout(() => {
+                if(editUserMap) editUserMap.invalidateSize();
+            }, 400);
+        }
+
+        function updateEditMapElements(lat, lng) {
+            document.getElementById('editUserLat').value = lat.toFixed(6);
+            document.getElementById('editUserLng').value = lng.toFixed(6);
+            if (editUserCircle) editUserCircle.setLatLng([lat, lng]);
+        }
+
+        function updateEditRadius(val) {
+            document.getElementById('editRadiusValDisplay').innerText = `${val} Meter`;
+            if (editUserCircle) editUserCircle.setRadius(parseInt(val));
+        }
+
+        window.nextEditStep = function() {
+            if (currentEditStep === 1) {
+                if (!document.getElementById('editUserName').value || !document.getElementById('editUserEmail').value) {
+                    return showNotif("Input Diperlukan", "Nama dan Emel wajib diisi.", true);
+                }
+                const lat = parseFloat(document.getElementById('editUserLat').value) || 1.5533;
+                const lng = parseFloat(document.getElementById('editUserLng').value) || 110.3592;
+                const rad = parseInt(document.getElementById('editUserRadius').value);
+                
+                // Init map jika belum ada
+                if (!editUserMap) {
+                    initEditMap(lat, lng, rad);
+                } else {
+                    setTimeout(() => editUserMap.invalidateSize(), 100);
+                }
+            }
+            currentEditStep++;
+            updateEditStepUI();
+        }
+
+        window.prevEditStep = function() {
+            currentEditStep--;
+            updateEditStepUI();
+        };
+
+        function updateEditStepUI() {
+            document.querySelectorAll('.wizard-step-2').forEach(s => s.classList.remove('active'));
+            document.getElementById(`editStep${currentEditStep}Content`).classList.add('active');
+            
+            for(let i=1; i<=2; i++) {
+                const s = document.getElementById(`editStep${i}`);
+                if (i < currentEditStep) s.className = 'step-2 completed';
+                else if (i === currentEditStep) s.className = 'step-2 active';
+                else s.className = 'step-2';
+            }
+
+            document.getElementById('prevEditBtn').classList.toggle('hidden', currentEditStep === 1);
+            document.getElementById('nextEditBtn').classList.toggle('hidden', currentEditStep === 2);
+            document.getElementById('updateBtn').classList.toggle('hidden', currentEditStep !== 2);
+        }
+
+        window.cancelEdit = function() {
+            if (editUserMap) {
+                editUserMap.remove();
+                editUserMap = null;
+                editUserMarker = null;
+                editUserCircle = null;
+            }
+            switchTab('users');
+        };
+
+        window.updateUser = async function() {
+            const btn = document.getElementById('updateBtn');
+            const uid = document.getElementById('editUserId').value;
+            
+            const data = {
+                uid: uid,
+                name: document.getElementById('editUserName').value,
+                email: document.getElementById('editUserEmail').value,
+                unit: currentUser.unit,
+                branch: currentUser.branch,
+                password: document.getElementById('editUserPassword').value,
+                lat: document.getElementById('editUserLat').value,
+                lng: document.getElementById('editUserLng').value,
+                radius: document.getElementById('editUserRadius').value
+            };
+
+            if (!data.name || !data.email) {
+                showNotif("Ralat", "Nama dan Emel wajib diisi", true);
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Sedang Mengemaskini...';
+
+            try {
+                console.log('📤 Updating user:', data);
+                const result = await callAPI('updateUser', { data: JSON.stringify(data) });
+                
+                if (result.success) {
+                    showNotif("Berjaya", "Maklumat kakitangan telah dikemaskini.");
+                    cancelEdit();
+                    loadUsers();
+                } else {
+                    showNotif("Ralat", result.error || "Gagal mengemaskini data", true);
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showNotif("Ralat", "Gagal mengemaskini data", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan';
+            }
         };
 
         // ============================================
-        // RESET WAJAH FUNCTIONS - KHAS UNTUK BIOMETRIK
+        // RESET WAJAH FUNCTIONS
         // ============================================
         function openResetModal(uid, name) {
             userToReset = { uid, name };
@@ -1106,7 +1717,6 @@
             const user = users.find(u => u.uid === uid);
             if (!user) return;
             
-            // Validation: Pastikan unit sama
             if (user.unit !== currentUser.unit) {
                 showNotif('Ralat', 'Anda hanya boleh reset wajah pengguna dalam unit anda sendiri', true);
                 return;
@@ -1128,17 +1738,14 @@
             document.getElementById('userLng').value = user.lng || 110.3592;
             updateRadius(user.radius || 500);
             
-            // Reset face descriptor dan tunjuk mesej sesuai
             document.getElementById('faceDescriptor').value = "";
             document.getElementById('faceStatusMsg').innerHTML = "<span class='text-amber-600 font-black'>⚠️ Sedia untuk daftar wajah baru</span>";
             document.getElementById('captureBtn').classList.remove('hidden');
             document.getElementById('resetFaceBtn').classList.add('hidden');
             
-            // Terus ke step 3 (biometrik)
             currentStep = 3;
             updateStepUI();
             
-            // Aktifkan kamera
             setTimeout(() => {
                 initCamera();
                 loadFaceModels();
@@ -1150,7 +1757,7 @@
         };
 
         // ============================================
-        // MAP LOGIC
+        // MAP LOGIC (untuk form daftar)
         // ============================================
         function initMap(lat = 1.5533, lng = 110.3592, radius = 500) {
             if (userMap) userMap.remove();
@@ -1367,6 +1974,10 @@
                     resetRegisterForm();
                 }
             }
+            
+            if (tab === 'editUser' && editUserMap) {
+                setTimeout(() => editUserMap.invalidateSize(), 300);
+            }
         };
 
         window.nextStep = function() {
@@ -1413,7 +2024,7 @@
         }
 
         // ============================================
-        // SAVE USER
+        // SAVE USER (Daftar baru)
         // ============================================
         window.saveUser = async function() {
             const btn = document.getElementById('saveBtn');
@@ -1565,7 +2176,7 @@
         }
 
         // ============================================
-        // GENERATE PDF - VERSI DIPERBAIKI (TANPA INVALID DATE)
+        // GENERATE PDF
         // ============================================
         window.generatePDF = async function() {
             const uid = document.getElementById('reportUser').value;
@@ -1584,14 +2195,12 @@
             showNotif("Menjana PDF", "Sila tunggu seketika...");
 
             try {
-                // Dapatkan data attendance dari API
                 const result = await callAPI('getAttendance', { 
                     uid, 
                     startDate: startDateStr, 
                     endDate: endDateStr 
                 });
                 
-                // Buat peta untuk akses cepat data attendance
                 const dataMap = {};
                 if (result.success && result.data) {
                     result.data.forEach(record => {
@@ -1602,7 +2211,6 @@
                 console.log('📊 Data attendance:', dataMap);
                 console.log('📅 Julat tarikh:', startDateStr, 'hingga', endDateStr);
                 
-                // Sediakan PDF
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({
                     format: 'a4',
@@ -1616,13 +2224,11 @@
                 const tableMarginX = (pageWidth - tableWidth) / 2;
                 const rowHeight = 8;
                 
-                // Headers dalam Bahasa Melayu
                 const headers = ["Tarikh", "Hari", "Masuk", "Keluar", "Jumlah Jam", "OT"];
                 const colWidths = [30, 35, 25, 25, 30, 25];
 
                 let y = 20;
 
-                // === LOGO ===
                 try {
                     const logoUrl = 'https://ik.imagekit.io/pyreotmgq/Immigration_Department_of_Malaysia_Logo.svg.png?updatedAt=1744170604496';
                     const logoImg = await getBase64ImageFromUrl(logoUrl);
@@ -1631,13 +2237,11 @@
                     console.log('Logo gagal dimuatkan');
                 }
 
-                // Tajuk Laporan
                 doc.setFontSize(16);
                 doc.setTextColor(30, 58, 138);
                 doc.setFont('helvetica', 'bold');
                 doc.text('LAPORAN KEHADIRAN', pageWidth / 2, 25, { align: 'center' });
 
-                // Maklumat Kakitangan
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.setFont('helvetica', 'normal');
@@ -1650,7 +2254,6 @@
 
                 y = 60;
 
-                // === HEADER JADUAL ===
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(9);
                 
@@ -1667,12 +2270,9 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setTextColor(0, 0, 0);
                 
-                // === DATA JADUAL - VERSI DIPERBAIKI ===
-                // Parse tarikh dengan validation
                 const startDate = new Date(startDateStr + 'T00:00:00');
                 const endDate = new Date(endDateStr + 'T00:00:00');
                 
-                // Validation: pastikan tarikh sah
                 if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
                     showNotif("Ralat", "Format tarikh tidak sah", true);
                     return;
@@ -1682,24 +2282,20 @@
                 let totalOTDecimal = 0;
                 let hasData = false;
                 
-                // Loop setiap hari dalam julat
                 const currentDate = new Date(startDate);
                 while (currentDate <= endDate) {
-                    const dateString = currentDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+                    const dateString = currentDate.toISOString().split('T')[0];
                     
-                    // Format tarikh untuk paparan (DD/MM/YYYY)
                     const day = String(currentDate.getDate()).padStart(2, '0');
                     const month = String(currentDate.getMonth() + 1).padStart(2, '0');
                     const year = currentDate.getFullYear();
                     const tarikh = `${day}/${month}/${year}`;
                     
-                    // Hari dalam Bahasa Malaysia
                     const hari = currentDate.toLocaleDateString('ms-MY', { 
                         weekday: 'long',
                         timeZone: 'Asia/Kuching'
                     });
                     
-                    // Semak jika ada data untuk tarikh ini
                     const record = dataMap[dateString] || null;
                     
                     let jamMasuk = '-';
@@ -1710,75 +2306,34 @@
                     if (record) {
                         hasData = true;
                         
-                        // FORMAT JAM MASUK - handle pelbagai format dengan lebih robust
                         if (record.clockIn && record.clockIn !== '' && record.clockIn !== 'null') {
                             try {
-                                let clockInDate;
-                                if (typeof record.clockIn === 'string') {
-                                    if (record.clockIn.includes('T')) {
-                                        clockInDate = new Date(record.clockIn);
-                                    } else {
-                                        // Cuba parse format lain
-                                        clockInDate = new Date(record.clockIn);
-                                    }
-                                } else if (record.clockIn instanceof Date) {
-                                    clockInDate = record.clockIn;
-                                }
-                                
-                                if (clockInDate && !isNaN(clockInDate.getTime())) {
+                                let clockInDate = new Date(record.clockIn);
+                                if (!isNaN(clockInDate)) {
                                     jamMasuk = clockInDate.toLocaleTimeString('ms-MY', { 
                                         hour: '2-digit', 
                                         minute: '2-digit',
                                         hour12: false,
                                         timeZone: 'Asia/Kuching'
                                     });
-                                } else {
-                                    // Jika gagal parse, cuba extract jam:minit dari string
-                                    const clockInStr = String(record.clockIn);
-                                    const match = clockInStr.match(/(\d{2}):(\d{2})/);
-                                    if (match) {
-                                        jamMasuk = match[1] + ':' + match[2];
-                                    }
                                 }
-                            } catch (e) {
-                                console.log('Error parsing clockIn:', e, record.clockIn);
-                            }
+                            } catch (e) {}
                         }
                         
-                        // FORMAT JAM KELUAR - handle pelbagai format
                         if (record.clockOut && record.clockOut !== '' && record.clockOut !== 'null') {
                             try {
-                                let clockOutDate;
-                                if (typeof record.clockOut === 'string') {
-                                    if (record.clockOut.includes('T')) {
-                                        clockOutDate = new Date(record.clockOut);
-                                    } else {
-                                        clockOutDate = new Date(record.clockOut);
-                                    }
-                                } else if (record.clockOut instanceof Date) {
-                                    clockOutDate = record.clockOut;
-                                }
-                                
-                                if (clockOutDate && !isNaN(clockOutDate.getTime())) {
+                                let clockOutDate = new Date(record.clockOut);
+                                if (!isNaN(clockOutDate)) {
                                     jamKeluar = clockOutDate.toLocaleTimeString('ms-MY', { 
                                         hour: '2-digit', 
                                         minute: '2-digit',
                                         hour12: false,
                                         timeZone: 'Asia/Kuching'
                                     });
-                                } else {
-                                    const clockOutStr = String(record.clockOut);
-                                    const match = clockOutStr.match(/(\d{2}):(\d{2})/);
-                                    if (match) {
-                                        jamKeluar = match[1] + ':' + match[2];
-                                    }
                                 }
-                            } catch (e) {
-                                console.log('Error parsing clockOut:', e, record.clockOut);
-                            }
+                            } catch (e) {}
                         }
                         
-                        // FORMAT JUMLAH JAM
                         if (record.totalHours !== undefined && record.totalHours !== null) {
                             const hours = parseFloat(record.totalHours);
                             if (!isNaN(hours) && hours > 0) {
@@ -1787,7 +2342,6 @@
                             }
                         }
                         
-                        // FORMAT JUMLAH OT
                         if (record.totalOT !== undefined && record.totalOT !== null) {
                             const ot = parseFloat(record.totalOT);
                             if (!isNaN(ot) && ot > 0) {
@@ -1797,7 +2351,6 @@
                         }
                     }
                     
-                    // Lukis border sel
                     x = tableMarginX;
                     const rowData = [tarikh, hari, jamMasuk, jamKeluar, jumlahJam, jumlahOT];
                     
@@ -1805,10 +2358,9 @@
                         doc.setDrawColor(200, 200, 200);
                         doc.rect(x, y, colWidths[i], rowHeight);
                         
-                        // Teks dengan alignment yang sesuai
-                        if (i === 1) { // Hari - left align
+                        if (i === 1) {
                             doc.text(text, x + 2, y + 5);
-                        } else { // Lain-lain - center align
+                        } else {
                             const textWidth = doc.getTextWidth(text);
                             doc.text(text, x + (colWidths[i] / 2) - (textWidth / 2), y + 5);
                         }
@@ -1819,12 +2371,10 @@
                     y += rowHeight;
                     currentDate.setDate(currentDate.getDate() + 1);
                     
-                    // Jika hampir ke penghujung halaman, tambah halaman baru
                     if (y > 260) {
                         doc.addPage();
                         y = 20;
                         
-                        // Header jadual di halaman baru
                         x = tableMarginX;
                         headers.forEach((header, i) => {
                             doc.setFillColor(30, 58, 138);
@@ -1838,7 +2388,6 @@
                     }
                 }
 
-                // === BARIS JUMLAH KESELURUHAN ===
                 doc.setFont('helvetica', 'bold');
                 doc.setDrawColor(200, 200, 200);
                 
@@ -1847,38 +2396,32 @@
                 
                 x = tableMarginX;
                 
-                // Sel pertama hingga keempat (kosong)
                 for (let i = 0; i < 4; i++) {
                     doc.rect(x, y, colWidths[i], rowHeight);
                     x += colWidths[i];
                 }
                 
-                // Sel Jumlah Jam
                 doc.rect(x, y, colWidths[4], rowHeight);
                 doc.text('JUMLAH', x + 2, y + 5);
                 doc.text(totalJamFormatted, x + colWidths[4] - 2 - doc.getTextWidth(totalJamFormatted), y + 5);
                 x += colWidths[4];
                 
-                // Sel OT
                 doc.rect(x, y, colWidths[5], rowHeight);
                 doc.text(totalOTFormatted, x + colWidths[5] - 2 - doc.getTextWidth(totalOTFormatted), y + 5);
                 
                 y += rowHeight;
 
-                // Footer
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8);
                 doc.setTextColor(150, 150, 150);
                 doc.text('Dijana oleh IMMI Presence 360', pageWidth / 2, doc.internal.pageSize.height - 10, { align: 'center' });
                 
-                // Nombor muka surat
                 const pageCount = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pageCount; i++) {
                     doc.setPage(i);
                     doc.text(`Muka surat ${i} / ${pageCount}`, pageWidth - 20, doc.internal.pageSize.height - 10);
                 }
                 
-                // Simpan PDF
                 const filename = `Laporan_Kehadiran_${user.name.replace(/\s+/g, '_')}_${startDateStr}_to_${endDateStr}.pdf`;
                 doc.save(filename);
                 
@@ -1944,6 +2487,9 @@
                 resetUserFace(userToReset.uid);
             }
         });
+
+        document.getElementById('userHistoryStartDate').addEventListener('change', loadUserAttendance);
+        document.getElementById('userHistoryEndDate').addEventListener('change', loadUserAttendance);
 
         document.addEventListener('DOMContentLoaded', function() {
             if (!document.getElementById('faceOverlay')) {
