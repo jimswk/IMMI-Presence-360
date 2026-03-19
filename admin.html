@@ -1565,7 +1565,7 @@
         }
 
 // ============================================
-// GENERATE PDF - VERSI BAHASA MELAYU (BERSIH)
+// GENERATE PDF - VERSI DIPERBAIKI (TANPA INVALID DATE)
 // ============================================
 window.generatePDF = async function() {
     const uid = document.getElementById('reportUser').value;
@@ -1633,31 +1633,25 @@ window.generatePDF = async function() {
         doc.setFont('helvetica', 'bold');
         doc.text('LAPORAN KEHADIRAN', pageWidth / 2, 25, { align: 'center' });
 
-        // Maklumat Kakitangan - dalam 2 baris sahaja
+        // Maklumat Kakitangan
         doc.setFontSize(10);
         doc.setTextColor(0, 0, 0);
         doc.setFont('helvetica', 'normal');
         
-        // Baris 1: Nama dan Unit
         doc.text(`Nama: ${user.name.toUpperCase()}`, 15, 38);
         doc.text(`Unit: ${user.unit || '-'}`, 120, 38);
-        
-        // Baris 2: Email dan Cawangan
         doc.text(`Email: ${user.email}`, 15, 44);
         doc.text(`Cawangan: ${user.branch}`, 120, 44);
-        
-        // Baris 3: Tempoh (sendiri)
         doc.text(`Tempoh: ${startDateStr} hingga ${endDateStr}`, 15, 50);
 
         y = 60;
 
-        // === HEADER JADUAL (SAHAJA YANG BERWARNA) ===
+        // === HEADER JADUAL ===
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
         
         let x = tableMarginX;
         headers.forEach((header, i) => {
-            // Header dengan latar biru
             doc.setFillColor(30, 58, 138);
             doc.rect(x, y, colWidths[i], rowHeight, 'F');
             doc.setTextColor(255, 255, 255);
@@ -1669,7 +1663,7 @@ window.generatePDF = async function() {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
         
-        // === DATA JADUAL (TIADA WARNA LATAR) ===
+        // === DATA JADUAL ===
         const startDate = new Date(startDateStr + 'T00:00:00');
         const endDate = new Date(endDateStr + 'T00:00:00');
         let totalHoursDecimal = 0;
@@ -1679,14 +1673,19 @@ window.generatePDF = async function() {
         // Loop setiap hari dalam julat
         const currentDate = new Date(startDate);
         while (currentDate <= endDate) {
-            const dateString = currentDate.toISOString().split('T')[0];
-            const tarikh = currentDate.toLocaleDateString('ms-MY', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
+            const dateString = currentDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
             
-            const hari = currentDate.toLocaleDateString('ms-MY', { weekday: 'long' });
+            // Format tarikh untuk paparan (DD/MM/YYYY)
+            const day = String(currentDate.getDate()).padStart(2, '0');
+            const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+            const year = currentDate.getFullYear();
+            const tarikh = `${day}/${month}/${year}`;
+            
+            // Hari dalam Bahasa Malaysia
+            const hari = currentDate.toLocaleDateString('ms-MY', { 
+                weekday: 'long',
+                timeZone: 'Asia/Kuching' // Tetapkan timezone
+            });
             
             // Semak jika ada data untuk tarikh ini
             const record = dataMap[dateString] || null;
@@ -1699,45 +1698,79 @@ window.generatePDF = async function() {
             if (record) {
                 hasData = true;
                 
-                // Format jam masuk
-                if (record.clockIn) {
-                    const clockInTime = new Date(record.clockIn);
-                    jamMasuk = clockInTime.toLocaleTimeString('ms-MY', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: false 
-                    });
+                // FORMAT JAM MASUK - handle pelbagai format
+                if (record.clockIn && record.clockIn !== '') {
+                    try {
+                        let clockInDate;
+                        if (record.clockIn.includes('T')) {
+                            // Format ISO
+                            clockInDate = new Date(record.clockIn);
+                        } else {
+                            // Format lain - cuba parse
+                            clockInDate = new Date(record.clockIn);
+                        }
+                        
+                        if (!isNaN(clockInDate)) {
+                            jamMasuk = clockInDate.toLocaleTimeString('ms-MY', { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: false,
+                                timeZone: 'Asia/Kuching'
+                            });
+                        } else {
+                            // Jika gagal parse, gunakan string asal
+                            jamMasuk = record.clockIn.substring(11, 16); // Ambil HH:mm dari string
+                        }
+                    } catch (e) {
+                        console.log('Error parsing clockIn:', e);
+                        jamMasuk = '-';
+                    }
                 }
                 
-                // Format jam keluar
+                // FORMAT JAM KELUAR - handle pelbagai format
                 if (record.clockOut && record.clockOut !== '') {
-                    const clockOutTime = new Date(record.clockOut);
-                    jamKeluar = clockOutTime.toLocaleTimeString('ms-MY', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: false 
-                    });
+                    try {
+                        let clockOutDate;
+                        if (record.clockOut.includes('T')) {
+                            clockOutDate = new Date(record.clockOut);
+                        } else {
+                            clockOutDate = new Date(record.clockOut);
+                        }
+                        
+                        if (!isNaN(clockOutDate)) {
+                            jamKeluar = clockOutDate.toLocaleTimeString('ms-MY', { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: false,
+                                timeZone: 'Asia/Kuching'
+                            });
+                        } else {
+                            jamKeluar = record.clockOut.substring(11, 16);
+                        }
+                    } catch (e) {
+                        console.log('Error parsing clockOut:', e);
+                        jamKeluar = '-';
+                    }
                 }
                 
-                // Format jumlah jam
+                // FORMAT JUMLAH JAM
                 if (record.totalHours !== undefined && record.totalHours !== null && record.totalHours > 0) {
                     jumlahJam = formatJam(record.totalHours);
                     totalHoursDecimal += record.totalHours;
                 }
                 
-                // Format jumlah OT
+                // FORMAT JUMLAH OT
                 if (record.totalOT !== undefined && record.totalOT !== null && record.totalOT > 0) {
                     jumlahOT = formatJam(record.totalOT);
                     totalOTDecimal += record.totalOT;
                 }
             }
             
-            // Lukis border sel SAHAJA (tanpa warna latar)
+            // Lukis border sel
             x = tableMarginX;
             const rowData = [tarikh, hari, jamMasuk, jamKeluar, jumlahJam, jumlahOT];
             
             rowData.forEach((text, i) => {
-                // Border sahaja, tanpa fill
                 doc.setDrawColor(200, 200, 200);
                 doc.rect(x, y, colWidths[i], rowHeight);
                 
@@ -1774,7 +1807,7 @@ window.generatePDF = async function() {
             }
         }
 
-        // === BARIS JUMLAH KESELURUHAN (TANPA WARNA LATAR) ===
+        // === BARIS JUMLAH KESELURUHAN ===
         doc.setFont('helvetica', 'bold');
         doc.setDrawColor(200, 200, 200);
         
@@ -1783,21 +1816,11 @@ window.generatePDF = async function() {
         
         x = tableMarginX;
         
-        // Sel pertama (kosong)
-        doc.rect(x, y, colWidths[0], rowHeight);
-        x += colWidths[0];
-        
-        // Sel kedua (kosong)
-        doc.rect(x, y, colWidths[1], rowHeight);
-        x += colWidths[1];
-        
-        // Sel ketiga (kosong)
-        doc.rect(x, y, colWidths[2], rowHeight);
-        x += colWidths[2];
-        
-        // Sel keempat (kosong)
-        doc.rect(x, y, colWidths[3], rowHeight);
-        x += colWidths[3];
+        // Sel pertama hingga keempat (kosong)
+        for (let i = 0; i < 4; i++) {
+            doc.rect(x, y, colWidths[i], rowHeight);
+            x += colWidths[i];
+        }
         
         // Sel Jumlah Jam
         doc.rect(x, y, colWidths[4], rowHeight);
@@ -1836,7 +1859,7 @@ window.generatePDF = async function() {
     }
 };
 
-// Helper function untuk format jam
+// Helper function untuk format jam (sama untuk index.html dan admin.html)
 function formatJam(decimalJam) {
     if (!decimalJam || decimalJam <= 0) return '-';
     const jam = Math.floor(decimalJam);
