@@ -1070,144 +1070,110 @@
             document.getElementById('loginPage').classList.remove('hidden');
         };
 
-// ============================================
-// CLOCK IN - VERSI DIPERBAIKI
-// ============================================
-window.handleClockIn = async function() {
-    if (!userLocation) {
-        showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
-        return;
-    }
-    
-    const distance = calculateDistance(
-        userLocation.lat, userLocation.lng,
-        parseFloat(currentUser.lat), parseFloat(currentUser.lng)
-    );
-    
-    if (distance > (parseInt(currentUser.radius) || 500)) {
-        showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan untuk clock in', true, true);
-        return;
-    }
-    
-    const verified = await verifyFace();
-    if (!verified) {
-        return;
-    }
-    
-    const btn = document.getElementById('clockInBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="loading mx-auto"></div>';
-    
-    try {
-        console.log('📤 Menghantar permintaan clock in...');
-        const result = await callAPI('clockIn', { 
-            uid: currentUser.uid, 
-            location: JSON.stringify(userLocation)
-        });
-        
-        console.log('📥 Hasil clock in:', result);
-        
-        if (result.success) {
-            showNotification('Berjaya', 'Clock In direkodkan', false, true);
+        // ============================================
+        // CLOCK IN / OUT
+        // ============================================
+        window.handleClockIn = async function() {
+            if (!userLocation) {
+                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
+                return;
+            }
             
-            // Tunggu lebih lama untuk data direkod
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            const distance = calculateDistance(
+                userLocation.lat, userLocation.lng,
+                parseFloat(currentUser.lat), parseFloat(currentUser.lng)
+            );
             
-            // Refresh data beberapa kali untuk pastikan
-            await checkTodayAttendance();
-            await loadAttendanceHistory();
-            updateLocationDisplay();
+            if (distance > (parseInt(currentUser.radius) || 500)) {
+                showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan untuk clock in', true, true);
+                return;
+            }
             
-            // Refresh sekali lagi selepas 2 saat
-            setTimeout(async () => {
-                await checkTodayAttendance();
-            }, 2000);
+            const verified = await verifyFace();
+            if (!verified) {
+                return;
+            }
             
-        } else {
-            showNotification('Ralat', result.error || 'Gagal clock in', true, true);
-        }
-    } catch (error) {
-        console.error('Clock in error:', error);
-        showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'MASUK';
-    }
-};
+            const btn = document.getElementById('clockInBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading mx-auto"></div>';
+            
+            try {
+                console.log('📤 Menghantar permintaan clock in...');
+                const result = await callAPI('clockIn', { 
+                    uid: currentUser.uid, 
+                    location: JSON.stringify(userLocation)
+                });
+                
+                console.log('📥 Hasil clock in:', result);
+                
+                if (result.success) {
+                    showNotification('Berjaya', 'Clock In direkodkan', false, true);
+                    
+                    // Tunggu sebentar untuk data direkod
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    await checkTodayAttendance();
+                    await loadAttendanceHistory();
+                    updateLocationDisplay();
+                    
+                } else {
+                    showNotification('Ralat', result.error || 'Gagal clock in', true, true);
+                }
+            } catch (error) {
+                console.error('Clock in error:', error);
+                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'MASUK';
+            }
+        };
 
-// ============================================
-// CLOCK OUT - VERSI DIPERBAIKI
-// ============================================
-window.handleClockOut = async function() {
-    if (!userLocation) {
-        showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
-        return;
-    }
-    
-    // SEMAK: Pastikan user sudah clock in
-    const today = new Date().toISOString().split('T')[0];
-    const checkResult = await callAPI('getAttendance', { 
-        uid: currentUser.uid, 
-        startDate: today, 
-        endDate: today 
-    });
-    
-    if (!checkResult.success || !checkResult.data || checkResult.data.length === 0) {
-        showNotification('Ralat', 'Anda belum clock in hari ini', true, true);
-        return;
-    }
-    
-    const record = checkResult.data[0];
-    if (record.status === 'clocked_out') {
-        showNotification('Ralat', 'Anda sudah clock out hari ini', true, true);
-        return;
-    }
-    
-    const verified = await verifyFace();
-    if (!verified) {
-        return;
-    }
-    
-    const btn = document.getElementById('clockOutBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="loading mx-auto"></div>';
-    
-    try {
-        console.log('📤 Menghantar permintaan clock out...');
-        const result = await callAPI('clockOut', { 
-            uid: currentUser.uid, 
-            location: JSON.stringify(userLocation)
-        });
-        
-        console.log('📥 Hasil clock out:', result);
-        
-        if (result.success) {
-            showNotification('Berjaya', 'Clock Out direkodkan', false, true);
+        window.handleClockOut = async function() {
+            if (!userLocation) {
+                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
+                return;
+            }
             
-            // Tunggu lebih lama untuk data direkod
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            const verified = await verifyFace();
+            if (!verified) {
+                return;
+            }
             
-            // Refresh data beberapa kali
-            await checkTodayAttendance();
-            await loadAttendanceHistory();
-            updateLocationDisplay();
+            const btn = document.getElementById('clockOutBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading mx-auto"></div>';
             
-            // Refresh sekali lagi selepas 2 saat
-            setTimeout(async () => {
-                await checkTodayAttendance();
-            }, 2000);
-            
-        } else {
-            showNotification('Ralat', result.error || 'Gagal clock out', true, true);
-        }
-    } catch (error) {
-        console.error('Clock out error:', error);
-        showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'KELUAR';
-    }
-};
+            try {
+                console.log('📤 Menghantar permintaan clock out...');
+                const result = await callAPI('clockOut', { 
+                    uid: currentUser.uid, 
+                    location: JSON.stringify(userLocation)
+                });
+                
+                console.log('📥 Hasil clock out:', result);
+                
+                if (result.success) {
+                    showNotification('Berjaya', 'Clock Out direkodkan', false, true);
+                    
+                    // Tunggu sebentar untuk data direkod
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    await checkTodayAttendance();
+                    await loadAttendanceHistory();
+                    updateLocationDisplay();
+                    
+                } else {
+                    showNotification('Ralat', result.error || 'Gagal clock out', true, true);
+                }
+            } catch (error) {
+                console.error('Clock out error:', error);
+                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'KELUAR';
+            }
+        };
 
         // ============================================
         // ATTENDANCE HISTORY
