@@ -496,6 +496,17 @@
             }
         }
 
+        // Helper function untuk format jam
+        function formatJam(decimalJam) {
+            if (!decimalJam || decimalJam <= 0) return '-';
+            const jam = Math.floor(decimalJam);
+            const minit = Math.round((decimalJam - jam) * 60);
+            
+            if (minit === 0) return `${jam}j`;
+            if (minit < 10) return `${jam}j 0${minit}m`;
+            return `${jam}j ${minit}m`;
+        }
+
         // ============================================
         // VIDEO DIMENSIONS HELPER
         // ============================================
@@ -687,13 +698,14 @@
         }
 
         // ============================================
-        // ATTENDANCE FUNCTIONS - VERSI DIPERBAIKI DENGAN STATUS
+        // CHECK TODAY ATTENDANCE - VERSI DIPERBAIKI
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
             
             const today = new Date().toISOString().split('T')[0];
             console.log('🔍 Menyemak kehadiran untuk tarikh:', today);
+            console.log('👤 User UID:', currentUser.uid);
             
             try {
                 const result = await callAPI('getAttendance', { 
@@ -702,7 +714,7 @@
                     endDate: today 
                 });
                 
-                console.log('📊 Hasil attendance:', result);
+                console.log('📊 Hasil attendance API:', result);
                 
                 const statusEl = document.getElementById('attendanceStatus');
                 const clockInBtn = document.getElementById('clockInBtn');
@@ -711,9 +723,25 @@
                 if (result.success && result.data && result.data.length > 0) {
                     const record = result.data[0];
                     console.log('📅 Rekod hari ini:', record);
+                    console.log('⏰ clockIn:', record.clockIn);
+                    console.log('⏰ clockOut:', record.clockOut);
+                    console.log('📌 status:', record.status);
                     
-                    // GUNAKAN STATUS dari sheet
-                    if (record.status === 'clocked_in') {
+                    // Semak clockIn dan clockOut dengan lebih teliti
+                    const hasClockIn = record.clockIn && 
+                                      record.clockIn !== '' && 
+                                      record.clockIn !== 'null' &&
+                                      record.clockIn !== 'undefined';
+                    
+                    const hasClockOut = record.clockOut && 
+                                       record.clockOut !== '' && 
+                                       record.clockOut !== 'null' &&
+                                       record.clockOut !== 'undefined';
+                    
+                    console.log('📊 hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
+                    
+                    // GUNAKAN STATUS dari sheet jika ada
+                    if (record.status === 'clocked_in' || (hasClockIn && !hasClockOut)) {
                         // Sudah clock in tetapi belum clock out
                         statusEl.innerText = 'DALAM BERTUGAS';
                         statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
@@ -726,7 +754,7 @@
                         
                         console.log('✅ Status dikemaskini: DALAM BERTUGAS');
                         
-                    } else if (record.status === 'clocked_out') {
+                    } else if (record.status === 'clocked_out' || (hasClockIn && hasClockOut)) {
                         // Sudah clock in dan clock out
                         statusEl.innerText = 'SELESAI';
                         statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
@@ -740,47 +768,18 @@
                         console.log('✅ Status dikemaskini: SELESAI');
                         
                     } else {
-                        // Fallback kepada method lama jika tiada status
-                        const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
-                        const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+                        statusEl.innerText = 'BELUM MASUK';
+                        statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                         
-                        if (hasClockIn && !hasClockOut) {
-                            statusEl.innerText = 'DALAM BERTUGAS';
-                            statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
-                            
-                            clockInBtn.disabled = true;
-                            clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
-                            
-                            clockOutBtn.disabled = false;
-                            clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
-                            
-                            console.log('✅ Status dikemaskini (fallback): DALAM BERTUGAS');
-                            
-                        } else if (hasClockIn && hasClockOut) {
-                            statusEl.innerText = 'SELESAI';
-                            statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
-                            
-                            clockInBtn.disabled = true;
-                            clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
-                            
-                            clockOutBtn.disabled = true;
-                            clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
-                            
-                            console.log('✅ Status dikemaskini (fallback): SELESAI');
-                        } else {
-                            statusEl.innerText = 'BELUM MASUK';
-                            statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                            
-                            clockInBtn.disabled = false;
-                            clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
-                            
-                            clockOutBtn.disabled = true;
-                            clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
-                        }
+                        clockInBtn.disabled = false;
+                        clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
+                        
+                        clockOutBtn.disabled = true;
+                        clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
                     }
                 } else {
                     // Tiada rekod untuk hari ini
-                    console.log('📅 Tiada rekod untuk hari ini');
+                    console.log('📅 Tiada rekod untuk hari ini dari API');
                     statusEl.innerText = 'BELUM MASUK';
                     statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     
@@ -1110,8 +1109,8 @@
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan', false, true);
                     
-                    // Tunggu sebentar untuk data direkod
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Tunggu 1 saat untuk data diproses
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     
                     await checkTodayAttendance();
                     await loadAttendanceHistory();
@@ -1156,8 +1155,8 @@
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan', false, true);
                     
-                    // Tunggu sebentar untuk data direkod
-                    await new Promise(resolve => setTimeout(resolve, 500));
+                    // Tunggu 1 saat untuk data diproses
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     
                     await checkTodayAttendance();
                     await loadAttendanceHistory();
@@ -1175,165 +1174,198 @@
             }
         };
 
-// ============================================
-// ATTENDANCE HISTORY - VERSI DIPERBAIKI
-// ============================================
-async function loadAttendanceHistory() {
-    if (!currentUser) return;
-    
-    const today = new Date();
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const startDate = thirtyDaysAgo.toISOString().split('T')[0];
-    const endDate = today.toISOString().split('T')[0];
-    
-    console.log('📅 Loading history from', startDate, 'to', endDate);
-    
-    try {
-        const result = await callAPI('getAttendance', { 
-            uid: currentUser.uid,
-            startDate: startDate,
-            endDate: endDate
-        });
-        
-        console.log('📊 History result:', result);
-        
-        const historyEl = document.getElementById('attendanceHistory');
-        
-        if (!result.success) {
-            historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Ralat memuat rekod</div>';
-            return;
-        }
-        
-        if (!result.data || result.data.length === 0) {
-            historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada rekod kehadiran</div>';
-            return;
-        }
-        
-        let html = '';
-        
-        // Sort by date descending (latest first)
-        result.data.sort((a, b) => b.date.localeCompare(a.date));
-        
-        result.data.forEach(record => {
-            // Parse date dengan selamat
-            let dateObj = null;
-            let formattedDate = '';
-            let weekday = '';
+        // ============================================
+        // ATTENDANCE HISTORY - VERSI DIPERBAIKI
+        // ============================================
+        async function loadAttendanceHistory() {
+            if (!currentUser) return;
             
-            if (record.date) {
-                // Handle format YYYY-MM-DD
-                const dateParts = record.date.split('-');
-                if (dateParts.length === 3) {
-                    const year = parseInt(dateParts[0]);
-                    const month = parseInt(dateParts[1]) - 1;
-                    const day = parseInt(dateParts[2]);
-                    dateObj = new Date(year, month, day);
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            const endDate = today.toISOString().split('T')[0];
+            
+            console.log('📅 Loading history from', startDate, 'to', endDate);
+            console.log('👤 User UID:', currentUser.uid);
+            
+            try {
+                const result = await callAPI('getAttendance', { 
+                    uid: currentUser.uid,
+                    startDate: startDate,
+                    endDate: endDate
+                });
+                
+                console.log('📊 History result:', result);
+                
+                const historyEl = document.getElementById('attendanceHistory');
+                
+                if (!result.success) {
+                    historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Ralat memuat rekod</div>';
+                    return;
+                }
+                
+                if (!result.data || result.data.length === 0) {
+                    historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada rekod kehadiran</div>';
+                    return;
+                }
+                
+                console.log('📊 Jumlah rekod:', result.data.length);
+                
+                // Tunjukkan semua tarikh yang ada
+                const dates = result.data.map(r => r.date);
+                console.log('📅 Tarikh dalam rekod:', dates);
+                
+                // Semak jika hari ini ada dalam rekod
+                const todayStr = new Date().toISOString().split('T')[0];
+                const hasToday = dates.includes(todayStr);
+                console.log('📅 Hari ini dalam rekod?', hasToday);
+                
+                let html = '';
+                
+                // Sort by date descending (latest first)
+                result.data.sort((a, b) => b.date.localeCompare(a.date));
+                
+                result.data.forEach(record => {
+                    // Parse date dengan selamat
+                    let dateObj = null;
+                    let formattedDate = '';
+                    let weekday = '';
                     
-                    if (!isNaN(dateObj)) {
-                        formattedDate = dateObj.toLocaleDateString('ms-MY', { 
-                            day: 'numeric', 
-                            month: 'long', 
-                            year: 'numeric' 
-                        });
-                        
-                        weekday = dateObj.toLocaleDateString('ms-MY', { 
-                            weekday: 'long' 
-                        });
+                    if (record.date) {
+                        // Handle format YYYY-MM-DD
+                        const dateParts = record.date.split('-');
+                        if (dateParts.length === 3) {
+                            const year = parseInt(dateParts[0]);
+                            const month = parseInt(dateParts[1]) - 1;
+                            const day = parseInt(dateParts[2]);
+                            dateObj = new Date(year, month, day);
+                            
+                            if (!isNaN(dateObj)) {
+                                formattedDate = dateObj.toLocaleDateString('ms-MY', { 
+                                    day: 'numeric', 
+                                    month: 'long', 
+                                    year: 'numeric' 
+                                });
+                                
+                                weekday = dateObj.toLocaleDateString('ms-MY', { 
+                                    weekday: 'long' 
+                                });
+                            }
+                        }
                     }
-                }
-            }
-            
-            // Fallback jika record.weekday ada
-            if (!weekday && record.weekday) {
-                weekday = record.weekday;
-            }
-            
-            if (!formattedDate) {
-                formattedDate = record.date || 'Tarikh tidak sah';
-            }
-            
-            // Parse clock in
-            let clockInTime = '--:--';
-            if (record.clockIn) {
-                try {
-                    const clockInDate = new Date(record.clockIn);
-                    if (!isNaN(clockInDate)) {
-                        clockInTime = clockInDate.toLocaleTimeString('ms-MY', { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: true 
-                        });
+                    
+                    // Fallback jika record.weekday ada
+                    if (!weekday && record.weekday) {
+                        weekday = record.weekday;
                     }
-                } catch (e) {
-                    console.log('Error parsing clockIn:', e);
-                }
-            }
-            
-            // Parse clock out
-            let clockOutTime = '--:--';
-            if (record.clockOut && record.clockOut !== '') {
-                try {
-                    const clockOutDate = new Date(record.clockOut);
-                    if (!isNaN(clockOutDate)) {
-                        clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { 
-                            hour: '2-digit', 
-                            minute: '2-digit',
-                            hour12: true 
-                        });
+                    
+                    if (!formattedDate) {
+                        formattedDate = record.date || 'Tarikh tidak sah';
                     }
-                } catch (e) {
-                    console.log('Error parsing clockOut:', e);
-                }
-            }
-            
-            // Format total hours
-            let totalHours = '-';
-            if (record.totalHours && record.totalHours > 0) {
-                const hours = Math.floor(record.totalHours);
-                const minutes = Math.round((record.totalHours - hours) * 60);
-                totalHours = minutes > 0 ? `${hours}j ${minutes}m` : `${hours}j`;
-            }
-            
-            const isToday = record.date === new Date().toISOString().split('T')[0];
-            const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
-            
-            html += `
-                <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow ${todayClass}">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
-                            ${weekday || '-'}
-                        </span>
-                        <span class="text-xs text-gray-400">${formattedDate}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <div class="flex gap-4">
-                            <div class="flex items-center gap-1">
-                                <span class="material-symbols-rounded text-sm text-green-600">login</span>
-                                <span class="text-sm font-bold">${clockInTime}</span>
+                    
+                    // Parse clock in
+                    let clockInTime = '--:--';
+                    if (record.clockIn) {
+                        try {
+                            let clockInDate;
+                            if (record.clockIn.includes('T')) {
+                                clockInDate = new Date(record.clockIn);
+                            } else {
+                                clockInDate = new Date(record.clockIn);
+                            }
+                            
+                            if (!isNaN(clockInDate)) {
+                                clockInTime = clockInDate.toLocaleTimeString('ms-MY', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                });
+                            } else {
+                                // Jika gagal parse, cuba ambil substring
+                                if (record.clockIn.length >= 16) {
+                                    const timePart = record.clockIn.substring(11, 16);
+                                    clockInTime = timePart;
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Error parsing clockIn:', e);
+                        }
+                    }
+                    
+                    // Parse clock out
+                    let clockOutTime = '--:--';
+                    if (record.clockOut && record.clockOut !== '') {
+                        try {
+                            let clockOutDate;
+                            if (record.clockOut.includes('T')) {
+                                clockOutDate = new Date(record.clockOut);
+                            } else {
+                                clockOutDate = new Date(record.clockOut);
+                            }
+                            
+                            if (!isNaN(clockOutDate)) {
+                                clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                });
+                            } else {
+                                if (record.clockOut.length >= 16) {
+                                    const timePart = record.clockOut.substring(11, 16);
+                                    clockOutTime = timePart;
+                                }
+                            }
+                        } catch (e) {
+                            console.log('Error parsing clockOut:', e);
+                        }
+                    }
+                    
+                    // Format total hours
+                    let totalHours = '-';
+                    if (record.totalHours && record.totalHours > 0) {
+                        totalHours = formatJam(record.totalHours);
+                    }
+                    
+                    const isToday = record.date === todayStr;
+                    const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
+                    
+                    html += `
+                        <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow ${todayClass}">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
+                                    ${weekday || '-'}
+                                </span>
+                                <span class="text-xs text-gray-400">${formattedDate}</span>
                             </div>
-                            <div class="flex items-center gap-1">
-                                <span class="material-symbols-rounded text-sm text-red-500">logout</span>
-                                <span class="text-sm font-bold">${clockOutTime}</span>
+                            <div class="flex justify-between items-center">
+                                <div class="flex gap-4">
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-rounded text-sm text-green-600">login</span>
+                                        <span class="text-sm font-bold">${clockInTime}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-rounded text-sm text-red-500">logout</span>
+                                        <span class="text-sm font-bold">${clockOutTime}</span>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold ${record.totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">
+                                    ${totalHours}
+                                </span>
                             </div>
                         </div>
-                        <span class="text-xs font-bold ${record.totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">
-                            ${totalHours}
-                        </span>
-                    </div>
-                </div>
-            `;
-        });
-        
-        historyEl.innerHTML = html;
-        
-    } catch (error) {
-        console.error('❌ Error loading history:', error);
-        document.getElementById('attendanceHistory').innerHTML = 
-            '<div class="text-center py-8 text-gray-400">Ralat memuat rekod</div>';
-    }
-}
+                    `;
+                });
+                
+                historyEl.innerHTML = html;
+                
+            } catch (error) {
+                console.error('❌ Error loading history:', error);
+                document.getElementById('attendanceHistory').innerHTML = 
+                    '<div class="text-center py-8 text-gray-400">Ralat memuat rekod</div>';
+            }
+        }
 
         // ============================================
         // CLOCK
