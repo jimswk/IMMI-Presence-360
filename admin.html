@@ -1564,226 +1564,221 @@
                 users.map(u => `<option value="${u.uid}">${u.name.toUpperCase()} (${u.unit || 'TIADA UNIT'})</option>`).join('');
         }
 
-        // ============================================
-        // GENERATE PDF
-        // ============================================
-        window.generatePDF = async function() {
-            const uid = document.getElementById('reportUser').value;
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
+// ============================================
+// GENERATE PDF - VERSI DIPERBAIKI (LOGO DI KIRI)
+// ============================================
+window.generatePDF = async function() {
+    const uid = document.getElementById('reportUser').value;
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+
+    if(!uid || !start || !end) return showNotif("Input Diperlukan", "Sila lengkapkan pilihan laporan.", true);
+
+    const user = users.find(u => u.uid === uid);
+    showNotif("Menjana PDF", "Sila tunggu seketika...");
+
+    try {
+        // Dapatkan data attendance dari API
+        const result = await callAPI('getAttendance', { uid, startDate: start, endDate: end });
         
-            if(!uid || !start || !end) return showNotif("Input Diperlukan", "Sila lengkapkan pilihan laporan.", true);
+        // Buat peta untuk akses cepat data attendance
+        const attendanceMap = {};
+        if (result.success && result.data) {
+            result.data.forEach(record => {
+                attendanceMap[record.date] = record;
+            });
+        }
         
-            const user = users.find(u => u.uid === uid);
-            showNotif("Menjana PDF", "Sila tunggu seketika...");
+        // Kira bilangan hari dalam julat
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        const daysInRange = [];
         
-            try {
-                // Dapatkan data attendance dari API
-                const result = await callAPI('getAttendance', { uid, startDate: start, endDate: end });
-                
-                // Buat peta untuk akses cepat data attendance
-                const attendanceMap = {};
-                if (result.success && result.data) {
-                    result.data.forEach(record => {
-                        attendanceMap[record.date] = record;
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            daysInRange.push(new Date(d));
+        }
+        
+        // Sediakan data untuk jadual
+        const tableData = [];
+        let totalHoursDecimal = 0;
+        let totalOTDecimal = 0;
+        
+        daysInRange.forEach(date => {
+            const dateStr = date.toISOString().split('T')[0];
+            const record = attendanceMap[dateStr];
+            
+            // Format tarikh (DD/MM/YYYY)
+            const tarikh = date.toLocaleDateString('ms-MY', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            
+            // Hari dalam Bahasa Malaysia
+            const hari = date.toLocaleDateString('ms-MY', { weekday: 'long' });
+            
+            let jamMasuk = '-';
+            let jamKeluar = '-';
+            let jumlahJam = '-';
+            let jumlahOT = '-';
+            
+            if (record) {
+                // Format jam masuk
+                if (record.clockIn) {
+                    const clockIn = new Date(record.clockIn);
+                    jamMasuk = clockIn.toLocaleTimeString('ms-MY', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: false 
                     });
                 }
                 
-                // Kira bilangan hari dalam julat
-                const startDate = new Date(start);
-                const endDate = new Date(end);
-                const daysInRange = [];
-                
-                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    daysInRange.push(new Date(d));
+                // Format jam keluar
+                if (record.clockOut) {
+                    const clockOut = new Date(record.clockOut);
+                    jamKeluar = clockOut.toLocaleTimeString('ms-MY', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: false 
+                    });
                 }
                 
-                // Sediakan data untuk jadual
-                const tableData = [];
-                let totalHoursDecimal = 0;
-                let totalOTDecimal = 0;
-                
-                daysInRange.forEach(date => {
-                    const dateStr = date.toISOString().split('T')[0];
-                    const record = attendanceMap[dateStr];
-                    
-                    // Format tarikh (DD/MM/YYYY)
-                    const tarikh = date.toLocaleDateString('ms-MY', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                    }).split('/').reverse().join('-');
-                    
-                    // Hari dalam Bahasa Malaysia
-                    const hari = date.toLocaleDateString('ms-MY', { weekday: 'long' });
-                    
-                    let jamMasuk = '-';
-                    let jamKeluar = '-';
-                    let jumlahJam = '-';
-                    let jumlahOT = '-';
-                    
-                    if (record) {
-                        // Format jam masuk
-                        if (record.clockIn) {
-                            const clockIn = new Date(record.clockIn);
-                            jamMasuk = clockIn.toLocaleTimeString('ms-MY', { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                hour12: false 
-                            });
-                        }
-                        
-                        // Format jam keluar
-                        if (record.clockOut) {
-                            const clockOut = new Date(record.clockOut);
-                            jamKeluar = clockOut.toLocaleTimeString('ms-MY', { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                hour12: false 
-                            });
-                        }
-                        
-                        // Jumlah jam
-                        if (record.totalHours !== undefined && record.totalHours !== null) {
-                            const hours = Math.floor(record.totalHours);
-                            const minutes = Math.round((record.totalHours - hours) * 60);
-                            jumlahJam = minutes > 0 ? `${hours}j ${minutes}m` : `${hours}j`;
-                            totalHoursDecimal += record.totalHours;
-                        }
-                        
-                        // Jumlah OT
-                        if (record.totalOT !== undefined && record.totalOT !== null && record.totalOT > 0) {
-                            const otHours = Math.floor(record.totalOT);
-                            const otMinutes = Math.round((record.totalOT - otHours) * 60);
-                            jumlahOT = otMinutes > 0 ? `${otHours}j ${otMinutes}m` : `${otHours}j`;
-                            totalOTDecimal += record.totalOT;
-                        }
-                    }
-                    
-                    tableData.push([tarikh, hari, jamMasuk, jamKeluar, jumlahJam, jumlahOT]);
-                });
-                
-                // Format total jam dan OT
-                const totalJamFormatted = formatJam(totalHoursDecimal);
-                const totalOTFormatted = formatJam(totalOTDecimal);
-                
-                // Tambah baris statistik
-                tableData.push(['', '', '', '', 'JUMLAH', '']);
-                tableData.push(['', '', '', '', totalJamFormatted, totalOTFormatted]);
-                
-                // Jana PDF
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                
-                // === HEADER DENGAN LOGO ===
-                // Muat turun logo
-                const logoUrl = 'https://ik.imagekit.io/pyreotmgq/Immigration_Department_of_Malaysia_Logo.svg.png?updatedAt=1744170604496';
-                try {
-                    const logoImg = await getBase64ImageFromUrl(logoUrl);
-                    doc.addImage(logoImg, 'PNG', 85, 10, 40, 15); // Logo di tengah
-                } catch (e) {
-                    console.log('Logo failed to load, continuing without logo');
+                // Jumlah jam
+                if (record.totalHours !== undefined && record.totalHours !== null) {
+                    const hours = Math.floor(record.totalHours);
+                    const minutes = Math.round((record.totalHours - hours) * 60);
+                    jumlahJam = minutes > 0 ? `${hours}j ${minutes}m` : `${hours}j`;
+                    totalHoursDecimal += record.totalHours;
                 }
                 
-                // Tajuk Laporan
-                doc.setFontSize(20);
-                doc.setTextColor(30, 58, 138); // Biru JIM
-                doc.setFont('helvetica', 'bold');
-                doc.text('LAPORAN KEHADIRAN', 105, 35, { align: 'center' });
-                
-                // Garis pemisah
-                doc.setDrawColor(30, 58, 138);
-                doc.setLineWidth(0.5);
-                doc.line(20, 40, 190, 40);
-                
-                // Maklumat Kakitangan
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0);
-                doc.setFont('helvetica', 'normal');
-                
-                doc.text(`Nama: ${user.name.toUpperCase()}`, 20, 50);
-                doc.text(`Email: ${user.email}`, 20, 56);
-                doc.text(`Unit: ${user.unit || '-'}`, 20, 62);
-                doc.text(`Cawangan: ${user.branch}`, 20, 68);
-                doc.text(`Tempoh: ${start} hingga ${end}`, 20, 74);
-                
-                // Jadual Kehadiran
-                doc.autoTable({
-                    startY: 80,
-                    head: [['Tarikh', 'Hari', 'Jam Masuk', 'Jam Keluar', 'Jumlah Jam', 'Jumlah OT']],
-                    body: tableData,
-                    theme: 'striped',
-                    headStyles: { 
-                        fillColor: [30, 58, 138], 
-                        textColor: [255, 255, 255],
-                        fontStyle: 'bold',
-                        halign: 'center'
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 30, halign: 'center' },
-                        1: { cellWidth: 30, halign: 'left' },
-                        2: { cellWidth: 25, halign: 'center' },
-                        3: { cellWidth: 25, halign: 'center' },
-                        4: { cellWidth: 25, halign: 'center' },
-                        5: { cellWidth: 25, halign: 'center' }
-                    },
-                    foot: [['', '', '', '', 'JUMLAH KESELURUHAN', '']],
-                    footStyles: { 
-                        fillColor: [240, 240, 240],
-                        textColor: [0, 0, 0],
-                        fontStyle: 'bold',
-                        halign: 'center'
-                    },
-                    didDrawPage: function(data) {
-                        // Footer setiap muka surat
-                        doc.setFontSize(8);
-                        doc.setTextColor(100, 100, 100);
-                        doc.text('Dijana oleh IMMI Presence 360', 105, doc.internal.pageSize.height - 10, { align: 'center' });
-                    }
-                });
-                
-                // Simpan PDF
-                const filename = `Laporan_Kehadiran_${user.name.replace(/\s+/g, '_')}_${start}_to_${end}.pdf`;
-                doc.save(filename);
-                
-                showNotif("Berjaya", "PDF telah dijana dan dimuat turun.");
-                
-            } catch (error) {
-                console.error('PDF generation error:', error);
-                showNotif("Ralat", "Gagal menjana PDF: " + error.message, true);
+                // Jumlah OT
+                if (record.totalOT !== undefined && record.totalOT !== null && record.totalOT > 0) {
+                    const otHours = Math.floor(record.totalOT);
+                    const otMinutes = Math.round((record.totalOT - otHours) * 60);
+                    jumlahOT = otMinutes > 0 ? `${otHours}j ${otMinutes}m` : `${otHours}j`;
+                    totalOTDecimal += record.totalOT;
+                }
             }
+            
+            tableData.push([tarikh, hari, jamMasuk, jamKeluar, jumlahJam, jumlahOT]);
+        });
+        
+        // Format total jam dan OT
+        const totalJamFormatted = formatJam(totalHoursDecimal);
+        const totalOTFormatted = formatJam(totalOTDecimal);
+        
+        // Tambah baris statistik
+        tableData.push(['', '', '', '', 'JUMLAH', '']);
+        tableData.push(['', '', '', '', totalJamFormatted, totalOTFormatted]);
+        
+        // Jana PDF
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+        
+        // === HEADER DENGAN LOGO DI KIRI ===
+        try {
+            const logoUrl = 'https://ik.imagekit.io/pyreotmgq/Immigration_Department_of_Malaysia_Logo.svg.png?updatedAt=1744170604496';
+            const logoImg = await getBase64ImageFromUrl(logoUrl);
+            
+            // Logo di kiri dengan saiz asal (25mm lebar, tinggi auto)
+            doc.addImage(logoImg, 'PNG', 15, 10, 25, 0); // Tinggi auto = 0
+            
+        } catch (e) {
+            console.log('Logo failed to load, continuing without logo');
+        }
+        
+        // Tajuk Laporan di tengah
+        doc.setFontSize(20);
+        doc.setTextColor(30, 58, 138); // Biru JIM
+        doc.setFont('helvetica', 'bold');
+        doc.text('LAPORAN KEHADIRAN', 105, 25, { align: 'center' });
+        
+        // Garis pemisah
+        doc.setDrawColor(30, 58, 138);
+        doc.setLineWidth(0.5);
+        doc.line(15, 30, 195, 30);
+        
+        // Maklumat Kakitangan
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        
+        doc.text(`Nama: ${user.name.toUpperCase()}`, 15, 40);
+        doc.text(`Email: ${user.email}`, 15, 46);
+        doc.text(`Unit: ${user.unit || '-'}`, 15, 52);
+        doc.text(`Cawangan: ${user.branch}`, 15, 58);
+        doc.text(`Tempoh: ${start} hingga ${end}`, 15, 64);
+        
+        // Jadual Kehadiran
+        doc.autoTable({
+            startY: 70,
+            head: [['Tarikh', 'Hari', 'Jam Masuk', 'Jam Keluar', 'Jumlah Jam', 'Jumlah OT']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { 
+                fillColor: [30, 58, 138], 
+                textColor: [255, 255, 255],
+                fontStyle: 'bold',
+                halign: 'center'
+            },
+            columnStyles: {
+                0: { cellWidth: 25, halign: 'center' },
+                1: { cellWidth: 30, halign: 'left' },
+                2: { cellWidth: 25, halign: 'center' },
+                3: { cellWidth: 25, halign: 'center' },
+                4: { cellWidth: 25, halign: 'center' },
+                5: { cellWidth: 25, halign: 'center' }
+            },
+            didDrawPage: function(data) {
+                // Footer setiap muka surat
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Dijana oleh IMMI Presence 360', 105, doc.internal.pageSize.height - 10, { align: 'center' });
+            }
+        });
+        
+        // Simpan PDF
+        const filename = `Laporan_Kehadiran_${user.name.replace(/\s+/g, '_')}_${start}_to_${end}.pdf`;
+        doc.save(filename);
+        
+        showNotif("Berjaya", "PDF telah dijana dan dimuat turun.");
+        
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        showNotif("Ralat", "Gagal menjana PDF: " + error.message, true);
+    }
+};
+
+// Helper function untuk format jam
+function formatJam(decimalJam) {
+    if (!decimalJam || decimalJam <= 0) return '-';
+    const jam = Math.floor(decimalJam);
+    const minit = Math.round((decimalJam - jam) * 60);
+    return minit > 0 ? `${jam}j ${minit}m` : `${jam}j`;
+}
+
+// Helper function untuk dapatkan image sebagai base64
+function getBase64ImageFromUrl(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL('image/png');
+            resolve(dataURL);
         };
-        
-        // Helper function untuk format jam
-        function formatJam(decimalJam) {
-            if (!decimalJam || decimalJam <= 0) return '-';
-            const jam = Math.floor(decimalJam);
-            const minit = Math.round((decimalJam - jam) * 60);
-            return minit > 0 ? `${jam}j ${minit}m` : `${jam}j`;
-        }
-        
-        // Helper function untuk dapatkan image sebagai base64
-        function getBase64ImageFromUrl(url) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    const dataURL = canvas.toDataURL('image/png');
-                    resolve(dataURL);
-                };
-                img.onerror = reject;
-                img.src = url;
-            });
-        }
+        img.onerror = reject;
+        img.src = url;
+    });
+}
 
         window.searchUsers = function() {
             const q = document.getElementById('searchUser').value.toLowerCase();
