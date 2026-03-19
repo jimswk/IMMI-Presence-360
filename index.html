@@ -247,7 +247,7 @@
             }
             
             .video-wrapper {
-                aspect-ratio: 3/4; /* Nisbah untuk portrait */
+                aspect-ratio: 3/4;
             }
             
             .face-guide {
@@ -259,33 +259,27 @@
                 max-height: 300px;
             }
             
-            /* Butang lebih besar untuk touch */
             button {
                 min-height: 48px;
                 touch-action: manipulation;
             }
             
-            /* Font lebih kecil untuk teks secondary */
             .text-xs {
                 font-size: 0.7rem;
             }
             
-            /* Location card padding dikurangkan */
             .bg-gray-50.p-4 {
                 padding: 12px;
             }
             
-            /* History items */
             .bg-white.p-4 {
                 padding: 12px;
             }
             
-            /* Progress bar */
             .progress-bar {
                 margin: 8px 0;
             }
             
-            /* Challenge box */
             .challenge-box {
                 padding: 10px;
                 font-size: 0.9rem;
@@ -457,7 +451,6 @@
                 audioSuccess = new Audio(successUrl);
                 audioError = new Audio(errorUrl);
                 
-                // Set volume
                 audioSuccess.volume = 0.7;
                 audioError.volume = 0.7;
                 
@@ -482,14 +475,16 @@
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
-        function showNotification(title, message, isError = false) {
+        function showNotification(title, message, isError = false, playAudio = true) {
             const notif = document.getElementById('notification');
             document.getElementById('notifTitle').innerText = title;
             document.getElementById('notifMessage').innerText = message;
             notif.className = `notification show ${isError ? 'error' : ''}`;
             
-            // Mainkan bunyi
-            playSound(isError ? 'error' : 'success');
+            // Mainkan bunyi hanya jika playAudio = true
+            if (playAudio) {
+                playSound(isError ? 'error' : 'success');
+            }
             
             setTimeout(() => notif.classList.remove('show'), 3000);
         }
@@ -577,7 +572,6 @@
             } catch (error) {
                 console.error('❌ Failed to load models:', error);
                 
-                // Try backup CDN
                 try {
                     console.log('🔄 Trying backup CDN...');
                     const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
@@ -593,7 +587,7 @@
                     
                 } catch (backupError) {
                     console.error('❌ Backup also failed:', backupError);
-                    showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true);
+                    showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true, false);
                     return false;
                 }
             }
@@ -603,7 +597,7 @@
         // LOCATION FUNCTIONS
         // ============================================
         function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // metres
+            const R = 6371e3;
             const φ1 = lat1 * Math.PI/180;
             const φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180;
@@ -654,7 +648,6 @@
                 return;
             }
             
-            // Get initial position immediately
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     userLocation = {
@@ -674,7 +667,6 @@
                 }
             );
             
-            // Then watch for changes
             locationWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     userLocation = {
@@ -695,7 +687,7 @@
         }
 
         // ============================================
-        // ATTENDANCE FUNCTIONS - VERSI DIPERBAIKI
+        // ATTENDANCE FUNCTIONS - VERSI DIPERBAIKI DENGAN STATUS
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
@@ -720,11 +712,8 @@
                     const record = result.data[0];
                     console.log('📅 Rekod hari ini:', record);
                     
-                    // Semak clockIn dan clockOut dengan lebih teliti
-                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
-                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                    
-                    if (hasClockIn && !hasClockOut) {
+                    // GUNAKAN STATUS dari sheet
+                    if (record.status === 'clocked_in') {
                         // Sudah clock in tetapi belum clock out
                         statusEl.innerText = 'DALAM BERTUGAS';
                         statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
@@ -737,7 +726,7 @@
                         
                         console.log('✅ Status dikemaskini: DALAM BERTUGAS');
                         
-                    } else if (hasClockIn && hasClockOut) {
+                    } else if (record.status === 'clocked_out') {
                         // Sudah clock in dan clock out
                         statusEl.innerText = 'SELESAI';
                         statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
@@ -749,16 +738,45 @@
                         clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
                         
                         console.log('✅ Status dikemaskini: SELESAI');
+                        
                     } else {
-                        // Rekod tak lengkap
-                        statusEl.innerText = 'BELUM MASUK';
-                        statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+                        // Fallback kepada method lama jika tiada status
+                        const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
+                        const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
                         
-                        clockInBtn.disabled = false;
-                        clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
-                        
-                        clockOutBtn.disabled = true;
-                        clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
+                        if (hasClockIn && !hasClockOut) {
+                            statusEl.innerText = 'DALAM BERTUGAS';
+                            statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
+                            
+                            clockInBtn.disabled = true;
+                            clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                            
+                            clockOutBtn.disabled = false;
+                            clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
+                            
+                            console.log('✅ Status dikemaskini (fallback): DALAM BERTUGAS');
+                            
+                        } else if (hasClockIn && hasClockOut) {
+                            statusEl.innerText = 'SELESAI';
+                            statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
+                            
+                            clockInBtn.disabled = true;
+                            clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                            
+                            clockOutBtn.disabled = true;
+                            clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                            
+                            console.log('✅ Status dikemaskini (fallback): SELESAI');
+                        } else {
+                            statusEl.innerText = 'BELUM MASUK';
+                            statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+                            
+                            clockInBtn.disabled = false;
+                            clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
+                            
+                            clockOutBtn.disabled = true;
+                            clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
+                        }
                     }
                 } else {
                     // Tiada rekod untuk hari ini
@@ -828,7 +846,7 @@
             isVerifying = true;
             
             if (!faceMatcher) {
-                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true);
+                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true, false);
                 isVerifying = false;
                 return false;
             }
@@ -863,7 +881,6 @@
                 
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Start face detection overlay
                 let faceDetectionInterval = setInterval(async () => {
                     if (!scanVideo || !scanVideo.srcObject) return;
                     
@@ -886,12 +903,9 @@
                             faceBox.style.height = `${adjustedBox.height}px`;
                             faceOverlay.appendChild(faceBox);
                         }
-                    } catch (e) {
-                        // Ignore detection errors
-                    }
+                    } catch (e) {}
                 }, 100);
                 
-                // Smile detection
                 updateProgress(30);
                 challengeDisplay.innerText = '😊 SILA SENYUM';
                 scanStatus.innerText = 'Sila senyum lebar...';
@@ -930,7 +944,6 @@
                     throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
                 }
                 
-                // Face Matching
                 updateProgress(80);
                 challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
                 scanStatus.innerText = 'Memadankan wajah dengan rekod...';
@@ -954,7 +967,6 @@
                     throw new Error('Wajah tidak sepadan dengan rekod');
                 }
                 
-                // All tests passed
                 updateProgress(100);
                 challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
                 scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
@@ -965,7 +977,6 @@
                 videoStream = null;
                 scanContainer.classList.add('hidden');
                 
-                showNotification('Berjaya', 'Pengesahan wajah berjaya');
                 return true;
                 
             } catch (error) {
@@ -977,7 +988,7 @@
                 }
                 
                 scanContainer.classList.add('hidden');
-                showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true);
+                showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true, true);
                 return false;
                 
             } finally {
@@ -998,7 +1009,7 @@
             const btn = document.getElementById('loginBtn');
 
             if (!email || !password) {
-                showNotification('Ralat', 'Sila isi email dan kata laluan', true);
+                showNotification('Ralat', 'Sila isi email dan kata laluan', true, false);
                 return;
             }
 
@@ -1011,7 +1022,6 @@
                 if (result.success) {
                     currentUser = result.user;
                     
-                    // Create face matcher if face descriptor exists
                     if (currentUser.faceDescriptor && currentUser.faceDescriptor !== '') {
                         try {
                             const descriptor = JSON.parse(currentUser.faceDescriptor);
@@ -1038,16 +1048,15 @@
                     loadAttendanceHistory();
                     startClock();
                     
-                    // Init audio
                     initAudio();
                     
-                    showNotification('Selamat Datang', `Log masuk berjaya`);
+                    showNotification('Selamat Datang', `Log masuk berjaya`, false, false);
                 } else {
-                    showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true);
+                    showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true, true);
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Log Masuk';
@@ -1066,7 +1075,7 @@
         // ============================================
         window.handleClockIn = async function() {
             if (!userLocation) {
-                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true);
+                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
                 return;
             }
             
@@ -1076,7 +1085,7 @@
             );
             
             if (distance > (parseInt(currentUser.radius) || 500)) {
-                showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan untuk clock in', true);
+                showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan untuk clock in', true, true);
                 return;
             }
             
@@ -1099,23 +1108,21 @@
                 console.log('📥 Hasil clock in:', result);
                 
                 if (result.success) {
-                    showNotification('Berjaya', 'Clock In direkodkan');
+                    showNotification('Berjaya', 'Clock In direkodkan', false, true);
                     
-                    // Update attendance status immediately
+                    // Tunggu sebentar untuk data direkod
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
                     await checkTodayAttendance();
-                    
-                    // Refresh history
                     await loadAttendanceHistory();
-                    
-                    // Update location display
                     updateLocationDisplay();
                     
                 } else {
-                    showNotification('Ralat', result.error || 'Gagal clock in', true);
+                    showNotification('Ralat', result.error || 'Gagal clock in', true, true);
                 }
             } catch (error) {
                 console.error('Clock in error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'MASUK';
@@ -1124,7 +1131,7 @@
 
         window.handleClockOut = async function() {
             if (!userLocation) {
-                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true);
+                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
                 return;
             }
             
@@ -1147,23 +1154,21 @@
                 console.log('📥 Hasil clock out:', result);
                 
                 if (result.success) {
-                    showNotification('Berjaya', 'Clock Out direkodkan');
+                    showNotification('Berjaya', 'Clock Out direkodkan', false, true);
                     
-                    // Update attendance status immediately
+                    // Tunggu sebentar untuk data direkod
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
                     await checkTodayAttendance();
-                    
-                    // Refresh history
                     await loadAttendanceHistory();
-                    
-                    // Update location display
                     updateLocationDisplay();
                     
                 } else {
-                    showNotification('Ralat', result.error || 'Gagal clock out', true);
+                    showNotification('Ralat', result.error || 'Gagal clock out', true, true);
                 }
             } catch (error) {
                 console.error('Clock out error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'KELUAR';
@@ -1281,7 +1286,7 @@
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
             loadFaceModels();
-            initAudio(); // Init audio awal
+            initAudio();
             
             if (!document.getElementById('faceOverlay')) {
                 const overlay = document.createElement('div');
@@ -1293,7 +1298,6 @@
                 }
             }
             
-            // Fix untuk scroll pada mobile
             setTimeout(() => window.scrollTo(0, 0), 100);
         });
 
@@ -1310,7 +1314,6 @@
             }
         });
 
-        // Handle orientation change
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
                 if (faceOverlay) faceOverlay.innerHTML = '';
