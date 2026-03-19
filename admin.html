@@ -1565,7 +1565,7 @@
         }
 
 // ============================================
-// GENERATE PDF - VERSI DIPERBAIKI (LOGO DI KIRI)
+// GENERATE PDF - VERSI DIPERBAIKI (RAPI)
 // ============================================
 window.generatePDF = async function() {
     const uid = document.getElementById('reportUser').value;
@@ -1590,8 +1590,8 @@ window.generatePDF = async function() {
         }
         
         // Kira bilangan hari dalam julat
-        const startDate = new Date(start);
-        const endDate = new Date(end);
+        const startDate = new Date(start + 'T00:00:00');
+        const endDate = new Date(end + 'T00:00:00');
         const daysInRange = [];
         
         for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
@@ -1602,6 +1602,7 @@ window.generatePDF = async function() {
         const tableData = [];
         let totalHoursDecimal = 0;
         let totalOTDecimal = 0;
+        let totalDaysWithData = 0;
         
         daysInRange.forEach(date => {
             const dateStr = date.toISOString().split('T')[0];
@@ -1623,6 +1624,8 @@ window.generatePDF = async function() {
             let jumlahOT = '-';
             
             if (record) {
+                totalDaysWithData++;
+                
                 // Format jam masuk
                 if (record.clockIn) {
                     const clockIn = new Date(record.clockIn);
@@ -1634,7 +1637,7 @@ window.generatePDF = async function() {
                 }
                 
                 // Format jam keluar
-                if (record.clockOut) {
+                if (record.clockOut && record.clockOut !== '') {
                     const clockOut = new Date(record.clockOut);
                     jamKeluar = clockOut.toLocaleTimeString('ms-MY', { 
                         hour: '2-digit', 
@@ -1644,7 +1647,7 @@ window.generatePDF = async function() {
                 }
                 
                 // Jumlah jam
-                if (record.totalHours !== undefined && record.totalHours !== null) {
+                if (record.totalHours !== undefined && record.totalHours !== null && record.totalHours > 0) {
                     const hours = Math.floor(record.totalHours);
                     const minutes = Math.round((record.totalHours - hours) * 60);
                     jumlahJam = minutes > 0 ? `${hours}j ${minutes}m` : `${hours}j`;
@@ -1667,10 +1670,6 @@ window.generatePDF = async function() {
         const totalJamFormatted = formatJam(totalHoursDecimal);
         const totalOTFormatted = formatJam(totalOTDecimal);
         
-        // Tambah baris statistik
-        tableData.push(['', '', '', '', 'JUMLAH', '']);
-        tableData.push(['', '', '', '', totalJamFormatted, totalOTFormatted]);
-        
         // Jana PDF
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({
@@ -1684,8 +1683,8 @@ window.generatePDF = async function() {
             const logoUrl = 'https://ik.imagekit.io/pyreotmgq/Immigration_Department_of_Malaysia_Logo.svg.png?updatedAt=1744170604496';
             const logoImg = await getBase64ImageFromUrl(logoUrl);
             
-            // Logo di kiri dengan saiz asal (25mm lebar, tinggi auto)
-            doc.addImage(logoImg, 'PNG', 15, 10, 25, 0); // Tinggi auto = 0
+            // Logo di kiri dengan saiz asal
+            doc.addImage(logoImg, 'PNG', 15, 10, 25, 0);
             
         } catch (e) {
             console.log('Logo failed to load, continuing without logo');
@@ -1693,7 +1692,7 @@ window.generatePDF = async function() {
         
         // Tajuk Laporan di tengah
         doc.setFontSize(20);
-        doc.setTextColor(30, 58, 138); // Biru JIM
+        doc.setTextColor(30, 58, 138);
         doc.setFont('helvetica', 'bold');
         doc.text('LAPORAN KEHADIRAN', 105, 25, { align: 'center' });
         
@@ -1702,42 +1701,72 @@ window.generatePDF = async function() {
         doc.setLineWidth(0.5);
         doc.line(15, 30, 195, 30);
         
-        // Maklumat Kakitangan
+        // Maklumat Kakitangan - dalam dua baris untuk jimat ruang
         doc.setFontSize(10);
         doc.setTextColor(0, 0, 0);
         doc.setFont('helvetica', 'normal');
         
+        // Baris 1
         doc.text(`Nama: ${user.name.toUpperCase()}`, 15, 40);
+        doc.text(`Unit: ${user.unit || '-'}`, 120, 40);
+        
+        // Baris 2
         doc.text(`Email: ${user.email}`, 15, 46);
-        doc.text(`Unit: ${user.unit || '-'}`, 15, 52);
-        doc.text(`Cawangan: ${user.branch}`, 15, 58);
-        doc.text(`Tempoh: ${start} hingga ${end}`, 15, 64);
+        doc.text(`Cawangan: ${user.branch}`, 120, 46);
+        
+        // Baris 3
+        doc.text(`Tempoh: ${start} hingga ${end}`, 15, 52);
         
         // Jadual Kehadiran
         doc.autoTable({
-            startY: 70,
-            head: [['Tarikh', 'Hari', 'Jam Masuk', 'Jam Keluar', 'Jumlah Jam', 'Jumlah OT']],
+            startY: 60,
+            head: [['Tarikh', 'Hari', 'Masuk', 'Keluar', 'Jumlah Jam', 'OT']],
             body: tableData,
-            theme: 'striped',
+            foot: [[
+                { content: 'JUMLAH KESELURUHAN', colSpan: 4, styles: { halign: 'right', fontStyle: 'bold' } },
+                { content: totalJamFormatted, styles: { halign: 'center', fontStyle: 'bold' } },
+                { content: totalOTFormatted, styles: { halign: 'center', fontStyle: 'bold' } }
+            ]],
+            theme: 'grid',
             headStyles: { 
                 fillColor: [30, 58, 138], 
                 textColor: [255, 255, 255],
                 fontStyle: 'bold',
-                halign: 'center'
+                halign: 'center',
+                lineWidth: 0.1,
+                lineColor: [255, 255, 255]
+            },
+            footStyles: {
+                fillColor: [240, 240, 240],
+                textColor: [0, 0, 0],
+                fontStyle: 'bold',
+                halign: 'center',
+                lineWidth: 0.1
+            },
+            bodyStyles: {
+                lineWidth: 0.1,
+                lineColor: [200, 200, 200]
+            },
+            alternateRowStyles: {
+                fillColor: [250, 250, 250]
             },
             columnStyles: {
-                0: { cellWidth: 25, halign: 'center' },
+                0: { cellWidth: 28, halign: 'center' },
                 1: { cellWidth: 30, halign: 'left' },
-                2: { cellWidth: 25, halign: 'center' },
-                3: { cellWidth: 25, halign: 'center' },
+                2: { cellWidth: 20, halign: 'center' },
+                3: { cellWidth: 20, halign: 'center' },
                 4: { cellWidth: 25, halign: 'center' },
-                5: { cellWidth: 25, halign: 'center' }
+                5: { cellWidth: 20, halign: 'center' }
             },
+            margin: { left: 15, right: 15 },
             didDrawPage: function(data) {
                 // Footer setiap muka surat
                 doc.setFontSize(8);
-                doc.setTextColor(100, 100, 100);
+                doc.setTextColor(150, 150, 150);
                 doc.text('Dijana oleh IMMI Presence 360', 105, doc.internal.pageSize.height - 10, { align: 'center' });
+                
+                // Nombor muka surat
+                doc.text(`Muka Surat ${doc.internal.getNumberOfPages()}`, 195, doc.internal.pageSize.height - 10, { align: 'right' });
             }
         });
         
@@ -1758,7 +1787,9 @@ function formatJam(decimalJam) {
     if (!decimalJam || decimalJam <= 0) return '-';
     const jam = Math.floor(decimalJam);
     const minit = Math.round((decimalJam - jam) * 60);
-    return minit > 0 ? `${jam}j ${minit}m` : `${jam}j`;
+    if (minit === 0) return `${jam}j`;
+    if (minit < 10) return `${jam}j 0${minit}m`;
+    return `${jam}j ${minit}m`;
 }
 
 // Helper function untuk dapatkan image sebagai base64
