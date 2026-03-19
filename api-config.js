@@ -1,6 +1,6 @@
-// Konfigurasi API - TUKAR URL INI
+// Konfigurasi API - TUKAR URL INI selepas deploy
 const CONFIG = {
-    API_BASE_URL: 'https://script.google.com/macros/s/AKfycbxQZmYE49CDoxfZEbG6l1CoW0CV83i_maFqEFsvHwV3thh36G-rrumK3_a5U7nQrAgHUA/exec'
+    API_BASE_URL: 'https://script.google.com/macros/s/AKfycbzVSo7ov0A_INrFj1Ql4kTi0h5-5QmIb8ccXrz6TfMqiUKl7I3A1wO4B4LMklAqXPQs/exec'
 };
 
 // Fungsi global untuk panggil API
@@ -16,6 +16,9 @@ async function callAPI(method, params = {}) {
             url += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(value);
         }
     });
+    
+    // Add cache buster
+    url += '&_=' + new Date().getTime();
     
     try {
         const response = await fetch(url, {
