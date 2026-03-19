@@ -191,6 +191,12 @@
             box-shadow: 0 10px 15px -3px rgba(30, 58, 138, 0.05);
         }
 
+        .input-field[readonly] {
+            background: #f1f5f9;
+            color: #475569;
+            cursor: not-allowed;
+        }
+
         .location-map {
             height: 350px;
             width: 100%;
@@ -343,6 +349,17 @@
             width: 90%;
             text-align: center;
         }
+
+        .unit-badge {
+            display: inline-block;
+            background: #dbeafe;
+            color: #1e3a8a;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -402,9 +419,10 @@
                 </div>
                 
                 <div class="bg-white/5 border border-white/10 p-5 rounded-3xl mb-8">
-                    <p class="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-1">Pentadbir Cawangan</p>
+                    <p class="text-[10px] font-black text-blue-300 uppercase tracking-widest mb-1">Pentadbir</p>
                     <p class="font-bold text-white truncate" id="adminName">-</p>
                     <p class="text-xs text-gray-400 mt-1" id="adminBranchDisplay"></p>
+                    <p class="text-xs text-blue-300 mt-1 font-bold" id="adminUnitDisplay"></p>
                 </div>
 
                 <nav class="space-y-2">
@@ -438,7 +456,11 @@
                 <div class="flex justify-between items-end mb-8">
                     <div>
                         <h1 class="text-4xl font-black text-gray-800">Senarai Pengguna</h1>
-                        <p class="text-gray-400 text-sm mt-2">Urus dan kemaskini maklumat kakitangan Cawangan <span id="currentBranchName" class="text-blue-800 font-bold"></span></p>
+                        <p class="text-gray-400 text-sm mt-2">
+                            Urus dan kemaskini maklumat kakitangan 
+                            <span id="currentBranchName" class="text-blue-800 font-bold"></span> - 
+                            <span id="currentUnitName" class="text-green-600 font-bold"></span>
+                        </p>
                     </div>
                     <div class="relative w-72">
                         <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
@@ -504,7 +526,7 @@
                                 </div>
                                 <div>
                                     <label class="input-label">Unit / Bahagian</label>
-                                    <input type="text" id="userUnit" class="input-field" placeholder="cth: ICT / Pengurusan / Operasi">
+                                    <input type="text" id="userUnit" class="input-field bg-gray-100 text-gray-500 font-black" readonly>
                                 </div>
                                 <div>
                                     <label class="input-label">Cawangan</label>
@@ -762,7 +784,7 @@
             document.getElementById('userId').value = "";
             document.getElementById('userName').value = "";
             document.getElementById('userEmail').value = "";
-            document.getElementById('userUnit').value = "";
+            document.getElementById('userUnit').value = currentUser ? currentUser.unit : "";
             document.getElementById('userPassword').value = "";
             document.getElementById('faceDescriptor').value = "";
             document.getElementById('userRadius').value = 500;
@@ -788,6 +810,8 @@
                 userMarker = null;
                 userCircle = null;
             }
+            
+            console.log("✅ Form reset selepas simpan");
         }
 
         function resetRegisterForm() {
@@ -795,7 +819,7 @@
             document.getElementById('userId').value = "";
             document.getElementById('userName').value = "";
             document.getElementById('userEmail').value = "";
-            document.getElementById('userUnit').value = "";
+            document.getElementById('userUnit').value = currentUser ? currentUser.unit : "";
             document.getElementById('userPassword').value = "";
             document.getElementById('faceDescriptor').value = "";
             document.getElementById('userRadius').value = 500;
@@ -815,6 +839,8 @@
                 userMarker = null;
                 userCircle = null;
             }
+            
+            console.log("✅ Register form reset dengan unit:", currentUser ? currentUser.unit : '');
         }
 
         function cancelAndReset() {
@@ -840,17 +866,20 @@
                 
                 if (result.success) {
                     currentUser = result.user;
+                    
                     if (currentUser.role !== 'admin' && currentUser.role !== 'superadmin') {
                         showNotif("Akses Disekat", "Anda tidak mempunyai kebenaran Pentadbir.", true);
                         btn.disabled = false;
                         btn.innerHTML = 'Log Masuk';
                         return;
                     }
+                    
                     initDashboard();
                 } else {
                     showNotif("Gagal", result.error || "Maklumat log masuk salah", true);
                 }
             } catch (error) {
+                console.error('Login error:', error);
                 showNotif("Ralat Sistem", "Gagal menghubungi server", true);
             } finally {
                 btn.disabled = false;
@@ -861,10 +890,15 @@
         function initDashboard() {
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('adminDashboard').classList.remove('hidden');
+            
             document.getElementById('adminName').innerText = currentUser.name;
             document.getElementById('adminBranchDisplay').innerText = `JIM Cawangan ${currentUser.branch}`;
+            document.getElementById('adminUnitDisplay').innerText = `Unit ${currentUser.unit}`;
             document.getElementById('currentBranchName').innerText = currentUser.branch;
+            document.getElementById('currentUnitName').innerText = currentUser.unit;
+            
             document.getElementById('userBranch').value = currentUser.branch;
+            document.getElementById('userUnit').value = currentUser.unit;
 
             const today = new Date();
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -873,25 +907,58 @@
 
             loadUsers();
             loadFaceModels(); 
+            
+            console.log("✅ Dashboard initialized for:", currentUser.branch, "-", currentUser.unit);
         }
 
         // ============================================
         // FACE MODELS
         // ============================================
         async function loadFaceModels() {
+            if (modelsLoaded) return true;
+            
             const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
+            
             try {
-                await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-                ]);
+                console.log('🔄 Loading face models...');
+                
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                console.log('✅ TinyFaceDetector loaded');
+                
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                console.log('✅ FaceLandmark68Net loaded');
+                
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                console.log('✅ FaceRecognitionNet loaded');
+                
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                console.log('✅ FaceExpressionNet loaded');
+                
+                modelsLoaded = true;
+                console.log('✅ All face models loaded successfully');
                 return true;
+                
             } catch (error) {
-                console.error('Failed to load models:', error);
-                showStatusMessage('Gagal memuatkan model wajah', 'error');
-                return false;
+                console.error('❌ Failed to load models:', error);
+                
+                try {
+                    console.log('🔄 Trying backup CDN...');
+                    const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+                    
+                    await faceapi.nets.tinyFaceDetector.loadFromUri(BACKUP_URL);
+                    await faceapi.nets.faceLandmark68Net.loadFromUri(BACKUP_URL);
+                    await faceapi.nets.faceRecognitionNet.loadFromUri(BACKUP_URL);
+                    await faceapi.nets.faceExpressionNet.loadFromUri(BACKUP_URL);
+                    
+                    modelsLoaded = true;
+                    console.log('✅ Face models loaded from backup');
+                    return true;
+                    
+                } catch (backupError) {
+                    console.error('❌ Backup also failed:', backupError);
+                    showNotif('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true);
+                    return false;
+                }
             }
         }
 
@@ -900,14 +967,25 @@
         // ============================================
         async function loadUsers() {
             try {
-                const result = await callAPI('getUsers', { branch: currentUser.branch });
+                console.log(`🔄 Loading users for ${currentUser.branch} - ${currentUser.unit}...`);
+                
+                const result = await callAPI('getUsers', { 
+                    branch: currentUser.branch,
+                    unit: currentUser.unit 
+                });
+                
                 if (result.success) {
                     users = result.data || [];
                     renderUsersTable();
                     updateDashboardStats();
                     updateReportDropdown();
+                    
+                    console.log(`✅ Loaded ${users.length} users for ${currentUser.branch} - ${currentUser.unit}`);
+                } else {
+                    showNotif('Ralat', 'Gagal memuatkan senarai pengguna', true);
                 }
             } catch (error) {
+                console.error('Load users error:', error);
                 showNotif('Ralat', 'Gagal memuatkan senarai pengguna', true);
             }
         }
@@ -930,7 +1008,7 @@
                         <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest">${u.branch}</div>
                     </td>
                     <td>
-                        ${u.faceDescriptor ? 
+                        ${u.faceDescriptor && u.faceDescriptor !== '' ? 
                             '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full border border-green-100">DIDAFTAR</span>' : 
                             '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full border border-red-100">TIADA REKOD</span>'}
                     </td>
@@ -940,11 +1018,11 @@
                     </td>
                     <td>
                         <div class="flex gap-2 justify-center">
-                            <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100 transition-colors" title="Edit">
+                            <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100 transition-colors" title="Edit Maklumat Asas">
                                 <span class="material-symbols-rounded text-xl">edit</span>
                             </button>
                             
-                            ${u.faceDescriptor ? 
+                            ${u.faceDescriptor && u.faceDescriptor !== '' ? 
                                 `<button onclick="openResetModal('${u.uid}', '${u.name}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100 transition-colors" title="Reset & Daftar Semula Wajah">
                                     <span class="material-symbols-rounded text-xl">face_4</span>
                                 </button>` : 
@@ -961,7 +1039,56 @@
         }
 
         // ============================================
-        // RESET WAJAH FUNCTIONS
+        // EDIT USER - MAKLUMAT ASAS SAHAJA (TANPA BIOMETRIK)
+        // ============================================
+        window.editUser = function(uid) {
+            const u = users.find(x => x.uid === uid);
+            if (!u) return;
+
+            // Validation: Pastikan unit sama
+            if (u.unit !== currentUser.unit) {
+                showNotif('Ralat', 'Anda hanya boleh mengedit pengguna dalam unit anda sendiri', true);
+                return;
+            }
+
+            // Reset form dan pastikan dalam mode edit biasa (bukan reset mode)
+            resetFormAfterSave();
+            document.getElementById('resetMode').value = 'false';
+            document.getElementById('regFormTitle').innerText = "Kemaskini Kakitangan";
+
+            // Isi data asas pengguna
+            document.getElementById('userId').value = u.uid;
+            document.getElementById('userName').value = u.name;
+            document.getElementById('userEmail').value = u.email;
+            document.getElementById('userUnit').value = u.unit || currentUser.unit;
+            document.getElementById('userPassword').value = ""; // Kosongkan password - admin boleh reset jika perlu
+            
+            // Isi data geofencing
+            document.getElementById('userRadius').value = u.radius || 500;
+            document.getElementById('userLat').value = u.lat || 1.5533;
+            document.getElementById('userLng').value = u.lng || 110.3592;
+            updateRadius(u.radius || 500);
+
+            // PENTING: JANGAN paparkan data biometrik dalam mode edit biasa
+            // Biarkan faceDescriptor kosong dan tunjuk mesej sesuai
+            document.getElementById('faceDescriptor').value = "";
+            document.getElementById('faceStatusMsg').innerHTML = "<span class='text-gray-500'>Gunakan butang 'Reset Wajah' (ikon muka) untuk kemaskini biometrik.</span>";
+            
+            // Sembunyikan butang imbas wajah dalam mode edit biasa
+            document.getElementById('captureBtn').classList.add('hidden');
+            document.getElementById('resetFaceBtn').classList.add('hidden');
+            document.getElementById('retryCamBtn').classList.add('hidden');
+
+            // Reset step ke 1 dan tukar tab
+            currentStep = 1;
+            updateStepUI();
+            switchTab('register');
+            
+            showNotif("Info", "Sila kemaskini maklumat asas sahaja. Untuk biometrik, gunakan ikon muka.", false);
+        };
+
+        // ============================================
+        // RESET WAJAH FUNCTIONS - KHAS UNTUK BIOMETRIK
         // ============================================
         function openResetModal(uid, name) {
             userToReset = { uid, name };
@@ -978,6 +1105,12 @@
             const user = users.find(u => u.uid === uid);
             if (!user) return;
             
+            // Validation: Pastikan unit sama
+            if (user.unit !== currentUser.unit) {
+                showNotif('Ralat', 'Anda hanya boleh reset wajah pengguna dalam unit anda sendiri', true);
+                return;
+            }
+            
             closeResetModal();
             
             resetFormAfterSave();
@@ -987,21 +1120,24 @@
             document.getElementById('userId').value = user.uid;
             document.getElementById('userName').value = user.name;
             document.getElementById('userEmail').value = user.email;
-            document.getElementById('userUnit').value = user.unit || "";
+            document.getElementById('userUnit').value = user.unit || currentUser.unit;
             document.getElementById('userPassword').value = "";
             document.getElementById('userRadius').value = user.radius || 500;
             document.getElementById('userLat').value = user.lat || 1.5533;
             document.getElementById('userLng').value = user.lng || 110.3592;
             updateRadius(user.radius || 500);
             
+            // Reset face descriptor dan tunjuk mesej sesuai
             document.getElementById('faceDescriptor').value = "";
             document.getElementById('faceStatusMsg').innerHTML = "<span class='text-amber-600 font-black'>⚠️ Sedia untuk daftar wajah baru</span>";
             document.getElementById('captureBtn').classList.remove('hidden');
             document.getElementById('resetFaceBtn').classList.add('hidden');
             
+            // Terus ke step 3 (biometrik)
             currentStep = 3;
             updateStepUI();
             
+            // Aktifkan kamera
             setTimeout(() => {
                 initCamera();
                 loadFaceModels();
@@ -1080,7 +1216,6 @@
                 video.srcObject = videoStream;
                 statusMsg.innerText = "Kamera Aktif. Sila posisikan wajah di tengah.";
                 
-                // Initialize face overlay
                 faceOverlay = document.getElementById('faceOverlay');
                 
             } catch (err) {
@@ -1101,114 +1236,110 @@
             }
         }
 
-        // Enhanced capture face with smile detection
-async function captureFace() {
-    if (isProcessing) return;
-    isProcessing = true;
-    
-    const btn = document.getElementById('captureBtn');
-    const video = document.getElementById('faceVideo');
-    const statusMsg = document.getElementById('faceStatusMsg');
-    
-    if (!video.srcObject) {
-        showNotif("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", true);
-        isProcessing = false;
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = 'Mengesan...';
-    
-    updateProgress(20);
-    statusMsg.innerHTML = "<span class='text-blue-600 font-black'>😊 SILA SENYUM SEKARANG...</span>";
-    
-    // Check for smile selama 5 saat
-    let smileDetected = false;
-    let smileStartTime = Date.now();
-    
-    while (Date.now() - smileStartTime < 5000) {
-        updateProgress(20 + ((Date.now() - smileStartTime) / 5000) * 50);
-        
-        try {
-            const detection = await faceapi.detectSingleFace(video, 
-                new faceapi.TinyFaceDetectorOptions())
-                .withFaceExpressions()
-                .withFaceLandmarks();
+        async function captureFace() {
+            if (isProcessing) return;
+            isProcessing = true;
             
-            if (detection) {
-                // Method 1: Guna expression
-                if (detection.expressions && detection.expressions.happy > 0.5) {
-                    smileDetected = true;
-                    console.log('😊 Smile detected via expression!');
-                    break;
-                }
+            const btn = document.getElementById('captureBtn');
+            const video = document.getElementById('faceVideo');
+            const statusMsg = document.getElementById('faceStatusMsg');
+            
+            if (!video.srcObject) {
+                showNotif("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", true);
+                isProcessing = false;
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = 'Mengesan...';
+            
+            updateProgress(20);
+            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>😊 SILA SENYUM SEKARANG...</span>";
+            
+            let smileDetected = false;
+            let smileStartTime = Date.now();
+            
+            while (Date.now() - smileStartTime < 5000) {
+                updateProgress(20 + ((Date.now() - smileStartTime) / 5000) * 50);
                 
-                // Method 2: Guna geometric (fallback)
-                if (detection.landmarks) {
-                    const mouth = detection.landmarks.getMouth();
-                    if (mouth && mouth.length > 10) {
-                        const leftMouth = mouth[0];
-                        const rightMouth = mouth[6];
-                        const width = Math.hypot(rightMouth.x - leftMouth.x, rightMouth.y - leftMouth.y);
-                        const height = Math.hypot(mouth[9].x - mouth[3].x, mouth[9].y - mouth[3].y);
-                        const ratio = width / (height + 0.1);
-                        
-                        if (ratio > 2.0) {
+                try {
+                    const detection = await faceapi.detectSingleFace(video, 
+                        new faceapi.TinyFaceDetectorOptions())
+                        .withFaceExpressions()
+                        .withFaceLandmarks();
+                    
+                    if (detection) {
+                        if (detection.expressions && detection.expressions.happy > 0.5) {
                             smileDetected = true;
-                            console.log('😊 Smile detected via geometry!');
+                            console.log('😊 Smile detected via expression!');
                             break;
                         }
+                        
+                        if (detection.landmarks) {
+                            const mouth = detection.landmarks.getMouth();
+                            if (mouth && mouth.length > 10) {
+                                const leftMouth = mouth[0];
+                                const rightMouth = mouth[6];
+                                const width = Math.hypot(rightMouth.x - leftMouth.x, rightMouth.y - leftMouth.y);
+                                const height = Math.hypot(mouth[9].x - mouth[3].x, mouth[9].y - mouth[3].y);
+                                const ratio = width / (height + 0.1);
+                                
+                                if (ratio > 2.0) {
+                                    smileDetected = true;
+                                    console.log('😊 Smile detected via geometry!');
+                                    break;
+                                }
+                            }
+                        }
                     }
+                } catch (e) {
+                    console.log('Smile detection error:', e);
                 }
+                
+                await new Promise(resolve => setTimeout(resolve, 100));
             }
-        } catch (e) {
-            console.log('Smile detection error:', e);
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    if (!smileDetected) {
-        statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ SENYUM TIDAK DIKESAN</span>";
-        showNotif("Gagal", "Sila senyum untuk pendaftaran", true);
-        btn.disabled = false;
-        btn.innerHTML = "Imbas Wajah Kakitangan";
-        updateProgress(0);
-        isProcessing = false;
-        return;
-    }
-    
-    // Capture face descriptor
-    updateProgress(80);
-    statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 MEREKOD DATA WAJAH...</span>";
-    
-    try {
-        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-            .withFaceLandmarks()
-            .withFaceDescriptor();
+            
+            if (!smileDetected) {
+                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ SENYUM TIDAK DIKESAN</span>";
+                showNotif("Gagal", "Sila senyum untuk pendaftaran", true);
+                btn.disabled = false;
+                btn.innerHTML = "Imbas Wajah Kakitangan";
+                updateProgress(0);
+                isProcessing = false;
+                return;
+            }
+            
+            updateProgress(80);
+            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 MEREKOD DATA WAJAH...</span>";
+            
+            try {
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor();
 
-        if (detection) {
-            document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
-            statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
-            btn.classList.add('hidden');
-            document.getElementById('resetFaceBtn').classList.remove('hidden');
-            updateProgress(100);
-            showNotif("Berjaya", "Data biometrik telah direkodkan.");
-        } else {
-            statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ WAJAH TIDAK DIKESAN</span>";
-            showNotif("Gagal", "Wajah tidak dikesan", true);
-            updateProgress(0);
+                if (detection) {
+                    document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
+                    statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
+                    btn.classList.add('hidden');
+                    document.getElementById('resetFaceBtn').classList.remove('hidden');
+                    updateProgress(100);
+                    showNotif("Berjaya", "Data biometrik telah direkodkan.");
+                } else {
+                    statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ WAJAH TIDAK DIKESAN</span>";
+                    showNotif("Gagal", "Wajah tidak dikesan", true);
+                    updateProgress(0);
+                }
+            } catch (e) {
+                console.error('Face capture error:', e);
+                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
+                showNotif("Ralat", "Ralat semasa pemprosesan biometrik", true);
+                updateProgress(0);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Imbas Wajah Kakitangan";
+                isProcessing = false;
+            }
         }
-    } catch (e) {
-        statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
-        showNotif("Ralat", "Ralat semasa pemprosesan biometrik", true);
-        updateProgress(0);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = "Imbas Wajah Kakitangan";
-        isProcessing = false;
-    }
-}
 
         function resetFace() {
             document.getElementById('faceDescriptor').value = "";
@@ -1235,39 +1366,6 @@ async function captureFace() {
                     resetRegisterForm();
                 }
             }
-        };
-
-        window.editUser = function(uid) {
-            const u = users.find(x => x.uid === uid);
-            if (!u) return;
-
-            resetFormAfterSave();
-
-            document.getElementById('resetMode').value = 'false';
-            document.getElementById('regFormTitle').innerText = "Kemaskini Kakitangan";
-            document.getElementById('userId').value = u.uid;
-            document.getElementById('userName').value = u.name;
-            document.getElementById('userEmail').value = u.email;
-            document.getElementById('userUnit').value = u.unit || "";
-            document.getElementById('userPassword').value = ""; 
-            document.getElementById('userRadius').value = u.radius || 500;
-            updateRadius(u.radius || 500);
-
-            if (u.faceDescriptor) {
-                document.getElementById('faceDescriptor').value = u.faceDescriptor;
-                document.getElementById('faceStatusMsg').innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH TELAH DIDAFTARKAN</span>";
-                document.getElementById('captureBtn').classList.add('hidden');
-                document.getElementById('resetFaceBtn').classList.remove('hidden');
-            } else {
-                resetFace();
-            }
-
-            document.getElementById('userLat').value = u.lat || 1.5533;
-            document.getElementById('userLng').value = u.lng || 110.3592;
-
-            currentStep = 1;
-            updateStepUI();
-            switchTab('register');
         };
 
         window.nextStep = function() {
@@ -1329,8 +1427,8 @@ async function captureFace() {
                 uid: document.getElementById('userId').value,
                 name: document.getElementById('userName').value,
                 email: document.getElementById('userEmail').value,
-                unit: document.getElementById('userUnit').value,
-                branch: document.getElementById('userBranch').value,
+                unit: currentUser.unit,
+                branch: currentUser.branch,
                 password: document.getElementById('userPassword').value,
                 lat: document.getElementById('userLat').value,
                 lng: document.getElementById('userLng').value,
@@ -1339,10 +1437,21 @@ async function captureFace() {
                 createdBy: currentUser.uid
             };
 
+            if (!data.name || !data.email || !data.password) {
+                showNotif("Ralat", "Sila isi semua maklumat wajib", true);
+                return;
+            }
+
+            if (data.password.length < 6) {
+                showNotif("Ralat", "Kata laluan minimum 6 aksara", true);
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = 'Sedang Menyimpan...';
 
             try {
+                console.log('📤 Saving user:', data);
                 const result = await callAPI('createUser', { data: JSON.stringify(data) });
                 
                 if (result.success) {
@@ -1354,6 +1463,7 @@ async function captureFace() {
                     showNotif("Ralat Simpan", result.error || "Gagal menyimpan data", true);
                 }
             } catch (error) {
+                console.error('Save error:', error);
                 showNotif("Ralat", "Gagal menyimpan data", true);
             } finally {
                 btn.disabled = false;
@@ -1390,6 +1500,7 @@ async function captureFace() {
                     showNotif("Ralat", result.error || "Gagal mengemaskini wajah", true);
                 }
             } catch (error) {
+                console.error('Update face error:', error);
                 showNotif("Ralat", "Gagal menghubungi server", true);
             } finally {
                 btn.disabled = false;
@@ -1401,6 +1512,13 @@ async function captureFace() {
         // DELETE USER
         // ============================================
         window.confirmDelete = function(uid, name) {
+            const user = users.find(u => u.uid === uid);
+            
+            if (user && user.unit !== currentUser.unit) {
+                showNotif('Ralat', 'Anda hanya boleh memadam pengguna dalam unit anda sendiri', true);
+                return;
+            }
+            
             const modal = document.getElementById('deleteModal');
             const btn = document.getElementById('confirmDeleteBtn');
             modal.style.display = 'flex';
@@ -1413,14 +1531,19 @@ async function captureFace() {
                     const result = await callAPI('deleteUser', { data: JSON.stringify({ uid: uid }) });
                     if (result.success) {
                         showNotif("Dipadam", "Rekod kakitangan telah dikeluarkan daripada sistem.");
+                        modal.style.display = 'none';
                         loadUsers();
+                    } else {
+                        showNotif("Ralat", "Gagal memadam rekod", true);
+                        modal.style.display = 'none';
                     }
                 } catch (error) {
+                    console.error('Delete error:', error);
                     showNotif("Ralat", "Gagal memadam rekod", true);
+                    modal.style.display = 'none';
                 } finally {
                     btn.disabled = false;
                     btn.innerHTML = 'Ya, Padam';
-                    modal.style.display = 'none';
                 }
             };
         };
@@ -1430,7 +1553,7 @@ async function captureFace() {
         // ============================================
         function updateDashboardStats() {
             document.getElementById('totalUsersStat').innerText = users.length;
-            document.getElementById('faceRegisteredStat').innerText = users.filter(u => u.faceDescriptor).length;
+            document.getElementById('faceRegisteredStat').innerText = users.filter(u => u.faceDescriptor && u.faceDescriptor !== '').length;
             document.getElementById('presentTodayStat').innerText = Math.floor(users.length * 0.85);
         }
 
@@ -1490,6 +1613,7 @@ async function captureFace() {
                     showNotif("Tiada Data", "Tiada rekod kehadiran ditemui bagi tempoh ini.", true);
                 }
             } catch (error) {
+                console.error('PDF error:', error);
                 showNotif("Ralat", "Gagal menjana PDF", true);
             }
         };
@@ -1503,6 +1627,8 @@ async function captureFace() {
         };
 
         window.handleLogout = function() {
+            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
+            stopCamera();
             location.reload();
         };
 
@@ -1517,7 +1643,6 @@ async function captureFace() {
             }
         });
 
-        // Initialize face overlay on page load
         document.addEventListener('DOMContentLoaded', function() {
             if (!document.getElementById('faceOverlay')) {
                 const overlay = document.createElement('div');
