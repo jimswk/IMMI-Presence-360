@@ -685,9 +685,9 @@
             );
         }
 
-        // ============================================
-        // ATTENDANCE FUNCTIONS - VERSI DIPERBAIKI DENGAN STATUS
-        // ============================================
+// ============================================
+// ATTENDANCE FUNCTIONS - VERSI DIPERBAIKI DENGAN STATUS
+// ============================================
 async function checkTodayAttendance() {
     if (!currentUser) return;
     
@@ -695,6 +695,7 @@ async function checkTodayAttendance() {
     console.log('🔍 Menyemak kehadiran untuk tarikh:', today);
     
     try {
+        // Add timestamp to avoid cache
         const result = await callAPI('getAttendance', { 
             uid: currentUser.uid, 
             startDate: today, 
@@ -792,7 +793,9 @@ async function checkTodayAttendance() {
     }
 }
 
-// Gantikan bahagian handleClockIn (sekitar baris 1080) - tambah delay yang lebih lama
+// ============================================
+// CLOCK IN / OUT - VERSI DIPERBAIKI
+// ============================================
 window.handleClockIn = async function() {
     if (!userLocation) {
         showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
@@ -830,18 +833,18 @@ window.handleClockIn = async function() {
         if (result.success) {
             showNotification('Berjaya', 'Clock In direkodkan', false, true);
             
-            // TUNGGU LEBIH LAMA UNTUK DATA DIREKOD - 2 saat
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Tunggu untuk data direkod
+            await new Promise(resolve => setTimeout(resolve, 3000));
             
-            // PANGGIL checkTodayAttendance DENGAN FORCE REFRESH
+            // Refresh data
             await checkTodayAttendance();
             await loadAttendanceHistory();
             updateLocationDisplay();
             
-            // TAMBAH SEMAKAN SEMULA SELEPAS 1 SAAT LAGI
+            // Refresh sekali lagi selepas 2 saat
             setTimeout(async () => {
                 await checkTodayAttendance();
-            }, 1000);
+            }, 2000);
             
         } else {
             showNotification('Ralat', result.error || 'Gagal clock in', true, true);
@@ -855,7 +858,6 @@ window.handleClockIn = async function() {
     }
 };
 
-// Gantikan bahagian handleClockOut (sekitar baris 1140)
 window.handleClockOut = async function() {
     if (!userLocation) {
         showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
@@ -883,18 +885,18 @@ window.handleClockOut = async function() {
         if (result.success) {
             showNotification('Berjaya', 'Clock Out direkodkan', false, true);
             
-            // TUNGGU LEBIH LAMA UNTUK DATA DIREKOD
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Tunggu untuk data direkod
+            await new Promise(resolve => setTimeout(resolve, 3000));
             
-            // PANGGIL checkTodayAttendance DENGAN FORCE REFRESH
+            // Refresh data
             await checkTodayAttendance();
             await loadAttendanceHistory();
             updateLocationDisplay();
             
-            // TAMBAH SEMAKAN SEMULA SELEPAS 1 SAAT LAGI
+            // Refresh sekali lagi selepas 2 saat
             setTimeout(async () => {
                 await checkTodayAttendance();
-            }, 1000);
+            }, 2000);
             
         } else {
             showNotification('Ralat', result.error || 'Gagal clock out', true, true);
