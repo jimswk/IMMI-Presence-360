@@ -1565,7 +1565,7 @@
         }
 
 // ============================================
-// GENERATE PDF - VERSI BAHASA MELAYU (RAPI)
+// GENERATE PDF - VERSI BAHASA MELAYU (BERSIH)
 // ============================================
 window.generatePDF = async function() {
     const uid = document.getElementById('reportUser').value;
@@ -1618,7 +1618,7 @@ window.generatePDF = async function() {
 
         let y = 20;
 
-        // === LOGO DAN TAJUK ===
+        // === LOGO ===
         try {
             const logoUrl = 'https://ik.imagekit.io/pyreotmgq/Immigration_Department_of_Malaysia_Logo.svg.png?updatedAt=1744170604496';
             const logoImg = await getBase64ImageFromUrl(logoUrl);
@@ -1633,34 +1633,31 @@ window.generatePDF = async function() {
         doc.setFont('helvetica', 'bold');
         doc.text('LAPORAN KEHADIRAN', pageWidth / 2, 25, { align: 'center' });
 
-        // Garis pemisah
-        doc.setDrawColor(30, 58, 138);
-        doc.setLineWidth(0.3);
-        doc.line(15, 28, 195, 28);
-
-        // Maklumat Kakitangan
+        // Maklumat Kakitangan - dalam 2 baris sahaja
         doc.setFontSize(10);
         doc.setTextColor(0, 0, 0);
         doc.setFont('helvetica', 'normal');
         
+        // Baris 1: Nama dan Unit
         doc.text(`Nama: ${user.name.toUpperCase()}`, 15, 38);
         doc.text(`Unit: ${user.unit || '-'}`, 120, 38);
         
+        // Baris 2: Email dan Cawangan
         doc.text(`Email: ${user.email}`, 15, 44);
         doc.text(`Cawangan: ${user.branch}`, 120, 44);
         
+        // Baris 3: Tempoh (sendiri)
         doc.text(`Tempoh: ${startDateStr} hingga ${endDateStr}`, 15, 50);
 
         y = 60;
 
-        // === HEADER JADUAL ===
+        // === HEADER JADUAL (SAHAJA YANG BERWARNA) ===
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9);
-        doc.setDrawColor(0);
-        doc.setLineWidth(0.2);
         
         let x = tableMarginX;
         headers.forEach((header, i) => {
+            // Header dengan latar biru
             doc.setFillColor(30, 58, 138);
             doc.rect(x, y, colWidths[i], rowHeight, 'F');
             doc.setTextColor(255, 255, 255);
@@ -1672,7 +1669,7 @@ window.generatePDF = async function() {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(0, 0, 0);
         
-        // === DATA JADUAL ===
+        // === DATA JADUAL (TIADA WARNA LATAR) ===
         const startDate = new Date(startDateStr + 'T00:00:00');
         const endDate = new Date(endDateStr + 'T00:00:00');
         let totalHoursDecimal = 0;
@@ -1682,7 +1679,7 @@ window.generatePDF = async function() {
         // Loop setiap hari dalam julat
         const currentDate = new Date(startDate);
         while (currentDate <= endDate) {
-            const dateString = currentDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+            const dateString = currentDate.toISOString().split('T')[0];
             const tarikh = currentDate.toLocaleDateString('ms-MY', {
                 day: '2-digit',
                 month: '2-digit',
@@ -1735,11 +1732,12 @@ window.generatePDF = async function() {
                 }
             }
             
-            // Lukis border sel
+            // Lukis border sel SAHAJA (tanpa warna latar)
             x = tableMarginX;
             const rowData = [tarikh, hari, jamMasuk, jamKeluar, jumlahJam, jumlahOT];
             
             rowData.forEach((text, i) => {
+                // Border sahaja, tanpa fill
                 doc.setDrawColor(200, 200, 200);
                 doc.rect(x, y, colWidths[i], rowHeight);
                 
@@ -1776,58 +1774,42 @@ window.generatePDF = async function() {
             }
         }
 
-        // === BARIS JUMLAH KESELURUHAN ===
-        if (hasData) {
-            doc.setFont('helvetica', 'bold');
-            doc.setDrawColor(200, 200, 200);
-            doc.setFillColor(240, 240, 240);
-            
-            const totalJamFormatted = formatJam(totalHoursDecimal);
-            const totalOTFormatted = formatJam(totalOTDecimal);
-            
-            x = tableMarginX;
-            
-            // Sel pertama (kosong)
-            doc.setFillColor(240, 240, 240);
-            doc.rect(x, y, colWidths[0], rowHeight, 'FD');
-            x += colWidths[0];
-            
-            // Sel kedua (kosong)
-            doc.rect(x, y, colWidths[1], rowHeight, 'FD');
-            x += colWidths[1];
-            
-            // Sel ketiga (kosong)
-            doc.rect(x, y, colWidths[2], rowHeight, 'FD');
-            x += colWidths[2];
-            
-            // Sel keempat (kosong)
-            doc.rect(x, y, colWidths[3], rowHeight, 'FD');
-            x += colWidths[3];
-            
-            // Sel Jumlah Jam
-            doc.rect(x, y, colWidths[4], rowHeight, 'FD');
-            doc.text('JUMLAH', x + 2, y + 5);
-            doc.text(totalJamFormatted, x + colWidths[4] - 2 - doc.getTextWidth(totalJamFormatted), y + 5);
-            x += colWidths[4];
-            
-            // Sel OT
-            doc.rect(x, y, colWidths[5], rowHeight, 'FD');
-            doc.text(totalOTFormatted, x + colWidths[5] - 2 - doc.getTextWidth(totalOTFormatted), y + 5);
-            
-            y += rowHeight;
-        } else {
-            // Tiada data langsung
-            x = tableMarginX;
-            doc.setFont('helvetica', 'italic');
-            doc.setDrawColor(200, 200, 200);
-            
-            for (let i = 0; i < headers.length; i++) {
-                doc.rect(x, y, colWidths[i], rowHeight);
-                x += colWidths[i];
-            }
-            
-            doc.text('TIADA REKOD KEHADIRAN', tableMarginX + 50, y + 5);
-        }
+        // === BARIS JUMLAH KESELURUHAN (TANPA WARNA LATAR) ===
+        doc.setFont('helvetica', 'bold');
+        doc.setDrawColor(200, 200, 200);
+        
+        const totalJamFormatted = formatJam(totalHoursDecimal);
+        const totalOTFormatted = formatJam(totalOTDecimal);
+        
+        x = tableMarginX;
+        
+        // Sel pertama (kosong)
+        doc.rect(x, y, colWidths[0], rowHeight);
+        x += colWidths[0];
+        
+        // Sel kedua (kosong)
+        doc.rect(x, y, colWidths[1], rowHeight);
+        x += colWidths[1];
+        
+        // Sel ketiga (kosong)
+        doc.rect(x, y, colWidths[2], rowHeight);
+        x += colWidths[2];
+        
+        // Sel keempat (kosong)
+        doc.rect(x, y, colWidths[3], rowHeight);
+        x += colWidths[3];
+        
+        // Sel Jumlah Jam
+        doc.rect(x, y, colWidths[4], rowHeight);
+        doc.text('JUMLAH', x + 2, y + 5);
+        doc.text(totalJamFormatted, x + colWidths[4] - 2 - doc.getTextWidth(totalJamFormatted), y + 5);
+        x += colWidths[4];
+        
+        // Sel OT
+        doc.rect(x, y, colWidths[5], rowHeight);
+        doc.text(totalOTFormatted, x + colWidths[5] - 2 - doc.getTextWidth(totalOTFormatted), y + 5);
+        
+        y += rowHeight;
 
         // Footer
         doc.setFont('helvetica', 'normal');
