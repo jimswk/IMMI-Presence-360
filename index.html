@@ -2,7 +2,7 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>IMMI Presence 360 - Sistem Kehadiran</title>
     
     <!-- Tailwind CSS -->
@@ -110,6 +110,7 @@
             border: 2px solid #fbbf24;
             border-radius: 80px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+            pointer-events: none;
         }
 
         .face-overlay {
@@ -192,7 +193,7 @@
             transition: width 0.3s;
         }
 
-        /* Status Badge Styles */
+        /* Status Badge */
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -219,6 +220,97 @@
         .status-badge.error {
             background-color: #fee2e2;
             color: #991b1b;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 640px) {
+            .dashboard-header {
+                padding: 24px 16px 56px;
+            }
+            
+            .glass-card {
+                padding: 16px;
+            }
+            
+            .text-5xl {
+                font-size: 2.5rem;
+            }
+            
+            .grid-cols-2 {
+                gap: 8px;
+            }
+            
+            .btn-primary, .bg-green-600, .bg-gray-200 {
+                padding: 14px 12px;
+                font-size: 1rem;
+                min-height: 52px;
+            }
+            
+            .video-wrapper {
+                aspect-ratio: 3/4; /* Nisbah untuk portrait */
+            }
+            
+            .face-guide {
+                width: 120px;
+                height: 160px;
+            }
+            
+            .attendance-history {
+                max-height: 300px;
+            }
+            
+            /* Butang lebih besar untuk touch */
+            button {
+                min-height: 48px;
+                touch-action: manipulation;
+            }
+            
+            /* Font lebih kecil untuk teks secondary */
+            .text-xs {
+                font-size: 0.7rem;
+            }
+            
+            /* Location card padding dikurangkan */
+            .bg-gray-50.p-4 {
+                padding: 12px;
+            }
+            
+            /* History items */
+            .bg-white.p-4 {
+                padding: 12px;
+            }
+            
+            /* Progress bar */
+            .progress-bar {
+                margin: 8px 0;
+            }
+            
+            /* Challenge box */
+            .challenge-box {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Fix untuk iOS */
+        input, button {
+            -webkit-appearance: none;
+            border-radius: 14px;
+        }
+
+        /* Landscape mode */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .dashboard-header {
+                padding: 16px 16px 40px;
+            }
+            
+            .glass-card {
+                padding: 12px;
+            }
+            
+            .video-wrapper {
+                max-height: 200px;
+            }
         }
     </style>
 </head>
@@ -350,6 +442,43 @@
         let isVerifying = false;
         let faceOverlay = null;
 
+        // Audio untuk notifikasi
+        let audioSuccess = null;
+        let audioError = null;
+
+        // ============================================
+        // AUDIO FUNCTIONS
+        // ============================================
+        function initAudio() {
+            try {
+                const successUrl = 'https://ik.imagekit.io/pyreotmgq/berjaya.mp3?updatedAt=1773883565780';
+                const errorUrl = 'https://ik.imagekit.io/pyreotmgq/gagal.mp3?updatedAt=1773883736989';
+                
+                audioSuccess = new Audio(successUrl);
+                audioError = new Audio(errorUrl);
+                
+                // Set volume
+                audioSuccess.volume = 0.7;
+                audioError.volume = 0.7;
+                
+                console.log('✅ Audio initialized');
+            } catch (e) {
+                console.error('❌ Failed to initialize audio:', e);
+            }
+        }
+
+        function playSound(type) {
+            try {
+                if (type === 'success' && audioSuccess) {
+                    audioSuccess.play().catch(e => console.log('Audio play failed:', e));
+                } else if (type === 'error' && audioError) {
+                    audioError.play().catch(e => console.log('Audio play failed:', e));
+                }
+            } catch (e) {
+                console.error('Audio play error:', e);
+            }
+        }
+
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
@@ -358,6 +487,10 @@
             document.getElementById('notifTitle').innerText = title;
             document.getElementById('notifMessage').innerText = message;
             notif.className = `notification show ${isError ? 'error' : ''}`;
+            
+            // Mainkan bunyi
+            playSound(isError ? 'error' : 'success');
+            
             setTimeout(() => notif.classList.remove('show'), 3000);
         }
 
@@ -501,7 +634,6 @@
             const radius = parseInt(currentUser.radius) || 500;
             const within = distance <= radius;
             
-            // Update location status with appropriate color
             const locationEl = document.getElementById('locationStatus');
             const distanceEl = document.getElementById('distanceStatus');
             
@@ -513,7 +645,6 @@
             
             distanceEl.innerText = `${Math.round(distance)}m / ${radius}m`;
             
-            // Log untuk debugging
             console.log(`📍 Distance: ${Math.round(distance)}m, Radius: ${radius}m, Within: ${within}`);
         }
 
@@ -564,13 +695,13 @@
         }
 
         // ============================================
-        // ATTENDANCE FUNCTIONS
+        // ATTENDANCE FUNCTIONS - VERSI DIPERBAIKI
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
             
             const today = new Date().toISOString().split('T')[0];
-            console.log('🔍 Checking attendance for date:', today);
+            console.log('🔍 Menyemak kehadiran untuk tarikh:', today);
             
             try {
                 const result = await callAPI('getAttendance', { 
@@ -579,7 +710,7 @@
                     endDate: today 
                 });
                 
-                console.log('📊 Attendance result:', result);
+                console.log('📊 Hasil attendance:', result);
                 
                 const statusEl = document.getElementById('attendanceStatus');
                 const clockInBtn = document.getElementById('clockInBtn');
@@ -587,13 +718,14 @@
                 
                 if (result.success && result.data && result.data.length > 0) {
                     const record = result.data[0];
-                    console.log('📅 Today record:', record);
-                    console.log('⏰ clockIn:', record.clockIn);
-                    console.log('⏰ clockOut:', record.clockOut);
+                    console.log('📅 Rekod hari ini:', record);
                     
-                    // Check if clock in exists and clock out is empty/null
-                    if (record.clockIn && (!record.clockOut || record.clockOut === '' || record.clockOut === 'null')) {
-                        // Clocked in but not clocked out
+                    // Semak clockIn dan clockOut dengan lebih teliti
+                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
+                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+                    
+                    if (hasClockIn && !hasClockOut) {
+                        // Sudah clock in tetapi belum clock out
                         statusEl.innerText = 'DALAM BERTUGAS';
                         statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
                         
@@ -603,10 +735,10 @@
                         clockOutBtn.disabled = false;
                         clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
                         
-                        console.log('✅ Status updated: DALAM BERTUGAS');
+                        console.log('✅ Status dikemaskini: DALAM BERTUGAS');
                         
-                    } else if (record.clockIn && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null') {
-                        // Both clock in and clock out exist
+                    } else if (hasClockIn && hasClockOut) {
+                        // Sudah clock in dan clock out
                         statusEl.innerText = 'SELESAI';
                         statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
                         
@@ -616,9 +748,9 @@
                         clockOutBtn.disabled = true;
                         clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
                         
-                        console.log('✅ Status updated: SELESAI');
+                        console.log('✅ Status dikemaskini: SELESAI');
                     } else {
-                        // Should not happen, but handle just in case
+                        // Rekod tak lengkap
                         statusEl.innerText = 'BELUM MASUK';
                         statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                         
@@ -629,8 +761,8 @@
                         clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
                     }
                 } else {
-                    // No record for today
-                    console.log('📅 No record for today');
+                    // Tiada rekod untuk hari ini
+                    console.log('📅 Tiada rekod untuk hari ini');
                     statusEl.innerText = 'BELUM MASUK';
                     statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     
@@ -641,7 +773,7 @@
                     clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
                 }
             } catch (error) {
-                console.error('❌ Error checking attendance:', error);
+                console.error('❌ Ralat menyemak attendance:', error);
             }
         }
 
@@ -762,7 +894,7 @@
                 // Smile detection
                 updateProgress(30);
                 challengeDisplay.innerText = '😊 SILA SENYUM';
-                scanStatus.innerText = 'Sila senyum...';
+                scanStatus.innerText = 'Sila senyum lebar...';
                 
                 let smileDetected = false;
                 let smileStartTime = Date.now();
@@ -879,6 +1011,7 @@
                 if (result.success) {
                     currentUser = result.user;
                     
+                    // Create face matcher if face descriptor exists
                     if (currentUser.faceDescriptor && currentUser.faceDescriptor !== '') {
                         try {
                             const descriptor = JSON.parse(currentUser.faceDescriptor);
@@ -904,6 +1037,9 @@
                     startLocationTracking();
                     loadAttendanceHistory();
                     startClock();
+                    
+                    // Init audio
+                    initAudio();
                     
                     showNotification('Selamat Datang', `Log masuk berjaya`);
                 } else {
@@ -954,13 +1090,13 @@
             btn.innerHTML = '<div class="loading mx-auto"></div>';
             
             try {
-                console.log('📤 Sending clock in request...');
+                console.log('📤 Menghantar permintaan clock in...');
                 const result = await callAPI('clockIn', { 
                     uid: currentUser.uid, 
                     location: JSON.stringify(userLocation)
                 });
                 
-                console.log('📥 Clock in result:', result);
+                console.log('📥 Hasil clock in:', result);
                 
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan');
@@ -1002,13 +1138,13 @@
             btn.innerHTML = '<div class="loading mx-auto"></div>';
             
             try {
-                console.log('📤 Sending clock out request...');
+                console.log('📤 Menghantar permintaan clock out...');
                 const result = await callAPI('clockOut', { 
                     uid: currentUser.uid, 
                     location: JSON.stringify(userLocation)
                 });
                 
-                console.log('📥 Clock out result:', result);
+                console.log('📥 Hasil clock out:', result);
                 
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan');
@@ -1065,21 +1201,37 @@
                 const clockIn = record.clockIn ? new Date(record.clockIn) : null;
                 const clockOut = record.clockOut ? new Date(record.clockOut) : null;
                 
-                const clockInTime = clockIn ? clockIn.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-                const clockOutTime = clockOut ? clockOut.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const clockInTime = clockIn ? clockIn.toLocaleTimeString('ms-MY', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                }) : '--:--';
+                
+                const clockOutTime = clockOut ? clockOut.toLocaleTimeString('ms-MY', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: true 
+                }) : '--:--';
                 
                 const totalHours = record.totalHours ? parseFloat(record.totalHours).toFixed(1) : '-';
                 
                 const isToday = record.date === new Date().toISOString().split('T')[0];
                 const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
                 
+                const weekday = date.toLocaleDateString('ms-MY', { weekday: 'long' });
+                const formattedDate = date.toLocaleDateString('ms-MY', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                
                 html += `
                     <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow ${todayClass}">
                         <div class="flex justify-between items-center mb-2">
                             <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
-                                ${record.weekday || '-'}
+                                ${weekday}
                             </span>
-                            <span class="text-xs text-gray-400">${date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                            <span class="text-xs text-gray-400">${formattedDate}</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <div class="flex gap-4">
@@ -1109,7 +1261,12 @@
         function startClock() {
             setInterval(() => {
                 const now = new Date();
-                document.getElementById('realTimeClock').innerText = now.toLocaleTimeString('ms-MY', { hour12: false });
+                document.getElementById('realTimeClock').innerText = now.toLocaleTimeString('ms-MY', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit',
+                    hour12: false 
+                });
                 document.getElementById('displayDate').innerText = now.toLocaleDateString('ms-MY', { 
                     weekday: 'long', 
                     day: 'numeric', 
@@ -1124,6 +1281,7 @@
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
             loadFaceModels();
+            initAudio(); // Init audio awal
             
             if (!document.getElementById('faceOverlay')) {
                 const overlay = document.createElement('div');
@@ -1134,6 +1292,9 @@
                     videoContainer.appendChild(overlay);
                 }
             }
+            
+            // Fix untuk scroll pada mobile
+            setTimeout(() => window.scrollTo(0, 0), 100);
         });
 
         document.getElementById('loginPassword').addEventListener('keypress', (e) => {
@@ -1147,6 +1308,13 @@
             if (locationWatchId) {
                 navigator.geolocation.clearWatch(locationWatchId);
             }
+        });
+
+        // Handle orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (faceOverlay) faceOverlay.innerHTML = '';
+            }, 300);
         });
     </script>
 </body>
