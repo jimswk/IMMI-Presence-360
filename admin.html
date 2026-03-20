@@ -117,7 +117,7 @@
             min-height: 100vh;
         }
 
-        /* Step Indicators - untuk form daftar (3 step) */
+        /* Step Indicators */
         .step-indicator {
             display: flex;
             justify-content: space-between;
@@ -162,7 +162,7 @@
         .step.active .step-number { background: #1e3a8a; color: white; }
         .step.completed .step-number { background: #059669; color: white; }
 
-        /* Step Indicators - untuk form kemaskini (2 step) */
+        /* Step Indicators - 2 steps */
         .step-indicator-2 {
             display: flex;
             justify-content: space-between;
@@ -411,7 +411,7 @@
             margin-left: 8px;
         }
 
-        /* Tab Sub-navigation */
+        /* Sub-navigation Tabs */
         .sub-tabs {
             display: flex;
             gap: 2px;
@@ -716,14 +716,14 @@
                 </div>
             </div>
 
-            <!-- Edit User Tab (2 Steps) - BARU -->
+            <!-- EDIT USER TAB - 2 STEPS (DIPERBAIKI) -->
             <div id="editUserTab" class="hidden">
                 <div class="max-w-4xl">
                     <h1 class="text-4xl font-black text-gray-800 mb-2" id="editFormTitle">Kemaskini Kakitangan</h1>
                     <p class="text-gray-400 text-sm mb-10">Kemaskini maklumat asas dan lokasi kakitangan.</p>
 
                     <div class="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
-                        <!-- Step Indicator (2 steps) -->
+                        <!-- Step Indicator (2 steps) - PASTIKAN ID INI WUJUD -->
                         <div class="step-indicator-2">
                             <div class="step-2 active" id="editStep1">
                                 <div class="step-number-2">1</div>
@@ -826,7 +826,7 @@
                 </div>
             </div>
 
-            <!-- User Details Tab (BARU) - untuk papar senarai kehadiran -->
+            <!-- User Details Tab -->
             <div id="userDetailsTab" class="hidden">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -1009,7 +1009,7 @@
         let userMap = null;
         let userMarker = null;
         let userCircle = null;
-        let editUserMap = null; // Map untuk form edit
+        let editUserMap = null;
         let editUserMarker = null;
         let editUserCircle = null;
         let videoStream = null;
@@ -1355,7 +1355,7 @@
         }
 
         // ============================================
-        // VIEW USER DETAILS (BARU)
+        // VIEW USER DETAILS
         // ============================================
         window.viewUserDetails = function(uid) {
             const user = users.find(u => u.uid === uid);
@@ -1363,7 +1363,6 @@
             
             selectedUser = user;
             
-            // Papar maklumat asas
             document.getElementById('selectedUserName').innerText = user.name;
             document.getElementById('selectedUserInfo').innerText = `${user.email} • ${user.unit || 'Tiada Unit'} • ${user.branch}`;
             
@@ -1379,10 +1378,7 @@
             document.getElementById('infoCoord').innerText = user.lat ? `${parseFloat(user.lat).toFixed(6)}, ${parseFloat(user.lng).toFixed(6)}` : '-';
             document.getElementById('infoRadius').innerText = user.radius ? `${user.radius}m` : '500m';
             
-            // Tukar tab
             switchTab('userDetails');
-            
-            // Load attendance
             loadUserAttendance();
         };
 
@@ -1443,7 +1439,6 @@
                     
                     const hari = date.toLocaleDateString('ms-MY', { weekday: 'long' });
                     
-                    // Format jam masuk
                     let jamMasuk = '-';
                     if (record.clockIn) {
                         try {
@@ -1458,7 +1453,6 @@
                         } catch (e) {}
                     }
                     
-                    // Format jam keluar
                     let jamKeluar = '-';
                     if (record.clockOut) {
                         try {
@@ -1473,19 +1467,16 @@
                         } catch (e) {}
                     }
                     
-                    // Format jumlah jam
                     let jumlahJam = '-';
                     if (record.totalHours && record.totalHours > 0) {
                         jumlahJam = formatJam(record.totalHours);
                     }
                     
-                    // Format OT
                     let jumlahOT = '-';
                     if (record.totalOT && record.totalOT > 0) {
                         jumlahOT = formatJam(record.totalOT);
                     }
                     
-                    // Status
                     let statusText = '';
                     let statusClass = '';
                     if (record.status === 'clocked_in') {
@@ -1521,7 +1512,7 @@
         }
 
         // ============================================
-        // EDIT USER FUNCTIONS (2 STEPS)
+        // EDIT USER FUNCTIONS (2 STEPS) - DIPERBAIKI
         // ============================================
         window.editUser = function(uid) {
             const u = users.find(x => x.uid === uid);
@@ -1547,23 +1538,31 @@
             
             // Reset step
             currentEditStep = 1;
-            updateEditStepUI();
             
-            // Tukar tab
+            // Tukar tab dulu
             switchTab('editUser');
             
-            // Init map selepas switch tab
+            // Update step UI selepas switch tab
             setTimeout(() => {
+                updateEditStepUI();
+                
+                // Init map selepas step UI update
                 initEditMap(
                     parseFloat(document.getElementById('editUserLat').value) || 1.5533,
                     parseFloat(document.getElementById('editUserLng').value) || 110.3592,
                     parseInt(document.getElementById('editUserRadius').value) || 500
                 );
-            }, 300);
+            }, 400);
         };
 
         function initEditMap(lat, lng, radius) {
             if (editUserMap) editUserMap.remove();
+            
+            const mapElement = document.getElementById('editUserLocationMap');
+            if (!mapElement) {
+                console.log('Map element not found');
+                return;
+            }
             
             editUserMap = L.map('editUserLocationMap').setView([lat, lng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editUserMap);
@@ -1622,7 +1621,7 @@
             }
             currentEditStep++;
             updateEditStepUI();
-        }
+        };
 
         window.prevEditStep = function() {
             currentEditStep--;
@@ -1630,19 +1629,50 @@
         };
 
         function updateEditStepUI() {
-            document.querySelectorAll('.wizard-step-2').forEach(s => s.classList.remove('active'));
+            // Semak jika elemen wujud sebelum mengakses
+            const step1Content = document.getElementById('editStep1Content');
+            const step2Content = document.getElementById('editStep2Content');
+            const step1 = document.getElementById('editStep1');
+            const step2 = document.getElementById('editStep2');
+            const prevBtn = document.getElementById('prevEditBtn');
+            const nextBtn = document.getElementById('nextEditBtn');
+            const updateBtn = document.getElementById('updateBtn');
+            
+            if (!step1Content || !step2Content) {
+                console.log('Step elements not found yet');
+                return;
+            }
+            
+            // Sembunyikan semua content
+            step1Content.classList.remove('active');
+            step2Content.classList.remove('active');
+            
+            // Tunjukkan content mengikut step
             document.getElementById(`editStep${currentEditStep}Content`).classList.add('active');
             
-            for(let i=1; i<=2; i++) {
-                const s = document.getElementById(`editStep${i}`);
-                if (i < currentEditStep) s.className = 'step-2 completed';
-                else if (i === currentEditStep) s.className = 'step-2 active';
-                else s.className = 'step-2';
+            // Update step indicators jika wujud
+            if (step1) {
+                step1.className = currentEditStep === 1 ? 'step-2 active' : 
+                                 (currentEditStep > 1 ? 'step-2 completed' : 'step-2');
             }
-
-            document.getElementById('prevEditBtn').classList.toggle('hidden', currentEditStep === 1);
-            document.getElementById('nextEditBtn').classList.toggle('hidden', currentEditStep === 2);
-            document.getElementById('updateBtn').classList.toggle('hidden', currentEditStep !== 2);
+            
+            if (step2) {
+                step2.className = currentEditStep === 2 ? 'step-2 active' : 
+                                 (currentEditStep > 2 ? 'step-2 completed' : 'step-2');
+            }
+            
+            // Update buttons
+            if (prevBtn) {
+                prevBtn.classList.toggle('hidden', currentEditStep === 1);
+            }
+            
+            if (nextBtn) {
+                nextBtn.classList.toggle('hidden', currentEditStep === 2);
+            }
+            
+            if (updateBtn) {
+                updateBtn.classList.toggle('hidden', currentEditStep !== 2);
+            }
         }
 
         window.cancelEdit = function() {
@@ -1959,15 +1989,26 @@
         }
 
         // ============================================
-        // NAVIGATION
+        // NAVIGATION - DIPERBAIKI DENGAN VALIDATION
         // ============================================
         window.switchTab = function(tab) {
             stopCamera();
-            document.querySelectorAll('.main-content > div').forEach(d => d.classList.add('hidden'));
-            document.getElementById(`${tab}Tab`).classList.remove('hidden');
             
+            // Sembunyikan semua tab
+            document.querySelectorAll('.main-content > div').forEach(d => d.classList.add('hidden'));
+            
+            // Tunjukkan tab yang dipilih
+            const selectedTab = document.getElementById(`${tab}Tab`);
+            if (selectedTab) {
+                selectedTab.classList.remove('hidden');
+            }
+            
+            // Update nav items
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+            const navItem = document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
 
             if (tab === 'register') {
                 if (document.getElementById('userId').value === "") {
@@ -1975,8 +2016,14 @@
                 }
             }
             
-            if (tab === 'editUser' && editUserMap) {
-                setTimeout(() => editUserMap.invalidateSize(), 300);
+            if (tab === 'editUser') {
+                // Small delay to ensure DOM is ready
+                setTimeout(() => {
+                    if (editUserMap) {
+                        editUserMap.invalidateSize();
+                    }
+                    updateEditStepUI();
+                }, 300);
             }
         };
 
@@ -1999,7 +2046,7 @@
             if (currentStep === 2 && userMap) {
                 setTimeout(() => userMap.invalidateSize(), 100);
             }
-        }
+        };
 
         window.prevStep = function() {
             if (currentStep === 3) stopCamera();
@@ -2175,257 +2222,43 @@
                 users.map(u => `<option value="${u.uid}">${u.name.toUpperCase()} (${u.unit || 'TIADA UNIT'})</option>`).join('');
         }
 
-// ============================================
-// GENERATE PDF - VERSI SAMA DENGAN FIREBASE
-// ============================================
-window.generatePDF = async function() {
-    const uid = document.getElementById('reportUser').value;
-    const startDateStr = document.getElementById('startDate').value;
-    const endDateStr = document.getElementById('endDate').value;
+        // Helper function untuk format jam
+        function formatJam(decimalJam) {
+            if (!decimalJam || decimalJam <= 0) return '-';
+            const jam = Math.floor(decimalJam);
+            const minit = Math.round((decimalJam - jam) * 60);
+            
+            if (minit === 0) return `${jam}j`;
+            if (minit < 10) return `${jam}j 0${minit}m`;
+            return `${jam}j ${minit}m`;
+        }
 
-    if (!uid || !startDateStr || !endDateStr) {
-        showNotif("Input Diperlukan", "Sila lengkapkan pilihan laporan.", true);
-        return;
-    }
+        // Helper function untuk format masa (sama seperti Firebase)
+        function formatDecimalToTime(decimal) {
+            if (!decimal || decimal <= 0) return '';
+            const hours = Math.floor(decimal);
+            const minutes = Math.round((decimal - hours) * 60);
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
 
-    const start = new Date(startDateStr);
-    const end = new Date(endDateStr);
-
-    if (start > end) {
-        showNotif("Ralat Tarikh", "Tarikh mula tidak boleh lepas tarikh tamat.", true);
-        return;
-    }
-
-    const user = users.find(u => u.uid === uid);
-    if (!user) {
-        showNotif("Ralat", "Pengguna tidak ditemui", true);
-        return;
-    }
-
-    showNotif("Menjana PDF", "Sila tunggu seketika...");
-
-    try {
-        // Dapatkan data attendance dari API
-        const result = await callAPI('getAttendance', { 
-            uid, 
-            startDate: startDateStr, 
-            endDate: endDateStr 
-        });
-        
-        // Buat peta untuk akses pantas data berdasarkan tarikh
-        const dataMap = {};
-        if (result.success && result.data) {
-            result.data.forEach(record => {
-                dataMap[record.date] = {
-                    clockIn: record.clockIn,
-                    clockOut: record.clockOut,
-                    totalHours: record.totalHours,
-                    totalOT: record.totalOT
+        // Helper function untuk dapatkan image sebagai base64
+        function getBase64ImageFromUrl(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    const dataURL = canvas.toDataURL('image/png');
+                    resolve(dataURL);
                 };
+                img.onerror = reject;
+                img.src = url;
             });
         }
-
-        // Debug: log data yang diperoleh
-        console.log('📊 Data attendance:', dataMap);
-        console.log('📅 Julat tarikh:', startDateStr, 'hingga', endDateStr);
-        
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({
-            format: 'a4',
-            unit: 'mm'
-        });
-
-        doc.setFont('times', 'normal');
-        
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const tableWidth = 180;
-        const tableMarginX = (pageWidth - tableWidth) / 2;
-        const rowHeight = 6;
-        
-        // HEADERS SAMA DENGAN FIREBASE
-        const headers = ["Date", "Weekday", "Clock In", "Clock Out", "Total Hours", "Total OT"];
-        const colWidths = [30, 30, 30, 30, 30, 30];
-
-        let y = 20;
-
-        // TITLE
-        doc.setFontSize(14);
-        doc.setFont('times', 'bold');
-        const title = 'Total Time Card';
-        const titleWidth = doc.getTextWidth(title);
-        doc.text(title, (pageWidth - titleWidth) / 2, y);
-
-        // DATE RANGE
-        y += 10;
-        doc.setFontSize(10);
-        doc.setFont('times', 'normal');
-        doc.text(`Start Date ${startDateStr} End Date ${endDateStr}`, tableMarginX, y);
-        
-        // USER INFO
-        y += 5;
-        doc.text(`First Name: ${user.name || 'Pengguna'}, Department: ${user.unit || 'Tiada'}`, tableMarginX, y);
-
-        // HEADER ROW
-        y += 10;
-        doc.setFont('times', 'bold');
-        doc.setDrawColor(0);
-        doc.setLineWidth(0.2);
-        
-        let x = tableMarginX;
-        headers.forEach((header, i) => {
-            doc.rect(x, y, colWidths[i], rowHeight);
-            doc.text(header, x + 2, y + 4);
-            x += colWidths[i];
-        });
-        
-        y += rowHeight;
-        doc.setFont('times', 'normal');
-        let totalHoursDecimal = 0;
-        let totalOTDecimal = 0;
-        
-        // Loop setiap hari dalam julat
-        const currentDate = new Date(start);
-        while (currentDate <= end) {
-            const dateString = currentDate.toISOString().slice(0, 10); // Format: YYYY-MM-DD
-            const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
-            
-            // Semak jika ada data untuk tarikh ini
-            const record = dataMap[dateString] || null;
-            
-            let clockInText = '';
-            let clockOutText = '';
-            let hoursText = '';
-            let otText = '';
-            
-            if (record) {
-                // Format masa untuk Clock In
-                if (record.clockIn) {
-                    try {
-                        const clockInTime = new Date(record.clockIn);
-                        if (!isNaN(clockInTime)) {
-                            clockInText = clockInTime.toLocaleTimeString('en-GB', { 
-                                hour: '2-digit', 
-                                minute: '2-digit', 
-                                hour12: false 
-                            });
-                        }
-                    } catch (e) {
-                        console.log('ClockIn parse error:', e);
-                    }
-                }
-                
-                // Format masa untuk Clock Out
-                if (record.clockOut) {
-                    try {
-                        const clockOutTime = new Date(record.clockOut);
-                        if (!isNaN(clockOutTime)) {
-                            clockOutText = clockOutTime.toLocaleTimeString('en-GB', { 
-                                hour: '2-digit', 
-                                minute: '2-digit', 
-                                hour12: false 
-                            });
-                        }
-                    } catch (e) {
-                        console.log('ClockOut parse error:', e);
-                    }
-                }
-                
-                // Format jumlah jam dan OT
-                if (record.totalHours !== undefined && record.totalHours !== null) {
-                    const hours = parseFloat(record.totalHours);
-                    if (!isNaN(hours)) {
-                        hoursText = formatDecimalToTime(hours);
-                        totalHoursDecimal += hours;
-                    }
-                }
-                
-                if (record.totalOT !== undefined && record.totalOT !== null) {
-                    const ot = parseFloat(record.totalOT);
-                    if (!isNaN(ot)) {
-                        otText = formatDecimalToTime(ot);
-                        totalOTDecimal += ot;
-                    }
-                }
-            }
-            
-            // Tambah baris ke PDF
-            x = tableMarginX;
-            const rowData = [dateString, weekday, clockInText, clockOutText, hoursText, otText];
-            
-            rowData.forEach((text, i) => {
-                doc.rect(x, y, colWidths[i], rowHeight);
-                doc.text(text, x + 2, y + 4);
-                x += colWidths[i];
-            });
-            
-            y += rowHeight;
-            currentDate.setDate(currentDate.getDate() + 1); // Hari berikutnya
-            
-            // Jika hampir ke penghujung halaman, tambah halaman baru
-            if (y > 270) {
-                doc.addPage();
-                y = 20;
-                
-                // Header jadual di halaman baru
-                x = tableMarginX;
-                doc.setFont('times', 'bold');
-                headers.forEach((header, i) => {
-                    doc.rect(x, y, colWidths[i], rowHeight);
-                    doc.text(header, x + 2, y + 4);
-                    x += colWidths[i];
-                });
-                y += rowHeight;
-                doc.setFont('times', 'normal');
-            }
-        }
-
-        // Baris Statistik dalam jadual
-        doc.setFont('times', 'bold');
-        doc.rect(tableMarginX, y, tableWidth, rowHeight);
-        
-        // Kolom pertama: "Statistic"
-        doc.text('Statistic', tableMarginX + 2, y + 4);
-        
-        // Kolom "Total Hours" (kolom ke-5): jumlah jam
-        const totalHoursFormatted = formatDecimalToTime(totalHoursDecimal);
-        doc.text(totalHoursFormatted, 
-            tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 2, 
-            y + 4);
-        
-        // Kolom "Total OT" (kolom ke-6): jumlah OT
-        const totalOTFormatted = formatDecimalToTime(totalOTDecimal);
-        doc.text(totalOTFormatted, 
-            tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + 2, 
-            y + 4);
-        
-        // Nombor muka surat
-        const pageCount = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8);
-            doc.setTextColor(150, 150, 150);
-            doc.text(`Page ${i} of ${pageCount}`, pageWidth - 30, doc.internal.pageSize.height - 10);
-        }
-        
-        // Simpan PDF
-        const filename = `Laporan_Kehadiran_${user.name.replace(/\s+/g, '_')}_${startDateStr}_to_${endDateStr}.pdf`;
-        doc.save(filename);
-        
-        showNotif("Berjaya", "PDF telah dijana dan dimuat turun.");
-        
-    } catch (error) {
-        console.error('❌ Ralat PDF:', error);
-        showNotif("Ralat", "Gagal menjana PDF: " + error.message, true);
-    }
-};
-
-// Helper function untuk format masa (sama seperti Firebase)
-function formatDecimalToTime(decimal) {
-    if (!decimal || decimal <= 0) return '';
-    const hours = Math.floor(decimal);
-    const minutes = Math.round((decimal - hours) * 60);
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-}
 
         window.searchUsers = function() {
             const q = document.getElementById('searchUser').value.toLowerCase();
@@ -2439,6 +2272,250 @@ function formatDecimalToTime(decimal) {
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             stopCamera();
             location.reload();
+        };
+
+        // ============================================
+        // GENERATE PDF - VERSI SAMA DENGAN FIREBASE
+        // ============================================
+        window.generatePDF = async function() {
+            const uid = document.getElementById('reportUser').value;
+            const startDateStr = document.getElementById('startDate').value;
+            const endDateStr = document.getElementById('endDate').value;
+
+            if (!uid || !startDateStr || !endDateStr) {
+                showNotif("Input Diperlukan", "Sila lengkapkan pilihan laporan.", true);
+                return;
+            }
+
+            const start = new Date(startDateStr);
+            const end = new Date(endDateStr);
+
+            if (start > end) {
+                showNotif("Ralat Tarikh", "Tarikh mula tidak boleh lepas tarikh tamat.", true);
+                return;
+            }
+
+            const user = users.find(u => u.uid === uid);
+            if (!user) {
+                showNotif("Ralat", "Pengguna tidak ditemui", true);
+                return;
+            }
+
+            showNotif("Menjana PDF", "Sila tunggu seketika...");
+
+            try {
+                // Dapatkan data attendance dari API
+                const result = await callAPI('getAttendance', { 
+                    uid, 
+                    startDate: startDateStr, 
+                    endDate: endDateStr 
+                });
+                
+                // Buat peta untuk akses pantas data berdasarkan tarikh
+                const dataMap = {};
+                if (result.success && result.data) {
+                    result.data.forEach(record => {
+                        dataMap[record.date] = {
+                            clockIn: record.clockIn,
+                            clockOut: record.clockOut,
+                            totalHours: record.totalHours,
+                            totalOT: record.totalOT
+                        };
+                    });
+                }
+
+                // Debug: log data yang diperoleh
+                console.log('📊 Data attendance:', dataMap);
+                console.log('📅 Julat tarikh:', startDateStr, 'hingga', endDateStr);
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({
+                    format: 'a4',
+                    unit: 'mm'
+                });
+
+                doc.setFont('times', 'normal');
+                
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const tableWidth = 180;
+                const tableMarginX = (pageWidth - tableWidth) / 2;
+                const rowHeight = 6;
+                
+                // HEADERS SAMA DENGAN FIREBASE
+                const headers = ["Date", "Weekday", "Clock In", "Clock Out", "Total Hours", "Total OT"];
+                const colWidths = [30, 30, 30, 30, 30, 30];
+
+                let y = 20;
+
+                // TITLE
+                doc.setFontSize(14);
+                doc.setFont('times', 'bold');
+                const title = 'Total Time Card';
+                const titleWidth = doc.getTextWidth(title);
+                doc.text(title, (pageWidth - titleWidth) / 2, y);
+
+                // DATE RANGE
+                y += 10;
+                doc.setFontSize(10);
+                doc.setFont('times', 'normal');
+                doc.text(`Start Date: ${startDateStr} End Date: ${endDateStr}`, tableMarginX, y);
+                
+                // USER INFO
+                y += 5;
+                doc.text(`First Name: ${user.name || 'Pengguna'}, Department: ${user.unit || 'Tiada'}`, tableMarginX, y);
+
+                // HEADER ROW
+                y += 10;
+                doc.setFont('times', 'bold');
+                doc.setDrawColor(0);
+                doc.setLineWidth(0.2);
+                
+                let x = tableMarginX;
+                headers.forEach((header, i) => {
+                    doc.rect(x, y, colWidths[i], rowHeight);
+                    doc.text(header, x + 2, y + 4);
+                    x += colWidths[i];
+                });
+                
+                y += rowHeight;
+                doc.setFont('times', 'normal');
+                let totalHoursDecimal = 0;
+                let totalOTDecimal = 0;
+                
+                // Loop setiap hari dalam julat
+                const currentDate = new Date(start);
+                while (currentDate <= end) {
+                    const dateString = currentDate.toISOString().slice(0, 10); // Format: YYYY-MM-DD
+                    const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
+                    
+                    // Semak jika ada data untuk tarikh ini
+                    const record = dataMap[dateString] || null;
+                    
+                    let clockInText = '';
+                    let clockOutText = '';
+                    let hoursText = '';
+                    let otText = '';
+                    
+                    if (record) {
+                        // Format masa untuk Clock In
+                        if (record.clockIn) {
+                            try {
+                                const clockInTime = new Date(record.clockIn);
+                                if (!isNaN(clockInTime)) {
+                                    clockInText = clockInTime.toLocaleTimeString('en-GB', { 
+                                        hour: '2-digit', 
+                                        minute: '2-digit', 
+                                        hour12: false 
+                                    });
+                                }
+                            } catch (e) {
+                                console.log('ClockIn parse error:', e);
+                            }
+                        }
+                        
+                        // Format masa untuk Clock Out
+                        if (record.clockOut) {
+                            try {
+                                const clockOutTime = new Date(record.clockOut);
+                                if (!isNaN(clockOutTime)) {
+                                    clockOutText = clockOutTime.toLocaleTimeString('en-GB', { 
+                                        hour: '2-digit', 
+                                        minute: '2-digit', 
+                                        hour12: false 
+                                    });
+                                }
+                            } catch (e) {
+                                console.log('ClockOut parse error:', e);
+                            }
+                        }
+                        
+                        // Format jumlah jam dan OT
+                        if (record.totalHours !== undefined && record.totalHours !== null) {
+                            const hours = parseFloat(record.totalHours);
+                            if (!isNaN(hours)) {
+                                hoursText = formatDecimalToTime(hours);
+                                totalHoursDecimal += hours;
+                            }
+                        }
+                        
+                        if (record.totalOT !== undefined && record.totalOT !== null) {
+                            const ot = parseFloat(record.totalOT);
+                            if (!isNaN(ot)) {
+                                otText = formatDecimalToTime(ot);
+                                totalOTDecimal += ot;
+                            }
+                        }
+                    }
+                    
+                    // Tambah baris ke PDF
+                    x = tableMarginX;
+                    const rowData = [dateString, weekday, clockInText, clockOutText, hoursText, otText];
+                    
+                    rowData.forEach((text, i) => {
+                        doc.rect(x, y, colWidths[i], rowHeight);
+                        doc.text(text, x + 2, y + 4);
+                        x += colWidths[i];
+                    });
+                    
+                    y += rowHeight;
+                    currentDate.setDate(currentDate.getDate() + 1); // Hari berikutnya
+                    
+                    // Jika hampir ke penghujung halaman, tambah halaman baru
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                        
+                        // Header jadual di halaman baru
+                        x = tableMarginX;
+                        doc.setFont('times', 'bold');
+                        headers.forEach((header, i) => {
+                            doc.rect(x, y, colWidths[i], rowHeight);
+                            doc.text(header, x + 2, y + 4);
+                            x += colWidths[i];
+                        });
+                        y += rowHeight;
+                        doc.setFont('times', 'normal');
+                    }
+                }
+
+                // Baris Statistik dalam jadual
+                doc.setFont('times', 'bold');
+                doc.rect(tableMarginX, y, tableWidth, rowHeight);
+                
+                // Kolom pertama: "Statistic"
+                doc.text('Statistic', tableMarginX + 2, y + 4);
+                
+                // Kolom "Total Hours" (kolom ke-5): jumlah jam
+                const totalHoursFormatted = formatDecimalToTime(totalHoursDecimal);
+                doc.text(totalHoursFormatted, 
+                    tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 2, 
+                    y + 4);
+                
+                // Kolom "Total OT" (kolom ke-6): jumlah OT
+                const totalOTFormatted = formatDecimalToTime(totalOTDecimal);
+                doc.text(totalOTFormatted, 
+                    tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + 2, 
+                    y + 4);
+                
+                // Nombor muka surat
+                const pageCount = doc.internal.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(8);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text(`Page ${i} of ${pageCount}`, pageWidth - 30, doc.internal.pageSize.height - 10);
+                }
+                
+                // Simpan PDF
+                const filename = `Laporan_Kehadiran_${user.name.replace(/\s+/g, '_')}_${startDateStr}_to_${endDateStr}.pdf`;
+                doc.save(filename);
+                
+                showNotif("Berjaya", "PDF telah dijana dan dimuat turun.");
+                
+            } catch (error) {
+                console.error('❌ Ralat PDF:', error);
+                showNotif("Ralat", "Gagal menjana PDF: " + error.message, true);
+            }
         };
 
         // Event listeners
