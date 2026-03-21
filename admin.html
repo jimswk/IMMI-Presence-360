@@ -1763,50 +1763,131 @@
             switchTab('users');
         };
 
-        window.updateUser = async function() {
-            const btn = document.getElementById('updateBtn');
-            const uid = document.getElementById('editUserId').value;
+window.updateUser = async function() {
+    const btn = document.getElementById('updateBtn');
+    const uid = document.getElementById('editUserId').value;
+    
+    // Dapatkan data LAMA pengguna sebelum update
+    const oldUserData = users.find(u => u.uid === uid);
+    
+    const data = {
+        uid: uid,
+        name: document.getElementById('editUserName').value,
+        email: document.getElementById('editUserEmail').value,
+        unit: currentUser.unit,
+        branch: currentUser.branch,
+        password: document.getElementById('editUserPassword').value,
+        location: document.getElementById('editUserLocation').value,
+        lat: document.getElementById('editUserLat').value,
+        lng: document.getElementById('editUserLng').value,
+        radius: document.getElementById('editUserRadius').value
+    };
+
+    if (!data.name || !data.email) {
+        showNotif("Ralat", "Nama dan Emel wajib diisi", true);
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = 'Sedang Mengemaskini...';
+
+    try {
+        console.log('📤 Updating user:', data);
+        const result = await callAPI('updateUser', { data: JSON.stringify(data) });
+        
+        if (result.success) {
+            showNotif("Berjaya", "Maklumat kakitangan telah dikemaskini.");
             
-            const data = {
-                uid: uid,
-                name: document.getElementById('editUserName').value,
-                email: document.getElementById('editUserEmail').value,
-                unit: currentUser.unit,
-                branch: currentUser.branch,
-                password: document.getElementById('editUserPassword').value,
-                location: document.getElementById('editUserLocation').value, // TAMBAH LOKASI
-                lat: document.getElementById('editUserLat').value,
-                lng: document.getElementById('editUserLng').value,
-                radius: document.getElementById('editUserRadius').value
-            };
-
-            if (!data.name || !data.email) {
-                showNotif("Ralat", "Nama dan Emel wajib diisi", true);
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = 'Sedang Mengemaskini...';
-
-            try {
-                console.log('📤 Updating user:', data);
-                const result = await callAPI('updateUser', { data: JSON.stringify(data) });
+            // ============================================
+            // HANTAR NOTIFIKASI JIKA ADA PERUBAHAN PADA LOKASI ATAU RADIUS
+            // ============================================
+            if (oldUserData) {
+                const changes = [];
                 
-                if (result.success) {
-                    showNotif("Berjaya", "Maklumat kakitangan telah dikemaskini.");
-                    cancelEdit();
-                    loadUsers();
-                } else {
-                    showNotif("Ralat", result.error || "Gagal mengemaskini data", true);
+                // Semak perubahan lokasi (alamat)
+                const oldLocation = oldUserData.location || '';
+                const newLocation = data.location || '';
+                if (oldLocation !== newLocation && newLocation !== '') {
+                    changes.push({
+                        type: 'location',
+                        oldValue: oldLocation || '-',
+                        newValue: newLocation
+                    });
                 }
-            } catch (error) {
-                console.error('Update error:', error);
-                showNotif("Ralat", "Gagal mengemaskini data", true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan';
+                
+                // Semak perubahan radius
+                const oldRadius = parseFloat(oldUserData.radius) || 500;
+                const newRadius = parseFloat(data.radius) || 500;
+                if (oldRadius !== newRadius) {
+                    changes.push({
+                        type: 'radius',
+                        oldValue: oldRadius,
+                        newValue: newRadius
+                    });
+                }
+                
+                // Semak perubahan koordinat (lat/lng)
+                const oldLat = parseFloat(oldUserData.lat) || 0;
+                const newLat = parseFloat(data.lat) || 0;
+                const oldLng = parseFloat(oldUserData.lng) || 0;
+                const newLng = parseFloat(data.lng) || 0;
+                if (oldLat !== newLat || oldLng !== newLng) {
+                    changes.push({
+                        type: 'coordinates',
+                        oldValue: `${oldLat.toFixed(6)}, ${oldLng.toFixed(6)}`,
+                        newValue: `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`
+                    });
+                }
+                
+                // Jika ada perubahan, hantar notifikasi ke API
+                if (changes.length > 0) {
+                    const notificationData = {
+                        title: `Perubahan Data Pengguna: ${data.name}`,
+                        message: `${currentUser.name} (${currentUser.branch}) telah membuat perubahan pada ${changes.map(c => 
+                            c.type === 'location' ? 'lokasi' : c.type === 'radius' ? 'radius' : 'koordinat'
+                        ).join(', ')} untuk pengguna ${data.name}`,
+                        details: {
+                            userId: uid,
+                            userName: data.name,
+                            adminName: currentUser.name,
+                            adminBranch: currentUser.branch,
+                            adminUnit: currentUser.unit,
+                            branch: data.branch,
+                            changeType: changes.map(c => c.type).join(','),
+                            oldLocation: changes.find(c => c.type === 'location')?.oldValue,
+                            newLocation: changes.find(c => c.type === 'location')?.newValue,
+                            oldRadius: changes.find(c => c.type === 'radius')?.oldValue,
+                            newRadius: changes.find(c => c.type === 'radius')?.newValue,
+                            oldCoordinates: changes.find(c => c.type === 'coordinates')?.oldValue,
+                            newCoordinates: changes.find(c => c.type === 'coordinates')?.newValue
+                        },
+                        type: 'change',
+                        createdBy: currentUser.uid
+                    };
+                    
+                    // Hantar ke API untuk simpan notifikasi
+                    const notifResult = await callAPI('createNotification', { data: JSON.stringify(notificationData) });
+                    if (notifResult.success) {
+                        console.log('📬 Notifikasi perubahan telah dihantar ke Superadmin');
+                    } else {
+                        console.log('⚠️ Gagal menghantar notifikasi:', notifResult.error);
+                    }
+                }
             }
-        };
+            
+            cancelEdit();
+            loadUsers();
+        } else {
+            showNotif("Ralat", result.error || "Gagal mengemaskini data", true);
+        }
+    } catch (error) {
+        console.error('Update error:', error);
+        showNotif("Ralat", "Gagal mengemaskini data", true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan';
+    }
+};
 
         // ============================================
         // RESET WAJAH FUNCTIONS
