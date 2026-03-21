@@ -302,6 +302,23 @@
             color: #059669;
             font-weight: 700;
         }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .refresh-btn:active {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body>
@@ -400,7 +417,12 @@
                             <span class="material-symbols-rounded">notifications</span>
                             Notifikasi Perubahan
                         </div>
-                        <div id="inboxCount" class="text-xs text-gray-400">0 notifikasi</div>
+                        <div class="flex items-center gap-2">
+                            <div id="inboxCount" class="text-xs text-gray-400">0 notifikasi</div>
+                            <button onclick="refreshNotifications()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula notifikasi">
+                                <span class="material-symbols-rounded text-sm">refresh</span>
+                            </button>
+                        </div>
                     </div>
                     <div id="inboxList">
                         <div class="inbox-empty">
@@ -447,10 +469,10 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                             </tr>
+                              </tr>
                         </thead>
                         <tbody id="adminsTableBody">
-                             <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                              <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -598,6 +620,8 @@
         let branchChart = null;
         let adminToDelete = null;
         let notifications = [];
+        let notificationCheckInterval = null;
+        let lastNotificationCount = 0;
 
         // ============================================
         // UTILITY FUNCTIONS
@@ -610,18 +634,81 @@
             setTimeout(() => notif.classList.remove('show'), 3500);
         }
 
+        // Play notification sound
+        function playNotificationSound() {
+            try {
+                const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                audio.volume = 0.3;
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        // Show browser notification
+        function showBrowserNotification() {
+            if (!("Notification" in window)) {
+                return;
+            }
+            
+            if (Notification.permission === "granted") {
+                new Notification("IMMI Presence 360", {
+                    body: "Ada notifikasi baru! Sila semak peti masuk.",
+                    icon: "https://ik.imagekit.io/pyreotmgq/Immigration_Department_of_Malaysia_Logo.svg.png"
+                });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+        }
+
+        function requestNotificationPermission() {
+            if ("Notification" in window && Notification.permission !== "denied") {
+                Notification.requestPermission();
+            }
+        }
+
         // ============================================
         // NOTIFICATION FUNCTIONS
         // ============================================
-        async function loadNotifications() {
+        async function loadNotifications(showToast = false) {
             try {
                 const result = await callAPI('getNotifications');
                 if (result.success) {
+                    const oldUnreadCount = notifications.filter(n => !n.read).length;
                     notifications = result.data || [];
+                    const newUnreadCount = notifications.filter(n => !n.read).length;
+                    
                     renderNotifications();
+                    
+                    if (showToast && newUnreadCount > oldUnreadCount) {
+                        showNotif('Notifikasi Baru', `${newUnreadCount - oldUnreadCount} notifikasi baru diterima`);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading notifications:', error);
+            }
+        }
+
+        // Check for new notifications (polling)
+        async function checkNewNotifications() {
+            try {
+                const result = await callAPI('getNotifications');
+                if (result.success && result.data) {
+                    const newNotifications = result.data;
+                    const newUnreadCount = newNotifications.filter(n => !n.read).length;
+                    const oldUnreadCount = notifications.filter(n => !n.read).length;
+                    
+                    if (newUnreadCount > oldUnreadCount) {
+                        notifications = newNotifications;
+                        renderNotifications();
+                        playNotificationSound();
+                        showBrowserNotification();
+                        updateInboxBadge();
+                        console.log('📬 New notifications detected!');
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking notifications:', error);
             }
         }
 
@@ -663,7 +750,11 @@
             
             inboxList.innerHTML = html;
             inboxCount.innerText = `${notifications.length} notifikasi (${unreadCount} belum dibaca)`;
-            
+            updateInboxBadge();
+        }
+
+        function updateInboxBadge() {
+            const unreadCount = notifications.filter(n => !n.read).length;
             const badge = document.getElementById('inboxUnreadBadge');
             if (unreadCount > 0) {
                 badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
@@ -691,6 +782,11 @@
             } catch (error) {
                 console.error('Error marking notification as read:', error);
             }
+        }
+
+        async function refreshNotifications() {
+            await loadNotifications(true);
+            showNotif('Berjaya', 'Notifikasi dikemaskini');
         }
 
         async function viewNotificationDetail(id) {
@@ -786,6 +882,18 @@
             document.getElementById('notificationDetailModal').style.display = 'none';
         }
 
+        function startNotificationPolling() {
+            if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+            notificationCheckInterval = setInterval(checkNewNotifications, 10000);
+        }
+
+        function stopNotificationPolling() {
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+                notificationCheckInterval = null;
+            }
+        }
+
         // ============================================
         // LOGIN
         // ============================================
@@ -820,9 +928,14 @@
                     document.getElementById('loginPage').classList.add('hidden');
                     document.getElementById('superadminDashboard').classList.remove('hidden');
                     
+                    requestNotificationPermission();
+                    
                     await loadNotifications();
                     await loadAdmins();
                     await loadAllUsers();
+                    
+                    startNotificationPolling();
+                    
                     showNotif('Selamat Datang', 'Log masuk berjaya');
                 } else {
                     showNotif('Gagal', result.error || 'Email atau kata laluan salah', true);
@@ -836,6 +949,7 @@
         };
 
         window.handleLogout = function() {
+            stopNotificationPolling();
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('superadminDashboard').classList.add('hidden');
         };
@@ -1075,7 +1189,6 @@
                     closeAdminModal();
                     await loadAdmins();
                     
-                    // Add notification for new admin
                     await callAPI('createNotification', { data: JSON.stringify({
                         title: `Admin Baru: ${data.name}`,
                         message: `${currentUser.name} telah mendaftarkan ${data.name} sebagai ${isSuperadmin ? 'SUPERADMIN' : 'admin'} untuk cawangan ${data.branch}`,
