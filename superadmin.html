@@ -385,7 +385,7 @@
         </div>
 
         <div class="main-content">
-            <!-- Inbox Tab - BARU -->
+            <!-- Inbox Tab -->
             <div id="inboxTab">
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-2xl font-black text-gray-800">Peti Masuk Notifikasi</h1>
@@ -470,7 +470,7 @@
                                     <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                     <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
                                     <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
-                                </tr>
+                                 </tr>
                             </thead>
                             <tbody id="usersTableBody">
                                  <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
@@ -491,7 +491,7 @@
         </div>
     </div>
 
-    <!-- Modal Tambah Admin (Boleh Tambah Superadmin Juga) -->
+    <!-- Modal Tambah Admin -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -564,9 +564,7 @@
             <div class="modal-header">
                 <h3 class="text-lg font-black" id="detailModalTitle">Detail Notifikasi</h3>
             </div>
-            <div class="modal-body" id="detailModalBody">
-                <!-- Content will be filled dynamically -->
-            </div>
+            <div class="modal-body" id="detailModalBody"></div>
             <div class="modal-footer">
                 <button onclick="closeNotificationDetailModal()" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Tutup</button>
             </div>
@@ -599,52 +597,34 @@
         let adminMarker = null;
         let branchChart = null;
         let adminToDelete = null;
-        
-        // Notifications Storage
         let notifications = [];
-        
-        // Load notifications from localStorage
-        function loadNotifications() {
-            const saved = localStorage.getItem('imm360_notifications');
-            if (saved) {
-                notifications = JSON.parse(saved);
-                renderNotifications();
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function showNotif(title, message, isError = false) {
+            const notif = document.getElementById('notification');
+            document.getElementById('notificationTitle').innerText = title;
+            document.getElementById('notificationMessage').innerText = message;
+            notif.className = `notification show ${isError ? 'error' : ''}`;
+            setTimeout(() => notif.classList.remove('show'), 3500);
+        }
+
+        // ============================================
+        // NOTIFICATION FUNCTIONS
+        // ============================================
+        async function loadNotifications() {
+            try {
+                const result = await callAPI('getNotifications');
+                if (result.success) {
+                    notifications = result.data || [];
+                    renderNotifications();
+                }
+            } catch (error) {
+                console.error('Error loading notifications:', error);
             }
         }
-        
-        // Save notifications to localStorage
-        function saveNotifications() {
-            localStorage.setItem('imm360_notifications', JSON.stringify(notifications));
-            renderNotifications();
-        }
-        
-        // Add notification
-        function addNotification(title, message, details, type = 'change') {
-            const newNotif = {
-                id: Date.now(),
-                title: title,
-                message: message,
-                details: details,
-                type: type,
-                read: false,
-                timestamp: new Date().toISOString()
-            };
-            notifications.unshift(newNotif);
-            saveNotifications();
-            
-            // Show notification popup
-            showNotification('Notifikasi Baru', title, false);
-            
-            // Update badge
-            updateInboxBadge();
-        }
-        
-        // Check if notification exists for this user change
-        function notificationExists(userId, changeType) {
-            return notifications.some(n => n.details?.userId === userId && n.details?.changeType === changeType);
-        }
-        
-        // Render notifications in inbox
+
         function renderNotifications() {
             const inboxList = document.getElementById('inboxList');
             const inboxCount = document.getElementById('inboxCount');
@@ -669,7 +649,7 @@
                 const unreadClass = notif.read ? 'read' : 'unread';
                 
                 html += `
-                    <div class="inbox-item ${unreadClass}" onclick="viewNotificationDetail(${notif.id})">
+                    <div class="inbox-item ${unreadClass}" onclick="viewNotificationDetail('${notif.id}')">
                         <div class="inbox-item-title">${notif.title}</div>
                         <div class="inbox-item-meta">
                             <span>${formattedDate}</span>
@@ -683,11 +663,7 @@
             
             inboxList.innerHTML = html;
             inboxCount.innerText = `${notifications.length} notifikasi (${unreadCount} belum dibaca)`;
-            updateInboxBadge();
-        }
-        
-        function updateInboxBadge() {
-            const unreadCount = notifications.filter(n => !n.read).length;
+            
             const badge = document.getElementById('inboxUnreadBadge');
             if (unreadCount > 0) {
                 badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
@@ -696,21 +672,34 @@
                 badge.classList.add('hidden');
             }
         }
-        
-        function markAllAsRead() {
-            notifications.forEach(n => n.read = true);
-            saveNotifications();
-            showNotification('Berjaya', 'Semua notifikasi ditandakan sebagai dibaca');
+
+        async function markAllAsRead() {
+            try {
+                const result = await callAPI('markAllNotificationsRead');
+                if (result.success) {
+                    await loadNotifications();
+                    showNotif('Berjaya', 'Semua notifikasi ditandakan sebagai dibaca');
+                }
+            } catch (error) {
+                console.error('Error marking all as read:', error);
+            }
         }
-        
-        function viewNotificationDetail(id) {
+
+        async function markNotificationRead(id) {
+            try {
+                await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        async function viewNotificationDetail(id) {
             const notif = notifications.find(n => n.id === id);
             if (!notif) return;
             
-            // Mark as read
             if (!notif.read) {
-                notif.read = true;
-                saveNotifications();
+                await markNotificationRead(id);
+                await loadNotifications();
             }
             
             const modal = document.getElementById('notificationDetailModal');
@@ -723,8 +712,8 @@
             const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
             
             let changesHtml = '';
-            if (notif.details) {
-                const d = notif.details;
+            const d = notif.details;
+            if (d) {
                 if (d.oldLocation && d.newLocation) {
                     changesHtml += `
                         <div class="mb-4 p-3 bg-blue-50 rounded-xl">
@@ -757,6 +746,22 @@
                         </div>
                     `;
                 }
+                if (d.oldCoordinates && d.newCoordinates) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-purple-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge location">📍 KOORDINAT</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${d.oldCoordinates}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge location">📍 KOORDINAT</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${d.newCoordinates}</span>
+                            </div>
+                        </div>
+                    `;
+                }
             }
             
             modalBody.innerHTML = `
@@ -776,59 +781,11 @@
             
             modal.style.display = 'flex';
         }
-        
+
         function closeNotificationDetailModal() {
             document.getElementById('notificationDetailModal').style.display = 'none';
         }
-        
-        // Function to check for changes when updating user (to be called from admin.html via API)
-        async function checkAndNotifyUserChange(userData, oldUserData, adminName, branch) {
-            const changes = [];
-            let hasChange = false;
-            
-            // Check location change
-            if (oldUserData.location !== userData.location && userData.location && userData.location !== '') {
-                changes.push({
-                    type: 'location',
-                    oldValue: oldUserData.location,
-                    newValue: userData.location
-                });
-                hasChange = true;
-            }
-            
-            // Check radius change
-            if (parseFloat(oldUserData.radius) !== parseFloat(userData.radius) && userData.radius) {
-                changes.push({
-                    type: 'radius',
-                    oldValue: oldUserData.radius,
-                    newValue: userData.radius
-                });
-                hasChange = true;
-            }
-            
-            if (hasChange && oldUserData.uid) {
-                // Only notify if user already existed (not new)
-                const title = `Perubahan Data Pengguna: ${userData.name}`;
-                let message = `${adminName} telah membuat perubahan pada `;
-                message += changes.map(c => c.type === 'location' ? 'lokasi' : 'radius').join(' dan ');
-                message += ` pengguna ${userData.name}`;
-                
-                const details = {
-                    userId: userData.uid,
-                    userName: userData.name,
-                    adminName: adminName,
-                    branch: branch,
-                    changeType: changes.map(c => c.type).join(','),
-                    oldLocation: changes.find(c => c.type === 'location')?.oldValue,
-                    newLocation: changes.find(c => c.type === 'location')?.newValue,
-                    oldRadius: changes.find(c => c.type === 'radius')?.oldValue,
-                    newRadius: changes.find(c => c.type === 'radius')?.newValue
-                };
-                
-                addNotification(title, message, details);
-            }
-        }
-        
+
         // ============================================
         // LOGIN
         // ============================================
@@ -838,7 +795,7 @@
             const btn = document.getElementById('loginBtn');
 
             if (!email || !password) {
-                showNotification('Ralat', 'Sila isi email dan kata laluan', true);
+                showNotif('Ralat', 'Sila isi email dan kata laluan', true);
                 return;
             }
 
@@ -850,7 +807,7 @@
                 
                 if (result.success) {
                     if (result.user.role !== 'superadmin') {
-                        showNotification('Akses Ditolak', 'Anda bukan Superadmin', true);
+                        showNotif('Akses Ditolak', 'Anda bukan Superadmin', true);
                         btn.disabled = false;
                         btn.innerHTML = 'Log Masuk';
                         return;
@@ -863,15 +820,15 @@
                     document.getElementById('loginPage').classList.add('hidden');
                     document.getElementById('superadminDashboard').classList.remove('hidden');
                     
-                    loadNotifications();
-                    loadAdmins();
-                    loadAllUsers();
-                    showNotification('Selamat Datang', 'Log masuk berjaya');
+                    await loadNotifications();
+                    await loadAdmins();
+                    await loadAllUsers();
+                    showNotif('Selamat Datang', 'Log masuk berjaya');
                 } else {
-                    showNotification('Gagal', result.error || 'Email atau kata laluan salah', true);
+                    showNotif('Gagal', result.error || 'Email atau kata laluan salah', true);
                 }
             } catch (error) {
-                showNotification('Ralat', 'Gagal berkomunikasi dengan server', true);
+                showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Log Masuk';
@@ -913,15 +870,14 @@
                     updateStats();
                 }
             } catch (error) {
-                showNotification('Ralat', 'Gagal memuatkan senarai admin', true);
+                showNotif('Ralat', 'Gagal memuatkan senarai admin', true);
             }
         }
 
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td>';
-
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
                 return;
             }
 
@@ -968,15 +924,14 @@
                     createBranchChart();
                 }
             } catch (error) {
-                showNotification('Ralat', 'Gagal memuatkan senarai pengguna', true);
+                showNotif('Ralat', 'Gagal memuatkan senarai pengguna', true);
             }
         }
 
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td>';
-
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
                 return;
             }
 
@@ -1083,7 +1038,7 @@
                     adminMap.setView([lat, lng], 16);
                     reverseGeocode(lat, lng);
                 },
-                () => showNotification('Ralat', 'Gagal mengesan lokasi', true)
+                () => showNotif('Ralat', 'Gagal mengesan lokasi', true)
             );
         };
 
@@ -1104,7 +1059,7 @@
             };
 
             if (!data.name || !data.email || !data.password || !data.branch || !data.location) {
-                showNotification('Ralat', 'Sila lengkapkan semua maklumat', true);
+                showNotif('Ralat', 'Sila lengkapkan semua maklumat', true);
                 return;
             }
 
@@ -1116,26 +1071,28 @@
                 const result = await callAPI('createAdmin', { data: JSON.stringify(data) });
                 
                 if (result.success) {
-                    showNotification('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`);
+                    showNotif('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`);
                     closeAdminModal();
-                    loadAdmins();
+                    await loadAdmins();
                     
                     // Add notification for new admin
-                    addNotification(
-                        `Admin Baru: ${data.name}`,
-                        `${currentUser.name} telah mendaftarkan ${data.name} sebagai ${isSuperadmin ? 'SUPERADMIN' : 'admin'} untuk cawangan ${data.branch}`,
-                        {
+                    await callAPI('createNotification', { data: JSON.stringify({
+                        title: `Admin Baru: ${data.name}`,
+                        message: `${currentUser.name} telah mendaftarkan ${data.name} sebagai ${isSuperadmin ? 'SUPERADMIN' : 'admin'} untuk cawangan ${data.branch}`,
+                        details: {
                             adminName: data.name,
                             branch: data.branch,
                             role: role,
                             createdBy: currentUser.name
-                        }
-                    );
+                        },
+                        type: 'admin',
+                        createdBy: currentUser.uid
+                    })});
                 } else {
-                    showNotification('Ralat', result.error || 'Gagal menyimpan', true);
+                    showNotif('Ralat', result.error || 'Gagal menyimpan', true);
                 }
             } catch (error) {
-                showNotification('Ralat', 'Gagal menyimpan data', true);
+                showNotif('Ralat', 'Gagal menyimpan data', true);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Daftar Admin';
@@ -1166,14 +1123,14 @@
                 const result = await callAPI('deleteAdmin', { data: JSON.stringify({ uid: adminToDelete }) });
                 
                 if (result.success) {
-                    showNotification('Berjaya', 'Admin telah dipadamkan');
+                    showNotif('Berjaya', 'Admin telah dipadamkan');
                     closeDeleteModal();
-                    loadAdmins();
+                    await loadAdmins();
                 } else {
-                    showNotification('Ralat', result.error || 'Gagal memadam', true);
+                    showNotif('Ralat', result.error || 'Gagal memadam', true);
                 }
             } catch (error) {
-                showNotification('Ralat', 'Gagal memadam admin', true);
+                showNotif('Ralat', 'Gagal memadam admin', true);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Ya, Padam';
@@ -1213,9 +1170,6 @@
                 }
             });
         }
-
-        // Export function for external use (to be called from admin.html)
-        window.immNotifyUserChange = checkAndNotifyUserChange;
 
         // Enter key for login
         document.getElementById('loginPassword').addEventListener('keypress', (e) => {
