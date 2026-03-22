@@ -1,3 +1,4 @@
+<!-- superadmin.html - Gantikan dengan versi ini -->
 <!DOCTYPE html>
 <html lang="ms">
 <head>
@@ -469,10 +470,10 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                              </tr>
+                               </tr>
                         </thead>
                         <tbody id="adminsTableBody">
-                              <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                               <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -622,6 +623,36 @@
         let notifications = [];
         let notificationCheckInterval = null;
         let lastNotificationCount = 0;
+        
+        // Audio untuk notifikasi
+        let audioBell = null;
+
+        // ============================================
+        // AUDIO FUNCTIONS
+        // ============================================
+        function initAudio() {
+            try {
+                // Bunyi notifikasi - menggunakan URL yang boleh diakses
+                audioBell = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                audioBell.volume = 0.5;
+                console.log('✅ Audio initialized');
+            } catch (e) {
+                console.error('❌ Failed to initialize audio:', e);
+            }
+        }
+
+        function playNotificationSound() {
+            if (audioBell) {
+                audioBell.play().catch(e => console.log('Audio play failed:', e));
+            } else {
+                // Fallback - create new audio if not initialized
+                try {
+                    const fallbackAudio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                    fallbackAudio.volume = 0.5;
+                    fallbackAudio.play().catch(e => console.log('Fallback audio failed:', e));
+                } catch (e) {}
+            }
+        }
 
         // ============================================
         // UTILITY FUNCTIONS
@@ -630,30 +661,20 @@
             const notif = document.getElementById('notification');
             document.getElementById('notificationTitle').innerText = title;
             document.getElementById('notificationMessage').innerText = message;
+            document.getElementById('notifIcon').innerHTML = isError ? 'error' : 'check_circle';
             notif.className = `notification show ${isError ? 'error' : ''}`;
             setTimeout(() => notif.classList.remove('show'), 3500);
         }
 
-        // Play notification sound
-        function playNotificationSound() {
-            try {
-                const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
-                audio.volume = 0.3;
-                audio.play().catch(e => console.log('Audio play failed:', e));
-            } catch (e) {
-                console.log('Audio not supported');
-            }
-        }
-
         // Show browser notification
-        function showBrowserNotification() {
+        function showBrowserNotification(title, body) {
             if (!("Notification" in window)) {
                 return;
             }
             
             if (Notification.permission === "granted") {
-                new Notification("IMMI Presence 360", {
-                    body: "Ada notifikasi baru! Sila semak peti masuk.",
+                new Notification(title, {
+                    body: body,
                     icon: "https://ik.imagekit.io/pyreotmgq/Immigration_Department_of_Malaysia_Logo.svg.png"
                 });
             } else if (Notification.permission !== "denied") {
@@ -679,6 +700,7 @@
                     const newUnreadCount = notifications.filter(n => !n.read).length;
                     
                     renderNotifications();
+                    updateInboxBadge();
                     
                     if (showToast && newUnreadCount > oldUnreadCount) {
                         showNotif('Notifikasi Baru', `${newUnreadCount - oldUnreadCount} notifikasi baru diterima`);
@@ -695,15 +717,24 @@
                 const result = await callAPI('getNotifications');
                 if (result.success && result.data) {
                     const newNotifications = result.data;
-                    const newUnreadCount = newNotifications.filter(n => !n.read).length;
                     const oldUnreadCount = notifications.filter(n => !n.read).length;
+                    const newUnreadCount = newNotifications.filter(n => !n.read).length;
                     
                     if (newUnreadCount > oldUnreadCount) {
                         notifications = newNotifications;
                         renderNotifications();
-                        playNotificationSound();
-                        showBrowserNotification();
                         updateInboxBadge();
+                        
+                        // Play sound and show browser notification for new notifications
+                        playNotificationSound();
+                        const newNotifs = newNotifications.filter(n => !notifications.find(old => old.id === n.id)?.read);
+                        if (newNotifs.length > 0) {
+                            showBrowserNotification(
+                                'IMMI Presence 360', 
+                                `${newNotifs.length} notifikasi baru diterima. Sila semak peti masuk.`
+                            );
+                        }
+                        
                         console.log('📬 New notifications detected!');
                     }
                 }
@@ -773,6 +804,7 @@
                 }
             } catch (error) {
                 console.error('Error marking all as read:', error);
+                showNotif('Ralat', 'Gagal menandakan semua sebagai dibaca', true);
             }
         }
 
@@ -795,6 +827,7 @@
             
             if (!notif.read) {
                 await markNotificationRead(id);
+                // Refresh notifications to update read status
                 await loadNotifications();
             }
             
@@ -810,7 +843,7 @@
             let changesHtml = '';
             const d = notif.details;
             if (d) {
-                if (d.oldLocation && d.newLocation) {
+                if (d.oldLocation && d.newLocation && d.oldLocation !== d.newLocation) {
                     changesHtml += `
                         <div class="mb-4 p-3 bg-blue-50 rounded-xl">
                             <div class="flex items-center gap-2 mb-2">
@@ -826,7 +859,7 @@
                         </div>
                     `;
                 }
-                if (d.oldRadius && d.newRadius) {
+                if (d.oldRadius && d.newRadius && d.oldRadius !== d.newRadius) {
                     changesHtml += `
                         <div class="mb-4 p-3 bg-amber-50 rounded-xl">
                             <div class="flex items-center gap-2 mb-2">
@@ -842,7 +875,7 @@
                         </div>
                     `;
                 }
-                if (d.oldCoordinates && d.newCoordinates) {
+                if (d.oldCoordinates && d.newCoordinates && d.oldCoordinates !== d.newCoordinates) {
                     changesHtml += `
                         <div class="mb-4 p-3 bg-purple-50 rounded-xl">
                             <div class="flex items-center gap-2 mb-2">
@@ -865,7 +898,7 @@
                     <div class="p-3 bg-gray-50 rounded-xl">
                         <p class="text-sm text-gray-600">${notif.message}</p>
                     </div>
-                    ${changesHtml}
+                    ${changesHtml || '<p class="text-gray-400 text-sm">Tiada perubahan detail</p>'}
                     <div class="text-xs text-gray-400 border-t pt-3">
                         <div>Admin: ${notif.details?.adminName || '-'}</div>
                         <div>Pengguna: ${notif.details?.userName || '-'}</div>
@@ -885,12 +918,14 @@
         function startNotificationPolling() {
             if (notificationCheckInterval) clearInterval(notificationCheckInterval);
             notificationCheckInterval = setInterval(checkNewNotifications, 10000);
+            console.log('🔔 Notification polling started (every 10 seconds)');
         }
 
         function stopNotificationPolling() {
             if (notificationCheckInterval) {
                 clearInterval(notificationCheckInterval);
                 notificationCheckInterval = null;
+                console.log('🔕 Notification polling stopped');
             }
         }
 
@@ -928,6 +963,9 @@
                     document.getElementById('loginPage').classList.add('hidden');
                     document.getElementById('superadminDashboard').classList.remove('hidden');
                     
+                    // Initialize audio
+                    initAudio();
+                    
                     requestNotificationPermission();
                     
                     await loadNotifications();
@@ -936,7 +974,7 @@
                     
                     startNotificationPolling();
                     
-                    showNotif('Selamat Datang', 'Log masuk berjaya');
+                    showNotif('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`);
                 } else {
                     showNotif('Gagal', result.error || 'Email atau kata laluan salah', true);
                 }
@@ -991,7 +1029,7 @@
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td> ';
                 return;
             }
 
@@ -1045,13 +1083,13 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
                 return;
             }
 
             let html = '';
             users.forEach(user => {
-                const faceStatus = user.faceDescriptor ? 
+                const faceStatus = user.faceDescriptor && user.faceDescriptor !== '' ? 
                     '<span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">DIDAFTAR</span>' : 
                     '<span class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-xs font-bold">BELUM</span>';
                 
@@ -1189,14 +1227,17 @@
                     closeAdminModal();
                     await loadAdmins();
                     
+                    // Create notification
                     await callAPI('createNotification', { data: JSON.stringify({
                         title: `Admin Baru: ${data.name}`,
-                        message: `${currentUser.name} telah mendaftarkan ${data.name} sebagai ${isSuperadmin ? 'SUPERADMIN' : 'admin'} untuk cawangan ${data.branch}`,
+                        message: `${currentUser.name} (${currentUser.branch}) telah mendaftarkan ${data.name} sebagai ${isSuperadmin ? 'SUPERADMIN' : 'admin'} untuk cawangan ${data.branch}`,
                         details: {
                             adminName: data.name,
+                            adminEmail: data.email,
                             branch: data.branch,
                             role: role,
-                            createdBy: currentUser.name
+                            createdBy: currentUser.name,
+                            createdByUid: currentUser.uid
                         },
                         type: 'admin',
                         createdBy: currentUser.uid
