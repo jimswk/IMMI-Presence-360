@@ -1841,18 +1841,22 @@ window.updateUser = async function() {
                 
                 // Jika ada perubahan, hantar notifikasi ke API
                 if (changes.length > 0) {
+                    const changeDescription = changes.map(c => 
+                        c.type === 'location' ? 'lokasi' : (c.type === 'radius' ? 'radius' : 'koordinat')
+                    ).join(', ');
+                    
                     const notificationData = {
                         title: `Perubahan Data Pengguna: ${data.name}`,
-                        message: `${currentUser.name} (${currentUser.branch}) telah membuat perubahan pada ${changes.map(c => 
-                            c.type === 'location' ? 'lokasi' : c.type === 'radius' ? 'radius' : 'koordinat'
-                        ).join(', ')} untuk pengguna ${data.name}`,
+                        message: `${currentUser.name} (${currentUser.branch}) telah membuat perubahan pada ${changeDescription} untuk pengguna ${data.name}.`,
                         details: {
                             userId: uid,
                             userName: data.name,
                             adminName: currentUser.name,
+                            adminEmail: currentUser.email,
                             adminBranch: currentUser.branch,
                             adminUnit: currentUser.unit,
                             branch: data.branch,
+                            unit: data.unit,
                             changeType: changes.map(c => c.type).join(','),
                             oldLocation: changes.find(c => c.type === 'location')?.oldValue,
                             newLocation: changes.find(c => c.type === 'location')?.newValue,
@@ -1865,10 +1869,13 @@ window.updateUser = async function() {
                         createdBy: currentUser.uid
                     };
                     
+                    console.log('📬 Sending notification:', notificationData);
+                    
                     // Hantar ke API untuk simpan notifikasi
                     const notifResult = await callAPI('createNotification', { data: JSON.stringify(notificationData) });
                     if (notifResult.success) {
                         console.log('📬 Notifikasi perubahan telah dihantar ke Superadmin');
+                        showNotif("Makluman", "Notifikasi telah dihantar ke Superadmin", false);
                     } else {
                         console.log('⚠️ Gagal menghantar notifikasi:', notifResult.error);
                     }
