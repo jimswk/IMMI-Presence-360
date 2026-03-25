@@ -445,8 +445,7 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                                </tr>
-                        </thead>
+                                </thead>
                         <tbody id="adminsTableBody">
                             <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
@@ -598,6 +597,7 @@
         let notifications = [];
         let notificationCheckInterval = null;
         let audioBell = null;
+        let isUpdatingReadStatus = false;
 
         // ============================================
         // AUDIO FUNCTIONS
@@ -652,7 +652,7 @@
         }
 
         // ============================================
-        // NOTIFICATION FUNCTIONS
+        // NOTIFICATION FUNCTIONS - DENGAN FORCE REFRESH
         // ============================================
         async function loadNotifications(showToast = false) {
             try {
@@ -677,21 +677,35 @@
         }
 
         async function checkNewNotifications() {
+            if (isUpdatingReadStatus) return;
+            
             try {
                 const result = await callAPI('getNotifications');
                 if (result.success && result.data) {
                     const newNotifications = result.data;
-                    const oldUnreadCount = notifications.filter(n => !n.read).length;
-                    const newUnreadCount = newNotifications.filter(n => !n.read).length;
                     const oldIds = new Set(notifications.map(n => n.id));
                     const hasNew = newNotifications.some(n => !oldIds.has(n.id));
                     
-                    if (hasNew || newUnreadCount > oldUnreadCount) {
+                    if (hasNew) {
                         notifications = newNotifications;
                         renderNotifications();
                         updateInboxBadge();
                         playNotificationSound();
-                        showBrowserNotification('IMMI Presence 360', `${newUnreadCount - oldUnreadCount} notifikasi baru diterima`);
+                        showBrowserNotification('IMMI Presence 360', 'Notifikasi baru diterima');
+                    } else {
+                        // Update read status from server
+                        let needsUpdate = false;
+                        notifications.forEach(notif => {
+                            const serverNotif = newNotifications.find(n => n.id === notif.id);
+                            if (serverNotif && serverNotif.read !== notif.read) {
+                                notif.read = serverNotif.read;
+                                needsUpdate = true;
+                            }
+                        });
+                        if (needsUpdate) {
+                            renderNotifications();
+                            updateInboxBadge();
+                        }
                     }
                 }
             } catch (error) {
@@ -765,14 +779,19 @@
             const btn = document.getElementById('markAllReadBtn');
             btn.disabled = true;
             btn.innerHTML = 'Memproses...';
+            isUpdatingReadStatus = true;
             
             try {
                 const result = await callAPI('markAllNotificationsRead');
                 if (result.success) {
-                    notifications.forEach(notif => { notif.read = true; });
-                    renderNotifications();
-                    updateInboxBadge();
-                    showNotif('Berjaya', 'Semua notifikasi ditandakan sebagai dibaca');
+                    // Force refresh notifications from server
+                    const refreshResult = await callAPI('getNotifications');
+                    if (refreshResult.success) {
+                        notifications = refreshResult.data || [];
+                        renderNotifications();
+                        updateInboxBadge();
+                        showNotif('Berjaya', 'Semua notifikasi ditandakan sebagai dibaca');
+                    }
                 } else {
                     showNotif('Ralat', 'Gagal menandakan semua sebagai dibaca', true);
                 }
@@ -782,16 +801,20 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Tandakan Semua Dibaca';
+                isUpdatingReadStatus = false;
             }
         }
 
         async function markNotificationRead(id) {
             try {
                 await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
-                const notif = notifications.find(n => n.id === id);
-                if (notif) notif.read = true;
-                renderNotifications();
-                updateInboxBadge();
+                // Update local and refresh
+                const refreshResult = await callAPI('getNotifications');
+                if (refreshResult.success) {
+                    notifications = refreshResult.data || [];
+                    renderNotifications();
+                    updateInboxBadge();
+                }
             } catch (error) {
                 console.error('Error marking notification as read:', error);
             }
@@ -803,21 +826,30 @@
         }
 
         async function deleteNotification(id) {
-            if (!confirm('Padam notifikasi ini? Notifikasi akan diarkibkan dan tidak akan muncul lagi.')) return;
+            if (!confirm('Padam notifikasi ini? Tindakan ini tidak boleh dibatalkan.')) return;
+            
+            const btn = document.querySelector(`.inbox-item[data-id="${id}"] button`);
+            if (btn) btn.disabled = true;
             
             try {
                 const result = await callAPI('deleteNotification', { data: JSON.stringify({ id: id }) });
                 if (result.success) {
-                    notifications = notifications.filter(n => n.id !== id);
-                    renderNotifications();
-                    updateInboxBadge();
-                    showNotif('Berjaya', 'Notifikasi telah dipadamkan');
+                    // Force refresh from server
+                    const refreshResult = await callAPI('getNotifications');
+                    if (refreshResult.success) {
+                        notifications = refreshResult.data || [];
+                        renderNotifications();
+                        updateInboxBadge();
+                        showNotif('Berjaya', 'Notifikasi telah dipadamkan');
+                    }
                 } else {
                     showNotif('Ralat', 'Gagal memadam notifikasi', true);
                 }
             } catch (error) {
                 console.error('Error deleting notification:', error);
                 showNotif('Ralat', 'Gagal memadam notifikasi', true);
+            } finally {
+                if (btn) btn.disabled = false;
             }
         }
 
@@ -830,18 +862,23 @@
                 return;
             }
             
-            if (!confirm(`Anda pasti ingin memadam ${readCount} notifikasi yang telah dibaca? Notifikasi akan diarkibkan.`)) return;
+            if (!confirm(`Anda pasti ingin memadam ${readCount} notifikasi yang telah dibaca? Tindakan ini tidak boleh dibatalkan.`)) return;
             
             btn.disabled = true;
             btn.innerHTML = 'Memadam...';
+            isUpdatingReadStatus = true;
             
             try {
                 const result = await callAPI('deleteAllReadNotifications');
                 if (result.success) {
-                    notifications = notifications.filter(n => !n.read);
-                    renderNotifications();
-                    updateInboxBadge();
-                    showNotif('Berjaya', `${result.deleted || readCount} notifikasi telah dipadamkan`);
+                    // Force refresh from server
+                    const refreshResult = await callAPI('getNotifications');
+                    if (refreshResult.success) {
+                        notifications = refreshResult.data || [];
+                        renderNotifications();
+                        updateInboxBadge();
+                        showNotif('Berjaya', `${result.deleted || readCount} notifikasi telah dipadamkan`);
+                    }
                 } else {
                     showNotif('Ralat', result.error || 'Gagal memadam notifikasi', true);
                 }
@@ -851,6 +888,7 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-rounded text-sm">delete_sweep</span> Padam Semua Dibaca';
+                isUpdatingReadStatus = false;
             }
         }
 
@@ -1054,7 +1092,7 @@
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
                 return;
             }
 
@@ -1108,7 +1146,7 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
                 return;
             }
 
