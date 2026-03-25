@@ -5,22 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>IMMI Presence 360 - Panel Superadmin</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0,0" />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,0" />
     
-    <!-- Leaflet for Maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
-    <!-- API Config -->
     <script src="api-config.js"></script>
     
     <style>
@@ -29,14 +24,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        :root {
-            --gov-purple: #5b21b6;
-            --gov-purple-light: #7c3aed;
-            --gov-gold: #fbbf24;
-            --gov-success: #059669;
-            --gov-danger: #dc2626;
         }
 
         body {
@@ -297,10 +284,6 @@
             background: #e2e8f0;
         }
 
-        .refresh-btn:active {
-            transform: rotate(180deg);
-        }
-
         .delete-notif-btn {
             transition: all 0.2s;
         }
@@ -462,7 +445,7 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                               </tr>
+                                </tr>
                         </thead>
                         <tbody id="adminsTableBody">
                             <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
@@ -621,11 +604,10 @@
         // ============================================
         function initAudio() {
             try {
-                audioBell = new Audio('https://ik.imagekit.io/pyreotmgq/mixkit-modern-classic-door-bell-sound-113.wav');
+                audioBell = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
                 audioBell.volume = 0.5;
-                console.log('✅ Audio initialized');
             } catch (e) {
-                console.error('❌ Failed to initialize audio:', e);
+                console.error('Failed to initialize audio:', e);
             }
         }
 
@@ -662,6 +644,13 @@
             }
         }
 
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         // ============================================
         // NOTIFICATION FUNCTIONS
         // ============================================
@@ -694,8 +683,10 @@
                     const newNotifications = result.data;
                     const oldUnreadCount = notifications.filter(n => !n.read).length;
                     const newUnreadCount = newNotifications.filter(n => !n.read).length;
+                    const oldIds = new Set(notifications.map(n => n.id));
+                    const hasNew = newNotifications.some(n => !oldIds.has(n.id));
                     
-                    if (newUnreadCount > oldUnreadCount) {
+                    if (hasNew || newUnreadCount > oldUnreadCount) {
                         notifications = newNotifications;
                         renderNotifications();
                         updateInboxBadge();
@@ -731,18 +722,20 @@
                 const date = new Date(notif.timestamp);
                 const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
                 const unreadClass = notif.read ? 'read' : 'unread';
+                const adminName = notif.details?.adminName || notif.details?.createdBy || 'Admin';
+                const userName = notif.details?.userName || 'Pengguna';
                 
                 html += `
-                    <div class="inbox-item ${unreadClass}">
+                    <div class="inbox-item ${unreadClass}" data-id="${notif.id}">
                         <div class="flex justify-between items-start">
                             <div class="flex-1 cursor-pointer" onclick="viewNotificationDetail('${notif.id}')">
-                                <div class="inbox-item-title">${notif.title}</div>
+                                <div class="inbox-item-title">${escapeHtml(notif.title)}</div>
                                 <div class="inbox-item-meta">
                                     <span>${formattedDate}</span>
-                                    <span>${notif.details?.adminName || 'Admin'}</span>
-                                    <span>${notif.details?.userName || 'Pengguna'}</span>
+                                    <span>${escapeHtml(adminName)}</span>
+                                    <span>${escapeHtml(userName)}</span>
                                 </div>
-                                <div class="text-sm text-gray-600 mt-1">${notif.message}</div>
+                                <div class="text-sm text-gray-600 mt-1">${escapeHtml(notif.message)}</div>
                             </div>
                             <button onclick="deleteNotification('${notif.id}')" class="delete-notif-btn ml-4 p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-all" title="Padam notifikasi">
                                 <span class="material-symbols-rounded text-sm">delete</span>
@@ -809,98 +802,8 @@
             showNotif('Berjaya', 'Notifikasi dikemaskini');
         }
 
-        async function viewNotificationDetail(id) {
-            const notif = notifications.find(n => n.id === id);
-            if (!notif) return;
-            
-            if (!notif.read) await markNotificationRead(id);
-            
-            const modal = document.getElementById('notificationDetailModal');
-            const modalBody = document.getElementById('detailModalBody');
-            const modalTitle = document.getElementById('detailModalTitle');
-            
-            modalTitle.innerText = notif.title;
-            
-            const date = new Date(notif.timestamp);
-            const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
-            
-            let changesHtml = '';
-            const d = notif.details;
-            if (d) {
-                if (d.oldLocation && d.newLocation && d.oldLocation !== d.newLocation) {
-                    changesHtml += `
-                        <div class="mb-4 p-3 bg-blue-50 rounded-xl">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="change-badge location">🌍 LOKASI</span>
-                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
-                                <span class="diff-old text-sm">${d.oldLocation}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="change-badge location">🌍 LOKASI</span>
-                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
-                                <span class="diff-new text-sm">${d.newLocation}</span>
-                            </div>
-                        </div>
-                    `;
-                }
-                if (d.oldRadius && d.newRadius && d.oldRadius !== d.newRadius) {
-                    changesHtml += `
-                        <div class="mb-4 p-3 bg-amber-50 rounded-xl">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="change-badge radius">📏 RADIUS</span>
-                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
-                                <span class="diff-old text-sm">${d.oldRadius}m</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="change-badge radius">📏 RADIUS</span>
-                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
-                                <span class="diff-new text-sm">${d.newRadius}m</span>
-                            </div>
-                        </div>
-                    `;
-                }
-                if (d.oldCoordinates && d.newCoordinates && d.oldCoordinates !== d.newCoordinates) {
-                    changesHtml += `
-                        <div class="mb-4 p-3 bg-purple-50 rounded-xl">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="change-badge location">📍 KOORDINAT</span>
-                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
-                                <span class="diff-old text-sm">${d.oldCoordinates}</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="change-badge location">📍 KOORDINAT</span>
-                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
-                                <span class="diff-new text-sm">${d.newCoordinates}</span>
-                            </div>
-                        </div>
-                    `;
-                }
-            }
-            
-            modalBody.innerHTML = `
-                <div class="space-y-4">
-                    <div class="p-3 bg-gray-50 rounded-xl">
-                        <p class="text-sm text-gray-600">${notif.message}</p>
-                    </div>
-                    ${changesHtml || '<p class="text-gray-400 text-sm">Tiada perubahan detail</p>'}
-                    <div class="text-xs text-gray-400 border-t pt-3">
-                        <div>Admin: ${notif.details?.adminName || '-'}</div>
-                        <div>Pengguna: ${notif.details?.userName || '-'}</div>
-                        <div>Masa: ${formattedDate}</div>
-                        <div>Cawangan: ${notif.details?.branch || '-'}</div>
-                    </div>
-                </div>
-            `;
-            
-            modal.style.display = 'flex';
-        }
-
-        function closeNotificationDetailModal() {
-            document.getElementById('notificationDetailModal').style.display = 'none';
-        }
-
         async function deleteNotification(id) {
-            if (!confirm('Padam notifikasi ini?')) return;
+            if (!confirm('Padam notifikasi ini? Notifikasi akan diarkibkan dan tidak akan muncul lagi.')) return;
             
             try {
                 const result = await callAPI('deleteNotification', { data: JSON.stringify({ id: id }) });
@@ -927,7 +830,7 @@
                 return;
             }
             
-            if (!confirm(`Anda pasti ingin memadam ${readCount} notifikasi yang telah dibaca?`)) return;
+            if (!confirm(`Anda pasti ingin memadam ${readCount} notifikasi yang telah dibaca? Notifikasi akan diarkibkan.`)) return;
             
             btn.disabled = true;
             btn.innerHTML = 'Memadam...';
@@ -949,6 +852,96 @@
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-rounded text-sm">delete_sweep</span> Padam Semua Dibaca';
             }
+        }
+
+        async function viewNotificationDetail(id) {
+            const notif = notifications.find(n => n.id === id);
+            if (!notif) return;
+            
+            if (!notif.read) await markNotificationRead(id);
+            
+            const modal = document.getElementById('notificationDetailModal');
+            const modalBody = document.getElementById('detailModalBody');
+            const modalTitle = document.getElementById('detailModalTitle');
+            
+            modalTitle.innerText = notif.title;
+            
+            const date = new Date(notif.timestamp);
+            const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+            
+            let changesHtml = '';
+            const d = notif.details;
+            if (d) {
+                if (d.oldLocation && d.newLocation && d.oldLocation !== d.newLocation) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-blue-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge location">🌍 LOKASI</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${escapeHtml(d.oldLocation)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge location">🌍 LOKASI</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${escapeHtml(d.newLocation)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                if (d.oldRadius && d.newRadius && d.oldRadius !== d.newRadius) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-amber-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge radius">📏 RADIUS</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${d.oldRadius}m</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge radius">📏 RADIUS</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${d.newRadius}m</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                if (d.oldCoordinates && d.newCoordinates && d.oldCoordinates !== d.newCoordinates) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-purple-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge location">📍 KOORDINAT</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${escapeHtml(d.oldCoordinates)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge location">📍 KOORDINAT</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${escapeHtml(d.newCoordinates)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            modalBody.innerHTML = `
+                <div class="space-y-4">
+                    <div class="p-3 bg-gray-50 rounded-xl">
+                        <p class="text-sm text-gray-600">${escapeHtml(notif.message)}</p>
+                    </div>
+                    ${changesHtml || '<p class="text-gray-400 text-sm">Tiada perubahan detail</p>'}
+                    <div class="text-xs text-gray-400 border-t pt-3">
+                        <div>Admin: ${escapeHtml(notif.details?.adminName || '-')}</div>
+                        <div>Pengguna: ${escapeHtml(notif.details?.userName || '-')}</div>
+                        <div>Masa: ${formattedDate}</div>
+                        <div>Cawangan: ${escapeHtml(notif.details?.branch || '-')}</div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+
+        function closeNotificationDetailModal() {
+            document.getElementById('notificationDetailModal').style.display = 'none';
         }
 
         function startNotificationPolling() {
@@ -1061,7 +1054,7 @@
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td>';
                 return;
             }
 
@@ -1073,12 +1066,12 @@
                 html += `
                     <tr>
                         <td class="p-3">
-                            <div class="font-bold">${admin.name}</div>
-                            <div class="text-xs text-gray-400">${admin.email}</div>
+                            <div class="font-bold">${escapeHtml(admin.name)}</div>
+                            <div class="text-xs text-gray-400">${escapeHtml(admin.email)}</div>
                         </td>
-                        <td class="p-3">${admin.branch}</td>
-                        <td class="p-3">${admin.unit}</td>
-                        <td class="p-3">${admin.location || '-'}</td>
+                        <td class="p-3">${escapeHtml(admin.branch)}</td>
+                        <td class="p-3">${escapeHtml(admin.unit)}</td>
+                        <td class="p-3">${escapeHtml(admin.location || '-')}</td>
                         <td class="p-3 text-center">
                             ${isSuperadmin ? 
                                 '<span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">SUPERADMIN</span>' : 
@@ -1115,7 +1108,7 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td>';
                 return;
             }
 
@@ -1128,12 +1121,12 @@
                 html += `
                     <tr>
                         <td class="p-3">
-                            <div class="font-bold">${user.name}</div>
-                            <div class="text-xs text-gray-400">${user.email}</div>
+                            <div class="font-bold">${escapeHtml(user.name)}</div>
+                            <div class="text-xs text-gray-400">${escapeHtml(user.email)}</div>
                         </td>
-                        <td class="p-3">${user.branch}</td>
-                        <td class="p-3">${user.unit || '-'}</td>
-                        <td class="p-3 max-w-[200px] truncate" title="${user.location || '-'}">${user.location || '-'}</td>
+                        <td class="p-3">${escapeHtml(user.branch)}</td>
+                        <td class="p-3">${escapeHtml(user.unit || '-')}</td>
+                        <td class="p-3 max-w-[200px] truncate" title="${escapeHtml(user.location || '-')}">${escapeHtml(user.location || '-')}</td>
                         <td class="p-3 text-center">${user.radius || 500}m</td>
                         <td class="p-3 text-center">${faceStatus}</td>
                     </tr>
