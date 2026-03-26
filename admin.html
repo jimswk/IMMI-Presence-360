@@ -160,6 +160,21 @@
             cursor: not-allowed;
         }
 
+        /* Spinner Animation */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Sidebar */
         .sidebar {
             background: linear-gradient(165deg, #0b1e33 0%, #132b41 100%);
@@ -424,18 +439,6 @@
         td { padding: 20px 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
         tr:hover td { background: #f8fafc; }
 
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
         .progress-bar {
             height: 4px;
             background: #e2e8f0;
@@ -519,6 +522,23 @@
 
         .sub-tab:not(.active):hover {
             background: rgba(255,255,255,0.5);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+            .floating-input {
+                padding: 16px 14px 6px 14px;
+                font-size: 0.95rem;
+            }
+            
+            .floating-label {
+                font-size: 0.9rem;
+            }
+            
+            .floating-input:focus ~ .floating-label,
+            .floating-input:not(:placeholder-shown) ~ .floating-label {
+                font-size: 0.65rem;
+            }
         }
     </style>
 </head>
@@ -642,16 +662,16 @@
                     <div class="overflow-x-auto">
                          <table>
                             <thead>
-                                <tr>
+                                 <tr>
                                     <th>Nama Kakitangan</th>
                                     <th>Unit / Bahagian</th>
                                     <th>Status Biometrik</th>
                                     <th>Geofencing</th>
                                     <th class="text-center">Tindakan</th>
-                                </tr>
+                                 </tr>
                             </thead>
                             <tbody id="usersTableBody"></tbody>
-                        </table>
+                         </table>
                     </div>
                 </div>
             </div>
@@ -961,7 +981,7 @@
                                 <tbody id="userAttendanceBody">
                                     <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
                                 </tbody>
-                             </table>
+                              </table>
                         </div>
                     </div>
                 </div>
@@ -1235,7 +1255,7 @@
             // Add loading animation
             btn.disabled = true;
             btn.classList.add('loading');
-            btn.innerHTML = '<div class="loading mx-auto"></div>';
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             
             try {
                 const result = await callAPI('login', { email, password });
@@ -1419,7 +1439,7 @@
                 const result = await callAPI('getAttendance', { uid: selectedUser.uid, startDate, endDate });
                 const tbody = document.getElementById('userAttendanceBody');
                 if (!result.success || !result.data || result.data.length === 0) {
-                    tbody.innerHTML = '很好<td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
                     return;
                 }
                 let html = '';
@@ -1834,7 +1854,26 @@
             const rows = document.querySelectorAll('#usersTableBody tr');
             rows.forEach(r => { r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none'; });
         };
-        window.handleLogout = function() { if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId); stopCamera(); location.reload(); };
+        
+        window.handleLogout = function() {
+            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
+            stopCamera();
+            
+            // Reset login button
+            const btn = document.getElementById('loginBtn');
+            btn.style.backgroundColor = '';
+            btn.disabled = false;
+            btn.classList.remove('loading');
+            btn.innerHTML = 'Log Masuk';
+            
+            // Reset input fields
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginEmail').style.borderColor = '';
+            document.getElementById('loginPassword').style.borderColor = '';
+            
+            location.reload();
+        };
 
         // ============================================
         // GENERATE PDF
