@@ -276,6 +276,15 @@
             cursor: pointer;
         }
 
+        .inbox-item.unread {
+            background: #fef3c7;
+            border-left: 4px solid #fbbf24;
+        }
+
+        .inbox-item.read {
+            background: white;
+        }
+
         .inbox-item:hover {
             background: #f8fafc;
         }
@@ -344,13 +353,13 @@
             background: #e2e8f0;
         }
 
-        .delete-notif-btn {
+        .read-btn {
             transition: all 0.2s;
         }
 
-        .delete-notif-btn:hover {
-            background: #fee2e2;
-            color: #dc2626;
+        .read-btn:hover {
+            background: #e6f7e6;
+            color: #059669;
         }
 
         .action-btn {
@@ -365,6 +374,7 @@
             padding: 12px 16px;
             border-bottom: 1px solid #e2e8f0;
             background: #f9fafb;
+            cursor: pointer;
         }
 
         .history-item:hover {
@@ -481,9 +491,8 @@
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-2xl font-black text-gray-800">Peti Masuk Notifikasi</h1>
                     <div class="flex gap-3">
-                        <button onclick="clearAllNotifications()" id="clearAllBtn" class="text-sm text-red-600 hover:text-red-800 font-bold flex items-center gap-1">
-                            <span class="material-symbols-rounded text-sm">delete_sweep</span>
-                            Kosongkan Semua
+                        <button onclick="markAllAsRead()" id="markAllReadBtn" class="text-sm text-purple-600 hover:text-purple-800 font-bold">
+                            Tandakan Semua Dibaca
                         </button>
                         <button onclick="refreshNotifications()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula notifikasi">
                             <span class="material-symbols-rounded text-sm">refresh</span>
@@ -574,16 +583,17 @@
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
                     <table class="w-full min-w-[800px]">
                         <thead>
-                            60e
+                            <tr>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama Admin</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                             </thead>
+                            </tr>
+                        </thead>
                         <tbody id="adminsTableBody">
-                            70e<td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -602,7 +612,7 @@
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
                     <table class="w-full min-w-[800px]">
                         <thead>
-                            60e
+                            <tr>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
@@ -610,9 +620,10 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                             </thead>
+                            </tr>
+                        </thead>
                         <tbody id="usersTableBody">
-                            70e<td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -746,6 +757,21 @@
 
     <script>
         // ============================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ============================================
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerText = 'visibility';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerText = 'visibility_off';
+            }
+        }
+
+        // ============================================
         // GLOBAL VARIABLES
         // ============================================
         let currentUser = null;
@@ -763,35 +789,30 @@
         let notificationCheckInterval = null;
 
         // ============================================
-        // PASSWORD VISIBILITY TOGGLE
-        // ============================================
-        function togglePasswordVisibility() {
-            const passwordInput = document.getElementById('loginPassword');
-            const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerText = 'visibility';
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerText = 'visibility_off';
-            }
-        }
-
-        // ============================================
         // AUDIO FUNCTIONS
         // ============================================
         function initAudio() {
             try {
+                // Gunakan URL bunyi yang lebih reliable
                 audioBell = new Audio('https://ik.imagekit.io/pyreotmgq/mixkit-modern-classic-door-bell-sound-113.wav?updatedAt=1774221408920');
                 audioBell.volume = 0.5;
+                console.log('✅ Audio initialized');
             } catch (e) {
                 console.error('Failed to initialize audio:', e);
+                // Fallback - create beep
+                audioBell = null;
             }
         }
 
         function playNotificationSound() {
             if (audioBell) {
                 audioBell.play().catch(e => console.log('Audio play failed:', e));
+            } else {
+                // Fallback beep
+                try {
+                    const beep = new Audio('data:audio/wav;base64,U3RlYWx0aCBiZWVw');
+                    beep.play().catch(e => {});
+                } catch(e) {}
             }
         }
 
@@ -830,26 +851,26 @@
         }
 
         // ============================================
-        // NOTIFICATION FUNCTIONS - DENGAN POLLING
+        // NOTIFICATION FUNCTIONS - DENGAN POLLING DAN HISTORY
         // ============================================
         
         async function loadNotifications(showToast = false) {
             try {
                 const result = await callAPI('getNotifications');
                 if (result.success) {
-                    const newNotifications = result.data || [];
-                    const oldIds = new Set(notifications.map(n => n.id));
-                    const hasNew = newNotifications.some(n => !oldIds.has(n.id));
+                    const oldCount = notifications.length;
+                    notifications = result.data || [];
                     
-                    notifications = newNotifications;
+                    // Check if there are new notifications
+                    if (showToast && notifications.length > oldCount) {
+                        const newCount = notifications.length - oldCount;
+                        showNotif('Notifikasi Baru', `${newCount} notifikasi baru diterima`);
+                        playNotificationSound();
+                        showBrowserNotification('IMMI Presence 360', `${newCount} notifikasi baru diterima`);
+                    }
+                    
                     renderNotifications();
                     updateInboxBadge();
-                    
-                    if (showToast && hasNew) {
-                        showNotif('Notifikasi Baru', `${hasNew ? newNotifications.filter(n => !oldIds.has(n.id)).length : 0} notifikasi baru diterima`);
-                        playNotificationSound();
-                        showBrowserNotification('IMMI Presence 360', 'Notifikasi baru diterima');
-                    }
                 }
             } catch (error) {
                 console.error('Error loading notifications:', error);
@@ -893,7 +914,7 @@
                 const userName = notif.details?.userName || 'Pengguna';
                 
                 html += `
-                    <div class="inbox-item" data-id="${notif.id}" onclick="viewNotificationDetail('${notif.id}')">
+                    <div class="inbox-item unread" data-id="${notif.id}" onclick="viewNotificationDetail('${notif.id}')">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
                                 <div class="inbox-item-title">${escapeHtml(notif.title)}</div>
@@ -904,7 +925,7 @@
                                 </div>
                                 <div class="text-sm text-gray-600 mt-1">${escapeHtml(notif.message)}</div>
                             </div>
-                            <button onclick="event.stopPropagation(); markAsReadAndMove('${notif.id}')" class="delete-notif-btn ml-4 p-2 text-green-600 hover:text-green-800 rounded-full hover:bg-green-50 transition-all" title="Tandakan Dibaca & Pindah ke Sejarah">
+                            <button onclick="event.stopPropagation(); markAsRead('${notif.id}')" class="read-btn ml-4 p-2 text-green-600 hover:text-green-800 rounded-full hover:bg-green-50 transition-all" title="Tandakan Dibaca & Pindah ke Sejarah">
                                 <span class="material-symbols-rounded text-sm">check_circle</span>
                             </button>
                         </div>
@@ -913,7 +934,7 @@
             });
             
             inboxList.innerHTML = html;
-            inboxCount.innerText = `${notifications.length} notifikasi`;
+            inboxCount.innerText = `${notifications.length} notifikasi (${notifications.length} belum dibaca)`;
             updateInboxBadge();
         }
 
@@ -974,13 +995,14 @@
             }
         }
 
-        async function markAsReadAndMove(id) {
+        async function markAsRead(id) {
             try {
                 const result = await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
                 if (result.success) {
+                    // Refresh both lists
                     await loadNotifications();
                     await loadNotificationHistory();
-                    showNotif('Berjaya', 'Notifikasi telah ditandakan dibaca dan dipindahkan ke sejarah');
+                    showNotif('Berjaya', 'Notifikasi telah dipindahkan ke sejarah');
                 } else {
                     showNotif('Ralat', 'Gagal memproses notifikasi', true);
                 }
@@ -990,21 +1012,26 @@
             }
         }
 
-        async function clearAllNotifications() {
-            if (!confirm('Kosongkan semua notifikasi? Tindakan ini akan memindahkan semua notifikasi ke sejarah.')) return;
+        async function markAllAsRead() {
+            const btn = document.getElementById('markAllReadBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Memproses...';
             
             try {
                 const result = await callAPI('markAllNotificationsRead');
                 if (result.success) {
                     await loadNotifications();
                     await loadNotificationHistory();
-                    showNotif('Berjaya', `${result.moved || 0} notifikasi telah dipindahkan ke sejarah`);
+                    showNotif('Berjaya', `${result.moved || notifications.length} notifikasi telah dipindahkan ke sejarah`);
                 } else {
-                    showNotif('Ralat', result.error || 'Gagal memproses notifikasi', true);
+                    showNotif('Ralat', 'Gagal memproses notifikasi', true);
                 }
             } catch (error) {
-                console.error('Error clearing notifications:', error);
+                console.error('Error marking all as read:', error);
                 showNotif('Ralat', 'Gagal memproses notifikasi', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Tandakan Semua Dibaca';
             }
         }
 
@@ -1027,6 +1054,7 @@
 
         async function refreshNotifications() {
             await loadNotifications(true);
+            showNotif('Berjaya', 'Notifikasi dikemaskini');
         }
 
         async function refreshHistory() {
@@ -1245,7 +1273,7 @@
             if (notificationCheckInterval) clearInterval(notificationCheckInterval);
             notificationCheckInterval = setInterval(async () => {
                 await loadNotifications();
-            }, 10000);
+            }, 15000);
         }
 
         function stopNotificationPolling() {
