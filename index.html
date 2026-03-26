@@ -435,6 +435,7 @@
         let modelsLoaded = false;
         let isVerifying = false;
         let faceOverlay = null;
+        let userGeofence = null;
 
         // Audio untuk notifikasi
         let audioSuccess = null;
@@ -495,7 +496,6 @@
             }
         }
 
-        // Helper function untuk format jam
         function formatJam(decimalJam) {
             if (!decimalJam || decimalJam <= 0) return '-';
             const jam = Math.floor(decimalJam);
@@ -504,6 +504,13 @@
             if (minit === 0) return `${jam}j`;
             if (minit < 10) return `${jam}j 0${minit}m`;
             return `${jam}j ${minit}m`;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // ============================================
@@ -564,16 +571,9 @@
                 console.log('🔄 Loading face models...');
                 
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                console.log('✅ TinyFaceDetector loaded');
-                
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                console.log('✅ FaceLandmark68Net loaded');
-                
                 await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                console.log('✅ FaceRecognitionNet loaded');
-                
                 await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-                console.log('✅ FaceExpressionNet loaded');
                 
                 modelsLoaded = true;
                 console.log('✅ All face models loaded successfully');
@@ -581,25 +581,8 @@
                 
             } catch (error) {
                 console.error('❌ Failed to load models:', error);
-                
-                try {
-                    console.log('🔄 Trying backup CDN...');
-                    const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-                    
-                    await faceapi.nets.tinyFaceDetector.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceLandmark68Net.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceRecognitionNet.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceExpressionNet.loadFromUri(BACKUP_URL);
-                    
-                    modelsLoaded = true;
-                    console.log('✅ Face models loaded from backup');
-                    return true;
-                    
-                } catch (backupError) {
-                    console.error('❌ Backup also failed:', backupError);
-                    showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true, false);
-                    return false;
-                }
+                showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true, false);
+                return false;
             }
         }
 
@@ -695,7 +678,7 @@
         }
 
         // ============================================
-        // CHECK TODAY ATTENDANCE - VERSI DIPERBAIKI
+        // CHECK TODAY ATTENDANCE
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
@@ -713,7 +696,6 @@
                 const clockInBtn = document.getElementById('clockInBtn');
                 const clockOutBtn = document.getElementById('clockOutBtn');
                 
-                // Semak rekod untuk hari ini
                 let hasTodayRecord = false;
                 let record = null;
                 
@@ -721,7 +703,6 @@
                     record = result.data[0];
                     hasTodayRecord = true;
                 } else {
-                    // Jika tiada rekod untuk hari ini, cari rekod aktif (clocked_in) dari semalam
                     const yesterday = new Date();
                     yesterday.setDate(yesterday.getDate() - 1);
                     const yesterdayStr = yesterday.toISOString().split('T')[0];
@@ -1047,8 +1028,8 @@
                         }
                     }
                     
-                    document.getElementById('userName').innerText = currentUser.name;
-                    document.getElementById('userDetail').innerText = `${currentUser.branch} • ${currentUser.unit}`;
+                    document.getElementById('userName').innerText = escapeHtml(currentUser.name);
+                    document.getElementById('userDetail').innerText = `${escapeHtml(currentUser.branch)} • ${escapeHtml(currentUser.unit)}`;
                     
                     document.getElementById('loginPage').classList.add('hidden');
                     document.getElementById('dashboard').classList.remove('hidden');
@@ -1082,7 +1063,7 @@
         };
 
         // ============================================
-        // CLOCK IN / OUT
+        // CLOCK IN / OUT - DENGAN REQUESTING USER
         // ============================================
         window.handleClockIn = async function() {
             if (!userLocation) {
@@ -1112,7 +1093,8 @@
             try {
                 const result = await callAPI('clockIn', { 
                     uid: currentUser.uid, 
-                    location: JSON.stringify(userLocation)
+                    location: JSON.stringify(userLocation),
+                    requestingUser: JSON.stringify(currentUser)
                 });
                 
                 if (result.success) {
@@ -1154,7 +1136,8 @@
             try {
                 const result = await callAPI('clockOut', { 
                     uid: currentUser.uid, 
-                    location: JSON.stringify(userLocation)
+                    location: JSON.stringify(userLocation),
+                    requestingUser: JSON.stringify(currentUser)
                 });
                 
                 if (result.success) {
@@ -1179,7 +1162,7 @@
         };
 
         // ============================================
-        // ATTENDANCE HISTORY
+        // ATTENDANCE HISTORY - DENGAN REQUESTING USER
         // ============================================
         async function loadAttendanceHistory() {
             if (!currentUser) return;
@@ -1188,79 +1171,85 @@
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             
-            const result = await callAPI('getAttendance', { 
-                uid: currentUser.uid,
-                startDate: thirtyDaysAgo.toISOString().split('T')[0],
-                endDate: today.toISOString().split('T')[0]
-            });
-            
-            const historyEl = document.getElementById('attendanceHistory');
-            
-            if (!result.success || !result.data || result.data.length === 0) {
-                historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada rekod kehadiran</div>';
-                return;
-            }
-            
-            let html = '';
-            result.data.sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            result.data.forEach(record => {
-                const date = new Date(record.date);
-                const clockIn = record.clockIn ? new Date(record.clockIn) : null;
-                const clockOut = record.clockOut ? new Date(record.clockOut) : null;
-                
-                const clockInTime = clockIn ? clockIn.toLocaleTimeString('ms-MY', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true 
-                }) : '--:--';
-                
-                const clockOutTime = clockOut ? clockOut.toLocaleTimeString('ms-MY', { 
-                    hour: '2-digit', 
-                    minute: '2-digit',
-                    hour12: true 
-                }) : '--:--';
-                
-                const totalHours = record.totalHours ? parseFloat(record.totalHours).toFixed(1) : '-';
-                
-                const isToday = record.date === new Date().toISOString().split('T')[0];
-                const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
-                
-                const weekday = date.toLocaleDateString('ms-MY', { weekday: 'long' });
-                const formattedDate = date.toLocaleDateString('ms-MY', { 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+            try {
+                const result = await callAPI('getAttendance', { 
+                    uid: currentUser.uid,
+                    startDate: thirtyDaysAgo.toISOString().split('T')[0],
+                    endDate: today.toISOString().split('T')[0],
+                    requestingUser: JSON.stringify(currentUser)
                 });
                 
-                html += `
-                    <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow ${todayClass}">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
-                                ${weekday}
-                            </span>
-                            <span class="text-xs text-gray-400">${formattedDate}</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <div class="flex gap-4">
-                                <div class="flex items-center gap-1">
-                                    <span class="material-symbols-rounded text-sm text-green-600">login</span>
-                                    <span class="text-sm font-bold">${clockInTime}</span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <span class="material-symbols-rounded text-sm text-red-500">logout</span>
-                                    <span class="text-sm font-bold">${clockOutTime}</span>
-                                </div>
+                const historyEl = document.getElementById('attendanceHistory');
+                
+                if (!result.success || !result.data || result.data.length === 0) {
+                    historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada rekod kehadiran</div>';
+                    return;
+                }
+                
+                let html = '';
+                result.data.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                result.data.forEach(record => {
+                    const date = new Date(record.date);
+                    const clockIn = record.clockIn ? new Date(record.clockIn) : null;
+                    const clockOut = record.clockOut ? new Date(record.clockOut) : null;
+                    
+                    const clockInTime = clockIn ? clockIn.toLocaleTimeString('ms-MY', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: true 
+                    }) : '--:--';
+                    
+                    const clockOutTime = clockOut ? clockOut.toLocaleTimeString('ms-MY', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: true 
+                    }) : '--:--';
+                    
+                    const totalHours = record.totalHours ? parseFloat(record.totalHours).toFixed(1) : '-';
+                    
+                    const isToday = record.date === new Date().toISOString().split('T')[0];
+                    const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
+                    
+                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'long' });
+                    const formattedDate = date.toLocaleDateString('ms-MY', { 
+                        day: 'numeric', 
+                        month: 'long', 
+                        year: 'numeric' 
+                    });
+                    
+                    html += `
+                        <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow ${todayClass}">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
+                                    ${escapeHtml(weekday)}
+                                </span>
+                                <span class="text-xs text-gray-400">${escapeHtml(formattedDate)}</span>
                             </div>
-                            <span class="text-xs font-bold ${totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">
-                                ${totalHours !== '-' ? totalHours + ' jam' : '-'}
-                            </span>
+                            <div class="flex justify-between items-center">
+                                <div class="flex gap-4">
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-rounded text-sm text-green-600">login</span>
+                                        <span class="text-sm font-bold">${clockInTime}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-rounded text-sm text-red-500">logout</span>
+                                        <span class="text-sm font-bold">${clockOutTime}</span>
+                                    </div>
+                                </div>
+                                <span class="text-xs font-bold ${totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">
+                                    ${totalHours !== '-' ? totalHours + ' jam' : '-'}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                `;
-            });
-            
-            historyEl.innerHTML = html;
+                    `;
+                });
+                
+                historyEl.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Load attendance error:', error);
+            }
         }
 
         // ============================================
