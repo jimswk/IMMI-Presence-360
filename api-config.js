@@ -1,6 +1,6 @@
 // Konfigurasi API - TUKAR URL INI selepas deploy
 const CONFIG = {
-    API_BASE_URL: 'https://script.google.com/macros/s/AKfycbzfmhzPZCmHom4-RTM8K5h0GKbGzyf8q3cA7AaCnZtY5TiD-Hn2jPaSVmzNXfrFMSIo2Q/exec'
+    API_BASE_URL: 'https://script.google.com/macros/s/AKfycbxfRngTA7Xhl4DKnKPUchC84be46eRC8GccHGDvdSK76GV8QlR3Y-PuuVPJ89v1GAMw5g/exec'
 };
 
 // Fungsi global untuk panggil API
@@ -155,12 +155,17 @@ async function clockOut(uid, location, requestingUser) {
 }
 
 // ============================================
-// FUNGSI UNTUK NOTIFIKASI
+// FUNGSI UNTUK NOTIFIKASI - DENGAN HISTORY
 // ============================================
 
-// Fungsi untuk mendapatkan semua notifikasi
+// Fungsi untuk mendapatkan semua notifikasi (belum dibaca)
 async function getNotifications() {
     return await callAPI('getNotifications');
+}
+
+// Fungsi untuk mendapatkan sejarah notifikasi (telah dibaca)
+async function getNotificationHistory() {
+    return await callAPI('getNotificationHistory');
 }
 
 // Fungsi untuk mencipta notifikasi baru
@@ -168,22 +173,27 @@ async function createNotification(data) {
     return await callAPI('createNotification', { data: JSON.stringify(data) });
 }
 
-// Fungsi untuk menandakan notifikasi sebagai dibaca
+// Fungsi untuk menandakan notifikasi sebagai dibaca dan pindah ke history
 async function markNotificationRead(id) {
     return await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
 }
 
-// Fungsi untuk menandakan semua notifikasi sebagai dibaca
+// Fungsi untuk menandakan semua notifikasi sebagai dibaca dan pindah ke history
 async function markAllNotificationsRead() {
     return await callAPI('markAllNotificationsRead');
 }
 
-// Fungsi untuk memadam notifikasi (hard delete)
+// Fungsi untuk memadam sejarah notifikasi
+async function clearNotificationHistory() {
+    return await callAPI('clearNotificationHistory');
+}
+
+// Fungsi untuk memadam notifikasi (hard delete) - DEPRECATED, guna markNotificationRead
 async function deleteNotification(id) {
     return await callAPI('deleteNotification', { data: JSON.stringify({ id: id }) });
 }
 
-// Fungsi untuk memadam semua notifikasi yang telah dibaca
+// Fungsi untuk memadam semua notifikasi yang telah dibaca - DEPRECATED, guna clearNotificationHistory
 async function deleteAllReadNotifications() {
     return await callAPI('deleteAllReadNotifications');
 }
@@ -236,9 +246,11 @@ if (typeof module !== 'undefined' && module.exports) {
         clockIn,
         clockOut,
         getNotifications,
+        getNotificationHistory,
         createNotification,
         markNotificationRead,
         markAllNotificationsRead,
+        clearNotificationHistory,
         deleteNotification,
         deleteAllReadNotifications,
         login,
