@@ -33,7 +33,6 @@
             overflow: hidden;
         }
 
-        /* Login Page */
         .login-container {
             min-height: 100vh;
             background: linear-gradient(165deg, #2e1065 0%, #4c1d95 100%);
@@ -52,7 +51,6 @@
             box-shadow: 0 50px 70px -20px rgba(0,0,0,0.5);
         }
 
-        /* Floating Label Styles */
         .floating-group {
             position: relative;
             margin-bottom: 28px;
@@ -100,7 +98,6 @@
             left: 12px;
         }
 
-        /* Password Eye Button */
         .password-wrapper {
             position: relative;
         }
@@ -131,7 +128,6 @@
             transform: translateY(-50%) scale(0.95);
         }
 
-        /* Login Button Animation */
         .login-btn {
             position: relative;
             overflow: hidden;
@@ -213,13 +209,13 @@
             background: white;
             border-radius: 28px;
             width: 100%;
-            max-width: 750px;
+            max-width: 800px;
             max-height: 95vh;
             overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
         }
 
-        .modal-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
         .modal-body { padding: 20px 24px; overflow-y: auto; max-height: 70vh; }
         .modal-footer { padding: 16px 24px; border-top: 1px solid #e2e8f0; display: flex; gap: 12px; justify-content: flex-end; }
 
@@ -277,15 +273,11 @@
             padding: 16px 24px;
             border-bottom: 1px solid #e2e8f0;
             transition: background 0.2s;
+            cursor: pointer;
         }
 
-        .inbox-item.unread {
-            background: #fef3c7;
-            border-left: 4px solid #fbbf24;
-        }
-
-        .inbox-item.read {
-            background: white;
+        .inbox-item:hover {
+            background: #f8fafc;
         }
 
         .inbox-item-title {
@@ -369,17 +361,24 @@
             transform: scale(1.05);
         }
 
-        /* Mobile Responsive */
+        .history-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f9fafb;
+        }
+
+        .history-item:hover {
+            background: #f3f4f6;
+        }
+
         @media (max-width: 640px) {
             .floating-input {
                 padding: 16px 14px 6px 14px;
                 font-size: 0.95rem;
             }
-            
             .floating-label {
                 font-size: 0.9rem;
             }
-            
             .floating-input:focus ~ .floating-label,
             .floating-input:not(:placeholder-shown) ~ .floating-label {
                 font-size: 0.65rem;
@@ -398,7 +397,6 @@
         </div>
     </div>
 
-    <!-- Login Page with Floating Label and Eye Button -->
     <div id="loginPage" class="login-container">
         <div class="login-card">
             <div class="text-center mb-8">
@@ -410,13 +408,11 @@
             </div>
 
             <div class="space-y-4">
-                <!-- Email Field with Floating Label -->
                 <div class="floating-group">
                     <input type="email" id="loginEmail" class="floating-input" placeholder=" " autocomplete="email">
                     <label class="floating-label">Email Rasmi</label>
                 </div>
                 
-                <!-- Password Field with Floating Label and Eye Button -->
                 <div class="floating-group">
                     <div class="password-wrapper">
                         <input type="password" id="loginPassword" class="floating-input" placeholder=" " autocomplete="current-password">
@@ -455,6 +451,10 @@
                     <span>Peti Masuk</span>
                     <span id="inboxUnreadBadge" class="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-auto hidden">0</span>
                 </div>
+                <div class="nav-item" onclick="switchTab('history')" id="navHistory">
+                    <span class="material-symbols-rounded">history</span>
+                    <span>Sejarah Notifikasi</span>
+                </div>
                 <div class="nav-item" onclick="switchTab('admins')" id="navAdmins">
                     <span class="material-symbols-rounded">admin_panel_settings</span>
                     <span>Pengurusan Admin</span>
@@ -481,12 +481,9 @@
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-2xl font-black text-gray-800">Peti Masuk Notifikasi</h1>
                     <div class="flex gap-3">
-                        <button onclick="deleteAllReadNotifications()" id="deleteReadBtn" class="text-sm text-red-600 hover:text-red-800 font-bold flex items-center gap-1">
+                        <button onclick="clearAllNotifications()" id="clearAllBtn" class="text-sm text-red-600 hover:text-red-800 font-bold flex items-center gap-1">
                             <span class="material-symbols-rounded text-sm">delete_sweep</span>
-                            Padam Semua Dibaca
-                        </button>
-                        <button onclick="markAllAsRead()" id="markAllReadBtn" class="text-sm text-purple-600 hover:text-purple-800 font-bold">
-                            Tandakan Semua Dibaca
+                            Kosongkan Semua
                         </button>
                         <button onclick="refreshNotifications()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula notifikasi">
                             <span class="material-symbols-rounded text-sm">refresh</span>
@@ -509,6 +506,41 @@
                             <span class="material-symbols-rounded text-4xl text-gray-300 mb-2">inbox</span>
                             <p>Tiada notifikasi</p>
                             <p class="text-xs mt-1">Notifikasi akan muncul apabila admin membuat perubahan pada lokasi atau radius pengguna</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="historyTab" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-black text-gray-800">Sejarah Notifikasi</h1>
+                    <div class="flex gap-3">
+                        <button onclick="clearHistory()" id="clearHistoryBtn" class="text-sm text-red-600 hover:text-red-800 font-bold flex items-center gap-1">
+                            <span class="material-symbols-rounded text-sm">delete_forever</span>
+                            Kosongkan Sejarah
+                        </button>
+                        <button onclick="refreshHistory()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula sejarah">
+                            <span class="material-symbols-rounded text-sm">refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="historyContainer" class="inbox-container">
+                    <div class="inbox-header">
+                        <div class="inbox-title">
+                            <span class="material-symbols-rounded">history</span>
+                            Notifikasi Telah Dibaca
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div id="historyCount" class="text-xs text-gray-400">0 rekod</div>
+                        </div>
+                    </div>
+                    <div id="historyList">
+                        <div class="inbox-empty">
+                            <span class="material-symbols-rounded text-4xl text-gray-300 mb-2">history</span>
+                            <p>Tiada sejarah notifikasi</p>
+                            <p class="text-xs mt-1">Notifikasi yang telah dibaca akan dipindahkan ke sini</p>
                         </div>
                     </div>
                 </div>
@@ -549,10 +581,9 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                            </tr>
-                        </thead>
+                             </thead>
                         <tbody id="adminsTableBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            70e<td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -571,7 +602,7 @@
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
                     <table class="w-full min-w-[800px]">
                         <thead>
-                            <tr>
+                            60e
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
@@ -579,10 +610,9 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                            </tr>
-                        </thead>
+                             </thead>
                         <tbody id="usersTableBody">
-                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            70e<td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -610,13 +640,10 @@
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Nama Penuh</label>
                         <input type="text" id="adminNameInput" class="input-field" placeholder="Nama Admin">
-                        
                         <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Email Rasmi</label>
                         <input type="email" id="adminEmailInput" class="input-field" placeholder="admin@imi.gov.my">
-                        
                         <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Kata Laluan</label>
                         <input type="password" id="adminPasswordInput" class="input-field" placeholder="Min. 6 aksara">
-                        
                         <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan</label>
                         <select id="adminBranchInput" class="input-field">
                             <option value="">Pilih Cawangan</option>
@@ -631,10 +658,8 @@
                             <option value="Limbang">Limbang</option>
                             <option value="Lawas">Lawas</option>
                         </select>
-                        
                         <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Unit</label>
                         <input type="text" id="adminUnitInput" class="input-field" placeholder="Contoh: UPSKK">
-                        
                         <div class="mt-3">
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" id="adminIsSuperadmin" class="w-4 h-4 text-purple-600">
@@ -643,19 +668,14 @@
                             <p class="text-xs text-gray-400 mt-1">Superadmin mempunyai akses penuh ke semua cawangan</p>
                         </div>
                     </div>
-                    
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Lokasi Pejabat</label>
                         <textarea id="adminLocationInput" class="input-field h-20" placeholder="Alamat akan terisi auto"></textarea>
-                        
                         <div id="adminLocationMap" class="location-map"></div>
                         <input type="hidden" id="adminLat">
                         <input type="hidden" id="adminLng">
-                        
                         <div class="flex gap-2 mt-2">
-                            <button onclick="getAdminLocation()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm font-bold">
-                                Lokasi Semasa
-                            </button>
+                            <button onclick="getAdminLocation()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm font-bold">Lokasi Semasa</button>
                         </div>
                     </div>
                 </div>
@@ -726,22 +746,6 @@
 
     <script>
         // ============================================
-        // PASSWORD VISIBILITY TOGGLE
-        // ============================================
-        function togglePasswordVisibility() {
-            const passwordInput = document.getElementById('loginPassword');
-            const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
-            
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerText = 'visibility';
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerText = 'visibility_off';
-            }
-        }
-
-        // ============================================
         // GLOBAL VARIABLES
         // ============================================
         let currentUser = null;
@@ -752,9 +756,26 @@
         let branchChart = null;
         let adminToDelete = null;
         let notifications = [];
+        let notificationHistory = [];
         let audioBell = null;
         let changeBranchTarget = null;
         let changeBranchType = null;
+        let notificationCheckInterval = null;
+
+        // ============================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ============================================
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerText = 'visibility';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerText = 'visibility_off';
+            }
+        }
 
         // ============================================
         // AUDIO FUNCTIONS
@@ -809,19 +830,25 @@
         }
 
         // ============================================
-        // NOTIFICATION FUNCTIONS
+        // NOTIFICATION FUNCTIONS - DENGAN POLLING
         // ============================================
         
         async function loadNotifications(showToast = false) {
             try {
                 const result = await callAPI('getNotifications');
                 if (result.success) {
-                    notifications = result.data || [];
+                    const newNotifications = result.data || [];
+                    const oldIds = new Set(notifications.map(n => n.id));
+                    const hasNew = newNotifications.some(n => !oldIds.has(n.id));
+                    
+                    notifications = newNotifications;
                     renderNotifications();
                     updateInboxBadge();
                     
-                    if (showToast) {
-                        showNotif('Berjaya', 'Notifikasi dikemaskini');
+                    if (showToast && hasNew) {
+                        showNotif('Notifikasi Baru', `${hasNew ? newNotifications.filter(n => !oldIds.has(n.id)).length : 0} notifikasi baru diterima`);
+                        playNotificationSound();
+                        showBrowserNotification('IMMI Presence 360', 'Notifikasi baru diterima');
                     }
                 }
             } catch (error) {
@@ -829,10 +856,21 @@
             }
         }
 
+        async function loadNotificationHistory() {
+            try {
+                const result = await callAPI('getNotificationHistory');
+                if (result.success) {
+                    notificationHistory = result.data || [];
+                    renderHistory();
+                }
+            } catch (error) {
+                console.error('Error loading notification history:', error);
+            }
+        }
+
         function renderNotifications() {
             const inboxList = document.getElementById('inboxList');
             const inboxCount = document.getElementById('inboxCount');
-            const unreadCount = notifications.filter(n => n.read === false || n.read === 'false').length;
             
             if (notifications.length === 0) {
                 inboxList.innerHTML = `
@@ -851,15 +889,13 @@
             notifications.forEach(notif => {
                 const date = new Date(notif.timestamp);
                 const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
-                const isRead = notif.read === true || notif.read === 'true';
-                const unreadClass = isRead ? 'read' : 'unread';
                 const adminName = notif.details?.adminName || notif.details?.createdBy || 'Admin';
                 const userName = notif.details?.userName || 'Pengguna';
                 
                 html += `
-                    <div class="inbox-item ${unreadClass}" data-id="${notif.id}">
+                    <div class="inbox-item" data-id="${notif.id}" onclick="viewNotificationDetail('${notif.id}')">
                         <div class="flex justify-between items-start">
-                            <div class="flex-1 cursor-pointer" onclick="viewNotificationDetail('${notif.id}')">
+                            <div class="flex-1">
                                 <div class="inbox-item-title">${escapeHtml(notif.title)}</div>
                                 <div class="inbox-item-meta">
                                     <span>${formattedDate}</span>
@@ -868,8 +904,8 @@
                                 </div>
                                 <div class="text-sm text-gray-600 mt-1">${escapeHtml(notif.message)}</div>
                             </div>
-                            <button onclick="deleteNotification('${notif.id}')" class="delete-notif-btn ml-4 p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-all" title="Padam notifikasi">
-                                <span class="material-symbols-rounded text-sm">delete</span>
+                            <button onclick="event.stopPropagation(); markAsReadAndMove('${notif.id}')" class="delete-notif-btn ml-4 p-2 text-green-600 hover:text-green-800 rounded-full hover:bg-green-50 transition-all" title="Tandakan Dibaca & Pindah ke Sejarah">
+                                <span class="material-symbols-rounded text-sm">check_circle</span>
                             </button>
                         </div>
                     </div>
@@ -877,56 +913,115 @@
             });
             
             inboxList.innerHTML = html;
-            inboxCount.innerText = `${notifications.length} notifikasi (${unreadCount} belum dibaca)`;
+            inboxCount.innerText = `${notifications.length} notifikasi`;
             updateInboxBadge();
         }
 
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            const historyCount = document.getElementById('historyCount');
+            
+            if (notificationHistory.length === 0) {
+                historyList.innerHTML = `
+                    <div class="inbox-empty">
+                        <span class="material-symbols-rounded text-4xl text-gray-300 mb-2">history</span>
+                        <p>Tiada sejarah notifikasi</p>
+                        <p class="text-xs mt-1">Notifikasi yang telah dibaca akan dipindahkan ke sini</p>
+                    </div>
+                `;
+                historyCount.innerText = '0 rekod';
+                return;
+            }
+            
+            let html = '';
+            notificationHistory.forEach(notif => {
+                const date = new Date(notif.timestamp);
+                const readDate = new Date(notif.readAt);
+                const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+                const readDateStr = readDate.toLocaleDateString('ms-MY') + ' ' + readDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+                const adminName = notif.details?.adminName || notif.details?.createdBy || 'Admin';
+                const userName = notif.details?.userName || 'Pengguna';
+                
+                html += `
+                    <div class="history-item" onclick="viewHistoryDetail('${notif.id}')">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="inbox-item-title">${escapeHtml(notif.title)}</div>
+                                <div class="inbox-item-meta">
+                                    <span>Dibaca: ${readDateStr}</span>
+                                    <span>Diterima: ${formattedDate}</span>
+                                    <span>${escapeHtml(adminName)}</span>
+                                    <span>${escapeHtml(userName)}</span>
+                                </div>
+                                <div class="text-sm text-gray-600 mt-1">${escapeHtml(notif.message)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            historyList.innerHTML = html;
+            historyCount.innerText = `${notificationHistory.length} rekod`;
+        }
+
         function updateInboxBadge() {
-            const unreadCount = notifications.filter(n => n.read === false || n.read === 'false').length;
             const badge = document.getElementById('inboxUnreadBadge');
-            if (unreadCount > 0) {
-                badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
+            if (notifications.length > 0) {
+                badge.innerText = notifications.length > 99 ? '99+' : notifications.length;
                 badge.classList.remove('hidden');
             } else {
                 badge.classList.add('hidden');
             }
         }
 
-        async function markAllAsRead() {
-            const btn = document.getElementById('markAllReadBtn');
-            btn.disabled = true;
-            btn.innerHTML = 'Memproses...';
+        async function markAsReadAndMove(id) {
+            try {
+                const result = await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
+                if (result.success) {
+                    await loadNotifications();
+                    await loadNotificationHistory();
+                    showNotif('Berjaya', 'Notifikasi telah ditandakan dibaca dan dipindahkan ke sejarah');
+                } else {
+                    showNotif('Ralat', 'Gagal memproses notifikasi', true);
+                }
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+                showNotif('Ralat', 'Gagal memproses notifikasi', true);
+            }
+        }
+
+        async function clearAllNotifications() {
+            if (!confirm('Kosongkan semua notifikasi? Tindakan ini akan memindahkan semua notifikasi ke sejarah.')) return;
             
             try {
                 const result = await callAPI('markAllNotificationsRead');
                 if (result.success) {
-                    notifications.forEach(notif => { notif.read = true; });
-                    renderNotifications();
-                    updateInboxBadge();
-                    showNotif('Berjaya', 'Semua notifikasi ditandakan sebagai dibaca');
+                    await loadNotifications();
+                    await loadNotificationHistory();
+                    showNotif('Berjaya', `${result.moved || 0} notifikasi telah dipindahkan ke sejarah`);
                 } else {
-                    showNotif('Ralat', 'Gagal menandakan semua sebagai dibaca', true);
+                    showNotif('Ralat', result.error || 'Gagal memproses notifikasi', true);
                 }
             } catch (error) {
-                console.error('Error marking all as read:', error);
-                showNotif('Ralat', 'Gagal menandakan semua sebagai dibaca', true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Tandakan Semua Dibaca';
+                console.error('Error clearing notifications:', error);
+                showNotif('Ralat', 'Gagal memproses notifikasi', true);
             }
         }
 
-        async function markNotificationRead(id) {
+        async function clearHistory() {
+            if (!confirm('Kosongkan semua sejarah notifikasi? Tindakan ini tidak boleh dibatalkan.')) return;
+            
             try {
-                await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
-                const notif = notifications.find(n => n.id === id);
-                if (notif) {
-                    notif.read = true;
-                    renderNotifications();
-                    updateInboxBadge();
+                const result = await callAPI('clearNotificationHistory');
+                if (result.success) {
+                    await loadNotificationHistory();
+                    showNotif('Berjaya', `${result.deleted || 0} rekod sejarah telah dipadamkan`);
+                } else {
+                    showNotif('Ralat', result.error || 'Gagal memadam sejarah', true);
                 }
             } catch (error) {
-                console.error('Error marking notification as read:', error);
+                console.error('Error clearing history:', error);
+                showNotif('Ralat', 'Gagal memadam sejarah', true);
             }
         }
 
@@ -934,66 +1029,14 @@
             await loadNotifications(true);
         }
 
-        async function deleteNotification(id) {
-            if (!confirm('Padam notifikasi ini? Tindakan ini tidak boleh dibatalkan.')) return;
-            
-            try {
-                const result = await callAPI('deleteNotification', { data: JSON.stringify({ id: id }) });
-                if (result.success) {
-                    notifications = notifications.filter(n => n.id !== id);
-                    renderNotifications();
-                    updateInboxBadge();
-                    showNotif('Berjaya', 'Notifikasi telah dipadamkan');
-                } else {
-                    showNotif('Ralat', 'Gagal memadam notifikasi', true);
-                }
-            } catch (error) {
-                console.error('Error deleting notification:', error);
-                showNotif('Ralat', 'Gagal memadam notifikasi', true);
-            }
-        }
-
-        async function deleteAllReadNotifications() {
-            const btn = document.getElementById('deleteReadBtn');
-            const readCount = notifications.filter(n => n.read === true || n.read === 'true').length;
-            
-            if (readCount === 0) {
-                showNotif('Makluman', 'Tiada notifikasi yang telah dibaca untuk dipadam', false);
-                return;
-            }
-            
-            if (!confirm(`Anda pasti ingin memadam ${readCount} notifikasi yang telah dibaca?`)) return;
-            
-            btn.disabled = true;
-            btn.innerHTML = 'Memadam...';
-            
-            try {
-                const result = await callAPI('deleteAllReadNotifications');
-                if (result.success) {
-                    notifications = notifications.filter(n => !(n.read === true || n.read === 'true'));
-                    renderNotifications();
-                    updateInboxBadge();
-                    showNotif('Berjaya', `${result.deleted || readCount} notifikasi telah dipadamkan`);
-                } else {
-                    showNotif('Ralat', result.error || 'Gagal memadam notifikasi', true);
-                }
-            } catch (error) {
-                console.error('Error deleting read notifications:', error);
-                showNotif('Ralat', 'Gagal memadam notifikasi', true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-rounded text-sm">delete_sweep</span> Padam Semua Dibaca';
-            }
+        async function refreshHistory() {
+            await loadNotificationHistory();
+            showNotif('Berjaya', 'Sejarah dikemaskini');
         }
 
         async function viewNotificationDetail(id) {
             const notif = notifications.find(n => n.id === id);
             if (!notif) return;
-            
-            const isRead = notif.read === true || notif.read === 'true';
-            if (!isRead) {
-                await markNotificationRead(id);
-            }
             
             const modal = document.getElementById('notificationDetailModal');
             const modalBody = document.getElementById('detailModalBody');
@@ -1055,6 +1098,22 @@
                         </div>
                     `;
                 }
+                if (d.oldUnit && d.newUnit && d.oldUnit !== d.newUnit) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-green-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge radius">🏢 UNIT</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${escapeHtml(d.oldUnit)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge radius">🏢 UNIT</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${escapeHtml(d.newUnit)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
             }
             
             modalBody.innerHTML = `
@@ -1075,19 +1134,135 @@
             modal.style.display = 'flex';
         }
 
+        async function viewHistoryDetail(id) {
+            const notif = notificationHistory.find(n => n.id === id);
+            if (!notif) return;
+            
+            const modal = document.getElementById('notificationDetailModal');
+            const modalBody = document.getElementById('detailModalBody');
+            const modalTitle = document.getElementById('detailModalTitle');
+            
+            modalTitle.innerText = notif.title;
+            
+            const date = new Date(notif.timestamp);
+            const readDate = new Date(notif.readAt);
+            const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+            const readDateStr = readDate.toLocaleDateString('ms-MY') + ' ' + readDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+            
+            let changesHtml = '';
+            const d = notif.details;
+            if (d) {
+                if (d.oldLocation && d.newLocation && d.oldLocation !== d.newLocation) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-blue-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge location">🌍 LOKASI</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${escapeHtml(d.oldLocation)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge location">🌍 LOKASI</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${escapeHtml(d.newLocation)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                if (d.oldRadius && d.newRadius && d.oldRadius !== d.newRadius) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-amber-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge radius">📏 RADIUS</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${d.oldRadius}m</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge radius">📏 RADIUS</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${d.newRadius}m</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                if (d.oldCoordinates && d.newCoordinates && d.oldCoordinates !== d.newCoordinates) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-purple-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge location">📍 KOORDINAT</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${escapeHtml(d.oldCoordinates)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge location">📍 KOORDINAT</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${escapeHtml(d.newCoordinates)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                if (d.oldUnit && d.newUnit && d.oldUnit !== d.newUnit) {
+                    changesHtml += `
+                        <div class="mb-4 p-3 bg-green-50 rounded-xl">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="change-badge radius">🏢 UNIT</span>
+                                <span class="text-xs font-bold text-gray-500">Sebelum:</span>
+                                <span class="diff-old text-sm">${escapeHtml(d.oldUnit)}</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="change-badge radius">🏢 UNIT</span>
+                                <span class="text-xs font-bold text-gray-500">Selepas:</span>
+                                <span class="diff-new text-sm">${escapeHtml(d.newUnit)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            modalBody.innerHTML = `
+                <div class="space-y-4">
+                    <div class="p-3 bg-gray-50 rounded-xl">
+                        <p class="text-sm text-gray-600">${escapeHtml(notif.message)}</p>
+                    </div>
+                    ${changesHtml || '<p class="text-gray-400 text-sm">Tiada perubahan detail</p>'}
+                    <div class="text-xs text-gray-400 border-t pt-3">
+                        <div>Admin: ${escapeHtml(notif.details?.adminName || '-')}</div>
+                        <div>Pengguna: ${escapeHtml(notif.details?.userName || '-')}</div>
+                        <div>Diterima: ${formattedDate}</div>
+                        <div>Dibaca: ${readDateStr}</div>
+                        <div>Cawangan: ${escapeHtml(notif.details?.branch || '-')}</div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+
         function closeNotificationDetailModal() {
             document.getElementById('notificationDetailModal').style.display = 'none';
         }
 
+        function startNotificationPolling() {
+            if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+            notificationCheckInterval = setInterval(async () => {
+                await loadNotifications();
+            }, 10000);
+        }
+
+        function stopNotificationPolling() {
+            if (notificationCheckInterval) {
+                clearInterval(notificationCheckInterval);
+                notificationCheckInterval = null;
+            }
+        }
+
         // ============================================
-        // LOGIN - ENHANCED WITH ANIMATION
+        // LOGIN
         // ============================================
         window.handleLogin = async function() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
             
-            // Reset error styling
             document.getElementById('loginEmail').style.borderColor = '';
             document.getElementById('loginPassword').style.borderColor = '';
 
@@ -1115,8 +1290,6 @@
                     }
                     
                     currentUser = result.user;
-                    
-                    // Success animation
                     btn.style.backgroundColor = '#059669';
                     btn.innerHTML = '<span class="material-symbols-rounded">check</span> Berjaya';
                     
@@ -1131,13 +1304,15 @@
                         requestNotificationPermission();
                         
                         loadNotifications();
+                        loadNotificationHistory();
                         loadAdmins();
                         loadAllUsers();
+                        
+                        startNotificationPolling();
                         
                         showNotif('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`);
                     }, 500);
                 } else {
-                    // Error animation
                     btn.style.backgroundColor = '#dc2626';
                     btn.innerHTML = 'Gagal';
                     showNotif('Gagal', result.error || 'Email atau kata laluan salah', true);
@@ -1164,17 +1339,16 @@
         };
 
         window.handleLogout = function() {
+            stopNotificationPolling();
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('superadminDashboard').classList.add('hidden');
             
-            // Reset login button
             const btn = document.getElementById('loginBtn');
             btn.style.backgroundColor = '';
             btn.disabled = false;
             btn.classList.remove('loading');
             btn.innerHTML = 'Log Masuk';
             
-            // Reset input fields
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
             document.getElementById('loginEmail').style.borderColor = '';
@@ -1189,6 +1363,7 @@
             document.getElementById(`nav${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
             
             document.getElementById('inboxTab').classList.add('hidden');
+            document.getElementById('historyTab').classList.add('hidden');
             document.getElementById('adminsTab').classList.add('hidden');
             document.getElementById('usersTab').classList.add('hidden');
             document.getElementById('dashboardTab').classList.add('hidden');
@@ -1197,6 +1372,7 @@
             
             if (tab === 'dashboard') createBranchChart();
             if (tab === 'inbox') renderNotifications();
+            if (tab === 'history') renderHistory();
         };
 
         // ============================================
@@ -1375,7 +1551,7 @@
             
             const btn = document.getElementById('confirmBranchBtn');
             btn.disabled = true;
-            btn.innerHTML = 'Memproses...';
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             
             try {
                 let result;
