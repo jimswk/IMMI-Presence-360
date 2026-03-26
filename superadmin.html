@@ -292,6 +292,14 @@
             background: #fee2e2;
             color: #dc2626;
         }
+
+        .action-btn {
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -435,8 +443,8 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-3xl p-6 border">
-                    <table class="w-full">
+                <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
                         <thead>
                             <tr>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama Admin</th>
@@ -456,25 +464,31 @@
 
             <!-- Users Tab -->
             <div id="usersTab" class="hidden">
-                <h1 class="text-2xl font-black text-gray-800 mb-6">Senarai Semua Pengguna</h1>
-                <div class="bg-white rounded-3xl p-6 border">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead>
-                                <tr>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
-                                    <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
-                            </tbody>
-                        </table>
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-black text-gray-800">Senarai Semua Pengguna</h1>
+                    <div class="relative w-72">
+                        <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                        <input type="text" id="searchUser" placeholder="Cari nama atau emel..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-purple-50 transition-all" onkeyup="searchUsers()">
                     </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -556,6 +570,34 @@
         </div>
     </div>
 
+    <!-- Modal Tukar Cawangan -->
+    <div id="changeBranchModal" class="modal-overlay">
+        <div class="modal max-w-sm">
+            <div class="modal-header">
+                <h3 class="text-lg font-black">Tukar Cawangan</h3>
+            </div>
+            <div class="modal-body">
+                <p class="text-sm text-gray-600 mb-4" id="changeBranchUserInfo"></p>
+                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan Baru</label>
+                <select id="newBranchSelect" class="input-field">
+                    <option value="Kuching">Kuching</option>
+                    <option value="Kota Samarahan">Kota Samarahan</option>
+                    <option value="Sri Aman">Sri Aman</option>
+                    <option value="Sarikei">Sarikei</option>
+                    <option value="Sibu">Sibu</option>
+                    <option value="Bintulu">Bintulu</option>
+                    <option value="Miri">Miri</option>
+                    <option value="Kapit">Kapit</option>
+                    <option value="Limbang">Limbang</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeChangeBranchModal()" class="px-6 py-2 rounded-xl border font-bold">Batal</button>
+                <button onclick="confirmChangeBranch()" id="confirmBranchBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Tukar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Detail Notifikasi -->
     <div id="notificationDetailModal" class="modal-overlay">
         <div class="modal detail-modal">
@@ -597,13 +639,15 @@
         let adminToDelete = null;
         let notifications = [];
         let audioBell = null;
+        let changeBranchTarget = null;
+        let changeBranchType = null;
 
         // ============================================
         // AUDIO FUNCTIONS
         // ============================================
         function initAudio() {
             try {
-                audioBell = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                audioBell = new Audio('https://ik.imagekit.io/pyreotmgq/mixkit-modern-classic-door-bell-sound-113.wav?updatedAt=1774221408920');
                 audioBell.volume = 0.5;
             } catch (e) {
                 console.error('Failed to initialize audio:', e);
@@ -651,7 +695,7 @@
         }
 
         // ============================================
-        // NOTIFICATION FUNCTIONS - TANPA POLLING
+        // NOTIFICATION FUNCTIONS
         // ============================================
         
         async function loadNotifications(showToast = false) {
@@ -674,8 +718,6 @@
         function renderNotifications() {
             const inboxList = document.getElementById('inboxList');
             const inboxCount = document.getElementById('inboxCount');
-            
-            // Normalize read status
             const unreadCount = notifications.filter(n => n.read === false || n.read === 'false').length;
             
             if (notifications.length === 0) {
@@ -695,16 +737,13 @@
             notifications.forEach(notif => {
                 const date = new Date(notif.timestamp);
                 const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
-                
-                // Normalize read status for display
                 const isRead = notif.read === true || notif.read === 'true';
                 const unreadClass = isRead ? 'read' : 'unread';
-                
                 const adminName = notif.details?.adminName || notif.details?.createdBy || 'Admin';
                 const userName = notif.details?.userName || 'Pengguna';
                 
                 html += `
-                    <div class="inbox-item ${unreadClass}" data-id="${notif.id}" data-read="${isRead}">
+                    <div class="inbox-item ${unreadClass}" data-id="${notif.id}">
                         <div class="flex justify-between items-start">
                             <div class="flex-1 cursor-pointer" onclick="viewNotificationDetail('${notif.id}')">
                                 <div class="inbox-item-title">${escapeHtml(notif.title)}</div>
@@ -747,7 +786,6 @@
             try {
                 const result = await callAPI('markAllNotificationsRead');
                 if (result.success) {
-                    // Update local immediately
                     notifications.forEach(notif => { notif.read = true; });
                     renderNotifications();
                     updateInboxBadge();
@@ -766,14 +804,12 @@
 
         async function markNotificationRead(id) {
             try {
-                const result = await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
-                if (result.success) {
-                    const notif = notifications.find(n => n.id === id);
-                    if (notif) {
-                        notif.read = true;
-                        renderNotifications();
-                        updateInboxBadge();
-                    }
+                await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
+                const notif = notifications.find(n => n.id === id);
+                if (notif) {
+                    notif.read = true;
+                    renderNotifications();
+                    updateInboxBadge();
                 }
             } catch (error) {
                 console.error('Error marking notification as read:', error);
@@ -812,7 +848,7 @@
                 return;
             }
             
-            if (!confirm(`Anda pasti ingin memadam ${readCount} notifikasi yang telah dibaca? Tindakan ini tidak boleh dibatalkan.`)) return;
+            if (!confirm(`Anda pasti ingin memadam ${readCount} notifikasi yang telah dibaca?`)) return;
             
             btn.disabled = true;
             btn.innerHTML = 'Memadam...';
@@ -1010,7 +1046,7 @@
         // ============================================
         async function loadAdmins() {
             try {
-                const result = await callAPI('getAdmins');
+                const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
                 if (result.success) {
                     admins = result.data || [];
                     renderAdminsTable();
@@ -1039,7 +1075,15 @@
                             <div class="font-bold">${escapeHtml(admin.name)}</div>
                             <div class="text-xs text-gray-400">${escapeHtml(admin.email)}</div>
                         </td>
-                        <td class="p-3">${escapeHtml(admin.branch)}</td>
+                        <td class="p-3">
+                            <span class="inline-flex items-center gap-1">
+                                ${escapeHtml(admin.branch)}
+                                <button onclick="changeAdminBranch('${admin.uid}', '${escapeHtml(admin.name)}', '${escapeHtml(admin.branch)}')" 
+                                        class="text-blue-400 hover:text-blue-300 transition-colors" title="Tukar Cawangan">
+                                    <span class="material-symbols-rounded text-sm">swap_horiz</span>
+                                </button>
+                            </span>
+                        </td>
                         <td class="p-3">${escapeHtml(admin.unit)}</td>
                         <td class="p-3">${escapeHtml(admin.location || '-')}</td>
                         <td class="p-3 text-center">
@@ -1049,7 +1093,7 @@
                         </td>
                         <td class="p-3 text-center">
                             ${!isSuperadmin ? 
-                                `<button onclick="openDeleteModal('${admin.uid}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all">
+                                `<button onclick="openDeleteModal('${admin.uid}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn">
                                     <span class="material-symbols-rounded">delete</span>
                                 </button>` : 
                                 (isCurrentUser ? '<span class="text-xs text-gray-400">Anda</span>' : '<span class="text-xs text-gray-400">Superadmin</span>')
@@ -1063,7 +1107,7 @@
 
         async function loadAllUsers() {
             try {
-                const result = await callAPI('getAllUsers');
+                const result = await callAPI('getAllUsers', { requestingUser: JSON.stringify(currentUser) });
                 if (result.success) {
                     users = result.data || [];
                     renderUsersTable();
@@ -1078,7 +1122,7 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="7" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
                 return;
             }
 
@@ -1094,11 +1138,25 @@
                             <div class="font-bold">${escapeHtml(user.name)}</div>
                             <div class="text-xs text-gray-400">${escapeHtml(user.email)}</div>
                         </td>
-                        <td class="p-3">${escapeHtml(user.branch)}</td>
+                        <td class="p-3">
+                            <span class="inline-flex items-center gap-1">
+                                ${escapeHtml(user.branch)}
+                                <button onclick="changeUserBranch('${user.uid}', '${escapeHtml(user.name)}', '${escapeHtml(user.branch)}')" 
+                                        class="text-blue-400 hover:text-blue-300 transition-colors" title="Tukar Cawangan">
+                                    <span class="material-symbols-rounded text-sm">swap_horiz</span>
+                                </button>
+                            </span>
+                        </td>
                         <td class="p-3">${escapeHtml(user.unit || '-')}</td>
                         <td class="p-3 max-w-[200px] truncate" title="${escapeHtml(user.location || '-')}">${escapeHtml(user.location || '-')}</td>
                         <td class="p-3 text-center">${user.radius || 500}m</td>
                         <td class="p-3 text-center">${faceStatus}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="deleteUser('${user.uid}', '${escapeHtml(user.name)}')" 
+                                    class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn" title="Padam Pengguna">
+                                <span class="material-symbols-rounded">delete</span>
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
@@ -1119,6 +1177,108 @@
             document.getElementById('totalAdmins').innerText = adminCount + superadminCount;
             document.getElementById('totalUsers').innerText = users.length;
             document.getElementById('totalBranches').innerText = branchSet.size;
+        }
+
+        window.searchUsers = function() {
+            const searchTerm = document.getElementById('searchUser').value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTableBody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        };
+
+        // ============================================
+        // CHANGE BRANCH FUNCTIONS
+        // ============================================
+        function changeAdminBranch(uid, name, currentBranch) {
+            changeBranchTarget = { uid: uid, name: name, currentBranch: currentBranch };
+            changeBranchType = 'admin';
+            document.getElementById('changeBranchUserInfo').innerHTML = `Tukar cawangan untuk: <strong>${escapeHtml(name)}</strong><br>Cawangan semasa: <strong>${escapeHtml(currentBranch)}</strong>`;
+            document.getElementById('changeBranchModal').style.display = 'flex';
+        }
+
+        function changeUserBranch(uid, name, currentBranch) {
+            changeBranchTarget = { uid: uid, name: name, currentBranch: currentBranch };
+            changeBranchType = 'user';
+            document.getElementById('changeBranchUserInfo').innerHTML = `Tukar cawangan untuk: <strong>${escapeHtml(name)}</strong><br>Cawangan semasa: <strong>${escapeHtml(currentBranch)}</strong>`;
+            document.getElementById('changeBranchModal').style.display = 'flex';
+        }
+
+        function closeChangeBranchModal() {
+            document.getElementById('changeBranchModal').style.display = 'none';
+            changeBranchTarget = null;
+            changeBranchType = null;
+        }
+
+        async function confirmChangeBranch() {
+            const newBranch = document.getElementById('newBranchSelect').value;
+            if (!newBranch) return;
+            
+            const btn = document.getElementById('confirmBranchBtn');
+            btn.disabled = true;
+            btn.innerHTML = 'Memproses...';
+            
+            try {
+                let result;
+                if (changeBranchType === 'admin') {
+                    result = await callAPI('updateAdmin', { 
+                        data: JSON.stringify({ 
+                            uid: changeBranchTarget.uid, 
+                            branch: newBranch,
+                            name: changeBranchTarget.name
+                        }),
+                        requestingUser: JSON.stringify(currentUser)
+                    });
+                } else {
+                    result = await callAPI('updateUser', { 
+                        data: JSON.stringify({ 
+                            uid: changeBranchTarget.uid, 
+                            branch: newBranch,
+                            name: changeBranchTarget.name
+                        }),
+                        requestingUser: JSON.stringify(currentUser)
+                    });
+                }
+                
+                if (result.success) {
+                    showNotif('Berjaya', `Cawangan ${changeBranchTarget.name} telah ditukar ke ${newBranch}`);
+                    closeChangeBranchModal();
+                    await loadAdmins();
+                    await loadAllUsers();
+                } else {
+                    showNotif('Ralat', result.error || 'Gagal menukar cawangan', true);
+                }
+            } catch (error) {
+                console.error('Error changing branch:', error);
+                showNotif('Ralat', 'Gagal menukar cawangan', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Tukar';
+            }
+        }
+
+        // ============================================
+        // DELETE FUNCTIONS
+        // ============================================
+        async function deleteUser(uid, name) {
+            if (!confirm(`Padam pengguna ${name}? Tindakan ini tidak boleh dibatalkan.`)) return;
+            
+            try {
+                const result = await callAPI('deleteUser', { 
+                    data: JSON.stringify({ uid: uid }),
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                if (result.success) {
+                    showNotif('Berjaya', `Pengguna ${name} telah dipadamkan`);
+                    await loadAllUsers();
+                } else {
+                    showNotif('Ralat', result.error || 'Gagal memadam pengguna', true);
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showNotif('Ralat', 'Gagal memadam pengguna', true);
+            }
         }
 
         // ============================================
@@ -1215,7 +1375,10 @@
             btn.innerHTML = '<div class="loading mx-auto"></div>';
 
             try {
-                const result = await callAPI('createAdmin', { data: JSON.stringify(data) });
+                const result = await callAPI('createAdmin', { 
+                    data: JSON.stringify(data),
+                    requestingUser: JSON.stringify(currentUser)
+                });
                 
                 if (result.success) {
                     showNotif('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`);
@@ -1236,7 +1399,6 @@
                         createdBy: currentUser.uid
                     })});
                     
-                    // Refresh notifications after creating admin
                     await loadNotifications();
                 } else {
                     showNotif('Ralat', result.error || 'Gagal menyimpan', true);
@@ -1270,7 +1432,10 @@
             btn.innerHTML = '<div class="loading mx-auto"></div>';
 
             try {
-                const result = await callAPI('deleteAdmin', { data: JSON.stringify({ uid: adminToDelete }) });
+                const result = await callAPI('deleteAdmin', { 
+                    data: JSON.stringify({ uid: adminToDelete }),
+                    requestingUser: JSON.stringify(currentUser)
+                });
                 
                 if (result.success) {
                     showNotif('Berjaya', 'Admin telah dipadamkan');
