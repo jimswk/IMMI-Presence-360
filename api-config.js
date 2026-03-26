@@ -17,7 +17,6 @@ async function callAPI(method, params = {}) {
         }
     });
     
-    // Add cache buster
     url += '&_=' + new Date().getTime();
     
     try {
@@ -43,15 +42,13 @@ async function callAPI(method, params = {}) {
 }
 
 // ============================================
-// FUNGSI KHUSUS UNTUK ADMIN DAN SUPERADMIN
+// FUNGSI UNTUK ADMIN DAN SUPERADMIN
 // ============================================
 
-// Fungsi untuk mendapatkan senarai admin (dengan requestingUser untuk kawalan akses)
 async function getAdmins(requestingUser) {
     return await callAPI('getAdmins', { requestingUser: JSON.stringify(requestingUser) });
 }
 
-// Fungsi untuk mencipta admin baru (hanya superadmin)
 async function createAdmin(data, requestingUser) {
     return await callAPI('createAdmin', { 
         data: JSON.stringify(data),
@@ -59,7 +56,6 @@ async function createAdmin(data, requestingUser) {
     });
 }
 
-// Fungsi untuk mengemaskini admin (hanya superadmin boleh tukar cawangan)
 async function updateAdmin(data, requestingUser) {
     return await callAPI('updateAdmin', { 
         data: JSON.stringify(data),
@@ -67,7 +63,6 @@ async function updateAdmin(data, requestingUser) {
     });
 }
 
-// Fungsi untuk memadam admin (hanya superadmin)
 async function deleteAdmin(data, requestingUser) {
     return await callAPI('deleteAdmin', { 
         data: JSON.stringify(data),
@@ -76,15 +71,13 @@ async function deleteAdmin(data, requestingUser) {
 }
 
 // ============================================
-// FUNGSI KHUSUS UNTUK PENGURUSAN PENGGUNA
+// FUNGSI UNTUK PENGURUSAN PENGGUNA
 // ============================================
 
-// Fungsi untuk mendapatkan semua pengguna (dengan kawalan cawangan)
 async function getAllUsers(requestingUser) {
     return await callAPI('getAllUsers', { requestingUser: JSON.stringify(requestingUser) });
 }
 
-// Fungsi untuk mendapatkan pengguna mengikut cawangan dan unit
 async function getUsers(branch, unit, requestingUser) {
     return await callAPI('getUsers', { 
         branch: branch, 
@@ -93,7 +86,6 @@ async function getUsers(branch, unit, requestingUser) {
     });
 }
 
-// Fungsi untuk mencipta pengguna baru
 async function createUser(data, requestingUser) {
     return await callAPI('createUser', { 
         data: JSON.stringify(data),
@@ -101,7 +93,6 @@ async function createUser(data, requestingUser) {
     });
 }
 
-// Fungsi untuk mengemaskini pengguna
 async function updateUser(data, requestingUser) {
     return await callAPI('updateUser', { 
         data: JSON.stringify(data),
@@ -109,7 +100,6 @@ async function updateUser(data, requestingUser) {
     });
 }
 
-// Fungsi untuk memadam pengguna
 async function deleteUser(data, requestingUser) {
     return await callAPI('deleteUser', { 
         data: JSON.stringify(data),
@@ -117,7 +107,6 @@ async function deleteUser(data, requestingUser) {
     });
 }
 
-// Fungsi untuk mengemaskini wajah pengguna sahaja
 async function updateUserFace(uid, faceDescriptor) {
     return await callAPI('updateUserFace', { uid: uid, faceDescriptor: faceDescriptor });
 }
@@ -126,7 +115,6 @@ async function updateUserFace(uid, faceDescriptor) {
 // FUNGSI UNTUK KEHADIRAN
 // ============================================
 
-// Fungsi untuk mendapatkan rekod kehadiran
 async function getAttendance(uid, startDate, endDate, requestingUser) {
     return await callAPI('getAttendance', { 
         uid: uid, 
@@ -136,7 +124,6 @@ async function getAttendance(uid, startDate, endDate, requestingUser) {
     });
 }
 
-// Fungsi untuk clock in
 async function clockIn(uid, location, requestingUser) {
     return await callAPI('clockIn', { 
         uid: uid, 
@@ -145,7 +132,6 @@ async function clockIn(uid, location, requestingUser) {
     });
 }
 
-// Fungsi untuk clock out
 async function clockOut(uid, location, requestingUser) {
     return await callAPI('clockOut', { 
         uid: uid, 
@@ -158,56 +144,44 @@ async function clockOut(uid, location, requestingUser) {
 // FUNGSI UNTUK NOTIFIKASI - DENGAN HISTORY
 // ============================================
 
-// Fungsi untuk mendapatkan semua notifikasi (belum dibaca)
+// Dapatkan semua notifikasi (belum dibaca)
 async function getNotifications() {
     return await callAPI('getNotifications');
 }
 
-// Fungsi untuk mendapatkan sejarah notifikasi (telah dibaca)
+// Dapatkan sejarah notifikasi (telah dibaca)
 async function getNotificationHistory() {
     return await callAPI('getNotificationHistory');
 }
 
-// Fungsi untuk mencipta notifikasi baru
+// Cipta notifikasi baru
 async function createNotification(data) {
     return await callAPI('createNotification', { data: JSON.stringify(data) });
 }
 
-// Fungsi untuk menandakan notifikasi sebagai dibaca dan pindah ke history
+// Tanda notifikasi sebagai dibaca dan pindah ke history
 async function markNotificationRead(id) {
     return await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
 }
 
-// Fungsi untuk menandakan semua notifikasi sebagai dibaca dan pindah ke history
+// Tanda semua notifikasi sebagai dibaca dan pindah ke history
 async function markAllNotificationsRead() {
     return await callAPI('markAllNotificationsRead');
 }
 
-// Fungsi untuk memadam sejarah notifikasi
+// Kosongkan sejarah notifikasi
 async function clearNotificationHistory() {
     return await callAPI('clearNotificationHistory');
-}
-
-// Fungsi untuk memadam notifikasi (hard delete) - DEPRECATED, guna markNotificationRead
-async function deleteNotification(id) {
-    return await callAPI('deleteNotification', { data: JSON.stringify({ id: id }) });
-}
-
-// Fungsi untuk memadam semua notifikasi yang telah dibaca - DEPRECATED, guna clearNotificationHistory
-async function deleteAllReadNotifications() {
-    return await callAPI('deleteAllReadNotifications');
 }
 
 // ============================================
 // FUNGSI UNTUK LOGIN
 // ============================================
 
-// Fungsi login untuk admin dan superadmin
 async function login(email, password) {
     return await callAPI('login', { email: email, password: password });
 }
 
-// Fungsi login untuk pengguna biasa
 async function userLogin(email, password) {
     return await callAPI('userLogin', { email: email, password: password });
 }
@@ -216,12 +190,10 @@ async function userLogin(email, password) {
 // FUNGSI UTILITY
 // ============================================
 
-// Fungsi untuk setup sheets (hanya untuk admin)
 async function setupSheets() {
     return await callAPI('setupSheets');
 }
 
-// Fungsi untuk membetulkan data yang tidak konsisten
 async function fixInconsistentData() {
     return await callAPI('fixInconsistentData');
 }
@@ -251,8 +223,6 @@ if (typeof module !== 'undefined' && module.exports) {
         markNotificationRead,
         markAllNotificationsRead,
         clearNotificationHistory,
-        deleteNotification,
-        deleteAllReadNotifications,
         login,
         userLogin,
         setupSheets,
