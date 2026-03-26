@@ -33,6 +33,7 @@
             overflow: hidden;
         }
 
+        /* Login Page */
         .login-container {
             min-height: 100vh;
             background: linear-gradient(165deg, #2e1065 0%, #4c1d95 100%);
@@ -51,30 +52,108 @@
             box-shadow: 0 50px 70px -20px rgba(0,0,0,0.5);
         }
 
-        .input-field {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            background: #f8fafc;
+        /* Floating Label Styles */
+        .floating-group {
+            position: relative;
+            margin-bottom: 28px;
         }
 
-        .input-field:focus {
+        .floating-input {
+            width: 100%;
+            padding: 18px 16px 8px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 1rem;
+            background: #f8fafc;
+            transition: all 0.2s ease;
             outline: none;
+        }
+
+        .floating-input:focus {
             border-color: #5b21b6;
+            background: white;
             box-shadow: 0 0 0 4px rgba(91, 33, 182, 0.1);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
+        .floating-label {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1rem;
+            font-weight: 500;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            background: transparent;
+            padding: 0 4px;
         }
+
+        .floating-input:focus ~ .floating-label,
+        .floating-input:not(:placeholder-shown) ~ .floating-label {
+            top: 0px;
+            transform: translateY(-50%);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #5b21b6;
+            background: white;
+            left: 12px;
+        }
+
+        /* Password Eye Button */
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-eye {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #94a3b8;
+            transition: all 0.2s;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            border-radius: 50%;
+        }
+
+        .password-eye:hover {
+            color: #5b21b6;
+            background: rgba(91, 33, 182, 0.05);
+        }
+
+        .password-eye:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        /* Login Button Animation */
+        .login-btn {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn.loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .sidebar {
             background: linear-gradient(165deg, #4c1d95 0%, #6d28d9 100%);
@@ -168,17 +247,6 @@
         .notification.error { border-left-color: #dc2626; }
 
         .hidden { display: none !important; }
-
-        .loading {
-            display: inline-block;
-            width: 18px; height: 18px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s infinite linear;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
 
         .inbox-container {
             background: white;
@@ -300,6 +368,23 @@
         .action-btn:hover {
             transform: scale(1.05);
         }
+
+        /* Mobile Responsive */
+        @media (max-width: 640px) {
+            .floating-input {
+                padding: 16px 14px 6px 14px;
+                font-size: 0.95rem;
+            }
+            
+            .floating-label {
+                font-size: 0.9rem;
+            }
+            
+            .floating-input:focus ~ .floating-label,
+            .floating-input:not(:placeholder-shown) ~ .floating-label {
+                font-size: 0.65rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -313,28 +398,39 @@
         </div>
     </div>
 
+    <!-- Login Page with Floating Label and Eye Button -->
     <div id="loginPage" class="login-container">
         <div class="login-card">
             <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-purple-50 rounded-3xl flex items-center justify-center mx-auto">
+                <div class="w-20 h-20 bg-purple-50 rounded-3xl flex items-center justify-center mx-auto animate-pulse">
                     <span class="material-symbols-rounded text-4xl text-purple-600">security</span>
                 </div>
                 <h1 class="text-3xl font-black text-gray-800 mt-4">Panel Superadmin</h1>
                 <p class="text-gray-400 text-sm">IMMI Presence 360</p>
             </div>
 
-            <div>
-                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Email</label>
-                <input type="email" id="loginEmail" class="input-field" placeholder="superadmin@imi.gov.my">
+            <div class="space-y-4">
+                <!-- Email Field with Floating Label -->
+                <div class="floating-group">
+                    <input type="email" id="loginEmail" class="floating-input" placeholder=" " autocomplete="email">
+                    <label class="floating-label">Email Rasmi</label>
+                </div>
+                
+                <!-- Password Field with Floating Label and Eye Button -->
+                <div class="floating-group">
+                    <div class="password-wrapper">
+                        <input type="password" id="loginPassword" class="floating-input" placeholder=" " autocomplete="current-password">
+                        <label class="floating-label">Kata Laluan</label>
+                        <button type="button" class="password-eye" onclick="togglePasswordVisibility()">
+                            <span class="material-symbols-rounded text-xl">visibility_off</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <button onclick="handleLogin()" id="loginBtn" class="login-btn w-full bg-purple-600 text-white py-4 rounded-2xl font-bold mt-4 shadow-lg shadow-purple-900/20 transition-all hover:bg-purple-700 active:scale-95">
+                    Log Masuk
+                </button>
             </div>
-            <div>
-                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Kata Laluan</label>
-                <input type="password" id="loginPassword" class="input-field" placeholder="••••••••">
-            </div>
-
-            <button onclick="handleLogin()" id="loginBtn" class="btn-primary w-full justify-center py-3 mt-4">
-                Log Masuk
-            </button>
         </div>
     </div>
 
@@ -446,7 +542,7 @@
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
                     <table class="w-full min-w-[800px]">
                         <thead>
-                            <tr>
+                            60e
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama Admin</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
@@ -629,6 +725,22 @@
     </div>
 
     <script>
+        // ============================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ============================================
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerText = 'visibility';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerText = 'visibility_off';
+            }
+        }
+
         // ============================================
         // GLOBAL VARIABLES
         // ============================================
@@ -968,20 +1080,27 @@
         }
 
         // ============================================
-        // LOGIN
+        // LOGIN - ENHANCED WITH ANIMATION
         // ============================================
         window.handleLogin = async function() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
+            
+            // Reset error styling
+            document.getElementById('loginEmail').style.borderColor = '';
+            document.getElementById('loginPassword').style.borderColor = '';
 
             if (!email || !password) {
+                if (!email) document.getElementById('loginEmail').style.borderColor = '#dc2626';
+                if (!password) document.getElementById('loginPassword').style.borderColor = '#dc2626';
                 showNotif('Ralat', 'Sila isi email dan kata laluan', true);
                 return;
             }
 
             btn.disabled = true;
-            btn.innerHTML = '<div class="loading mx-auto"></div>';
+            btn.classList.add('loading');
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
 
             try {
                 const result = await callAPI('login', { email, password });
@@ -990,39 +1109,76 @@
                     if (result.user.role !== 'superadmin') {
                         showNotif('Akses Ditolak', 'Anda bukan Superadmin', true);
                         btn.disabled = false;
+                        btn.classList.remove('loading');
                         btn.innerHTML = 'Log Masuk';
                         return;
                     }
                     
                     currentUser = result.user;
-                    document.getElementById('superadminName').innerText = currentUser.name;
-                    document.getElementById('superadminEmail').innerText = currentUser.email;
                     
-                    document.getElementById('loginPage').classList.add('hidden');
-                    document.getElementById('superadminDashboard').classList.remove('hidden');
+                    // Success animation
+                    btn.style.backgroundColor = '#059669';
+                    btn.innerHTML = '<span class="material-symbols-rounded">check</span> Berjaya';
                     
-                    initAudio();
-                    requestNotificationPermission();
-                    
-                    await loadNotifications();
-                    await loadAdmins();
-                    await loadAllUsers();
-                    
-                    showNotif('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`);
+                    setTimeout(() => {
+                        document.getElementById('superadminName').innerText = currentUser.name;
+                        document.getElementById('superadminEmail').innerText = currentUser.email;
+                        
+                        document.getElementById('loginPage').classList.add('hidden');
+                        document.getElementById('superadminDashboard').classList.remove('hidden');
+                        
+                        initAudio();
+                        requestNotificationPermission();
+                        
+                        loadNotifications();
+                        loadAdmins();
+                        loadAllUsers();
+                        
+                        showNotif('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`);
+                    }, 500);
                 } else {
+                    // Error animation
+                    btn.style.backgroundColor = '#dc2626';
+                    btn.innerHTML = 'Gagal';
                     showNotif('Gagal', result.error || 'Email atau kata laluan salah', true);
+                    
+                    setTimeout(() => {
+                        btn.style.backgroundColor = '';
+                        btn.disabled = false;
+                        btn.classList.remove('loading');
+                        btn.innerHTML = 'Log Masuk';
+                    }, 1000);
                 }
             } catch (error) {
                 showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Log Masuk';
+                btn.style.backgroundColor = '#dc2626';
+                btn.innerHTML = 'Ralat';
+                
+                setTimeout(() => {
+                    btn.style.backgroundColor = '';
+                    btn.disabled = false;
+                    btn.classList.remove('loading');
+                    btn.innerHTML = 'Log Masuk';
+                }, 1000);
             }
         };
 
         window.handleLogout = function() {
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('superadminDashboard').classList.add('hidden');
+            
+            // Reset login button
+            const btn = document.getElementById('loginBtn');
+            btn.style.backgroundColor = '';
+            btn.disabled = false;
+            btn.classList.remove('loading');
+            btn.innerHTML = 'Log Masuk';
+            
+            // Reset input fields
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginEmail').style.borderColor = '';
+            document.getElementById('loginPassword').style.borderColor = '';
         };
 
         // ============================================
@@ -1374,7 +1530,7 @@
 
             const btn = document.getElementById('saveAdminBtn');
             btn.disabled = true;
-            btn.innerHTML = '<div class="loading mx-auto"></div>';
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
 
             try {
                 const result = await callAPI('createAdmin', { 
@@ -1431,7 +1587,7 @@
             
             const btn = this;
             btn.disabled = true;
-            btn.innerHTML = '<div class="loading mx-auto"></div>';
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
 
             try {
                 const result = await callAPI('deleteAdmin', { 
