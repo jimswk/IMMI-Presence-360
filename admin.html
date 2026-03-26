@@ -571,7 +571,7 @@
                 </div>
             </div>
 
-            <!-- Register User Tab (3 Steps) - DENGAN INPUT LOKASI -->
+            <!-- Register User Tab (3 Steps) -->
             <div id="registerTab" class="hidden">
                 <div class="max-w-4xl">
                     <h1 class="text-4xl font-black text-gray-800 mb-2" id="regFormTitle">Daftar Pengguna</h1>
@@ -624,9 +624,8 @@
                             </div>
                         </div>
 
-                        <!-- Step 2: Lokasi - DENGAN INPUT ALAMAT -->
+                        <!-- Step 2: Lokasi -->
                         <div id="step2Content" class="wizard-step">
-                            <!-- INPUT LOKASI / ALAMAT - TAMBAHAN BARU -->
                             <div class="mb-6">
                                 <label class="input-label">Alamat / Lokasi Pejabat</label>
                                 <input type="text" id="userLocation" class="input-field" placeholder="Alamat akan diisi automatik dari peta" readonly>
@@ -685,7 +684,6 @@
                                 <div id="faceOverlay" class="face-overlay"></div>
                             </div>
 
-                            <!-- Progress Bar -->
                             <div class="progress-bar mt-4">
                                 <div id="progressFill" class="progress-fill"></div>
                             </div>
@@ -772,9 +770,8 @@
                             </div>
                         </div>
 
-                        <!-- Step 2: Lokasi - DENGAN INPUT ALAMAT -->
+                        <!-- Step 2: Lokasi -->
                         <div id="editStep2Content" class="wizard-step-2">
-                            <!-- INPUT LOKASI / ALAMAT -->
                             <div class="mb-6">
                                 <label class="input-label">Alamat / Lokasi Pejabat</label>
                                 <input type="text" id="editUserLocation" class="input-field" placeholder="Alamat akan diisi automatik dari peta" readonly>
@@ -1098,7 +1095,7 @@
         }
 
         // ============================================
-        // REVERSE GEOCODING - FUNGSI BARU
+        // REVERSE GEOCODING
         // ============================================
         async function reverseGeocode(lat, lng, target = 'user') {
             const locationInput = document.getElementById(target === 'user' ? 'userLocation' : 'editUserLocation');
@@ -1122,7 +1119,7 @@
         }
 
         // ============================================
-        // RESET FORM FUNCTIONS - DENGAN RESET LOKASI
+        // RESET FORM FUNCTIONS
         // ============================================
         function resetFormAfterSave() {
             document.getElementById('userId').value = "";
@@ -1131,7 +1128,7 @@
             document.getElementById('userUnit').value = currentUser ? currentUser.unit : "";
             document.getElementById('userPassword').value = "";
             document.getElementById('faceDescriptor').value = "";
-            document.getElementById('userLocation').value = ""; // RESET LOKASI
+            document.getElementById('userLocation').value = "";
             document.getElementById('userRadius').value = 500;
             document.getElementById('userLat').value = "";
             document.getElementById('userLng').value = "";
@@ -1167,7 +1164,7 @@
             document.getElementById('userUnit').value = currentUser ? currentUser.unit : "";
             document.getElementById('userPassword').value = "";
             document.getElementById('faceDescriptor').value = "";
-            document.getElementById('userLocation').value = ""; // RESET LOKASI
+            document.getElementById('userLocation').value = "";
             document.getElementById('userRadius').value = 500;
             document.getElementById('userLat').value = "";
             document.getElementById('userLng').value = "";
@@ -1276,16 +1273,9 @@
                 console.log('🔄 Loading face models...');
                 
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                console.log('✅ TinyFaceDetector loaded');
-                
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                console.log('✅ FaceLandmark68Net loaded');
-                
                 await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                console.log('✅ FaceRecognitionNet loaded');
-                
                 await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-                console.log('✅ FaceExpressionNet loaded');
                 
                 modelsLoaded = true;
                 console.log('✅ All face models loaded successfully');
@@ -1293,30 +1283,13 @@
                 
             } catch (error) {
                 console.error('❌ Failed to load models:', error);
-                
-                try {
-                    console.log('🔄 Trying backup CDN...');
-                    const BACKUP_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-                    
-                    await faceapi.nets.tinyFaceDetector.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceLandmark68Net.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceRecognitionNet.loadFromUri(BACKUP_URL);
-                    await faceapi.nets.faceExpressionNet.loadFromUri(BACKUP_URL);
-                    
-                    modelsLoaded = true;
-                    console.log('✅ Face models loaded from backup');
-                    return true;
-                    
-                } catch (backupError) {
-                    console.error('❌ Backup also failed:', backupError);
-                    showNotif('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true);
-                    return false;
-                }
+                showNotif('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true);
+                return false;
             }
         }
 
         // ============================================
-        // USERS MANAGEMENT
+        // USERS MANAGEMENT - DENGAN REQUESTING USER
         // ============================================
         async function loadUsers() {
             try {
@@ -1324,7 +1297,8 @@
                 
                 const result = await callAPI('getUsers', { 
                     branch: currentUser.branch,
-                    unit: currentUser.unit 
+                    unit: currentUser.unit,
+                    requestingUser: JSON.stringify(currentUser)
                 });
                 
                 if (result.success) {
@@ -1353,12 +1327,12 @@
             tbody.innerHTML = users.map(u => `
                 <tr>
                     <td>
-                        <div class="font-black text-gray-800">${u.name}</div>
-                        <div class="text-[10px] text-gray-400 font-bold tracking-tight">${u.email}</div>
+                        <div class="font-black text-gray-800">${escapeHtml(u.name)}</div>
+                        <div class="text-[10px] text-gray-400 font-bold tracking-tight">${escapeHtml(u.email)}</div>
                     </td>
                     <td>
-                        <div class="text-xs font-bold text-gray-600">${u.unit || '-'}</div>
-                        <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest">${u.branch}</div>
+                        <div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div>
+                        <div class="text-[10px] text-gray-400 uppercase font-black tracking-widest">${escapeHtml(u.branch)}</div>
                     </td>
                     <td>
                         ${u.faceDescriptor && u.faceDescriptor !== '' ? 
@@ -1366,7 +1340,7 @@
                             '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full border border-red-100">TIADA REKOD</span>'}
                     </td>
                     <td>
-                        <div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${u.location || 'Pejabat Am'}</div>
+                        <div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${escapeHtml(u.location || 'Pejabat Am')}</div>
                         <div class="text-[10px] text-blue-500 font-black">${u.radius || 500}m Radius</div>
                     </td>
                     <td>
@@ -1379,19 +1353,26 @@
                             </button>
                             
                             ${u.faceDescriptor && u.faceDescriptor !== '' ? 
-                                `<button onclick="openResetModal('${u.uid}', '${u.name}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100 transition-colors" title="Reset & Daftar Semula Wajah">
+                                `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100 transition-colors" title="Reset & Daftar Semula Wajah">
                                     <span class="material-symbols-rounded text-xl">face_4</span>
                                 </button>` : 
                                 ''
                             }
                             
-                            <button onclick="confirmDelete('${u.uid}', '${u.name}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100 transition-colors" title="Padam">
+                            <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100 transition-colors" title="Padam">
                                 <span class="material-symbols-rounded text-xl">delete</span>
                             </button>
                         </div>
                     </td>
                 </tr>
             `).join('');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         // ============================================
@@ -1470,12 +1451,7 @@
                 
                 result.data.forEach(record => {
                     const date = new Date(record.date);
-                    const tarikh = date.toLocaleDateString('ms-MY', { 
-                        day: '2-digit', 
-                        month: '2-digit', 
-                        year: 'numeric' 
-                    });
-                    
+                    const tarikh = date.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
                     const hari = date.toLocaleDateString('ms-MY', { weekday: 'long' });
                     
                     let jamMasuk = '-';
@@ -1483,11 +1459,7 @@
                         try {
                             const clockIn = new Date(record.clockIn);
                             if (!isNaN(clockIn)) {
-                                jamMasuk = clockIn.toLocaleTimeString('ms-MY', { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    hour12: false 
-                                });
+                                jamMasuk = clockIn.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: false });
                             }
                         } catch (e) {}
                     }
@@ -1497,11 +1469,7 @@
                         try {
                             const clockOut = new Date(record.clockOut);
                             if (!isNaN(clockOut)) {
-                                jamKeluar = clockOut.toLocaleTimeString('ms-MY', { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    hour12: false 
-                                });
+                                jamKeluar = clockOut.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: false });
                             }
                         } catch (e) {}
                     }
@@ -1551,7 +1519,7 @@
         }
 
         // ============================================
-        // MAP LOGIC (untuk form daftar) - DENGAN REVERSE GEOCODE
+        // MAP LOGIC
         // ============================================
         function initMap(lat = 1.5533, lng = 110.3592, radius = 500) {
             if (userMap) userMap.remove();
@@ -1560,16 +1528,10 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
             
             userMarker = L.marker([lat, lng], { draggable: true }).addTo(userMap);
-            userCircle = L.circle([lat, lng], { 
-                radius: radius, 
-                color: '#1e3a8a', 
-                fillOpacity: 0.1 
-            }).addTo(userMap);
+            userCircle = L.circle([lat, lng], { radius: radius, color: '#1e3a8a', fillOpacity: 0.1 }).addTo(userMap);
 
             document.getElementById('userLat').value = lat.toFixed(6);
             document.getElementById('userLng').value = lng.toFixed(6);
-            
-            // Dapatkan alamat untuk lokasi awal
             reverseGeocode(lat, lng, 'user');
 
             userMarker.on('dragend', function(e) {
@@ -1584,9 +1546,7 @@
                 reverseGeocode(e.latlng.lat, e.latlng.lng, 'user');
             });
 
-            setTimeout(() => {
-                if(userMap) userMap.invalidateSize();
-            }, 400);
+            setTimeout(() => { if(userMap) userMap.invalidateSize(); }, 400);
         }
 
         function updateMapElements(lat, lng) {
@@ -1600,32 +1560,20 @@
             if (userCircle) userCircle.setRadius(parseInt(val));
         }
 
-        // ============================================
-        // EDIT MAP LOGIC - DENGAN REVERSE GEOCODE
-        // ============================================
         function initEditMap(lat, lng, radius) {
             if (editUserMap) editUserMap.remove();
             
             const mapElement = document.getElementById('editUserLocationMap');
-            if (!mapElement) {
-                console.log('Map element not found');
-                return;
-            }
+            if (!mapElement) return;
             
             editUserMap = L.map('editUserLocationMap').setView([lat, lng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editUserMap);
             
             editUserMarker = L.marker([lat, lng], { draggable: true }).addTo(editUserMap);
-            editUserCircle = L.circle([lat, lng], { 
-                radius: radius, 
-                color: '#1e3a8a', 
-                fillOpacity: 0.1 
-            }).addTo(editUserMap);
+            editUserCircle = L.circle([lat, lng], { radius: radius, color: '#1e3a8a', fillOpacity: 0.1 }).addTo(editUserMap);
 
             document.getElementById('editUserLat').value = lat.toFixed(6);
             document.getElementById('editUserLng').value = lng.toFixed(6);
-            
-            // Dapatkan alamat untuk lokasi awal
             reverseGeocode(lat, lng, 'edit');
 
             editUserMarker.on('dragend', function(e) {
@@ -1640,9 +1588,7 @@
                 reverseGeocode(e.latlng.lat, e.latlng.lng, 'edit');
             });
 
-            setTimeout(() => {
-                if(editUserMap) editUserMap.invalidateSize();
-            }, 400);
+            setTimeout(() => { if(editUserMap) editUserMap.invalidateSize(); }, 400);
         }
 
         function updateEditMapElements(lat, lng) {
@@ -1657,7 +1603,7 @@
         }
 
         // ============================================
-        // EDIT USER FUNCTIONS (2 STEPS) - DENGAN LOKASI
+        // EDIT USER FUNCTIONS
         // ============================================
         window.editUser = function(uid) {
             const u = users.find(x => x.uid === uid);
@@ -1675,7 +1621,6 @@
             document.getElementById('editUserBranch').value = u.branch || currentUser.branch;
             document.getElementById('editUserPassword').value = "";
             
-            // PAPAR LOKASI
             document.getElementById('editUserLocation').value = u.location || "";
             document.getElementById('editUserRadius').value = u.radius || 500;
             document.getElementById('editUserLat').value = u.lat || 1.5533;
@@ -1729,10 +1674,7 @@
             const nextBtn = document.getElementById('nextEditBtn');
             const updateBtn = document.getElementById('updateBtn');
             
-            if (!step1Content || !step2Content) {
-                console.log('Step elements not found yet');
-                return;
-            }
+            if (!step1Content || !step2Content) return;
             
             step1Content.classList.remove('active');
             step2Content.classList.remove('active');
@@ -1763,138 +1705,110 @@
             switchTab('users');
         };
 
-window.updateUser = async function() {
-    const btn = document.getElementById('updateBtn');
-    const uid = document.getElementById('editUserId').value;
-    
-    // Dapatkan data LAMA pengguna sebelum update
-    const oldUserData = users.find(u => u.uid === uid);
-    
-    const data = {
-        uid: uid,
-        name: document.getElementById('editUserName').value,
-        email: document.getElementById('editUserEmail').value,
-        unit: currentUser.unit,
-        branch: currentUser.branch,
-        password: document.getElementById('editUserPassword').value,
-        location: document.getElementById('editUserLocation').value,
-        lat: document.getElementById('editUserLat').value,
-        lng: document.getElementById('editUserLng').value,
-        radius: document.getElementById('editUserRadius').value
-    };
-
-    if (!data.name || !data.email) {
-        showNotif("Ralat", "Nama dan Emel wajib diisi", true);
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = 'Sedang Mengemaskini...';
-
-    try {
-        console.log('📤 Updating user:', data);
-        const result = await callAPI('updateUser', { data: JSON.stringify(data) });
-        
-        if (result.success) {
-            showNotif("Berjaya", "Maklumat kakitangan telah dikemaskini.");
+        window.updateUser = async function() {
+            const btn = document.getElementById('updateBtn');
+            const uid = document.getElementById('editUserId').value;
             
-            // ============================================
-            // HANTAR NOTIFIKASI JIKA ADA PERUBAHAN PADA LOKASI ATAU RADIUS
-            // ============================================
-            if (oldUserData) {
-                const changes = [];
-                
-                // Semak perubahan lokasi (alamat)
-                const oldLocation = oldUserData.location || '';
-                const newLocation = data.location || '';
-                if (oldLocation !== newLocation && newLocation !== '') {
-                    changes.push({
-                        type: 'location',
-                        oldValue: oldLocation || '-',
-                        newValue: newLocation
-                    });
-                }
-                
-                // Semak perubahan radius
-                const oldRadius = parseFloat(oldUserData.radius) || 500;
-                const newRadius = parseFloat(data.radius) || 500;
-                if (oldRadius !== newRadius) {
-                    changes.push({
-                        type: 'radius',
-                        oldValue: oldRadius,
-                        newValue: newRadius
-                    });
-                }
-                
-                // Semak perubahan koordinat (lat/lng)
-                const oldLat = parseFloat(oldUserData.lat) || 0;
-                const newLat = parseFloat(data.lat) || 0;
-                const oldLng = parseFloat(oldUserData.lng) || 0;
-                const newLng = parseFloat(data.lng) || 0;
-                if (oldLat !== newLat || oldLng !== newLng) {
-                    changes.push({
-                        type: 'coordinates',
-                        oldValue: `${oldLat.toFixed(6)}, ${oldLng.toFixed(6)}`,
-                        newValue: `${newLat.toFixed(6)}, ${newLng.toFixed(6)}`
-                    });
-                }
-                
-                // Jika ada perubahan, hantar notifikasi ke API
-                if (changes.length > 0) {
-                    const changeDescription = changes.map(c => 
-                        c.type === 'location' ? 'lokasi' : (c.type === 'radius' ? 'radius' : 'koordinat')
-                    ).join(', ');
-                    
-                    const notificationData = {
-                        title: `Perubahan Data Pengguna: ${data.name}`,
-                        message: `${currentUser.name} (${currentUser.branch}) telah membuat perubahan pada ${changeDescription} untuk pengguna ${data.name}.`,
-                        details: {
-                            userId: uid,
-                            userName: data.name,
-                            adminName: currentUser.name,
-                            adminEmail: currentUser.email,
-                            adminBranch: currentUser.branch,
-                            adminUnit: currentUser.unit,
-                            branch: data.branch,
-                            unit: data.unit,
-                            changeType: changes.map(c => c.type).join(','),
-                            oldLocation: changes.find(c => c.type === 'location')?.oldValue,
-                            newLocation: changes.find(c => c.type === 'location')?.newValue,
-                            oldRadius: changes.find(c => c.type === 'radius')?.oldValue,
-                            newRadius: changes.find(c => c.type === 'radius')?.newValue,
-                            oldCoordinates: changes.find(c => c.type === 'coordinates')?.oldValue,
-                            newCoordinates: changes.find(c => c.type === 'coordinates')?.newValue
-                        },
-                        type: 'change',
-                        createdBy: currentUser.uid
-                    };
-                    
-                    console.log('📬 Sending notification:', notificationData);
-                    
-                    // Hantar ke API untuk simpan notifikasi
-                    const notifResult = await callAPI('createNotification', { data: JSON.stringify(notificationData) });
-                    if (notifResult.success) {
-                        console.log('📬 Notifikasi perubahan telah dihantar ke Superadmin');
-                        showNotif("Makluman", "Notifikasi telah dihantar ke Superadmin", false);
-                    } else {
-                        console.log('⚠️ Gagal menghantar notifikasi:', notifResult.error);
-                    }
-                }
+            const oldUserData = users.find(u => u.uid === uid);
+            
+            const data = {
+                uid: uid,
+                name: document.getElementById('editUserName').value,
+                email: document.getElementById('editUserEmail').value,
+                unit: currentUser.unit,
+                branch: currentUser.branch,
+                password: document.getElementById('editUserPassword').value,
+                location: document.getElementById('editUserLocation').value,
+                lat: document.getElementById('editUserLat').value,
+                lng: document.getElementById('editUserLng').value,
+                radius: document.getElementById('editUserRadius').value
+            };
+
+            if (!data.name || !data.email) {
+                showNotif("Ralat", "Nama dan Emel wajib diisi", true);
+                return;
             }
-            
-            cancelEdit();
-            loadUsers();
-        } else {
-            showNotif("Ralat", result.error || "Gagal mengemaskini data", true);
-        }
-    } catch (error) {
-        console.error('Update error:', error);
-        showNotif("Ralat", "Gagal mengemaskini data", true);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan';
-    }
-};
+
+            btn.disabled = true;
+            btn.innerHTML = 'Sedang Mengemaskini...';
+
+            try {
+                const result = await callAPI('updateUser', { 
+                    data: JSON.stringify(data),
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                
+                if (result.success) {
+                    showNotif("Berjaya", "Maklumat kakitangan telah dikemaskini.");
+                    
+                    if (oldUserData) {
+                        const changes = [];
+                        
+                        const oldLocation = oldUserData.location || '';
+                        const newLocation = data.location || '';
+                        if (oldLocation !== newLocation && newLocation !== '') {
+                            changes.push({ type: 'location', oldValue: oldLocation || '-', newValue: newLocation });
+                        }
+                        
+                        const oldRadius = parseFloat(oldUserData.radius) || 500;
+                        const newRadius = parseFloat(data.radius) || 500;
+                        if (oldRadius !== newRadius) {
+                            changes.push({ type: 'radius', oldValue: oldRadius, newValue: newRadius });
+                        }
+                        
+                        const oldLat = parseFloat(oldUserData.lat) || 0;
+                        const newLat = parseFloat(data.lat) || 0;
+                        const oldLng = parseFloat(oldUserData.lng) || 0;
+                        const newLng = parseFloat(data.lng) || 0;
+                        if (oldLat !== newLat || oldLng !== newLng) {
+                            changes.push({ type: 'coordinates', oldValue: `${oldLat.toFixed(6)}, ${oldLng.toFixed(6)}`, newValue: `${newLat.toFixed(6)}, ${newLng.toFixed(6)}` });
+                        }
+                        
+                        if (changes.length > 0) {
+                            const changeDescription = changes.map(c => c.type === 'location' ? 'lokasi' : (c.type === 'radius' ? 'radius' : 'koordinat')).join(', ');
+                            
+                            const notificationData = {
+                                title: `Perubahan Data Pengguna: ${data.name}`,
+                                message: `${currentUser.name} (${currentUser.branch}) telah membuat perubahan pada ${changeDescription} untuk pengguna ${data.name}.`,
+                                details: {
+                                    userId: uid,
+                                    userName: data.name,
+                                    adminName: currentUser.name,
+                                    adminEmail: currentUser.email,
+                                    adminBranch: currentUser.branch,
+                                    adminUnit: currentUser.unit,
+                                    branch: data.branch,
+                                    unit: data.unit,
+                                    changeType: changes.map(c => c.type).join(','),
+                                    oldLocation: changes.find(c => c.type === 'location')?.oldValue,
+                                    newLocation: changes.find(c => c.type === 'location')?.newValue,
+                                    oldRadius: changes.find(c => c.type === 'radius')?.oldValue,
+                                    newRadius: changes.find(c => c.type === 'radius')?.newValue,
+                                    oldCoordinates: changes.find(c => c.type === 'coordinates')?.oldValue,
+                                    newCoordinates: changes.find(c => c.type === 'coordinates')?.newValue
+                                },
+                                type: 'change',
+                                createdBy: currentUser.uid
+                            };
+                            
+                            await callAPI('createNotification', { data: JSON.stringify(notificationData) });
+                            console.log('📬 Notifikasi perubahan telah dihantar ke Superadmin');
+                        }
+                    }
+                    
+                    cancelEdit();
+                    loadUsers();
+                } else {
+                    showNotif("Ralat", result.error || "Gagal mengemaskini data", true);
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showNotif("Ralat", "Gagal mengemaskini data", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan';
+            }
+        };
 
         // ============================================
         // RESET WAJAH FUNCTIONS
@@ -1930,7 +1844,7 @@ window.updateUser = async function() {
             document.getElementById('userEmail').value = user.email;
             document.getElementById('userUnit').value = user.unit || currentUser.unit;
             document.getElementById('userPassword').value = "";
-            document.getElementById('userLocation').value = user.location || ""; // PAPAR LOKASI
+            document.getElementById('userLocation').value = user.location || "";
             document.getElementById('userRadius').value = user.radius || 500;
             document.getElementById('userLat').value = user.lat || 1.5533;
             document.getElementById('userLng').value = user.lng || 110.3592;
@@ -2024,15 +1938,13 @@ window.updateUser = async function() {
                 updateProgress(20 + ((Date.now() - smileStartTime) / 5000) * 50);
                 
                 try {
-                    const detection = await faceapi.detectSingleFace(video, 
-                        new faceapi.TinyFaceDetectorOptions())
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
                         .withFaceExpressions()
                         .withFaceLandmarks();
                     
                     if (detection) {
                         if (detection.expressions && detection.expressions.happy > 0.5) {
                             smileDetected = true;
-                            console.log('😊 Smile detected via expression!');
                             break;
                         }
                         
@@ -2047,7 +1959,6 @@ window.updateUser = async function() {
                                 
                                 if (ratio > 2.0) {
                                     smileDetected = true;
-                                    console.log('😊 Smile detected via geometry!');
                                     break;
                                 }
                             }
@@ -2190,7 +2101,7 @@ window.updateUser = async function() {
         }
 
         // ============================================
-        // SAVE USER (Daftar baru) - DENGAN LOKASI
+        // SAVE USER
         // ============================================
         window.saveUser = async function() {
             const btn = document.getElementById('saveBtn');
@@ -2208,7 +2119,7 @@ window.updateUser = async function() {
                 unit: currentUser.unit,
                 branch: currentUser.branch,
                 password: document.getElementById('userPassword').value,
-                location: document.getElementById('userLocation').value, // TAMBAH LOKASI
+                location: document.getElementById('userLocation').value,
                 lat: document.getElementById('userLat').value,
                 lng: document.getElementById('userLng').value,
                 radius: document.getElementById('userRadius').value,
@@ -2230,8 +2141,10 @@ window.updateUser = async function() {
             btn.innerHTML = 'Sedang Menyimpan...';
 
             try {
-                console.log('📤 Saving user:', data);
-                const result = await callAPI('createUser', { data: JSON.stringify(data) });
+                const result = await callAPI('createUser', { 
+                    data: JSON.stringify(data),
+                    requestingUser: JSON.stringify(currentUser)
+                });
                 
                 if (result.success) {
                     showNotif("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.");
@@ -2307,7 +2220,10 @@ window.updateUser = async function() {
                 btn.innerHTML = 'Memadam...';
                 
                 try {
-                    const result = await callAPI('deleteUser', { data: JSON.stringify({ uid: uid }) });
+                    const result = await callAPI('deleteUser', { 
+                        data: JSON.stringify({ uid: uid }),
+                        requestingUser: JSON.stringify(currentUser)
+                    });
                     if (result.success) {
                         showNotif("Dipadam", "Rekod kakitangan telah dikeluarkan daripada sistem.");
                         modal.style.display = 'none';
@@ -2339,7 +2255,7 @@ window.updateUser = async function() {
         function updateReportDropdown() {
             const sel = document.getElementById('reportUser');
             sel.innerHTML = '<option value="">-- PILIH KAKITANGAN --</option>' + 
-                users.map(u => `<option value="${u.uid}">${u.name.toUpperCase()} (${u.unit || 'TIADA UNIT'})</option>`).join('');
+                users.map(u => `<option value="${u.uid}">${escapeHtml(u.name.toUpperCase())} (${escapeHtml(u.unit || 'TIADA UNIT')})</option>`).join('');
         }
 
         function formatJam(decimalJam) {
@@ -2357,24 +2273,6 @@ window.updateUser = async function() {
             const hours = Math.floor(decimal);
             const minutes = Math.round((decimal - hours) * 60);
             return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        }
-
-        function getBase64ImageFromUrl(url) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.crossOrigin = 'Anonymous';
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-                    const dataURL = canvas.toDataURL('image/png');
-                    resolve(dataURL);
-                };
-                img.onerror = reject;
-                img.src = url;
-            });
         }
 
         window.searchUsers = function() {
@@ -2439,14 +2337,8 @@ window.updateUser = async function() {
                     });
                 }
 
-                console.log('📊 Data attendance:', dataMap);
-                console.log('📅 Julat tarikh:', startDateStr, 'hingga', endDateStr);
-                
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF({
-                    format: 'a4',
-                    unit: 'mm'
-                });
+                const doc = new jsPDF({ format: 'a4', unit: 'mm' });
 
                 doc.setFont('times', 'normal');
                 
@@ -2508,11 +2400,7 @@ window.updateUser = async function() {
                             try {
                                 const clockInTime = new Date(record.clockIn);
                                 if (!isNaN(clockInTime)) {
-                                    clockInText = clockInTime.toLocaleTimeString('en-GB', { 
-                                        hour: '2-digit', 
-                                        minute: '2-digit', 
-                                        hour12: false 
-                                    });
+                                    clockInText = clockInTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
                                 }
                             } catch (e) {}
                         }
@@ -2521,11 +2409,7 @@ window.updateUser = async function() {
                             try {
                                 const clockOutTime = new Date(record.clockOut);
                                 if (!isNaN(clockOutTime)) {
-                                    clockOutText = clockOutTime.toLocaleTimeString('en-GB', { 
-                                        hour: '2-digit', 
-                                        minute: '2-digit', 
-                                        hour12: false 
-                                    });
+                                    clockOutText = clockOutTime.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
                                 }
                             } catch (e) {}
                         }
@@ -2579,14 +2463,10 @@ window.updateUser = async function() {
                 doc.text('Statistic', tableMarginX + 2, y + 4);
                 
                 const totalHoursFormatted = formatDecimalToTime(totalHoursDecimal);
-                doc.text(totalHoursFormatted, 
-                    tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 2, 
-                    y + 4);
+                doc.text(totalHoursFormatted, tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 2, y + 4);
                 
                 const totalOTFormatted = formatDecimalToTime(totalOTDecimal);
-                doc.text(totalOTFormatted, 
-                    tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + 2, 
-                    y + 4);
+                doc.text(totalOTFormatted, tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + 2, y + 4);
                 
                 const pageCount = doc.internal.getNumberOfPages();
                 for (let i = 1; i <= pageCount; i++) {
