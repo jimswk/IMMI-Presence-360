@@ -384,6 +384,9 @@
                         <button onclick="markAllAsRead()" id="markAllReadBtn" class="text-sm text-purple-600 hover:text-purple-800 font-bold">
                             Tandakan Semua Dibaca
                         </button>
+                        <button onclick="refreshNotifications()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula notifikasi">
+                            <span class="material-symbols-rounded text-sm">refresh</span>
+                        </button>
                     </div>
                 </div>
 
@@ -395,9 +398,6 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <div id="inboxCount" class="text-xs text-gray-400">0 notifikasi</div>
-                            <button onclick="refreshNotifications()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula notifikasi">
-                                <span class="material-symbols-rounded text-sm">refresh</span>
-                            </button>
                         </div>
                     </div>
                     <div id="inboxList">
@@ -596,16 +596,14 @@
         let branchChart = null;
         let adminToDelete = null;
         let notifications = [];
-        let notificationCheckInterval = null;
         let audioBell = null;
-        let isRefreshing = false;
 
         // ============================================
         // AUDIO FUNCTIONS
         // ============================================
         function initAudio() {
             try {
-                audioBell = new Audio('https://ik.imagekit.io/pyreotmgq/mixkit-modern-classic-door-bell-sound-113.wav?updatedAt=1774221408920');
+                audioBell = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
                 audioBell.volume = 0.5;
             } catch (e) {
                 console.error('Failed to initialize audio:', e);
@@ -653,89 +651,23 @@
         }
 
         // ============================================
-        // NOTIFICATION FUNCTIONS
+        // NOTIFICATION FUNCTIONS - TANPA POLLING
         // ============================================
         
         async function loadNotifications(showToast = false) {
-            if (isRefreshing) return;
-            isRefreshing = true;
-            
             try {
                 const result = await callAPI('getNotifications');
                 if (result.success) {
-                    const newNotifications = result.data || [];
+                    notifications = result.data || [];
+                    renderNotifications();
+                    updateInboxBadge();
                     
-                    // Compare by ID
-                    const oldIds = new Set(notifications.map(n => n.id));
-                    const newIds = new Set(newNotifications.map(n => n.id));
-                    
-                    const hasNew = newNotifications.some(n => !oldIds.has(n.id));
-                    let readStatusChanged = false;
-                    
-                    notifications.forEach(oldNotif => {
-                        const newNotif = newNotifications.find(n => n.id === oldNotif.id);
-                        if (newNotif && newNotif.read !== oldNotif.read) {
-                            readStatusChanged = true;
-                        }
-                    });
-                    
-                    const hasDeleted = notifications.some(n => !newIds.has(n.id));
-                    
-                    if (hasNew || readStatusChanged || hasDeleted) {
-                        notifications = newNotifications;
-                        renderNotifications();
-                        updateInboxBadge();
-                        
-                        if (showToast && hasNew) {
-                            const newCount = newNotifications.filter(n => !oldIds.has(n.id)).length;
-                            showNotif('Notifikasi Baru', `${newCount} notifikasi baru diterima`);
-                            playNotificationSound();
-                            showBrowserNotification('IMMI Presence 360', `${newCount} notifikasi baru diterima`);
-                        }
+                    if (showToast) {
+                        showNotif('Berjaya', 'Notifikasi dikemaskini');
                     }
                 }
             } catch (error) {
                 console.error('Error loading notifications:', error);
-            } finally {
-                isRefreshing = false;
-            }
-        }
-
-        async function checkNewNotifications() {
-            if (isRefreshing) return;
-            
-            try {
-                const result = await callAPI('getNotifications');
-                if (result.success) {
-                    const newNotifications = result.data || [];
-                    const oldIds = new Set(notifications.map(n => n.id));
-                    const newIds = new Set(newNotifications.map(n => n.id));
-                    
-                    const hasNew = newNotifications.some(n => !oldIds.has(n.id));
-                    let readStatusChanged = false;
-                    
-                    notifications.forEach(oldNotif => {
-                        const newNotif = newNotifications.find(n => n.id === oldNotif.id);
-                        if (newNotif && newNotif.read !== oldNotif.read) {
-                            readStatusChanged = true;
-                        }
-                    });
-                    
-                    const hasDeleted = notifications.some(n => !newIds.has(n.id));
-                    
-                    if (hasNew || readStatusChanged || hasDeleted) {
-                        notifications = newNotifications;
-                        renderNotifications();
-                        updateInboxBadge();
-                        
-                        if (hasNew) {
-                            playNotificationSound();
-                            showBrowserNotification('IMMI Presence 360', 'Notifikasi baru diterima');
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking notifications:', error);
             }
         }
 
@@ -764,7 +696,7 @@
                 const date = new Date(notif.timestamp);
                 const formattedDate = date.toLocaleDateString('ms-MY') + ' ' + date.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
                 
-                // CRITICAL: Normalize read status for display
+                // Normalize read status for display
                 const isRead = notif.read === true || notif.read === 'true';
                 const unreadClass = isRead ? 'read' : 'unread';
                 
@@ -819,9 +751,6 @@
                     notifications.forEach(notif => { notif.read = true; });
                     renderNotifications();
                     updateInboxBadge();
-                    
-                    // Background refresh for consistency
-                    setTimeout(() => loadNotifications(), 500);
                     showNotif('Berjaya', 'Semua notifikasi ditandakan sebagai dibaca');
                 } else {
                     showNotif('Ralat', 'Gagal menandakan semua sebagai dibaca', true);
@@ -845,7 +774,6 @@
                         renderNotifications();
                         updateInboxBadge();
                     }
-                    setTimeout(() => loadNotifications(), 500);
                 }
             } catch (error) {
                 console.error('Error marking notification as read:', error);
@@ -854,7 +782,6 @@
 
         async function refreshNotifications() {
             await loadNotifications(true);
-            showNotif('Berjaya', 'Notifikasi dikemaskini');
         }
 
         async function deleteNotification(id) {
@@ -1002,18 +929,6 @@
             document.getElementById('notificationDetailModal').style.display = 'none';
         }
 
-        function startNotificationPolling() {
-            if (notificationCheckInterval) clearInterval(notificationCheckInterval);
-            notificationCheckInterval = setInterval(checkNewNotifications, 15000);
-        }
-
-        function stopNotificationPolling() {
-            if (notificationCheckInterval) {
-                clearInterval(notificationCheckInterval);
-                notificationCheckInterval = null;
-            }
-        }
-
         // ============================================
         // LOGIN
         // ============================================
@@ -1055,8 +970,6 @@
                     await loadAdmins();
                     await loadAllUsers();
                     
-                    startNotificationPolling();
-                    
                     showNotif('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`);
                 } else {
                     showNotif('Gagal', result.error || 'Email atau kata laluan salah', true);
@@ -1070,7 +983,6 @@
         };
 
         window.handleLogout = function() {
-            stopNotificationPolling();
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('superadminDashboard').classList.add('hidden');
         };
@@ -1112,7 +1024,7 @@
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
                 return;
             }
 
@@ -1166,7 +1078,7 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
                 return;
             }
 
@@ -1323,6 +1235,9 @@
                         type: 'admin',
                         createdBy: currentUser.uid
                     })});
+                    
+                    // Refresh notifications after creating admin
+                    await loadNotifications();
                 } else {
                     showNotif('Ralat', result.error || 'Gagal menyimpan', true);
                 }
