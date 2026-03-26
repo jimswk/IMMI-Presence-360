@@ -1,6 +1,6 @@
 // Konfigurasi API - TUKAR URL INI selepas deploy
 const CONFIG = {
-    API_BASE_URL: 'https://script.google.com/macros/s/AKfycbxfRngTA7Xhl4DKnKPUchC84be46eRC8GccHGDvdSK76GV8QlR3Y-PuuVPJ89v1GAMw5g/exec'
+    API_BASE_URL: 'https://script.google.com/macros/s/AKfycbzfmhzPZCmHom4-RTM8K5h0GKbGzyf8q3cA7AaCnZtY5TiD-Hn2jPaSVmzNXfrFMSIo2Q/exec'
 };
 
 // Fungsi global untuk panggil API
