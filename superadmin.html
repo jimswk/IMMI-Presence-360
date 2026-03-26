@@ -597,7 +597,8 @@
         let notifications = [];
         let notificationCheckInterval = null;
         let audioBell = null;
-        let isUpdatingReadStatus = false;
+        let lastNotificationTimestamp = null;
+        let isRefreshing = false;
 
         // ============================================
         // AUDIO FUNCTIONS
@@ -652,59 +653,95 @@
         }
 
         // ============================================
-        // NOTIFICATION FUNCTIONS - DENGAN FORCE REFRESH
+        // NOTIFICATION FUNCTIONS - DIPERBAIKI
         // ============================================
+        
+        // Load notifications from server
         async function loadNotifications(showToast = false) {
+            if (isRefreshing) return;
+            isRefreshing = true;
+            
             try {
                 const result = await callAPI('getNotifications');
                 if (result.success) {
-                    const oldUnreadCount = notifications.filter(n => !n.read).length;
-                    notifications = result.data || [];
-                    const newUnreadCount = notifications.filter(n => !n.read).length;
+                    const newNotifications = result.data || [];
                     
-                    renderNotifications();
-                    updateInboxBadge();
+                    // Compare by ID to detect changes
+                    const oldIds = new Set(notifications.map(n => n.id));
+                    const newIds = new Set(newNotifications.map(n => n.id));
                     
-                    if (showToast && newUnreadCount > oldUnreadCount) {
-                        showNotif('Notifikasi Baru', `${newUnreadCount - oldUnreadCount} notifikasi baru diterima`);
-                        playNotificationSound();
-                        showBrowserNotification('IMMI Presence 360', `${newUnreadCount - oldUnreadCount} notifikasi baru diterima`);
+                    // Check for new notifications (IDs not in old list)
+                    const hasNew = newNotifications.some(n => !oldIds.has(n.id));
+                    
+                    // Check if any existing notification's read status changed
+                    let readStatusChanged = false;
+                    notifications.forEach(oldNotif => {
+                        const newNotif = newNotifications.find(n => n.id === oldNotif.id);
+                        if (newNotif && newNotif.read !== oldNotif.read) {
+                            readStatusChanged = true;
+                        }
+                    });
+                    
+                    // Check if any notifications were deleted
+                    const hasDeleted = notifications.some(n => !newIds.has(n.id));
+                    
+                    // Update if there are changes
+                    if (hasNew || readStatusChanged || hasDeleted) {
+                        notifications = newNotifications;
+                        renderNotifications();
+                        updateInboxBadge();
+                        
+                        if (showToast && hasNew) {
+                            const newCount = newNotifications.filter(n => !oldIds.has(n.id)).length;
+                            showNotif('Notifikasi Baru', `${newCount} notifikasi baru diterima`);
+                            playNotificationSound();
+                            showBrowserNotification('IMMI Presence 360', `${newCount} notifikasi baru diterima`);
+                        }
                     }
                 }
             } catch (error) {
                 console.error('Error loading notifications:', error);
+            } finally {
+                isRefreshing = false;
             }
         }
 
+        // Check for new notifications (polling)
         async function checkNewNotifications() {
-            if (isUpdatingReadStatus) return;
+            if (isRefreshing) return;
             
             try {
                 const result = await callAPI('getNotifications');
-                if (result.success && result.data) {
-                    const newNotifications = result.data;
+                if (result.success) {
+                    const newNotifications = result.data || [];
+                    
+                    // Compare by ID
                     const oldIds = new Set(notifications.map(n => n.id));
+                    const newIds = new Set(newNotifications.map(n => n.id));
+                    
+                    // Check for new notifications
                     const hasNew = newNotifications.some(n => !oldIds.has(n.id));
                     
-                    if (hasNew) {
+                    // Check for read status changes
+                    let readStatusChanged = false;
+                    notifications.forEach(oldNotif => {
+                        const newNotif = newNotifications.find(n => n.id === oldNotif.id);
+                        if (newNotif && newNotif.read !== oldNotif.read) {
+                            readStatusChanged = true;
+                        }
+                    });
+                    
+                    // Check for deleted notifications
+                    const hasDeleted = notifications.some(n => !newIds.has(n.id));
+                    
+                    if (hasNew || readStatusChanged || hasDeleted) {
                         notifications = newNotifications;
                         renderNotifications();
                         updateInboxBadge();
-                        playNotificationSound();
-                        showBrowserNotification('IMMI Presence 360', 'Notifikasi baru diterima');
-                    } else {
-                        // Update read status from server
-                        let needsUpdate = false;
-                        notifications.forEach(notif => {
-                            const serverNotif = newNotifications.find(n => n.id === notif.id);
-                            if (serverNotif && serverNotif.read !== notif.read) {
-                                notif.read = serverNotif.read;
-                                needsUpdate = true;
-                            }
-                        });
-                        if (needsUpdate) {
-                            renderNotifications();
-                            updateInboxBadge();
+                        
+                        if (hasNew) {
+                            playNotificationSound();
+                            showBrowserNotification('IMMI Presence 360', 'Notifikasi baru diterima');
                         }
                     }
                 }
@@ -779,19 +816,13 @@
             const btn = document.getElementById('markAllReadBtn');
             btn.disabled = true;
             btn.innerHTML = 'Memproses...';
-            isUpdatingReadStatus = true;
             
             try {
                 const result = await callAPI('markAllNotificationsRead');
                 if (result.success) {
-                    // Force refresh notifications from server
-                    const refreshResult = await callAPI('getNotifications');
-                    if (refreshResult.success) {
-                        notifications = refreshResult.data || [];
-                        renderNotifications();
-                        updateInboxBadge();
-                        showNotif('Berjaya', 'Semua notifikasi ditandakan sebagai dibaca');
-                    }
+                    // Refresh from server to get updated read status
+                    await loadNotifications();
+                    showNotif('Berjaya', 'Semua notifikasi ditandakan sebagai dibaca');
                 } else {
                     showNotif('Ralat', 'Gagal menandakan semua sebagai dibaca', true);
                 }
@@ -801,20 +832,21 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Tandakan Semua Dibaca';
-                isUpdatingReadStatus = false;
             }
         }
 
         async function markNotificationRead(id) {
             try {
                 await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
-                // Update local and refresh
-                const refreshResult = await callAPI('getNotifications');
-                if (refreshResult.success) {
-                    notifications = refreshResult.data || [];
+                // Update local notification read status immediately for UI responsiveness
+                const notif = notifications.find(n => n.id === id);
+                if (notif) {
+                    notif.read = true;
                     renderNotifications();
                     updateInboxBadge();
                 }
+                // Also refresh from server in background to ensure consistency
+                setTimeout(() => loadNotifications(), 500);
             } catch (error) {
                 console.error('Error marking notification as read:', error);
             }
@@ -828,28 +860,23 @@
         async function deleteNotification(id) {
             if (!confirm('Padam notifikasi ini? Tindakan ini tidak boleh dibatalkan.')) return;
             
-            const btn = document.querySelector(`.inbox-item[data-id="${id}"] button`);
-            if (btn) btn.disabled = true;
-            
             try {
                 const result = await callAPI('deleteNotification', { data: JSON.stringify({ id: id }) });
                 if (result.success) {
-                    // Force refresh from server
-                    const refreshResult = await callAPI('getNotifications');
-                    if (refreshResult.success) {
-                        notifications = refreshResult.data || [];
-                        renderNotifications();
-                        updateInboxBadge();
-                        showNotif('Berjaya', 'Notifikasi telah dipadamkan');
-                    }
+                    // Remove from local array immediately
+                    notifications = notifications.filter(n => n.id !== id);
+                    renderNotifications();
+                    updateInboxBadge();
+                    showNotif('Berjaya', 'Notifikasi telah dipadamkan');
+                    
+                    // Refresh from server in background to ensure consistency
+                    setTimeout(() => loadNotifications(), 500);
                 } else {
                     showNotif('Ralat', 'Gagal memadam notifikasi', true);
                 }
             } catch (error) {
                 console.error('Error deleting notification:', error);
                 showNotif('Ralat', 'Gagal memadam notifikasi', true);
-            } finally {
-                if (btn) btn.disabled = false;
             }
         }
 
@@ -866,19 +893,18 @@
             
             btn.disabled = true;
             btn.innerHTML = 'Memadam...';
-            isUpdatingReadStatus = true;
             
             try {
                 const result = await callAPI('deleteAllReadNotifications');
                 if (result.success) {
-                    // Force refresh from server
-                    const refreshResult = await callAPI('getNotifications');
-                    if (refreshResult.success) {
-                        notifications = refreshResult.data || [];
-                        renderNotifications();
-                        updateInboxBadge();
-                        showNotif('Berjaya', `${result.deleted || readCount} notifikasi telah dipadamkan`);
-                    }
+                    // Remove read notifications from local array immediately
+                    notifications = notifications.filter(n => !n.read);
+                    renderNotifications();
+                    updateInboxBadge();
+                    showNotif('Berjaya', `${result.deleted || readCount} notifikasi telah dipadamkan`);
+                    
+                    // Refresh from server in background
+                    setTimeout(() => loadNotifications(), 500);
                 } else {
                     showNotif('Ralat', result.error || 'Gagal memadam notifikasi', true);
                 }
@@ -888,7 +914,6 @@
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-rounded text-sm">delete_sweep</span> Padam Semua Dibaca';
-                isUpdatingReadStatus = false;
             }
         }
 
@@ -896,7 +921,9 @@
             const notif = notifications.find(n => n.id === id);
             if (!notif) return;
             
-            if (!notif.read) await markNotificationRead(id);
+            if (!notif.read) {
+                await markNotificationRead(id);
+            }
             
             const modal = document.getElementById('notificationDetailModal');
             const modalBody = document.getElementById('detailModalBody');
@@ -984,7 +1011,8 @@
 
         function startNotificationPolling() {
             if (notificationCheckInterval) clearInterval(notificationCheckInterval);
-            notificationCheckInterval = setInterval(checkNewNotifications, 10000);
+            // Poll every 15 seconds instead of 10 to reduce conflicts
+            notificationCheckInterval = setInterval(checkNewNotifications, 15000);
         }
 
         function stopNotificationPolling() {
@@ -1092,7 +1120,7 @@
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td>';
                 return;
             }
 
@@ -1146,7 +1174,7 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td>';
                 return;
             }
 
