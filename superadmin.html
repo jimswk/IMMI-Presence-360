@@ -445,143 +445,144 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                                </thead>
+                            </tr>
+                        </thead>
                         <tbody id="adminsTableBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...<\/td><\/tr>
-                        <\/tbody>
-                    <\/table>
-                <\/div>
-            <\/div>
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <!-- Users Tab -->
             <div id="usersTab" class="hidden">
-                <h1 class="text-2xl font-black text-gray-800 mb-6">Senarai Semua Pengguna<\/h1>
+                <h1 class="text-2xl font-black text-gray-800 mb-6">Senarai Semua Pengguna</h1>
                 <div class="bg-white rounded-3xl p-6 border">
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
                                 <tr>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Nama<\/th>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan<\/th>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Unit<\/th>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi<\/th>
-                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Radius<\/th>
-                                    <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah<\/th>
-                                <\/tr>
-                            <\/thead>
+                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
+                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
+                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
+                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
+                                    <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
+                                    <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
+                                </tr>
+                            </thead>
                             <tbody id="usersTableBody">
-                                <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...<\/td><\/tr>
-                            <\/tbody>
-                        <\/table>
-                    <\/div>
-                <\/div>
-            <\/div>
+                                <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
             <!-- Dashboard Tab -->
             <div id="dashboardTab" class="hidden">
-                <h1 class="text-2xl font-black text-gray-800 mb-6">Analisis Sistem<\/h1>
+                <h1 class="text-2xl font-black text-gray-800 mb-6">Analisis Sistem</h1>
                 <div class="bg-white rounded-3xl p-6 border">
-                    <h2 class="font-bold text-sm mb-4">Taburan Pengguna Mengikut Cawangan<\/h2>
-                    <canvas id="branchChart" height="100"><\/canvas>
-                <\/div>
-            <\/div>
-        <\/div>
-    <\/div>
+                    <h2 class="font-bold text-sm mb-4">Taburan Pengguna Mengikut Cawangan</h2>
+                    <canvas id="branchChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Tambah Admin -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
-                <h3 class="text-lg font-black">Daftar Admin Baru<\/h3>
-            <\/div>
+                <h3 class="text-lg font-black">Daftar Admin Baru</h3>
+            </div>
             <div class="modal-body">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Nama Penuh<\/label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Nama Penuh</label>
                         <input type="text" id="adminNameInput" class="input-field" placeholder="Nama Admin">
                         
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Email Rasmi<\/label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Email Rasmi</label>
                         <input type="email" id="adminEmailInput" class="input-field" placeholder="admin@imi.gov.my">
                         
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Kata Laluan<\/label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Kata Laluan</label>
                         <input type="password" id="adminPasswordInput" class="input-field" placeholder="Min. 6 aksara">
                         
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan<\/label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan</label>
                         <select id="adminBranchInput" class="input-field">
-                            <option value="">Pilih Cawangan<\/option>
-                            <option value="Kuching">Kuching<\/option>
-                            <option value="Kota Samarahan">Kota Samarahan<\/option>
-                            <option value="Sri Aman">Sri Aman<\/option>
-                            <option value="Sarikei">Sarikei<\/option>
-                            <option value="Sibu">Sibu<\/option>
-                            <option value="Bintulu">Bintulu<\/option>
-                            <option value="Miri">Miri<\/option>
-                            <option value="Kapit">Kapit<\/option>
-                            <option value="Limbang">Limbang<\/option>
-                        <\/select>
+                            <option value="">Pilih Cawangan</option>
+                            <option value="Kuching">Kuching</option>
+                            <option value="Kota Samarahan">Kota Samarahan</option>
+                            <option value="Sri Aman">Sri Aman</option>
+                            <option value="Sarikei">Sarikei</option>
+                            <option value="Sibu">Sibu</option>
+                            <option value="Bintulu">Bintulu</option>
+                            <option value="Miri">Miri</option>
+                            <option value="Kapit">Kapit</option>
+                            <option value="Limbang">Limbang</option>
+                        </select>
                         
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Unit<\/label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Unit</label>
                         <input type="text" id="adminUnitInput" class="input-field" placeholder="Contoh: UPSKK">
                         
                         <div class="mt-3">
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" id="adminIsSuperadmin" class="w-4 h-4 text-purple-600">
-                                <span class="text-sm font-bold text-gray-600">Daftar sebagai SUPERADMIN<\/span>
-                            <\/label>
-                            <p class="text-xs text-gray-400 mt-1">Superadmin mempunyai akses penuh ke semua cawangan<\/p>
-                        <\/div>
-                    <\/div>
+                                <span class="text-sm font-bold text-gray-600">Daftar sebagai SUPERADMIN</span>
+                            </label>
+                            <p class="text-xs text-gray-400 mt-1">Superadmin mempunyai akses penuh ke semua cawangan</p>
+                        </div>
+                    </div>
                     
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Lokasi Pejabat<\/label>
-                        <textarea id="adminLocationInput" class="input-field h-20" placeholder="Alamat akan terisi auto"><\/textarea>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Lokasi Pejabat</label>
+                        <textarea id="adminLocationInput" class="input-field h-20" placeholder="Alamat akan terisi auto"></textarea>
                         
-                        <div id="adminLocationMap" class="location-map"><\/div>
+                        <div id="adminLocationMap" class="location-map"></div>
                         <input type="hidden" id="adminLat">
                         <input type="hidden" id="adminLng">
                         
                         <div class="flex gap-2 mt-2">
                             <button onclick="getAdminLocation()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm font-bold">
                                 Lokasi Semasa
-                            <\/button>
-                        <\/div>
-                    <\/div>
-                <\/div>
-            <\/div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="modal-footer">
-                <button onclick="closeAdminModal()" class="px-6 py-2 rounded-xl border font-bold">Batal<\/button>
-                <button onclick="saveAdmin()" id="saveAdminBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Daftar Admin<\/button>
-            <\/div>
-        <\/div>
-    <\/div>
+                <button onclick="closeAdminModal()" class="px-6 py-2 rounded-xl border font-bold">Batal</button>
+                <button onclick="saveAdmin()" id="saveAdminBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Daftar Admin</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Detail Notifikasi -->
     <div id="notificationDetailModal" class="modal-overlay">
         <div class="modal detail-modal">
             <div class="modal-header">
-                <h3 class="text-lg font-black" id="detailModalTitle">Detail Notifikasi<\/h3>
-            <\/div>
-            <div class="modal-body" id="detailModalBody"><\/div>
+                <h3 class="text-lg font-black" id="detailModalTitle">Detail Notifikasi</h3>
+            </div>
+            <div class="modal-body" id="detailModalBody"></div>
             <div class="modal-footer">
-                <button onclick="closeNotificationDetailModal()" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Tutup<\/button>
-            <\/div>
-        <\/div>
-    <\/div>
+                <button onclick="closeNotificationDetailModal()" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Tutup</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Padam Admin -->
     <div id="deleteModal" class="modal-overlay">
         <div class="modal max-w-sm">
             <div class="p-8 text-center">
-                <span class="material-symbols-rounded text-6xl text-red-500 mb-4">warning<\/span>
-                <h3 class="font-black text-xl">Padam Admin Ini?<\/h3>
-                <p class="text-sm text-gray-400 mt-2">Akses admin ini akan ditamatkan serta-merta.<\/p>
+                <span class="material-symbols-rounded text-6xl text-red-500 mb-4">warning</span>
+                <h3 class="font-black text-xl">Padam Admin Ini?</h3>
+                <p class="text-sm text-gray-400 mt-2">Akses admin ini akan ditamatkan serta-merta.</p>
                 <div class="flex gap-3 mt-6">
-                    <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Batal<\/button>
-                    <button id="confirmDeleteBtn" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">Ya, Padam<\/button>
-                <\/div>
-            <\/div>
-        <\/div>
-    <\/div>
+                    <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Batal</button>
+                    <button id="confirmDeleteBtn" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">Ya, Padam</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         // ============================================
