@@ -50,7 +50,6 @@
             overflow-x: hidden;
         }
 
-        /* Login Container */
         .login-container {
             min-height: 100vh;
             background: linear-gradient(165deg, #0b1e33 0%, #132b41 100%);
@@ -69,7 +68,6 @@
             box-shadow: 0 50px 70px -20px rgba(0,0,0,0.5);
         }
 
-        /* Floating Label Styles */
         .floating-group {
             position: relative;
             margin-bottom: 28px;
@@ -117,7 +115,6 @@
             left: 12px;
         }
 
-        /* Password Eye Button */
         .password-wrapper {
             position: relative;
         }
@@ -148,7 +145,6 @@
             transform: translateY(-50%) scale(0.95);
         }
 
-        /* Login Button Animation */
         .login-btn {
             position: relative;
             overflow: hidden;
@@ -160,7 +156,6 @@
             cursor: not-allowed;
         }
 
-        /* Spinner Animation */
         .loading-spinner {
             display: inline-block;
             width: 20px;
@@ -171,11 +166,8 @@
             animation: spin 1s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Sidebar */
         .sidebar {
             background: linear-gradient(165deg, #0b1e33 0%, #132b41 100%);
             width: 280px;
@@ -223,7 +215,6 @@
             min-height: 100vh;
         }
 
-        /* Step Indicators */
         .step-indicator {
             display: flex;
             justify-content: space-between;
@@ -315,7 +306,6 @@
         .step-2.active .step-number-2 { background: #1e3a8a; color: white; }
         .step-2.completed .step-number-2 { background: #059669; color: white; }
 
-        /* Form Inputs */
         .input-label {
             display: block;
             font-size: 0.75rem;
@@ -417,7 +407,6 @@
 
         .hidden { display: none !important; }
 
-        /* Notification */
         .notification {
             position: fixed;
             top: 24px;
@@ -524,17 +513,14 @@
             background: rgba(255,255,255,0.5);
         }
 
-        /* Mobile Responsive */
         @media (max-width: 640px) {
             .floating-input {
                 padding: 16px 14px 6px 14px;
                 font-size: 0.95rem;
             }
-            
             .floating-label {
                 font-size: 0.9rem;
             }
-            
             .floating-input:focus ~ .floating-label,
             .floating-input:not(:placeholder-shown) ~ .floating-label {
                 font-size: 0.65rem;
@@ -562,7 +548,6 @@
         </div>
     </div>
 
-    <!-- Login Page with Floating Label and Eye Button -->
     <div id="loginPage" class="login-container">
         <div class="login-card">
             <div class="text-center mb-8">
@@ -574,13 +559,11 @@
             </div>
             
             <div class="space-y-4">
-                <!-- Email Field with Floating Label -->
                 <div class="floating-group">
                     <input type="email" id="loginEmail" class="floating-input" placeholder=" " autocomplete="email">
                     <label class="floating-label">Emel Rasmi</label>
                 </div>
                 
-                <!-- Password Field with Floating Label and Eye Button -->
                 <div class="floating-group">
                     <div class="password-wrapper">
                         <input type="password" id="loginPassword" class="floating-input" placeholder=" " autocomplete="current-password">
@@ -632,6 +615,10 @@
                         <span class="material-symbols-rounded">dashboard</span> 
                         <span class="font-bold">Statistik Keseluruhan</span>
                     </div>
+                    <div class="nav-item" onclick="switchTab('tools')" id="navTools">
+                        <span class="material-symbols-rounded">build</span> 
+                        <span class="font-bold">Alat Sistem</span>
+                    </div>
                 </nav>
 
                 <button onclick="handleLogout()" class="mt-auto flex items-center gap-3 text-gray-400 hover:text-white transition-colors p-3 font-bold text-sm">
@@ -660,18 +647,18 @@
 
                 <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
                     <div class="overflow-x-auto">
-                         <table>
+                        <table>
                             <thead>
-                                 <tr>
+                                <tr>
                                     <th>Nama Kakitangan</th>
                                     <th>Unit / Bahagian</th>
                                     <th>Status Biometrik</th>
                                     <th>Geofencing</th>
                                     <th class="text-center">Tindakan</th>
-                                 </tr>
+                                </tr>
                             </thead>
                             <tbody id="usersTableBody"></tbody>
-                         </table>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -822,7 +809,7 @@
                 </div>
             </div>
 
-            <!-- EDIT USER TAB - DENGAN UNIT BOLEH DIEDIT -->
+            <!-- EDIT USER TAB -->
             <div id="editUserTab" class="hidden">
                 <div class="max-w-4xl">
                     <h1 class="text-4xl font-black text-gray-800 mb-2" id="editFormTitle">Kemaskini Kakitangan</h1>
@@ -981,7 +968,7 @@
                                 <tbody id="userAttendanceBody">
                                     <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
                                 </tbody>
-                              </table>
+                             </table>
                         </div>
                     </div>
                 </div>
@@ -1057,6 +1044,59 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Tools Tab -->
+            <div id="toolsTab" class="hidden">
+                <h1 class="text-4xl font-black text-gray-800 mb-8">Alat Sistem</h1>
+                
+                <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="material-symbols-rounded text-3xl text-amber-600">recalculate</span>
+                        <h2 class="text-2xl font-black text-gray-800">Kira Semula Overtime (WBF Sarawak)</h2>
+                    </div>
+                    
+                    <p class="text-gray-600 mb-6">Gunakan alat ini untuk mengira semula Overtime bagi rekod kehadiran lama mengikut formula WBF Sarawak:<br>
+                    <span class="text-sm text-gray-500">• Waktu mula kira: 7:30 AM<br>
+                    • Waktu rehat: Isnin-Khamis 30 minit, Jumaat 2 jam<br>
+                    • Standard kerja: 9 jam sehari</span></p>
+                    
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="input-label">Tarikh Mula</label>
+                            <input type="date" id="recalcStartDate" class="input-field" value="2024-01-01">
+                        </div>
+                        <div>
+                            <label class="input-label">Tarikh Tamat</label>
+                            <input type="date" id="recalcEndDate" class="input-field">
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <button onclick="recalculateOvertime()" id="recalcBtn" class="bg-amber-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-amber-700 transition-all">
+                            <span class="material-symbols-rounded">refresh</span>
+                            Kira Semula OT
+                        </button>
+                        <button onclick="recalculateAllOvertime()" id="recalcAllBtn" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-red-700 transition-all">
+                            <span class="material-symbols-rounded">warning</span>
+                            Kira Semua Data
+                        </button>
+                    </div>
+                    
+                    <div id="recalcResult" class="mt-6 hidden">
+                        <div class="p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3">
+                            <span class="material-symbols-rounded">check_circle</span>
+                            <span id="recalcMessage"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 pt-6 border-t border-gray-100">
+                        <p class="text-xs text-gray-400 flex items-center gap-1">
+                            <span class="material-symbols-rounded text-sm">info</span>
+                            Nota: Proses ini mungkin mengambil masa beberapa minit bergantung kepada jumlah data. Rekod yang dikira semula akan mengemaskini kolom 'totalHours' dan 'totalOT'.
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1102,7 +1142,6 @@
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('loginPassword');
             const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
-            
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 eyeIcon.innerText = 'visibility';
@@ -1130,6 +1169,22 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function formatJam(decimalJam) {
+            if (!decimalJam || decimalJam <= 0) return '-';
+            const jam = Math.floor(decimalJam);
+            const minit = Math.round((decimalJam - jam) * 60);
+            if (minit === 0) return `${jam}j`;
+            if (minit < 10) return `${jam}j 0${minit}m`;
+            return `${jam}j ${minit}m`;
+        }
+
+        function formatDecimalToTime(decimal) {
+            if (!decimal || decimal <= 0) return '';
+            const hours = Math.floor(decimal);
+            const minutes = Math.round((decimal - hours) * 60);
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         }
 
         // ============================================
@@ -1234,14 +1289,13 @@
         function cancelAndReset() { resetFormAfterSave(); switchTab('users'); }
 
         // ============================================
-        // LOGIN - ENHANCED WITH ANIMATION
+        // LOGIN
         // ============================================
         window.handleLogin = async function() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
             
-            // Reset error styling
             document.getElementById('loginEmail').style.borderColor = '';
             document.getElementById('loginPassword').style.borderColor = '';
             
@@ -1252,7 +1306,6 @@
                 return;
             }
             
-            // Add loading animation
             btn.disabled = true;
             btn.classList.add('loading');
             btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
@@ -1270,7 +1323,6 @@
                         return;
                     }
                     
-                    // Success animation
                     btn.style.backgroundColor = '#059669';
                     btn.innerHTML = '<span class="material-symbols-rounded">check</span> Berjaya';
                     
@@ -1278,11 +1330,9 @@
                         initDashboard();
                     }, 500);
                 } else {
-                    // Error animation
                     btn.style.backgroundColor = '#dc2626';
                     btn.innerHTML = 'Gagal';
                     showNotif("Gagal", result.error || "Maklumat log masuk salah", true);
-                    
                     setTimeout(() => {
                         btn.style.backgroundColor = '';
                         btn.disabled = false;
@@ -1295,7 +1345,6 @@
                 showNotif("Ralat Sistem", "Gagal menghubungi server", true);
                 btn.style.backgroundColor = '#dc2626';
                 btn.innerHTML = 'Ralat';
-                
                 setTimeout(() => {
                     btn.style.backgroundColor = '';
                     btn.disabled = false;
@@ -1317,14 +1366,18 @@
             document.getElementById('userUnit').value = currentUser.unit;
             document.getElementById('editUserBranch').value = currentUser.branch;
             document.getElementById('editUserUnit').value = currentUser.unit;
+            
             const today = new Date();
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
             document.getElementById('startDate').value = firstDay.toISOString().split('T')[0];
             document.getElementById('endDate').value = today.toISOString().split('T')[0];
+            document.getElementById('recalcEndDate').value = today.toISOString().split('T')[0];
+            
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             document.getElementById('userHistoryStartDate').value = thirtyDaysAgo.toISOString().split('T')[0];
             document.getElementById('userHistoryEndDate').value = today.toISOString().split('T')[0];
+            
             loadUsers();
             loadFaceModels();
         }
@@ -1375,7 +1428,7 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '很好<td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
                 return;
             }
             tbody.innerHTML = users.map(u => `
@@ -1439,7 +1492,7 @@
                 const result = await callAPI('getAttendance', { uid: selectedUser.uid, startDate, endDate });
                 const tbody = document.getElementById('userAttendanceBody');
                 if (!result.success || !result.data || result.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
+                    tbody.innerHTML = '很好<td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
                     return;
                 }
                 let html = '';
@@ -1498,7 +1551,7 @@
         function updateEditRadius(val) { document.getElementById('editRadiusValDisplay').innerText = `${val} Meter`; if (editUserCircle) editUserCircle.setRadius(parseInt(val)); }
 
         // ============================================
-        // EDIT USER FUNCTIONS - DENGAN UNIT BOLEH DIEDIT
+        // EDIT USER FUNCTIONS
         // ============================================
         window.editUser = function(uid) {
             const u = users.find(x => x.uid === uid);
@@ -1835,20 +1888,6 @@
             const sel = document.getElementById('reportUser');
             sel.innerHTML = '<option value="">-- PILIH KAKITANGAN --</option>' + users.map(u => `<option value="${u.uid}">${escapeHtml(u.name.toUpperCase())} (${escapeHtml(u.unit || 'TIADA UNIT')})</option>`).join('');
         }
-        function formatJam(decimalJam) {
-            if (!decimalJam || decimalJam <= 0) return '-';
-            const jam = Math.floor(decimalJam);
-            const minit = Math.round((decimalJam - jam) * 60);
-            if (minit === 0) return `${jam}j`;
-            if (minit < 10) return `${jam}j 0${minit}m`;
-            return `${jam}j ${minit}m`;
-        }
-        function formatDecimalToTime(decimal) {
-            if (!decimal || decimal <= 0) return '';
-            const hours = Math.floor(decimal);
-            const minutes = Math.round((decimal - hours) * 60);
-            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        }
         window.searchUsers = function() {
             const q = document.getElementById('searchUser').value.toLowerCase();
             const rows = document.querySelectorAll('#usersTableBody tr');
@@ -1858,22 +1897,118 @@
         window.handleLogout = function() {
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             stopCamera();
-            
-            // Reset login button
             const btn = document.getElementById('loginBtn');
             btn.style.backgroundColor = '';
             btn.disabled = false;
             btn.classList.remove('loading');
             btn.innerHTML = 'Log Masuk';
-            
-            // Reset input fields
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
             document.getElementById('loginEmail').style.borderColor = '';
             document.getElementById('loginPassword').style.borderColor = '';
-            
             location.reload();
         };
+
+        // ============================================
+        // RECALCULATE OVERTIME FUNCTIONS
+        // ============================================
+        async function recalculateOvertime() {
+            const startDate = document.getElementById('recalcStartDate').value;
+            const endDate = document.getElementById('recalcEndDate').value;
+            
+            if (!startDate || !endDate) {
+                showNotif('Ralat', 'Sila pilih tarikh mula dan tamat', true);
+                return;
+            }
+            
+            if (startDate > endDate) {
+                showNotif('Ralat', 'Tarikh mula tidak boleh lepas tarikh tamat', true);
+                return;
+            }
+            
+            if (!confirm(`Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 30 min, Jumaat 2 jam\n• Standard kerja: 9 jam sehari`)) {
+                return;
+            }
+            
+            const btn = document.getElementById('recalcBtn');
+            const resultDiv = document.getElementById('recalcResult');
+            const resultMsg = document.getElementById('recalcMessage');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula...';
+            resultDiv.classList.add('hidden');
+            
+            try {
+                const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
+                
+                if (result.success) {
+                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak.`;
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-6 p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3';
+                    showNotif('Berjaya', `${result.recalculated} rekod telah dikira semula`);
+                } else {
+                    resultMsg.innerHTML = result.error || 'Gagal mengira semula';
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-6 p-4 rounded-2xl bg-red-50 text-red-700 flex items-center gap-3';
+                    showNotif('Ralat', result.error || 'Gagal mengira semula', true);
+                }
+            } catch (error) {
+                console.error('Recalculate error:', error);
+                resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
+                resultDiv.classList.remove('hidden');
+                resultDiv.className = 'mt-6 p-4 rounded-2xl bg-red-50 text-red-700 flex items-center gap-3';
+                showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded">refresh</span> Kira Semula OT';
+            }
+        }
+
+        async function recalculateAllOvertime() {
+            const startDate = '2020-01-01';
+            const endDate = new Date().toISOString().split('T')[0];
+            
+            if (!confirm(`Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 30 min, Jumaat 2 jam\n• Standard kerja: 9 jam sehari`)) {
+                return;
+            }
+            
+            const btn = document.getElementById('recalcAllBtn');
+            const resultDiv = document.getElementById('recalcResult');
+            const resultMsg = document.getElementById('recalcMessage');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula semua data...';
+            resultDiv.classList.add('hidden');
+            
+            try {
+                const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
+                
+                if (result.success) {
+                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak.`;
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-6 p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3';
+                    showNotif('Berjaya', `${result.recalculated} rekod telah dikira semula`);
+                    
+                    if (typeof loadUsers === 'function') {
+                        loadUsers();
+                    }
+                } else {
+                    resultMsg.innerHTML = result.error || 'Gagal mengira semula';
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-6 p-4 rounded-2xl bg-red-50 text-red-700 flex items-center gap-3';
+                    showNotif('Ralat', result.error || 'Gagal mengira semula', true);
+                }
+            } catch (error) {
+                console.error('Recalculate error:', error);
+                resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
+                resultDiv.classList.remove('hidden');
+                resultDiv.className = 'mt-6 p-4 rounded-2xl bg-red-50 text-red-700 flex items-center gap-3';
+                showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded">warning</span> Kira Semua Data';
+            }
+        }
 
         // ============================================
         // GENERATE PDF
