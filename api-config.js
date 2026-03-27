@@ -144,32 +144,26 @@ async function clockOut(uid, location, requestingUser) {
 // FUNGSI UNTUK NOTIFIKASI - DENGAN HISTORY
 // ============================================
 
-// Dapatkan semua notifikasi (belum dibaca)
 async function getNotifications() {
     return await callAPI('getNotifications');
 }
 
-// Dapatkan sejarah notifikasi (telah dibaca)
 async function getNotificationHistory() {
     return await callAPI('getNotificationHistory');
 }
 
-// Cipta notifikasi baru
 async function createNotification(data) {
     return await callAPI('createNotification', { data: JSON.stringify(data) });
 }
 
-// Tanda notifikasi sebagai dibaca dan pindah ke history
 async function markNotificationRead(id) {
     return await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
 }
 
-// Tanda semua notifikasi sebagai dibaca dan pindah ke history
 async function markAllNotificationsRead() {
     return await callAPI('markAllNotificationsRead');
 }
 
-// Kosongkan sejarah notifikasi
 async function clearNotificationHistory() {
     return await callAPI('clearNotificationHistory');
 }
@@ -199,6 +193,23 @@ async function fixInconsistentData() {
 }
 
 // ============================================
+// FUNGSI UTILITY - RECALCULATE OVERTIME
+// ============================================
+
+/**
+ * Kira semula Overtime untuk rekod lama
+ * @param {string} startDate - Tarikh mula (YYYY-MM-DD)
+ * @param {string} endDate - Tarikh tamat (YYYY-MM-DD)
+ * @returns {Promise} - Hasil pengiraan semula
+ */
+async function recalculateOvertime(startDate, endDate) {
+    return await callAPI('recalculateOvertime', { 
+        startDate: startDate, 
+        endDate: endDate 
+    });
+}
+
+// ============================================
 // EXPORT UNTUK KEGUNAAN GLOBAL
 // ============================================
 if (typeof module !== 'undefined' && module.exports) {
@@ -223,6 +234,7 @@ if (typeof module !== 'undefined' && module.exports) {
         markNotificationRead,
         markAllNotificationsRead,
         clearNotificationHistory,
+        recalculateOvertime,
         login,
         userLogin,
         setupSheets,
