@@ -477,6 +477,10 @@
                     <span class="material-symbols-rounded">dashboard</span>
                     <span>Dashboard</span>
                 </div>
+                <div class="nav-item" onclick="switchTab('tools')" id="navTools">
+                    <span class="material-symbols-rounded">build</span>
+                    <span>Alat Sistem</span>
+                </div>
 
                 <button onclick="handleLogout()" class="mt-auto bg-white/10 hover:bg-white/20 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
                     <span class="material-symbols-rounded">logout</span>
@@ -583,21 +587,20 @@
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
                     <table class="w-full min-w-[800px]">
                         <thead>
-                            <tr>
+                            60e
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama Admin</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                            </tr>
-                        </thead>
+                             </thead>
                         <tbody id="adminsTableBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                            70e<td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...<\/td><\/tr>
+                        <\/tbody>
+                    <\/table>
+                <\/div>
+            <\/div>
 
             <!-- Users Tab -->
             <div id="usersTab" class="hidden">
@@ -606,154 +609,207 @@
                     <div class="relative w-72">
                         <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
                         <input type="text" id="searchUser" placeholder="Cari nama atau emel..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-purple-50 transition-all" onkeyup="searchUsers()">
-                    </div>
-                </div>
+                    <\/div>
+                <\/div>
 
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
                     <table class="w-full min-w-[800px]">
                         <thead>
-                            <tr>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
-                                <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
-                                <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                            </tr>
-                        </thead>
+                            60e
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Nama<\/th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan<\/th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Unit<\/th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi<\/th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Radius<\/th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah<\/th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan<\/th>
+                             <\/tr>
+                        <\/thead>
                         <tbody id="usersTableBody">
-                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                            70e<td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...<\/td><\/tr>
+                        <\/tbody>
+                    <\/table>
+                <\/div>
+            <\/div>
 
             <!-- Dashboard Tab -->
             <div id="dashboardTab" class="hidden">
-                <h1 class="text-2xl font-black text-gray-800 mb-6">Analisis Sistem</h1>
+                <h1 class="text-2xl font-black text-gray-800 mb-6">Analisis Sistem<\/h1>
                 <div class="bg-white rounded-3xl p-6 border">
-                    <h2 class="font-bold text-sm mb-4">Taburan Pengguna Mengikut Cawangan</h2>
-                    <canvas id="branchChart" height="100"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <h2 class="font-bold text-sm mb-4">Taburan Pengguna Mengikut Cawangan<\/h2>
+                    <canvas id="branchChart" height="100"><\/canvas>
+                <\/div>
+            <\/div>
+
+            <!-- Tools Tab -->
+            <div id="toolsTab" class="hidden">
+                <h1 class="text-2xl font-black text-gray-800 mb-6">Alat Sistem<\/h1>
+                
+                <div class="bg-white rounded-3xl p-6 border">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="material-symbols-rounded text-3xl text-amber-600">recalculate<\/span>
+                        <h2 class="text-xl font-black text-gray-800">Kira Semula Overtime (WBF Sarawak)<\/h2>
+                    <\/div>
+                    
+                    <p class="text-sm text-gray-500 mb-6">Gunakan alat ini untuk mengira semula Overtime bagi rekod kehadiran lama mengikut formula WBF Sarawak:<br>
+                    • Waktu mula kira: 7:30 AM<br>
+                    • Waktu rehat: Isnin-Khamis 30 minit, Jumaat 2 jam<br>
+                    • Standard kerja: 9 jam sehari<\/p>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Tarikh Mula<\/label>
+                            <input type="date" id="recalcStartDate" class="input-field" value="2024-01-01">
+                        <\/div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Tarikh Tamat<\/label>
+                            <input type="date" id="recalcEndDate" class="input-field">
+                        <\/div>
+                    <\/div>
+                    
+                    <div class="flex gap-4 mb-6">
+                        <button onclick="recalculateOvertime()" id="recalcBtn" class="bg-amber-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-amber-700 transition-all">
+                            <span class="material-symbols-rounded">refresh<\/span>
+                            Kira Semula OT
+                        <\/button>
+                        <button onclick="recalculateAllOvertime()" id="recalcAllBtn" class="bg-red-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-red-700 transition-all">
+                            <span class="material-symbols-rounded">warning<\/span>
+                            Kira Semua Data
+                        <\/button>
+                    <\/div>
+                    
+                    <div id="recalcResult" class="hidden">
+                        <div class="p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2">
+                            <span class="material-symbols-rounded">check_circle<\/span>
+                            <span id="recalcMessage"><\/span>
+                        <\/div>
+                    <\/div>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-100">
+                        <p class="text-xs text-gray-400 flex items-center gap-1">
+                            <span class="material-symbols-rounded text-sm">info<\/span>
+                            Nota: Proses ini mungkin mengambil masa beberapa minit bergantung kepada jumlah data. Rekod yang dikira semula akan mengemaskini kolom 'totalHours' dan 'totalOT'.
+                        <\/p>
+                    <\/div>
+                <\/div>
+            <\/div>
+        <\/div>
+    <\/div>
 
     <!-- Modal Tambah Admin -->
     <div id="adminModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
-                <h3 class="text-lg font-black">Daftar Admin Baru</h3>
-            </div>
+                <h3 class="text-lg font-black">Daftar Admin Baru<\/h3>
+            <\/div>
             <div class="modal-body">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Nama Penuh</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Nama Penuh<\/label>
                         <input type="text" id="adminNameInput" class="input-field" placeholder="Nama Admin">
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Email Rasmi</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Email Rasmi<\/label>
                         <input type="email" id="adminEmailInput" class="input-field" placeholder="admin@imi.gov.my">
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Kata Laluan</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Kata Laluan<\/label>
                         <input type="password" id="adminPasswordInput" class="input-field" placeholder="Min. 6 aksara">
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan</label>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan<\/label>
                         <select id="adminBranchInput" class="input-field">
-                            <option value="">Pilih Cawangan</option>
-                            <option value="Kuching">Kuching</option>
-                            <option value="Kota Samarahan">Kota Samarahan</option>
-                            <option value="Sri Aman">Sri Aman</option>
-                            <option value="Sarikei">Sarikei</option>
-                            <option value="Sibu">Sibu</option>
-                            <option value="Bintulu">Bintulu</option>
-                            <option value="Miri">Miri</option>
-                            <option value="Kapit">Kapit</option>
-                            <option value="Limbang">Limbang</option>
-                            <option value="Lawas">Lawas</option>
-                        </select>
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Unit</label>
+                            <option value="">Pilih Cawangan<\/option>
+                            <option value="Kuching">Kuching<\/option>
+                            <option value="Kota Samarahan">Kota Samarahan<\/option>
+                            <option value="Sri Aman">Sri Aman<\/option>
+                            <option value="Sarikei">Sarikei<\/option>
+                            <option value="Sibu">Sibu<\/option>
+                            <option value="Bintulu">Bintulu<\/option>
+                            <option value="Miri">Miri<\/option>
+                            <option value="Kapit">Kapit<\/option>
+                            <option value="Limbang">Limbang<\/option>
+                            <option value="Lawas">Lawas<\/option>
+                        <\/select>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Unit<\/label>
                         <input type="text" id="adminUnitInput" class="input-field" placeholder="Contoh: UPSKK">
                         <div class="mt-3">
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input type="checkbox" id="adminIsSuperadmin" class="w-4 h-4 text-purple-600">
-                                <span class="text-sm font-bold text-gray-600">Daftar sebagai SUPERADMIN</span>
-                            </label>
-                            <p class="text-xs text-gray-400 mt-1">Superadmin mempunyai akses penuh ke semua cawangan</p>
-                        </div>
-                    </div>
+                                <span class="text-sm font-bold text-gray-600">Daftar sebagai SUPERADMIN<\/span>
+                            <\/label>
+                            <p class="text-xs text-gray-400 mt-1">Superadmin mempunyai akses penuh ke semua cawangan<\/p>
+                        <\/div>
+                    <\/div>
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Lokasi Pejabat</label>
-                        <textarea id="adminLocationInput" class="input-field h-20" placeholder="Alamat akan terisi auto"></textarea>
-                        <div id="adminLocationMap" class="location-map"></div>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Lokasi Pejabat<\/label>
+                        <textarea id="adminLocationInput" class="input-field h-20" placeholder="Alamat akan terisi auto"><\/textarea>
+                        <div id="adminLocationMap" class="location-map"><\/div>
                         <input type="hidden" id="adminLat">
                         <input type="hidden" id="adminLng">
                         <div class="flex gap-2 mt-2">
-                            <button onclick="getAdminLocation()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm font-bold">Lokasi Semasa</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                            <button onclick="getAdminLocation()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm font-bold">Lokasi Semasa<\/button>
+                        <\/div>
+                    <\/div>
+                <\/div>
+            <\/div>
             <div class="modal-footer">
-                <button onclick="closeAdminModal()" class="px-6 py-2 rounded-xl border font-bold">Batal</button>
-                <button onclick="saveAdmin()" id="saveAdminBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Daftar Admin</button>
-            </div>
-        </div>
-    </div>
+                <button onclick="closeAdminModal()" class="px-6 py-2 rounded-xl border font-bold">Batal<\/button>
+                <button onclick="saveAdmin()" id="saveAdminBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Daftar Admin<\/button>
+            <\/div>
+        <\/div>
+    <\/div>
 
     <!-- Modal Tukar Cawangan -->
     <div id="changeBranchModal" class="modal-overlay">
         <div class="modal max-w-sm">
             <div class="modal-header">
-                <h3 class="text-lg font-black">Tukar Cawangan</h3>
-            </div>
+                <h3 class="text-lg font-black">Tukar Cawangan<\/h3>
+            <\/div>
             <div class="modal-body">
-                <p class="text-sm text-gray-600 mb-4" id="changeBranchUserInfo"></p>
-                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan Baru</label>
+                <p class="text-sm text-gray-600 mb-4" id="changeBranchUserInfo"><\/p>
+                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan Baru<\/label>
                 <select id="newBranchSelect" class="input-field">
-                    <option value="Kuching">Kuching</option>
-                    <option value="Kota Samarahan">Kota Samarahan</option>
-                    <option value="Sri Aman">Sri Aman</option>
-                    <option value="Sarikei">Sarikei</option>
-                    <option value="Sibu">Sibu</option>
-                    <option value="Bintulu">Bintulu</option>
-                    <option value="Miri">Miri</option>
-                    <option value="Kapit">Kapit</option>
-                    <option value="Limbang">Limbang</option>
-                    <option value="Lawas">Lawas</option>
-                </select>
-            </div>
+                    <option value="Kuching">Kuching<\/option>
+                    <option value="Kota Samarahan">Kota Samarahan<\/option>
+                    <option value="Sri Aman">Sri Aman<\/option>
+                    <option value="Sarikei">Sarikei<\/option>
+                    <option value="Sibu">Sibu<\/option>
+                    <option value="Bintulu">Bintulu<\/option>
+                    <option value="Miri">Miri<\/option>
+                    <option value="Kapit">Kapit<\/option>
+                    <option value="Limbang">Limbang<\/option>
+                    <option value="Lawas">Lawas<\/option>
+                <\/select>
+            <\/div>
             <div class="modal-footer">
-                <button onclick="closeChangeBranchModal()" class="px-6 py-2 rounded-xl border font-bold">Batal</button>
-                <button onclick="confirmChangeBranch()" id="confirmBranchBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Tukar</button>
-            </div>
-        </div>
-    </div>
+                <button onclick="closeChangeBranchModal()" class="px-6 py-2 rounded-xl border font-bold">Batal<\/button>
+                <button onclick="confirmChangeBranch()" id="confirmBranchBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Tukar<\/button>
+            <\/div>
+        <\/div>
+    <\/div>
 
     <!-- Modal Detail Notifikasi -->
     <div id="notificationDetailModal" class="modal-overlay">
         <div class="modal detail-modal">
             <div class="modal-header">
-                <h3 class="text-lg font-black" id="detailModalTitle">Detail Notifikasi</h3>
-            </div>
-            <div class="modal-body" id="detailModalBody"></div>
+                <h3 class="text-lg font-black" id="detailModalTitle">Detail Notifikasi<\/h3>
+            <\/div>
+            <div class="modal-body" id="detailModalBody"><\/div>
             <div class="modal-footer">
-                <button onclick="closeNotificationDetailModal()" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Tutup</button>
-            </div>
-        </div>
-    </div>
+                <button onclick="closeNotificationDetailModal()" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Tutup<\/button>
+            <\/div>
+        <\/div>
+    <\/div>
 
     <!-- Modal Padam Admin -->
     <div id="deleteModal" class="modal-overlay">
         <div class="modal max-w-sm">
             <div class="p-8 text-center">
-                <span class="material-symbols-rounded text-6xl text-red-500 mb-4">warning</span>
-                <h3 class="font-black text-xl">Padam Admin Ini?</h3>
-                <p class="text-sm text-gray-400 mt-2">Akses admin ini akan ditamatkan serta-merta.</p>
+                <span class="material-symbols-rounded text-6xl text-red-500 mb-4">warning<\/span>
+                <h3 class="font-black text-xl">Padam Admin Ini?<\/h3>
+                <p class="text-sm text-gray-400 mt-2">Akses admin ini akan ditamatkan serta-merta.<\/p>
                 <div class="flex gap-3 mt-6">
-                    <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Batal</button>
-                    <button id="confirmDeleteBtn" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">Ya, Padam</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <button onclick="closeDeleteModal()" class="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Batal<\/button>
+                    <button id="confirmDeleteBtn" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold">Ya, Padam<\/button>
+                <\/div>
+            <\/div>
+        <\/div>
+    <\/div>
 
     <script>
         // ============================================
@@ -793,13 +849,11 @@
         // ============================================
         function initAudio() {
             try {
-                // Gunakan URL bunyi yang lebih reliable
                 audioBell = new Audio('https://ik.imagekit.io/pyreotmgq/mixkit-modern-classic-door-bell-sound-113.wav?updatedAt=1774221408920');
                 audioBell.volume = 0.5;
                 console.log('✅ Audio initialized');
             } catch (e) {
                 console.error('Failed to initialize audio:', e);
-                // Fallback - create beep
                 audioBell = null;
             }
         }
@@ -807,12 +861,6 @@
         function playNotificationSound() {
             if (audioBell) {
                 audioBell.play().catch(e => console.log('Audio play failed:', e));
-            } else {
-                // Fallback beep
-                try {
-                    const beep = new Audio('data:audio/wav;base64,U3RlYWx0aCBiZWVw');
-                    beep.play().catch(e => {});
-                } catch(e) {}
             }
         }
 
@@ -851,7 +899,7 @@
         }
 
         // ============================================
-        // NOTIFICATION FUNCTIONS - DENGAN POLLING DAN HISTORY
+        // NOTIFICATION FUNCTIONS
         // ============================================
         
         async function loadNotifications(showToast = false) {
@@ -861,7 +909,6 @@
                     const oldCount = notifications.length;
                     notifications = result.data || [];
                     
-                    // Check if there are new notifications
                     if (showToast && notifications.length > oldCount) {
                         const newCount = notifications.length - oldCount;
                         showNotif('Notifikasi Baru', `${newCount} notifikasi baru diterima`);
@@ -999,7 +1046,6 @@
             try {
                 const result = await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
                 if (result.success) {
-                    // Refresh both lists
                     await loadNotifications();
                     await loadNotificationHistory();
                     showNotif('Berjaya', 'Notifikasi telah dipindahkan ke sejarah');
@@ -1395,6 +1441,7 @@
             document.getElementById('adminsTab').classList.add('hidden');
             document.getElementById('usersTab').classList.add('hidden');
             document.getElementById('dashboardTab').classList.add('hidden');
+            document.getElementById('toolsTab').classList.add('hidden');
             
             document.getElementById(tab + 'Tab').classList.remove('hidden');
             
@@ -1815,6 +1862,107 @@
         };
 
         // ============================================
+        // RECALCULATE OVERTIME FUNCTIONS
+        // ============================================
+        async function recalculateOvertime() {
+            const startDate = document.getElementById('recalcStartDate').value;
+            const endDate = document.getElementById('recalcEndDate').value;
+            
+            if (!startDate || !endDate) {
+                showNotif('Ralat', 'Sila pilih tarikh mula dan tamat', true);
+                return;
+            }
+            
+            if (startDate > endDate) {
+                showNotif('Ralat', 'Tarikh mula tidak boleh lepas tarikh tamat', true);
+                return;
+            }
+            
+            if (!confirm(`Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 30 min, Jumaat 2 jam\n• Standard kerja: 9 jam sehari`)) {
+                return;
+            }
+            
+            const btn = document.getElementById('recalcBtn');
+            const resultDiv = document.getElementById('recalcResult');
+            const resultMsg = document.getElementById('recalcMessage');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula...';
+            resultDiv.classList.add('hidden');
+            
+            try {
+                const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
+                
+                if (result.success) {
+                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak.`;
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
+                    showNotif('Berjaya', `${result.recalculated} rekod telah dikira semula`);
+                } else {
+                    resultMsg.innerHTML = result.error || 'Gagal mengira semula';
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
+                    showNotif('Ralat', result.error || 'Gagal mengira semula', true);
+                }
+            } catch (error) {
+                console.error('Recalculate error:', error);
+                resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
+                resultDiv.classList.remove('hidden');
+                resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
+                showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded">refresh</span> Kira Semula OT';
+            }
+        }
+
+        async function recalculateAllOvertime() {
+            const startDate = '2020-01-01';
+            const endDate = new Date().toISOString().split('T')[0];
+            
+            if (!confirm(`Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 30 min, Jumaat 2 jam\n• Standard kerja: 9 jam sehari`)) {
+                return;
+            }
+            
+            const btn = document.getElementById('recalcAllBtn');
+            const resultDiv = document.getElementById('recalcResult');
+            const resultMsg = document.getElementById('recalcMessage');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula semua data...';
+            resultDiv.classList.add('hidden');
+            
+            try {
+                const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
+                
+                if (result.success) {
+                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak.`;
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
+                    showNotif('Berjaya', `${result.recalculated} rekod telah dikira semula`);
+                    
+                    if (typeof loadAllUsers === 'function') {
+                        loadAllUsers();
+                    }
+                } else {
+                    resultMsg.innerHTML = result.error || 'Gagal mengira semula';
+                    resultDiv.classList.remove('hidden');
+                    resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
+                    showNotif('Ralat', result.error || 'Gagal mengira semula', true);
+                }
+            } catch (error) {
+                console.error('Recalculate error:', error);
+                resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
+                resultDiv.classList.remove('hidden');
+                resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
+                showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-rounded">warning</span> Kira Semua Data';
+            }
+        }
+
+        // ============================================
         // CHART
         // ============================================
         function createBranchChart() {
@@ -1855,6 +2003,14 @@
         document.getElementById('notificationDetailModal').addEventListener('click', function(e) {
             if (e.target === this) closeNotificationDetailModal();
         });
+        
+        // Set default end date on load
+        setTimeout(() => {
+            const today = new Date().toISOString().split('T')[0];
+            if (document.getElementById('recalcEndDate')) {
+                document.getElementById('recalcEndDate').value = today;
+            }
+        }, 100);
     </script>
 </body>
 </html>
