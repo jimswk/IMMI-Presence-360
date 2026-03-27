@@ -226,6 +226,31 @@
             border: 2px solid #e2e8f0;
         }
 
+        .input-field {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #5b21b6;
+            box-shadow: 0 0 0 4px rgba(91, 33, 182, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+
         .notification {
             position: fixed;
             top: 24px; right: 24px;
@@ -594,7 +619,7 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                             </thead>
+                            </thead>
                         <tbody id="adminsTableBody">
                             70e<td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...<\/td><\/tr>
                         <\/tbody>
@@ -605,9 +630,9 @@
             <!-- Users Tab -->
             <div id="usersTab" class="hidden">
                 <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-2xl font-black text-gray-800">Senarai Semua Pengguna</h1>
+                    <h1 class="text-2xl font-black text-gray-800">Senarai Semua Pengguna<\/h1>
                     <div class="relative w-72">
-                        <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                        <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search<\/span>
                         <input type="text" id="searchUser" placeholder="Cari nama atau emel..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-purple-50 transition-all" onkeyup="searchUsers()">
                     <\/div>
                 <\/div>
@@ -1469,7 +1494,7 @@
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar<\/td><\/tr>';
                 return;
             }
 
@@ -1483,32 +1508,32 @@
                         <td class="p-3">
                             <div class="font-bold">${escapeHtml(admin.name)}</div>
                             <div class="text-xs text-gray-400">${escapeHtml(admin.email)}</div>
-                        </td>
+                        <\/td>
                         <td class="p-3">
                             <span class="inline-flex items-center gap-1">
                                 ${escapeHtml(admin.branch)}
                                 <button onclick="changeAdminBranch('${admin.uid}', '${escapeHtml(admin.name)}', '${escapeHtml(admin.branch)}')" 
                                         class="text-blue-400 hover:text-blue-300 transition-colors" title="Tukar Cawangan">
                                     <span class="material-symbols-rounded text-sm">swap_horiz</span>
-                                </button>
-                            </span>
-                        </td>
-                        <td class="p-3">${escapeHtml(admin.unit)}</td>
-                        <td class="p-3">${escapeHtml(admin.location || '-')}</td>
+                                <\/button>
+                            <\/span>
+                        <\/td>
+                        <td class="p-3">${escapeHtml(admin.unit)}<\/td>
+                        <td class="p-3">${escapeHtml(admin.location || '-')}<\/td>
                         <td class="p-3 text-center">
                             ${isSuperadmin ? 
-                                '<span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">SUPERADMIN</span>' : 
-                                '<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">ADMIN</span>'}
-                        </td>
+                                '<span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">SUPERADMIN<\/span>' : 
+                                '<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">ADMIN<\/span>'}
+                        <\/td>
                         <td class="p-3 text-center">
                             ${!isSuperadmin ? 
                                 `<button onclick="openDeleteModal('${admin.uid}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn">
-                                    <span class="material-symbols-rounded">delete</span>
-                                </button>` : 
-                                (isCurrentUser ? '<span class="text-xs text-gray-400">Anda</span>' : '<span class="text-xs text-gray-400">Superadmin</span>')
+                                    <span class="material-symbols-rounded">delete<\/span>
+                                <\/button>` : 
+                                (isCurrentUser ? '<span class="text-xs text-gray-400">Anda<\/span>' : '<span class="text-xs text-gray-400">Superadmin<\/span>')
                             }
-                        </td>
-                    </tr>
+                        <\/td>
+                    <\/tr>
                 `;
             });
             tbody.innerHTML = html;
@@ -1531,42 +1556,42 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '很好<td colspan="7" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
+                tbody.innerHTML = '很好<td colspan="7" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar<\/td><\/tr>';
                 return;
             }
 
             let html = '';
             users.forEach(user => {
                 const faceStatus = user.faceDescriptor && user.faceDescriptor !== '' ? 
-                    '<span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">DIDAFTAR</span>' : 
-                    '<span class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-xs font-bold">BELUM</span>';
+                    '<span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">DIDAFTAR<\/span>' : 
+                    '<span class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-xs font-bold">BELUM<\/span>';
                 
                 html += `
                     <tr>
                         <td class="p-3">
                             <div class="font-bold">${escapeHtml(user.name)}</div>
                             <div class="text-xs text-gray-400">${escapeHtml(user.email)}</div>
-                        </td>
+                        <\/td>
                         <td class="p-3">
                             <span class="inline-flex items-center gap-1">
                                 ${escapeHtml(user.branch)}
                                 <button onclick="changeUserBranch('${user.uid}', '${escapeHtml(user.name)}', '${escapeHtml(user.branch)}')" 
                                         class="text-blue-400 hover:text-blue-300 transition-colors" title="Tukar Cawangan">
                                     <span class="material-symbols-rounded text-sm">swap_horiz</span>
-                                </button>
-                            </span>
-                        </td>
-                        <td class="p-3">${escapeHtml(user.unit || '-')}</td>
-                        <td class="p-3 max-w-[200px] truncate" title="${escapeHtml(user.location || '-')}">${escapeHtml(user.location || '-')}</td>
-                        <td class="p-3 text-center">${user.radius || 500}m</td>
-                        <td class="p-3 text-center">${faceStatus}</td>
+                                <\/button>
+                            <\/span>
+                        <\/td>
+                        <td class="p-3">${escapeHtml(user.unit || '-')}<\/td>
+                        <td class="p-3 max-w-[200px] truncate" title="${escapeHtml(user.location || '-')}">${escapeHtml(user.location || '-')}<\/td>
+                        <td class="p-3 text-center">${user.radius || 500}m<\/td>
+                        <td class="p-3 text-center">${faceStatus}<\/td>
                         <td class="p-3 text-center">
                             <button onclick="deleteUser('${user.uid}', '${escapeHtml(user.name)}')" 
                                     class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn" title="Padam Pengguna">
-                                <span class="material-symbols-rounded">delete</span>
-                            </button>
-                        </td>
-                    </tr>
+                                <span class="material-symbols-rounded">delete<\/span>
+                            <\/button>
+                        <\/td>
+                    <\/tr>
                 `;
             });
             tbody.innerHTML = html;
