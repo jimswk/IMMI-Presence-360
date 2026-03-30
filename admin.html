@@ -374,12 +374,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 160px;
-            height: 200px;
-            border: 2px solid #fbbf24;
-            border-radius: 80px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+            width: 200px;
+            height: 240px;
+            border: 3px dashed #fbbf24;
+            border-radius: 100px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.4);
             pointer-events: none;
+            transition: all 0.3s;
         }
 
         .face-overlay {
@@ -398,6 +399,7 @@
             box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
             border-radius: 10px;
             pointer-events: none;
+            transition: all 0.1s ease;
         }
 
         .wizard-step { display: none; }
@@ -513,6 +515,19 @@
             background: rgba(255,255,255,0.5);
         }
 
+        .confidence-badge {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
         @media (max-width: 640px) {
             .floating-input {
                 padding: 16px 14px 6px 14px;
@@ -524,6 +539,13 @@
             .floating-input:focus ~ .floating-label,
             .floating-input:not(:placeholder-shown) ~ .floating-label {
                 font-size: 0.65rem;
+            }
+            .sidebar {
+                width: 240px;
+            }
+            .main-content {
+                margin-left: 240px;
+                padding: 20px;
             }
         }
     </style>
@@ -968,7 +990,7 @@
                                 <tbody id="userAttendanceBody">
                                     <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
                                 </tbody>
-                             </table>
+                              </table>
                         </div>
                     </div>
                 </div>
@@ -1135,6 +1157,7 @@
         let faceOverlay = null;
         let isProcessing = false;
         let locationWatchId = null;
+        let realTimeDetectionInterval = null;
 
         // ============================================
         // PASSWORD VISIBILITY TOGGLE
@@ -1222,6 +1245,75 @@
                 width: box.width * dims.scaleX,
                 height: box.height * dims.scaleY
             };
+        }
+
+        function drawFaceOverlay(video, detection) {
+            const overlay = document.getElementById('faceOverlay');
+            if (!overlay) return;
+            
+            if (!detection) {
+                overlay.innerHTML = '';
+                return;
+            }
+            
+            const dims = getVideoDimensions(video);
+            const box = adjustFaceBox(detection.detection.box, dims);
+            
+            // Calculate confidence percentage
+            const confidence = Math.round(detection.detection.score * 100);
+            const borderColor = detection.detection.score > 0.7 ? '#10b981' : '#fbbf24';
+            
+            overlay.innerHTML = `
+                <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};">
+                    <div class="confidence-badge" style="bottom:-25px; left:0;">
+                        Keyakinan: ${confidence}%
+                    </div>
+                </div>
+            `;
+        }
+
+        // ============================================
+        // REAL TIME FACE DETECTION
+        // ============================================
+        function startRealTimeFaceDetection() {
+            if (realTimeDetectionInterval) {
+                clearInterval(realTimeDetectionInterval);
+            }
+            
+            const video = document.getElementById('faceVideo');
+            const statusMsg = document.getElementById('faceStatusMsg');
+            
+            realTimeDetectionInterval = setInterval(async () => {
+                if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
+                
+                try {
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks();
+                    
+                    if (detection) {
+                        drawFaceOverlay(video, detection);
+                        const confidence = Math.round(detection.detection.score * 100);
+                        if (detection.detection.score > 0.7) {
+                            statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan dengan baik (${confidence}%)</span><br><span class='text-xs'>Sedia untuk imbasan</span>`;
+                        } else {
+                            statusMsg.innerHTML = `<span class='text-amber-600 font-black'>⚠️ Wajah dikesan (${confidence}%)</span><br><span class='text-xs'>Pastikan wajah jelas dan pencahayaan mencukupi</span>`;
+                        }
+                    } else {
+                        if (faceOverlay) faceOverlay.innerHTML = '';
+                        statusMsg.innerHTML = "<span class='text-amber-600 font-black'>🔍 Tiada wajah dikesan</span><br><span class='text-xs'>Pastikan wajah berada dalam bulatan panduan</span>";
+                    }
+                } catch (e) {
+                    // Silently fail
+                }
+            }, 200);
+        }
+
+        function stopRealTimeFaceDetection() {
+            if (realTimeDetectionInterval) {
+                clearInterval(realTimeDetectionInterval);
+                realTimeDetectionInterval = null;
+            }
+            if (faceOverlay) faceOverlay.innerHTML = '';
         }
 
         // ============================================
@@ -1492,7 +1584,7 @@
                 const result = await callAPI('getAttendance', { uid: selectedUser.uid, startDate, endDate });
                 const tbody = document.getElementById('userAttendanceBody');
                 if (!result.success || !result.data || result.data.length === 0) {
-                    tbody.innerHTML = '很好<td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
+                    tbody.innerHTML = '汽车<td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
                     return;
                 }
                 let html = '';
@@ -1710,65 +1802,180 @@
                 videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
                 const video = document.getElementById('faceVideo');
                 video.srcObject = videoStream;
-                statusMsg.innerText = "Kamera Aktif. Sila posisikan wajah di tengah.";
+                statusMsg.innerHTML = "<span class='text-green-600 font-black'>✅ Kamera Aktif. Sila posisikan wajah di tengah.</span>";
                 faceOverlay = document.getElementById('faceOverlay');
+                
+                // Start real-time face detection for visual feedback
+                startRealTimeFaceDetection();
             } catch (err) {
                 captureBtn.classList.add('hidden');
                 retryBtn.classList.remove('hidden');
-                statusMsg.innerHTML = `<span class='text-red-500 font-bold'>Akses Kamera Disekat</span><br><small>Sila benarkan akses kamera</small>`;
+                statusMsg.innerHTML = `<span class='text-red-500 font-bold'>❌ Akses Kamera Disekat</span><br><small>Sila benarkan akses kamera pada pelayar.</small>`;
                 showNotif("Ralat Kamera", "Sila benarkan akses kamera pada pelayar.", true);
             }
         }
-        function stopCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; } if (faceOverlay) faceOverlay.innerHTML = ''; }
+        
+        function stopCamera() { 
+            if (videoStream) { 
+                videoStream.getTracks().forEach(track => track.stop()); 
+                videoStream = null; 
+            } 
+            if (faceOverlay) faceOverlay.innerHTML = '';
+            stopRealTimeFaceDetection();
+        }
+        
         async function captureFace() {
             if (isProcessing) return;
             isProcessing = true;
             const btn = document.getElementById('captureBtn');
             const video = document.getElementById('faceVideo');
             const statusMsg = document.getElementById('faceStatusMsg');
-            if (!video.srcObject) { showNotif("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", true); isProcessing = false; return; }
+            if (!video.srcObject) { 
+                showNotif("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", true); 
+                isProcessing = false; 
+                return; 
+            }
             btn.disabled = true;
             btn.innerHTML = 'Mengesan...';
             updateProgress(20);
-            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>😊 SILA SENYUM SEKARANG...</span>";
-            let smileDetected = false;
-            let smileStartTime = Date.now();
-            while (Date.now() - smileStartTime < 5000) {
-                updateProgress(20 + ((Date.now() - smileStartTime) / 5000) * 50);
+            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>🔍 Mengesan wajah...</span>";
+            
+            let bestDetection = null;
+            let detectionStartTime = Date.now();
+            let attemptCount = 0;
+            
+            // Try to detect face for up to 5 seconds, keep best detection
+            while (Date.now() - detectionStartTime < 5000) {
+                attemptCount++;
+                updateProgress(20 + ((Date.now() - detectionStartTime) / 5000) * 40);
                 try {
-                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions().withFaceLandmarks();
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks()
+                        .withFaceDescriptor()
+                        .withFaceExpressions();
+                    
                     if (detection) {
-                        if (detection.expressions && detection.expressions.happy > 0.5) { smileDetected = true; break; }
-                        if (detection.landmarks) {
-                            const mouth = detection.landmarks.getMouth();
-                            if (mouth && mouth.length > 10) {
-                                const leftMouth = mouth[0], rightMouth = mouth[6];
-                                const width = Math.hypot(rightMouth.x - leftMouth.x, rightMouth.y - leftMouth.y);
-                                const height = Math.hypot(mouth[9].x - mouth[3].x, mouth[9].y - mouth[3].y);
-                                if (width / (height + 0.1) > 2.0) { smileDetected = true; break; }
-                            }
+                        // Show face box on overlay for feedback
+                        drawFaceOverlay(video, detection);
+                        
+                        // Store best detection (highest confidence)
+                        if (!bestDetection || (detection.detection.score > bestDetection.detection.score)) {
+                            bestDetection = detection;
                         }
+                        
+                        const confidence = Math.round(detection.detection.score * 100);
+                        statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan! (${confidence}%)</span><br><span class='text-xs'>Teruskan pegang stabil...</span>`;
+                        
+                        // If we have a good quality detection with high confidence, we can proceed
+                        if (detection.detection.score > 0.7 && attemptCount > 3) {
+                            break;
+                        }
+                    } else {
+                        if (faceOverlay) faceOverlay.innerHTML = '';
+                        statusMsg.innerHTML = "<span class='text-amber-600 font-black'>⚠️ Tiada wajah dikesan. Pastikan wajah berada dalam bulatan...</span>";
                     }
-                } catch (e) {}
-                await new Promise(resolve => setTimeout(resolve, 100));
+                } catch (e) {
+                    console.log('Detection attempt error:', e);
+                }
+                await new Promise(resolve => setTimeout(resolve, 200));
             }
-            if (!smileDetected) { statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ SENYUM TIDAK DIKESAN</span>"; showNotif("Gagal", "Sila senyum untuk pendaftaran", true); btn.disabled = false; btn.innerHTML = "Imbas Wajah Kakitangan"; updateProgress(0); isProcessing = false; return; }
-            updateProgress(80);
-            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 MEREKOD DATA WAJAH...</span>";
+            
+            if (!bestDetection) {
+                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ TIADA WAJAH DIKESAN</span>";
+                showNotif("Gagal", "Tiada wajah dikesan. Pastikan pencahayaan mencukupi dan wajah berada di hadapan kamera.", true);
+                btn.disabled = false;
+                btn.innerHTML = "Imbas Wajah Kakitangan";
+                updateProgress(0);
+                isProcessing = false;
+                if (faceOverlay) faceOverlay.innerHTML = '';
+                return;
+            }
+            
+            updateProgress(70);
+            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 Merekod data wajah...</span>";
+            
             try {
-                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-                if (detection) {
-                    document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
-                    statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
-                    btn.classList.add('hidden');
-                    document.getElementById('resetFaceBtn').classList.remove('hidden');
-                    updateProgress(100);
-                    showNotif("Berjaya", "Data biometrik telah direkodkan.");
-                } else { statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ WAJAH TIDAK DIKESAN</span>"; showNotif("Gagal", "Wajah tidak dikesan", true); updateProgress(0); }
-            } catch (e) { statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>"; showNotif("Ralat", "Ralat semasa pemprosesan biometrik", true); updateProgress(0); }
-            finally { btn.disabled = false; btn.innerHTML = "Imbas Wajah Kakitangan"; isProcessing = false; }
+                // Use the best detection we found
+                const detection = bestDetection;
+                
+                // Check face quality - face size validation
+                const dims = getVideoDimensions(video);
+                const faceWidth = detection.detection.box.width;
+                const faceHeight = detection.detection.box.height;
+                
+                let qualityIssues = [];
+                
+                // Check if face is too close or too far
+                if (faceWidth < 60 || faceHeight < 60) {
+                    qualityIssues.push("wajah terlalu jauh");
+                }
+                if (faceWidth > 280 || faceHeight > 280) {
+                    qualityIssues.push("wajah terlalu dekat");
+                }
+                
+                // Check confidence
+                if (detection.detection.score < 0.6) {
+                    qualityIssues.push("keyakinan rendah");
+                }
+                
+                if (qualityIssues.length > 0) {
+                    statusMsg.innerHTML = `<span class='text-red-600 font-black'>✗ Kualiti wajah rendah: ${qualityIssues.join(", ")}</span>`;
+                    showNotif("Gagal", `Sila laraskan jarak - ${qualityIssues.join(", ")}`, true);
+                    updateProgress(0);
+                    btn.disabled = false;
+                    btn.innerHTML = "Imbas Wajah Kakitangan";
+                    isProcessing = false;
+                    return;
+                }
+                
+                // Store the face descriptor
+                document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
+                statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
+                btn.classList.add('hidden');
+                document.getElementById('resetFaceBtn').classList.remove('hidden');
+                updateProgress(100);
+                
+                // Show success with animation
+                if (faceOverlay) {
+                    const dims = getVideoDimensions(video);
+                    const box = adjustFaceBox(detection.detection.box, dims);
+                    faceOverlay.innerHTML = `
+                        <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:#10b981; box-shadow:0 0 20px rgba(16,185,129,0.5);">
+                            <div class="confidence-badge" style="background:#10b981; top:-25px; bottom:auto;">
+                                ✓ BERJAYA
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => {
+                        if (faceOverlay && !realTimeDetectionInterval) {
+                            faceOverlay.innerHTML = '';
+                        }
+                    }, 2000);
+                }
+                
+                showNotif("Berjaya", "Data biometrik telah direkodkan.");
+                
+            } catch (e) {
+                console.error('Face capture error:', e);
+                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
+                showNotif("Ralat", "Ralat semasa pemprosesan biometrik. Sila cuba lagi.", true);
+                updateProgress(0);
+                if (faceOverlay) faceOverlay.innerHTML = '';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Imbas Wajah Kakitangan";
+                isProcessing = false;
+            }
         }
-        function resetFace() { document.getElementById('faceDescriptor').value = ""; document.getElementById('faceStatusMsg').innerText = "Sedia untuk imbasan semula..."; document.getElementById('captureBtn').classList.remove('hidden'); document.getElementById('resetFaceBtn').classList.add('hidden'); updateProgress(0); if (faceOverlay) faceOverlay.innerHTML = ''; }
+        
+        function resetFace() { 
+            document.getElementById('faceDescriptor').value = ""; 
+            document.getElementById('faceStatusMsg').innerHTML = "<span class='text-gray-500'>Sedia untuk imbasan semula...</span>"; 
+            document.getElementById('captureBtn').classList.remove('hidden'); 
+            document.getElementById('resetFaceBtn').classList.add('hidden'); 
+            updateProgress(0); 
+            if (faceOverlay) faceOverlay.innerHTML = ''; 
+        }
 
         // ============================================
         // NAVIGATION
@@ -2077,6 +2284,7 @@
             } catch (error) { showNotif("Ralat", "Gagal menjana PDF: " + error.message, true); }
         };
 
+        // Event listeners
         document.getElementById('loginPassword').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
         document.getElementById('confirmResetBtn').addEventListener('click', function() { if (userToReset) resetUserFace(userToReset.uid); });
         document.getElementById('userHistoryStartDate').addEventListener('change', loadUserAttendance);
