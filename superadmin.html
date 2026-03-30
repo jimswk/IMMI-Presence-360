@@ -612,17 +612,16 @@
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
                     <table class="w-full min-w-[800px]">
                         <thead>
-                            <tr>
+                            32r
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama Admin</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                            </tr>
-                        </thead>
+                            </thead>
                         <tbody id="adminsTableBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            32r<td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td>
                         </tbody>
                     </table>
                 </div>
@@ -641,7 +640,7 @@
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
                     <table class="w-full min-w-[800px]">
                         <thead>
-                            <tr>
+                            32r
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
@@ -649,10 +648,9 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                            </tr>
-                        </thead>
+                            </thead>
                         <tbody id="usersTableBody">
-                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            32r<td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td>
                         </tbody>
                     </table>
                 </div>
@@ -679,7 +677,9 @@
                     
                     <p class="text-sm text-gray-500 mb-6">Gunakan alat ini untuk mengira semula Overtime bagi rekod kehadiran lama mengikut formula WBF Sarawak:<br>
                     • Waktu mula kira: 7:30 AM<br>
-                    • Waktu rehat: Isnin-Khamis 30 minit, Jumaat 2 jam<br>
+                    • Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)<br>
+                    • Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)<br>
+                    • Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)<br>
                     • Standard kerja: 9 jam sehari</p>
                     
                     <div class="grid grid-cols-2 gap-4 mb-6">
@@ -842,6 +842,39 @@
         </div>
     </div>
 
+    <!-- Modal Alert Popup -->
+    <div id="alertModal" class="modal-overlay" style="display: none;">
+        <div class="modal max-w-sm">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4" id="alertIcon">
+                    <span class="material-symbols-rounded text-4xl">info</span>
+                </div>
+                <h3 class="font-black text-xl text-gray-800" id="alertTitle">Makluman</h3>
+                <p class="text-sm text-gray-500 mt-2" id="alertMessage">Mesej akan dipaparkan di sini.</p>
+                <div class="mt-8">
+                    <button id="alertConfirmBtn" class="bg-purple-600 text-white px-8 py-3 rounded-xl font-bold w-full">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirm Popup -->
+    <div id="confirmModal" class="modal-overlay" style="display: none;">
+        <div class="modal max-w-sm">
+            <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-rounded text-4xl">help</span>
+                </div>
+                <h3 class="font-black text-xl text-gray-800" id="confirmTitle">Pengesahan</h3>
+                <p class="text-sm text-gray-500 mt-2" id="confirmMessage">Adakah anda pasti?</p>
+                <div class="grid grid-cols-2 gap-3 mt-8">
+                    <button id="confirmCancelBtn" class="bg-gray-100 text-gray-500 py-3 rounded-xl font-bold">Batal</button>
+                    <button id="confirmOkBtn" class="bg-amber-600 text-white py-3 rounded-xl font-bold">Ya, Teruskan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ============================================
         // PASSWORD VISIBILITY TOGGLE
@@ -856,6 +889,112 @@
                 passwordInput.type = 'password';
                 eyeIcon.innerText = 'visibility_off';
             }
+        }
+
+        // ============================================
+        // WBF SARAWAK CONFIGURATION (FRONTEND)
+        // ============================================
+        const WBF_CONFIG = {
+            STANDARD_WORK_HOURS: 9,
+            WORK_START: 7.5,      // 7:30 AM
+            WORK_END: 16.5,       // 4:30 PM
+            OVERTIME_THRESHOLD: 16.5, // 4:30 PM - OT dikira selepas waktu ini
+            BREAK_CONFIG: {
+                'Sunday': { duration: 0, startHour: 0 },
+                'Monday': { duration: 1.0, startHour: 13.0 },    // 1:00 PM - 2:00 PM
+                'Tuesday': { duration: 1.0, startHour: 13.0 },
+                'Wednesday': { duration: 1.0, startHour: 13.0 },
+                'Thursday': { duration: 1.0, startHour: 13.0 },
+                'Friday': { duration: 2.5, startHour: 11.75 },   // 11:45 AM - 2:15 PM
+                'Saturday': { duration: 0, startHour: 0 }
+            }
+        };
+
+        // ============================================
+        // CUSTOM ALERT & CONFIRM FUNCTIONS
+        // ============================================
+        let alertCallback = null;
+        let confirmCallback = null;
+
+        function showAlert(title, message, icon = 'info', callback = null) {
+            const modal = document.getElementById('alertModal');
+            const titleEl = document.getElementById('alertTitle');
+            const messageEl = document.getElementById('alertMessage');
+            const iconEl = document.getElementById('alertIcon');
+            const confirmBtn = document.getElementById('alertConfirmBtn');
+            
+            let iconHtml = '';
+            let iconBg = '';
+            let iconColor = '';
+            switch(icon) {
+                case 'success':
+                    iconHtml = 'check_circle';
+                    iconBg = 'bg-green-50';
+                    iconColor = 'text-green-600';
+                    break;
+                case 'error':
+                    iconHtml = 'error';
+                    iconBg = 'bg-red-50';
+                    iconColor = 'text-red-600';
+                    break;
+                case 'warning':
+                    iconHtml = 'warning';
+                    iconBg = 'bg-amber-50';
+                    iconColor = 'text-amber-600';
+                    break;
+                default:
+                    iconHtml = 'info';
+                    iconBg = 'bg-blue-50';
+                    iconColor = 'text-blue-600';
+            }
+            
+            iconEl.className = `w-16 h-16 ${iconBg} ${iconColor} rounded-full flex items-center justify-center mx-auto mb-4`;
+            iconEl.innerHTML = `<span class="material-symbols-rounded text-4xl">${iconHtml}</span>`;
+            
+            titleEl.innerText = title;
+            messageEl.innerText = message;
+            
+            alertCallback = callback;
+            
+            modal.style.display = 'flex';
+            
+            const newBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+            newBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+                if (alertCallback) {
+                    alertCallback();
+                    alertCallback = null;
+                }
+            });
+        }
+
+        function showConfirm(title, message, onConfirm, onCancel = null) {
+            const modal = document.getElementById('confirmModal');
+            const titleEl = document.getElementById('confirmTitle');
+            const messageEl = document.getElementById('confirmMessage');
+            const okBtn = document.getElementById('confirmOkBtn');
+            const cancelBtn = document.getElementById('confirmCancelBtn');
+            
+            titleEl.innerText = title;
+            messageEl.innerText = message;
+            
+            modal.style.display = 'flex';
+            
+            const newOkBtn = okBtn.cloneNode(true);
+            const newCancelBtn = cancelBtn.cloneNode(true);
+            okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+            cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+            
+            newOkBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+                if (onConfirm) onConfirm();
+            });
+            
+            newCancelBtn.addEventListener('click', function() {
+                modal.style.display = 'none';
+                if (onCancel) onCancel();
+            });
         }
 
         // ============================================
@@ -942,7 +1081,7 @@
                     
                     if (showToast && notifications.length > oldCount) {
                         const newCount = notifications.length - oldCount;
-                        showNotif('Notifikasi Baru', `${newCount} notifikasi baru diterima`);
+                        showAlert('Notifikasi Baru', `${newCount} notifikasi baru diterima`, 'success');
                         playNotificationSound();
                         showBrowserNotification('IMMI Presence 360', `${newCount} notifikasi baru diterima`);
                     }
@@ -1079,13 +1218,13 @@
                 if (result.success) {
                     await loadNotifications();
                     await loadNotificationHistory();
-                    showNotif('Berjaya', 'Notifikasi telah dipindahkan ke sejarah');
+                    showAlert('Berjaya', 'Notifikasi telah dipindahkan ke sejarah', 'success');
                 } else {
-                    showNotif('Ralat', 'Gagal memproses notifikasi', true);
+                    showAlert('Ralat', 'Gagal memproses notifikasi', 'error');
                 }
             } catch (error) {
                 console.error('Error marking notification as read:', error);
-                showNotif('Ralat', 'Gagal memproses notifikasi', true);
+                showAlert('Ralat', 'Gagal memproses notifikasi', 'error');
             }
         }
 
@@ -1099,13 +1238,13 @@
                 if (result.success) {
                     await loadNotifications();
                     await loadNotificationHistory();
-                    showNotif('Berjaya', `${result.moved || notifications.length} notifikasi telah dipindahkan ke sejarah`);
+                    showAlert('Berjaya', `${result.moved || notifications.length} notifikasi telah dipindahkan ke sejarah`, 'success');
                 } else {
-                    showNotif('Ralat', 'Gagal memproses notifikasi', true);
+                    showAlert('Ralat', 'Gagal memproses notifikasi', 'error');
                 }
             } catch (error) {
                 console.error('Error marking all as read:', error);
-                showNotif('Ralat', 'Gagal memproses notifikasi', true);
+                showAlert('Ralat', 'Gagal memproses notifikasi', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Tandakan Semua Dibaca';
@@ -1113,30 +1252,30 @@
         }
 
         async function clearHistory() {
-            if (!confirm('Kosongkan semua sejarah notifikasi? Tindakan ini tidak boleh dibatalkan.')) return;
-            
-            try {
-                const result = await callAPI('clearNotificationHistory');
-                if (result.success) {
-                    await loadNotificationHistory();
-                    showNotif('Berjaya', `${result.deleted || 0} rekod sejarah telah dipadamkan`);
-                } else {
-                    showNotif('Ralat', result.error || 'Gagal memadam sejarah', true);
+            showConfirm('Kosongkan Sejarah', 'Kosongkan semua sejarah notifikasi? Tindakan ini tidak boleh dibatalkan.', async function() {
+                try {
+                    const result = await callAPI('clearNotificationHistory');
+                    if (result.success) {
+                        await loadNotificationHistory();
+                        showAlert('Berjaya', `${result.deleted || 0} rekod sejarah telah dipadamkan`, 'success');
+                    } else {
+                        showAlert('Ralat', result.error || 'Gagal memadam sejarah', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error clearing history:', error);
+                    showAlert('Ralat', 'Gagal memadam sejarah', 'error');
                 }
-            } catch (error) {
-                console.error('Error clearing history:', error);
-                showNotif('Ralat', 'Gagal memadam sejarah', true);
-            }
+            });
         }
 
         async function refreshNotifications() {
             await loadNotifications(true);
-            showNotif('Berjaya', 'Notifikasi dikemaskini');
+            showAlert('Berjaya', 'Notifikasi dikemaskini', 'success');
         }
 
         async function refreshHistory() {
             await loadNotificationHistory();
-            showNotif('Berjaya', 'Sejarah dikemaskini');
+            showAlert('Berjaya', 'Sejarah dikemaskini', 'success');
         }
 
         async function viewNotificationDetail(id) {
@@ -1374,7 +1513,7 @@
             if (!email || !password) {
                 if (!email) document.getElementById('loginEmail').style.borderColor = '#dc2626';
                 if (!password) document.getElementById('loginPassword').style.borderColor = '#dc2626';
-                showNotif('Ralat', 'Sila isi email dan kata laluan', true);
+                showAlert('Ralat', 'Sila isi email dan kata laluan', 'warning');
                 return;
             }
 
@@ -1387,7 +1526,7 @@
                 
                 if (result.success) {
                     if (result.user.role !== 'superadmin') {
-                        showNotif('Akses Ditolak', 'Anda bukan Superadmin', true);
+                        showAlert('Akses Ditolak', 'Anda bukan Superadmin', 'error');
                         btn.disabled = false;
                         btn.classList.remove('loading');
                         btn.innerHTML = 'Log Masuk';
@@ -1415,12 +1554,12 @@
                         
                         startNotificationPolling();
                         
-                        showNotif('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`);
+                        showAlert('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`, 'success');
                     }, 500);
                 } else {
                     btn.style.backgroundColor = '#dc2626';
                     btn.innerHTML = 'Gagal';
-                    showNotif('Gagal', result.error || 'Email atau kata laluan salah', true);
+                    showAlert('Gagal', result.error || 'Email atau kata laluan salah', 'error');
                     
                     setTimeout(() => {
                         btn.style.backgroundColor = '';
@@ -1430,7 +1569,7 @@
                     }, 1000);
                 }
             } catch (error) {
-                showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
+                showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
                 btn.style.backgroundColor = '#dc2626';
                 btn.innerHTML = 'Ralat';
                 
@@ -1479,6 +1618,13 @@
             if (tab === 'dashboard') createBranchChart();
             if (tab === 'inbox') renderNotifications();
             if (tab === 'history') renderHistory();
+            
+            if (tab === 'tools') {
+                const today = new Date().toISOString().split('T')[0];
+                if (document.getElementById('recalcEndDate') && !document.getElementById('recalcEndDate').value) {
+                    document.getElementById('recalcEndDate').value = today;
+                }
+            }
         };
 
         // ============================================
@@ -1493,14 +1639,14 @@
                     updateStats();
                 }
             } catch (error) {
-                showNotif('Ralat', 'Gagal memuatkan senarai admin', true);
+                showAlert('Ralat', 'Gagal memuatkan senarai admin', 'error');
             }
         }
 
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '32r<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td>32r';
                 return;
             }
 
@@ -1555,7 +1701,7 @@
                     createBranchChart();
                 }
             } catch (error) {
-                showNotif('Ralat', 'Gagal memuatkan senarai pengguna', true);
+                showAlert('Ralat', 'Gagal memuatkan senarai pengguna', 'error');
             }
         }
 
@@ -1682,16 +1828,16 @@
                 }
                 
                 if (result.success) {
-                    showNotif('Berjaya', `Cawangan ${changeBranchTarget.name} telah ditukar ke ${newBranch}`);
+                    showAlert('Berjaya', `Cawangan ${changeBranchTarget.name} telah ditukar ke ${newBranch}`, 'success');
                     closeChangeBranchModal();
                     await loadAdmins();
                     await loadAllUsers();
                 } else {
-                    showNotif('Ralat', result.error || 'Gagal menukar cawangan', true);
+                    showAlert('Ralat', result.error || 'Gagal menukar cawangan', 'error');
                 }
             } catch (error) {
                 console.error('Error changing branch:', error);
-                showNotif('Ralat', 'Gagal menukar cawangan', true);
+                showAlert('Ralat', 'Gagal menukar cawangan', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Tukar';
@@ -1699,26 +1845,26 @@
         }
 
         // ============================================
-        // DELETE FUNCTIONS
+        // DELETE FUNCTIONS - Menggunakan showConfirm
         // ============================================
         async function deleteUser(uid, name) {
-            if (!confirm(`Padam pengguna ${name}? Tindakan ini tidak boleh dibatalkan.`)) return;
-            
-            try {
-                const result = await callAPI('deleteUser', { 
-                    data: JSON.stringify({ uid: uid }),
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                if (result.success) {
-                    showNotif('Berjaya', `Pengguna ${name} telah dipadamkan`);
-                    await loadAllUsers();
-                } else {
-                    showNotif('Ralat', result.error || 'Gagal memadam pengguna', true);
+            showConfirm('Padam Pengguna', `Anda pasti mahu memadamkan ${name}? Tindakan ini tidak boleh dibatalkan.`, async function() {
+                try {
+                    const result = await callAPI('deleteUser', { 
+                        data: JSON.stringify({ uid: uid }),
+                        requestingUser: JSON.stringify(currentUser)
+                    });
+                    if (result.success) {
+                        showAlert('Berjaya', `Pengguna ${name} telah dipadamkan`, 'success');
+                        await loadAllUsers();
+                    } else {
+                        showAlert('Ralat', result.error || 'Gagal memadam pengguna', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    showAlert('Ralat', 'Gagal memadam pengguna', 'error');
                 }
-            } catch (error) {
-                console.error('Error deleting user:', error);
-                showNotif('Ralat', 'Gagal memadam pengguna', true);
-            }
+            });
         }
 
         // ============================================
@@ -1785,7 +1931,7 @@
                     adminMap.setView([lat, lng], 16);
                     reverseGeocode(lat, lng);
                 },
-                () => showNotif('Ralat', 'Gagal mengesan lokasi', true)
+                () => showAlert('Ralat', 'Gagal mengesan lokasi', 'error')
             );
         };
 
@@ -1806,7 +1952,7 @@
             };
 
             if (!data.name || !data.email || !data.password || !data.branch || !data.location) {
-                showNotif('Ralat', 'Sila lengkapkan semua maklumat', true);
+                showAlert('Ralat', 'Sila lengkapkan semua maklumat', 'warning');
                 return;
             }
 
@@ -1821,7 +1967,7 @@
                 });
                 
                 if (result.success) {
-                    showNotif('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`);
+                    showAlert('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`, 'success');
                     closeAdminModal();
                     await loadAdmins();
                     
@@ -1841,10 +1987,10 @@
                     
                     await loadNotifications();
                 } else {
-                    showNotif('Ralat', result.error || 'Gagal menyimpan', true);
+                    showAlert('Ralat', result.error || 'Gagal menyimpan', 'error');
                 }
             } catch (error) {
-                showNotif('Ralat', 'Gagal menyimpan data', true);
+                showAlert('Ralat', 'Gagal menyimpan data', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Daftar Admin';
@@ -1878,14 +2024,14 @@
                 });
                 
                 if (result.success) {
-                    showNotif('Berjaya', 'Admin telah dipadamkan');
+                    showAlert('Berjaya', 'Admin telah dipadamkan', 'success');
                     closeDeleteModal();
                     await loadAdmins();
                 } else {
-                    showNotif('Ralat', result.error || 'Gagal memadam', true);
+                    showAlert('Ralat', result.error || 'Gagal memadam', 'error');
                 }
             } catch (error) {
-                showNotif('Ralat', 'Gagal memadam admin', true);
+                showAlert('Ralat', 'Gagal memadam admin', 'error');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Ya, Padam';
@@ -1893,104 +2039,101 @@
         };
 
         // ============================================
-        // RECALCULATE OVERTIME FUNCTIONS
+        // RECALCULATE OVERTIME FUNCTIONS (WBF SARAWAK)
         // ============================================
+        
         async function recalculateOvertime() {
             const startDate = document.getElementById('recalcStartDate').value;
             const endDate = document.getElementById('recalcEndDate').value;
             
             if (!startDate || !endDate) {
-                showNotif('Ralat', 'Sila pilih tarikh mula dan tamat', true);
+                showAlert('Ralat', 'Sila pilih tarikh mula dan tamat', 'warning');
                 return;
             }
             
             if (startDate > endDate) {
-                showNotif('Ralat', 'Tarikh mula tidak boleh lepas tarikh tamat', true);
+                showAlert('Ralat', 'Tarikh mula tidak boleh lepas tarikh tamat', 'error');
                 return;
             }
             
-            if (!confirm(`Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 30 min, Jumaat 2 jam\n• Standard kerja: 9 jam sehari`)) {
-                return;
-            }
-            
-            const btn = document.getElementById('recalcBtn');
-            const resultDiv = document.getElementById('recalcResult');
-            const resultMsg = document.getElementById('recalcMessage');
-            
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula...';
-            resultDiv.classList.add('hidden');
-            
-            try {
-                const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
+            showConfirm('Kira Semula OT', `Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)\n• Standard kerja: 9 jam sehari`, async function() {
+                const btn = document.getElementById('recalcBtn');
+                const resultDiv = document.getElementById('recalcResult');
+                const resultMsg = document.getElementById('recalcMessage');
                 
-                if (result.success) {
-                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak.`;
-                    resultDiv.classList.remove('hidden');
-                    resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
-                    showNotif('Berjaya', `${result.recalculated} rekod telah dikira semula`);
-                } else {
-                    resultMsg.innerHTML = result.error || 'Gagal mengira semula';
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula...';
+                resultDiv.classList.add('hidden');
+                
+                try {
+                    const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
+                    
+                    if (result.success) {
+                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak (Isnin-Khamis rehat 1 jam, Jumaat rehat 2.5 jam, OT selepas 4:30 PM).`;
+                        resultDiv.classList.remove('hidden');
+                        resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
+                        showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success');
+                    } else {
+                        resultMsg.innerHTML = result.error || 'Gagal mengira semula';
+                        resultDiv.classList.remove('hidden');
+                        resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
+                        showAlert('Ralat', result.error || 'Gagal mengira semula', 'error');
+                    }
+                } catch (error) {
+                    console.error('Recalculate error:', error);
+                    resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
                     resultDiv.classList.remove('hidden');
                     resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
-                    showNotif('Ralat', result.error || 'Gagal mengira semula', true);
+                    showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="material-symbols-rounded">refresh</span> Kira Semula OT';
                 }
-            } catch (error) {
-                console.error('Recalculate error:', error);
-                resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
-                resultDiv.classList.remove('hidden');
-                resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
-                showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-rounded">refresh</span> Kira Semula OT';
-            }
+            });
         }
 
         async function recalculateAllOvertime() {
             const startDate = '2020-01-01';
             const endDate = new Date().toISOString().split('T')[0];
             
-            if (!confirm(`Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 30 min, Jumaat 2 jam\n• Standard kerja: 9 jam sehari`)) {
-                return;
-            }
-            
-            const btn = document.getElementById('recalcAllBtn');
-            const resultDiv = document.getElementById('recalcResult');
-            const resultMsg = document.getElementById('recalcMessage');
-            
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula semua data...';
-            resultDiv.classList.add('hidden');
-            
-            try {
-                const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
+            showConfirm('Kira Semua OT', `Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)\n• Standard kerja: 9 jam sehari`, async function() {
+                const btn = document.getElementById('recalcAllBtn');
+                const resultDiv = document.getElementById('recalcResult');
+                const resultMsg = document.getElementById('recalcMessage');
                 
-                if (result.success) {
-                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak.`;
-                    resultDiv.classList.remove('hidden');
-                    resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
-                    showNotif('Berjaya', `${result.recalculated} rekod telah dikira semula`);
+                btn.disabled = true;
+                btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula semua data...';
+                resultDiv.classList.add('hidden');
+                
+                try {
+                    const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
                     
-                    if (typeof loadAllUsers === 'function') {
-                        loadAllUsers();
+                    if (result.success) {
+                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak (Isnin-Khamis rehat 1 jam, Jumaat rehat 2.5 jam, OT selepas 4:30 PM).`;
+                        resultDiv.classList.remove('hidden');
+                        resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
+                        showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success');
+                        
+                        if (typeof loadAllUsers === 'function') {
+                            loadAllUsers();
+                        }
+                    } else {
+                        resultMsg.innerHTML = result.error || 'Gagal mengira semula';
+                        resultDiv.classList.remove('hidden');
+                        resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
+                        showAlert('Ralat', result.error || 'Gagal mengira semula', 'error');
                     }
-                } else {
-                    resultMsg.innerHTML = result.error || 'Gagal mengira semula';
+                } catch (error) {
+                    console.error('Recalculate error:', error);
+                    resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
                     resultDiv.classList.remove('hidden');
                     resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
-                    showNotif('Ralat', result.error || 'Gagal mengira semula', true);
+                    showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="material-symbols-rounded">warning</span> Kira Semua Data';
                 }
-            } catch (error) {
-                console.error('Recalculate error:', error);
-                resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
-                resultDiv.classList.remove('hidden');
-                resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
-                showNotif('Ralat', 'Gagal berkomunikasi dengan server', true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-rounded">warning</span> Kira Semua Data';
-            }
+            });
         }
 
         // ============================================
@@ -2027,6 +2170,9 @@
             });
         }
 
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
         document.getElementById('loginPassword').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
         });
@@ -2035,7 +2181,6 @@
             if (e.target === this) closeNotificationDetailModal();
         });
         
-        // Set default end date on load
         setTimeout(() => {
             const today = new Date().toISOString().split('T')[0];
             if (document.getElementById('recalcEndDate')) {
