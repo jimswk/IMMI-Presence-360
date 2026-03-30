@@ -452,7 +452,6 @@
             border-radius: 12px;
             text-align: center;
             margin-bottom: 16px;
-            font-weight: bold;
             animation: pulse 1.5s infinite;
         }
 
@@ -669,7 +668,7 @@
 
                 <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
                     <div class="overflow-x-auto">
-                        <table>
+                        <table class="w-full">
                             <thead>
                                 <tr>
                                     <th>Nama Kakitangan</th>
@@ -976,9 +975,9 @@
                             </div>
                         </div>
                         <div class="overflow-x-auto">
-                            <table id="userAttendanceTable">
+                            <table class="w-full">
                                 <thead>
-                                    <tr>
+                                    32r
                                         <th>Tarikh</th>
                                         <th>Hari</th>
                                         <th>Jam Masuk</th>
@@ -1081,6 +1080,7 @@
                     <span class="text-sm text-gray-500">• Waktu mula kira: 7:30 AM<br>
                     • Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)<br>
                     • Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)<br>
+                    • Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)<br>
                     • Standard kerja: 9 jam sehari</span></p>
                     
                     <div class="grid grid-cols-2 gap-6 mb-8">
@@ -1161,53 +1161,27 @@
         let realTimeDetectionInterval = null;
 
         // ============================================
-        // WBF CALCULATION FUNCTIONS (SARAWAK)
+        // WBF SARAWAK CONFIGURATION (FRONTEND)
         // ============================================
-        function getBreakDuration(dayOfWeek) {
-            // Returns break duration in hours based on official WBF Sarawak schedule
-            // 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday
-            if (dayOfWeek === 5) {
-                return 2.5; // Friday break: 11:45 AM - 2:15 PM (2.5 hours)
+        const WBF_CONFIG = {
+            STANDARD_WORK_HOURS: 9,
+            WORK_START: 7.5,      // 7:30 AM
+            WORK_END: 16.5,       // 4:30 PM
+            OVERTIME_THRESHOLD: 16.5, // 4:30 PM - OT dikira selepas waktu ini
+            BREAK_CONFIG: {
+                'Sunday': { duration: 0, startHour: 0 },
+                'Monday': { duration: 1.0, startHour: 13.0 },    // 1:00 PM - 2:00 PM
+                'Tuesday': { duration: 1.0, startHour: 13.0 },
+                'Wednesday': { duration: 1.0, startHour: 13.0 },
+                'Thursday': { duration: 1.0, startHour: 13.0 },
+                'Friday': { duration: 2.5, startHour: 11.75 },   // 11:45 AM - 2:15 PM
+                'Saturday': { duration: 0, startHour: 0 }
             }
-            // Monday-Thursday: 1:00 PM - 2:00 PM (1 hour)
-            return 1.0;
-        }
+        };
 
-        function calculateWorkHours(clockInTime, clockOutTime, date) {
-            // Calculate total work hours and overtime based on official WBF Sarawak schedule
-            const overtimeThreshold = 17.0; // 5:00 PM
-            
-            if (!clockInTime || !clockOutTime) return { totalHours: 0, totalOT: 0 };
-            
-            const clockIn = new Date(clockInTime);
-            const clockOut = new Date(clockOutTime);
-            
-            if (clockOut <= clockIn) return { totalHours: 0, totalOT: 0 };
-            
-            // Get day of week (0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday)
-            const dayOfWeek = clockIn.getDay();
-            const breakDuration = getBreakDuration(dayOfWeek);
-            
-            // Calculate total hours worked (including break)
-            let totalWorkedHours = (clockOut - clockIn) / (1000 * 60 * 60);
-            
-            // Subtract break time
-            let actualWorkHours = Math.max(0, totalWorkedHours - breakDuration);
-            
-            // Calculate overtime (any hours worked after 5:00 PM)
-            const clockOutHour = clockOut.getHours() + clockOut.getMinutes() / 60;
-            let overtimeHours = 0;
-            if (clockOutHour > overtimeThreshold) {
-                overtimeHours = clockOutHour - overtimeThreshold;
-                overtimeHours = Math.max(0, overtimeHours);
-            }
-            
-            return {
-                totalHours: parseFloat(actualWorkHours.toFixed(2)),
-                totalOT: parseFloat(overtimeHours.toFixed(2))
-            };
-        }
-
+        // ============================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ============================================
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('loginPassword');
             const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
@@ -2167,7 +2141,7 @@
                 return;
             }
             
-            if (!confirm(`Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Standard kerja: 9 jam sehari`)) {
+            if (!confirm(`Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)\n• Standard kerja: 9 jam sehari`)) {
                 return;
             }
             
@@ -2183,7 +2157,7 @@
                 const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
                 
                 if (result.success) {
-                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak.`;
+                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak (Isnin-Khamis rehat 1 jam, Jumaat rehat 2.5 jam, OT selepas 4:30 PM).`;
                     resultDiv.classList.remove('hidden');
                     resultDiv.className = 'mt-6 p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3';
                     showNotif('Berjaya', `${result.recalculated} rekod telah dikira semula`);
@@ -2209,7 +2183,7 @@
             const startDate = '2020-01-01';
             const endDate = new Date().toISOString().split('T')[0];
             
-            if (!confirm(`Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Standard kerja: 9 jam sehari`)) {
+            if (!confirm(`Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)\n• Standard kerja: 9 jam sehari`)) {
                 return;
             }
             
@@ -2225,7 +2199,7 @@
                 const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
                 
                 if (result.success) {
-                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak.`;
+                    resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak (Isnin-Khamis rehat 1 jam, Jumaat rehat 2.5 jam, OT selepas 4:30 PM).`;
                     resultDiv.classList.remove('hidden');
                     resultDiv.className = 'mt-6 p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3';
                     showNotif('Berjaya', `${result.recalculated} rekod telah dikira semula`);
