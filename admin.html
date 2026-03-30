@@ -990,7 +990,7 @@
                                 <tbody id="userAttendanceBody">
                                     <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
                                 </tbody>
-                              </table>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -1079,7 +1079,8 @@
                     
                     <p class="text-gray-600 mb-6">Gunakan alat ini untuk mengira semula Overtime bagi rekod kehadiran lama mengikut formula WBF Sarawak:<br>
                     <span class="text-sm text-gray-500">• Waktu mula kira: 7:30 AM<br>
-                    • Waktu rehat: Isnin-Khamis 30 minit, Jumaat 2 jam<br>
+                    • Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)<br>
+                    • Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)<br>
                     • Standard kerja: 9 jam sehari</span></p>
                     
                     <div class="grid grid-cols-2 gap-6 mb-8">
@@ -1160,8 +1161,53 @@
         let realTimeDetectionInterval = null;
 
         // ============================================
-        // PASSWORD VISIBILITY TOGGLE
+        // WBF CALCULATION FUNCTIONS (SARAWAK)
         // ============================================
+        function getBreakDuration(dayOfWeek) {
+            // Returns break duration in hours based on official WBF Sarawak schedule
+            // 0 = Sunday, 1 = Monday, 2 = Tuesday, 3 = Wednesday, 4 = Thursday, 5 = Friday, 6 = Saturday
+            if (dayOfWeek === 5) {
+                return 2.5; // Friday break: 11:45 AM - 2:15 PM (2.5 hours)
+            }
+            // Monday-Thursday: 1:00 PM - 2:00 PM (1 hour)
+            return 1.0;
+        }
+
+        function calculateWorkHours(clockInTime, clockOutTime, date) {
+            // Calculate total work hours and overtime based on official WBF Sarawak schedule
+            const overtimeThreshold = 17.0; // 5:00 PM
+            
+            if (!clockInTime || !clockOutTime) return { totalHours: 0, totalOT: 0 };
+            
+            const clockIn = new Date(clockInTime);
+            const clockOut = new Date(clockOutTime);
+            
+            if (clockOut <= clockIn) return { totalHours: 0, totalOT: 0 };
+            
+            // Get day of week (0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday)
+            const dayOfWeek = clockIn.getDay();
+            const breakDuration = getBreakDuration(dayOfWeek);
+            
+            // Calculate total hours worked (including break)
+            let totalWorkedHours = (clockOut - clockIn) / (1000 * 60 * 60);
+            
+            // Subtract break time
+            let actualWorkHours = Math.max(0, totalWorkedHours - breakDuration);
+            
+            // Calculate overtime (any hours worked after 5:00 PM)
+            const clockOutHour = clockOut.getHours() + clockOut.getMinutes() / 60;
+            let overtimeHours = 0;
+            if (clockOutHour > overtimeThreshold) {
+                overtimeHours = clockOutHour - overtimeThreshold;
+                overtimeHours = Math.max(0, overtimeHours);
+            }
+            
+            return {
+                totalHours: parseFloat(actualWorkHours.toFixed(2)),
+                totalOT: parseFloat(overtimeHours.toFixed(2))
+            };
+        }
+
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('loginPassword');
             const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
@@ -1259,7 +1305,6 @@
             const dims = getVideoDimensions(video);
             const box = adjustFaceBox(detection.detection.box, dims);
             
-            // Calculate confidence percentage
             const confidence = Math.round(detection.detection.score * 100);
             const borderColor = detection.detection.score > 0.7 ? '#10b981' : '#fbbf24';
             
@@ -1584,7 +1629,7 @@
                 const result = await callAPI('getAttendance', { uid: selectedUser.uid, startDate, endDate });
                 const tbody = document.getElementById('userAttendanceBody');
                 if (!result.success || !result.data || result.data.length === 0) {
-                    tbody.innerHTML = '汽车<td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
                     return;
                 }
                 let html = '';
@@ -1805,7 +1850,6 @@
                 statusMsg.innerHTML = "<span class='text-green-600 font-black'>✅ Kamera Aktif. Sila posisikan wajah di tengah.</span>";
                 faceOverlay = document.getElementById('faceOverlay');
                 
-                // Start real-time face detection for visual feedback
                 startRealTimeFaceDetection();
             } catch (err) {
                 captureBtn.classList.add('hidden');
@@ -1844,7 +1888,6 @@
             let detectionStartTime = Date.now();
             let attemptCount = 0;
             
-            // Try to detect face for up to 5 seconds, keep best detection
             while (Date.now() - detectionStartTime < 5000) {
                 attemptCount++;
                 updateProgress(20 + ((Date.now() - detectionStartTime) / 5000) * 40);
@@ -1855,10 +1898,8 @@
                         .withFaceExpressions();
                     
                     if (detection) {
-                        // Show face box on overlay for feedback
                         drawFaceOverlay(video, detection);
                         
-                        // Store best detection (highest confidence)
                         if (!bestDetection || (detection.detection.score > bestDetection.detection.score)) {
                             bestDetection = detection;
                         }
@@ -1866,7 +1907,6 @@
                         const confidence = Math.round(detection.detection.score * 100);
                         statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan! (${confidence}%)</span><br><span class='text-xs'>Teruskan pegang stabil...</span>`;
                         
-                        // If we have a good quality detection with high confidence, we can proceed
                         if (detection.detection.score > 0.7 && attemptCount > 3) {
                             break;
                         }
@@ -1895,17 +1935,14 @@
             statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 Merekod data wajah...</span>";
             
             try {
-                // Use the best detection we found
                 const detection = bestDetection;
                 
-                // Check face quality - face size validation
                 const dims = getVideoDimensions(video);
                 const faceWidth = detection.detection.box.width;
                 const faceHeight = detection.detection.box.height;
                 
                 let qualityIssues = [];
                 
-                // Check if face is too close or too far
                 if (faceWidth < 60 || faceHeight < 60) {
                     qualityIssues.push("wajah terlalu jauh");
                 }
@@ -1913,7 +1950,6 @@
                     qualityIssues.push("wajah terlalu dekat");
                 }
                 
-                // Check confidence
                 if (detection.detection.score < 0.6) {
                     qualityIssues.push("keyakinan rendah");
                 }
@@ -1928,14 +1964,12 @@
                     return;
                 }
                 
-                // Store the face descriptor
                 document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
                 statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
                 btn.classList.add('hidden');
                 document.getElementById('resetFaceBtn').classList.remove('hidden');
                 updateProgress(100);
                 
-                // Show success with animation
                 if (faceOverlay) {
                     const dims = getVideoDimensions(video);
                     const box = adjustFaceBox(detection.detection.box, dims);
@@ -2133,7 +2167,7 @@
                 return;
             }
             
-            if (!confirm(`Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 30 min, Jumaat 2 jam\n• Standard kerja: 9 jam sehari`)) {
+            if (!confirm(`Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Standard kerja: 9 jam sehari`)) {
                 return;
             }
             
@@ -2175,7 +2209,7 @@
             const startDate = '2020-01-01';
             const endDate = new Date().toISOString().split('T')[0];
             
-            if (!confirm(`Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 30 min, Jumaat 2 jam\n• Standard kerja: 9 jam sehari`)) {
+            if (!confirm(`Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Standard kerja: 9 jam sehari`)) {
                 return;
             }
             
