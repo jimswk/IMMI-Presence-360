@@ -789,6 +789,8 @@
             
             const today = new Date().toISOString().split('T')[0];
             
+            console.log('Checking attendance for user:', currentUser.uid, 'date:', today);
+            
             try {
                 const result = await callAPI('getAttendance', { 
                     uid: currentUser.uid, 
@@ -796,27 +798,40 @@
                     endDate: today 
                 });
                 
+                console.log('Attendance API response:', result);
+                
                 const statusEl = document.getElementById('attendanceStatus');
                 const clockInBtn = document.getElementById('clockInBtn');
                 const clockOutBtn = document.getElementById('clockOutBtn');
                 
-                // Reset button states to default
+                // RESET BUTTONS TO DEFAULT ENABLED STATE FIRST
                 clockInBtn.disabled = false;
                 clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
                 clockOutBtn.disabled = true;
                 clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
                 
+                // Jika gagal mendapatkan data, set default
+                if (!result.success) {
+                    console.error('Failed to get attendance:', result.error);
+                    statusEl.innerText = 'BELUM MASUK';
+                    statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+                    return;
+                }
+                
                 // Jika tiada rekod hari ini
-                if (!result.success || !result.data || result.data.length === 0) {
+                if (!result.data || result.data.length === 0) {
+                    console.log('No attendance record for today');
                     statusEl.innerText = 'BELUM MASUK';
                     statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     return;
                 }
                 
                 const record = result.data[0];
+                console.log('Today record:', record);
                 
-                // Semak status rekod
+                // SEMAK BERDASARKAN STATUS FIELD
                 if (record.status === 'clocked_in') {
+                    console.log('User is clocked in (status)');
                     statusEl.innerText = 'DALAM BERTUGAS';
                     statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
                     
@@ -826,6 +841,7 @@
                     clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
                     
                 } else if (record.status === 'clocked_out') {
+                    console.log('User is clocked out (status)');
                     statusEl.innerText = 'SELESAI';
                     statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
                     
@@ -835,29 +851,37 @@
                     clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
                     
                 } else {
-                    // Fallback: semak berdasarkan clockIn dan clockOut values
-                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
-                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+                    // FALLBACK: Semak berdasarkan clockIn dan clockOut values
+                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '0';
+                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '0';
+                    
+                    console.log('Fallback check - hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
                     
                     if (hasClockIn && !hasClockOut) {
+                        console.log('User is clocked in (fallback)');
                         statusEl.innerText = 'DALAM BERTUGAS';
                         statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
+                        
                         clockInBtn.disabled = true;
                         clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
                         clockOutBtn.disabled = false;
                         clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
                         
                     } else if (hasClockIn && hasClockOut) {
+                        console.log('User is clocked out (fallback)');
                         statusEl.innerText = 'SELESAI';
                         statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
+                        
                         clockInBtn.disabled = true;
                         clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
                         clockOutBtn.disabled = true;
                         clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
                         
                     } else {
+                        console.log('User has no clock in today (fallback)');
                         statusEl.innerText = 'BELUM MASUK';
                         statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+                        // Butang sudah dalam keadaan default (clockIn enabled, clockOut disabled)
                     }
                 }
                 
