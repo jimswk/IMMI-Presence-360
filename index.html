@@ -2,7 +2,12 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1e33">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="IMMI Presence">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230b1e33'/%3E%3Ctext x='50' y='67' font-size='50' text-anchor='middle' fill='%23fbbf24' font-family='Arial'%3E👤%3C/text%3E%3C/svg%3E">
     <title>IMMI Presence 360 - Sistem Kehadiran</title>
     
     <!-- Tailwind CSS -->
@@ -19,10 +24,15 @@
     <script src="api-config.js"></script>
     
     <style>
-        * { font-family: 'Plus Jakarta Sans', sans-serif; }
+        * { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
         body {
             background: linear-gradient(135deg, #f0f5fa 0%, #e6edf4 100%);
             min-height: 100vh;
+            overscroll-behavior: none;
         }
         
         /* Login Page */
@@ -38,24 +48,24 @@
         .login-card {
             background: white;
             border-radius: 36px;
-            padding: 40px;
+            padding: 32px 24px;
             width: 100%;
-            max-width: 400px;
+            max-width: 360px;
             box-shadow: 0 50px 70px -20px rgba(0,0,0,0.5);
         }
         
         /* Floating Label Styles */
         .floating-group {
             position: relative;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
         }
 
         .floating-input {
             width: 100%;
-            padding: 18px 16px 8px 16px;
+            padding: 16px 14px 6px 14px;
             border: 2px solid #e2e8f0;
             border-radius: 16px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             background: #f8fafc;
             transition: all 0.2s ease;
             outline: none;
@@ -69,11 +79,11 @@
 
         .floating-label {
             position: absolute;
-            left: 16px;
+            left: 14px;
             top: 50%;
             transform: translateY(-50%);
             color: #94a3b8;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 500;
             pointer-events: none;
             transition: all 0.2s ease;
@@ -85,11 +95,11 @@
         .floating-input:not(:placeholder-shown) ~ .floating-label {
             top: 0px;
             transform: translateY(-50%);
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
             color: #1e3a8a;
             background: white;
-            left: 12px;
+            left: 10px;
         }
 
         /* Password Eye Button */
@@ -99,7 +109,7 @@
 
         .password-eye {
             position: absolute;
-            right: 16px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             cursor: pointer;
@@ -119,15 +129,12 @@
             background: rgba(30, 58, 138, 0.05);
         }
 
-        .password-eye:active {
-            transform: translateY(-50%) scale(0.95);
-        }
-
         /* Login Button Animation */
         .login-btn {
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
+            min-height: 52px;
         }
 
         .login-btn.loading {
@@ -135,25 +142,29 @@
             cursor: not-allowed;
         }
         
+        /* Dashboard Header */
         .dashboard-header {
             background: linear-gradient(165deg, #0b1e33 0%, #132b41 100%);
-            padding: 32px 24px 64px;
-            border-bottom-left-radius: 40px;
-            border-bottom-right-radius: 40px;
+            padding: 24px 20px 56px;
+            border-bottom-left-radius: 32px;
+            border-bottom-right-radius: 32px;
         }
         
+        /* Glass Card */
         .glass-card {
             background: white;
-            border-radius: 24px;
-            padding: 24px;
+            border-radius: 28px;
+            padding: 20px;
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05);
+            margin-top: -32px;
         }
         
+        /* Video Wrapper */
         .video-wrapper {
             position: relative;
             width: 100%;
-            aspect-ratio: 4/3;
-            border-radius: 16px;
+            aspect-ratio: 3/4;
+            border-radius: 20px;
             overflow: hidden;
             background: #000;
         }
@@ -170,10 +181,10 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 160px;
-            height: 200px;
+            width: 130px;
+            height: 170px;
             border: 2px solid #fbbf24;
-            border-radius: 80px;
+            border-radius: 70px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
             pointer-events: none;
         }
@@ -198,23 +209,26 @@
         
         .hidden { display: none !important; }
         
+        /* Notification */
         .notification {
             position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translate(-50%, -150%);
+            bottom: 24px;
+            left: 16px;
+            right: 16px;
             background: white;
-            border-radius: 16px;
-            padding: 16px 24px;
+            border-radius: 20px;
+            padding: 14px 20px;
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
             z-index: 9999;
             border-left: 4px solid #059669;
-            transition: transform 0.3s;
+            transform: translateY(200px);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         
-        .notification.show { transform: translate(-50%, 0); }
+        .notification.show { transform: translateY(0); }
         .notification.error { border-left-color: #dc2626; }
         
+        /* Loading Spinner */
         .loading-spinner {
             display: inline-block;
             width: 20px;
@@ -227,14 +241,16 @@
         
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Challenge Box */
         .challenge-box {
             background: #1e3a8a;
             color: white;
             padding: 12px;
-            border-radius: 12px;
+            border-radius: 16px;
             text-align: center;
             margin-bottom: 16px;
             font-weight: bold;
+            font-size: 0.9rem;
             animation: pulse 1.5s infinite;
         }
 
@@ -243,12 +259,13 @@
             50% { opacity: 0.8; }
         }
 
+        /* Progress Bar */
         .progress-bar {
             height: 4px;
             background: #e2e8f0;
             border-radius: 2px;
             overflow: hidden;
-            margin: 10px 0;
+            margin: 12px 0;
         }
 
         .progress-fill {
@@ -263,126 +280,115 @@
             display: inline-block;
             padding: 4px 12px;
             border-radius: 9999px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
         }
         
-        .status-badge.success {
-            background-color: #d1fae5;
-            color: #065f46;
+        /* Location Card */
+        .location-card {
+            background: #f8fafc;
+            padding: 14px;
+            border-radius: 20px;
+            margin-bottom: 16px;
         }
         
-        .status-badge.warning {
-            background-color: #fef3c7;
-            color: #92400e;
+        /* Action Buttons - Mobile Optimized */
+        .action-btn {
+            min-height: 52px;
+            touch-action: manipulation;
+            transition: all 0.2s;
+            border-radius: 24px;
         }
         
-        .status-badge.info {
-            background-color: #dbeafe;
-            color: #1e40af;
+        .action-btn:active {
+            transform: scale(0.97);
         }
         
-        .status-badge.error {
-            background-color: #fee2e2;
-            color: #991b1b;
+        /* History Items */
+        .history-item {
+            background: white;
+            padding: 14px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
         }
-
-        /* Mobile Optimizations */
-        @media (max-width: 640px) {
+        
+        .history-item:active {
+            transform: scale(0.98);
+            background: #f8fafc;
+        }
+        
+        /* Scrollable Container */
+        .scrollable-container {
+            max-height: 50vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Clock Text */
+        .clock-text {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+        
+        @media (min-width: 400px) {
+            .clock-text {
+                font-size: 3.5rem;
+            }
+        }
+        
+        /* Bottom Sheet Animation */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 28px 28px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .bottom-sheet.show {
+            transform: translateY(0);
+        }
+        
+        .bottom-sheet-header {
+            padding: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* Pull to refresh indicator */
+        .pull-to-refresh {
+            text-align: center;
+            padding: 12px;
+            color: #94a3b8;
+            font-size: 0.75rem;
+        }
+        
+        /* Disable text selection on buttons */
+        button {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Safe area inset for notches */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
             .dashboard-header {
-                padding: 24px 16px 56px;
+                padding-top: env(safe-area-inset-top);
             }
-            
-            .glass-card {
-                padding: 16px;
+            .bottom-sheet {
+                padding-bottom: env(safe-area-inset-bottom);
             }
-            
-            .text-5xl {
-                font-size: 2.5rem;
-            }
-            
-            .grid-cols-2 {
-                gap: 8px;
-            }
-            
-            .btn-primary, .bg-green-600, .bg-gray-200 {
-                padding: 14px 12px;
-                font-size: 1rem;
-                min-height: 52px;
-            }
-            
-            .video-wrapper {
-                aspect-ratio: 3/4;
-            }
-            
-            .face-guide {
-                width: 120px;
-                height: 160px;
-            }
-            
-            .attendance-history {
-                max-height: 300px;
-            }
-            
-            button {
-                min-height: 48px;
-                touch-action: manipulation;
-            }
-            
-            .text-xs {
-                font-size: 0.7rem;
-            }
-            
-            .bg-gray-50.p-4 {
-                padding: 12px;
-            }
-            
-            .bg-white.p-4 {
-                padding: 12px;
-            }
-            
-            .progress-bar {
-                margin: 8px 0;
-            }
-            
-            .challenge-box {
-                padding: 10px;
-                font-size: 0.9rem;
-            }
-            
-            .floating-input {
-                padding: 16px 14px 6px 14px;
-                font-size: 0.95rem;
-            }
-            
-            .floating-label {
-                font-size: 0.9rem;
-            }
-            
-            .floating-input:focus ~ .floating-label,
-            .floating-input:not(:placeholder-shown) ~ .floating-label {
-                font-size: 0.65rem;
-            }
-        }
-
-        /* Fix untuk iOS */
-        input, button {
-            -webkit-appearance: none;
-            border-radius: 14px;
-        }
-
-        /* Landscape mode */
-        @media (orientation: landscape) and (max-height: 500px) {
-            .dashboard-header {
-                padding: 16px 16px 40px;
-            }
-            
-            .glass-card {
-                padding: 12px;
-            }
-            
-            .video-wrapper {
-                max-height: 200px;
+            .notification {
+                margin-bottom: env(safe-area-inset-bottom);
             }
         }
     </style>
@@ -390,40 +396,43 @@
 <body>
     <!-- Notification -->
     <div id="notification" class="notification">
-        <p class="font-bold text-sm" id="notifTitle">Makluman Sistem</p>
-        <p class="text-xs text-gray-600 mt-1" id="notifMessage"></p>
+        <div class="flex items-center gap-3">
+            <span id="notifIcon" class="material-symbols-rounded text-xl text-green-600">check_circle</span>
+            <div class="flex-1">
+                <p class="font-bold text-sm" id="notifTitle">Makluman Sistem</p>
+                <p class="text-xs text-gray-500" id="notifMessage"></p>
+            </div>
+        </div>
     </div>
 
-    <!-- Login Page with Floating Label and Eye Button -->
+    <!-- Login Page -->
     <div id="loginPage" class="login-container">
         <div class="login-card">
-            <div class="text-center mb-8">
+            <div class="text-center mb-6">
                 <div class="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto animate-pulse">
                     <span class="material-symbols-rounded text-4xl text-blue-800">fingerprint</span>
                 </div>
-                <h1 class="text-3xl font-black text-gray-800 mt-4">IMMI Presence</h1>
-                <p class="text-gray-400 text-sm">Sistem Kehadiran Pintar 360</p>
+                <h1 class="text-2xl font-black text-gray-800 mt-3">IMMI Presence</h1>
+                <p class="text-gray-400 text-xs">Sistem Kehadiran Pintar 360</p>
             </div>
             
-            <div class="space-y-4">
-                <!-- Email Field with Floating Label -->
+            <div class="space-y-3">
                 <div class="floating-group">
                     <input type="email" id="loginEmail" class="floating-input" placeholder=" " autocomplete="email">
                     <label class="floating-label">Email</label>
                 </div>
                 
-                <!-- Password Field with Floating Label and Eye Button -->
                 <div class="floating-group">
                     <div class="password-wrapper">
                         <input type="password" id="loginPassword" class="floating-input" placeholder=" " autocomplete="current-password">
                         <label class="floating-label">Kata Laluan</label>
                         <button type="button" class="password-eye" onclick="togglePasswordVisibility()">
-                            <span class="material-symbols-rounded text-xl">visibility_off</span>
+                            <span class="material-symbols-rounded text-lg">visibility_off</span>
                         </button>
                     </div>
                 </div>
                 
-                <button onclick="handleLogin()" id="loginBtn" class="login-btn w-full bg-blue-800 text-white py-4 rounded-2xl font-bold mt-4 shadow-lg shadow-blue-900/20 transition-all hover:bg-blue-700 active:scale-95">
+                <button onclick="handleLogin()" id="loginBtn" class="login-btn w-full bg-blue-800 text-white py-4 rounded-2xl font-bold mt-2 shadow-lg shadow-blue-900/20">
                     Log Masuk
                 </button>
             </div>
@@ -431,29 +440,29 @@
     </div>
 
     <!-- Main Dashboard -->
-    <div id="dashboard" class="hidden min-h-screen pb-8">
+    <div id="dashboard" class="hidden min-h-screen pb-4">
         <!-- Header -->
         <div class="dashboard-header">
-            <div class="max-w-md mx-auto flex justify-between items-start">
+            <div class="flex justify-between items-start">
                 <div>
                     <span class="bg-yellow-400 text-blue-900 px-3 py-1 rounded-full text-xs font-bold" id="statusBadge">AKTIF</span>
-                    <h2 class="text-2xl font-extrabold text-white mt-2" id="userName">-</h2>
-                    <p class="text-sm text-blue-200 mt-1" id="userDetail">-</p>
+                    <h2 class="text-xl font-extrabold text-white mt-2" id="userName">-</h2>
+                    <p class="text-xs text-blue-200 mt-1" id="userDetail">-</p>
                 </div>
-                <button onclick="handleLogout()" class="p-3 bg-white/10 hover:bg-white/20 rounded-2xl">
-                    <span class="material-symbols-rounded text-white">logout</span>
+                <button onclick="handleLogout()" class="p-2 bg-white/10 hover:bg-white/20 rounded-2xl active:scale-95 transition-all">
+                    <span class="material-symbols-rounded text-white text-xl">logout</span>
                 </button>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="max-w-md mx-auto px-5 -mt-12 space-y-5">
+        <div class="px-4 space-y-4">
             <!-- Status Card -->
             <div class="glass-card">
-                <div class="flex justify-between items-center mb-5">
+                <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center gap-2">
-                        <span class="material-symbols-rounded text-blue-600">event_available</span>
-                        <span class="font-bold">Kehadiran Hari Ini</span>
+                        <span class="material-symbols-rounded text-blue-600 text-xl">event_available</span>
+                        <span class="font-bold text-sm">Kehadiran Hari Ini</span>
                     </div>
                     <div id="attendanceStatus" class="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold status-badge">
                         BELUM MASUK
@@ -461,14 +470,14 @@
                 </div>
 
                 <!-- Clock -->
-                <div class="text-center mb-6">
-                    <div class="text-5xl font-black text-blue-800" id="realTimeClock">00:00:00</div>
-                    <p class="text-xs font-bold text-gray-400 mt-2" id="displayDate">-</p>
+                <div class="text-center mb-4">
+                    <div class="clock-text font-black text-blue-800" id="realTimeClock">00:00:00</div>
+                    <p class="text-xs font-bold text-gray-400 mt-1" id="displayDate">-</p>
                 </div>
 
                 <!-- Location Card -->
-                <div class="bg-gray-50 p-4 rounded-2xl" id="locationCard">
-                    <div class="flex gap-3">
+                <div class="location-card" id="locationCard">
+                    <div class="flex gap-3 items-center">
                         <span class="material-symbols-rounded text-blue-600">location_on</span>
                         <div class="flex-1">
                             <p class="text-sm font-bold" id="locationStatus">Mengesan lokasi...</p>
@@ -477,8 +486,8 @@
                     </div>
                 </div>
 
-                <!-- Camera Scanner with Liveness -->
-                <div id="scanContainer" class="hidden mt-4">
+                <!-- Camera Scanner -->
+                <div id="scanContainer" class="hidden mt-3">
                     <div id="challengeDisplay" class="challenge-box">
                         Sedia untuk pengesahan...
                     </div>
@@ -490,24 +499,31 @@
                         <div class="face-guide"></div>
                         <div id="faceOverlay" class="face-overlay"></div>
                     </div>
-                    <p class="text-center mt-3 text-sm text-blue-600" id="scanStatus">Menyediakan kamera...</p>
+                    <p class="text-center mt-2 text-xs text-blue-600" id="scanStatus">Menyediakan kamera...</p>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-4 mt-6">
-                    <button onclick="handleClockIn()" id="clockInBtn" class="bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors">
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="handleClockIn()" id="clockInBtn" class="action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95">
                         MASUK
                     </button>
-                    <button onclick="handleClockOut()" id="clockOutBtn" class="bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold disabled:opacity-50" disabled>
+                    <button onclick="handleClockOut()" id="clockOutBtn" class="action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold disabled:opacity-50" disabled>
                         KELUAR
                     </button>
                 </div>
             </div>
 
-            <!-- History -->
+            <!-- History Section -->
             <div>
-                <h3 class="font-bold mb-3">REKOD KEHADIRAN</h3>
-                <div id="attendanceHistory" class="space-y-2 max-h-96 overflow-y-auto"></div>
+                <h3 class="font-bold text-sm mb-2 flex items-center gap-2">
+                    <span class="material-symbols-rounded text-gray-500 text-base">history</span>
+                    REKOD KEHADIRAN
+                </h3>
+                <div id="attendanceHistory" class="space-y-2 scrollable-container"></div>
+                <div class="pull-to-refresh text-center py-3 text-gray-400 text-xs">
+                    <span class="material-symbols-rounded text-sm inline-block animate-pulse">swap_vert</span>
+                    Tarik untuk muat semula
+                </div>
             </div>
         </div>
     </div>
@@ -524,10 +540,37 @@
         let modelsLoaded = false;
         let isVerifying = false;
         let faceOverlay = null;
+        let pullToRefreshStartY = 0;
+        let pullToRefreshActive = false;
 
         // Audio untuk notifikasi
         let audioSuccess = null;
         let audioError = null;
+
+        // ============================================
+        // PULL TO REFRESH
+        // ============================================
+        function initPullToRefresh() {
+            const scrollContainer = document.querySelector('.scrollable-container');
+            if (!scrollContainer) return;
+            
+            let startY = 0;
+            scrollContainer.addEventListener('touchstart', (e) => {
+                if (scrollContainer.scrollTop === 0) {
+                    startY = e.touches[0].clientY;
+                }
+            });
+            
+            scrollContainer.addEventListener('touchmove', (e) => {
+                if (scrollContainer.scrollTop === 0 && e.touches[0].clientY - startY > 60) {
+                    if (!pullToRefreshActive) {
+                        pullToRefreshActive = true;
+                        loadAttendanceHistory();
+                        setTimeout(() => { pullToRefreshActive = false; }, 1000);
+                    }
+                }
+            });
+        }
 
         // ============================================
         // PASSWORD VISIBILITY TOGGLE
@@ -556,12 +599,10 @@
                 audioSuccess = new Audio(successUrl);
                 audioError = new Audio(errorUrl);
                 
-                audioSuccess.volume = 0.7;
-                audioError.volume = 0.7;
-                
-                console.log('✅ Audio initialized');
+                audioSuccess.volume = 0.5;
+                audioError.volume = 0.5;
             } catch (e) {
-                console.error('❌ Failed to initialize audio:', e);
+                console.error('Audio init failed:', e);
             }
         }
 
@@ -572,9 +613,7 @@
                 } else if (type === 'error' && audioError) {
                     audioError.play().catch(e => console.log('Audio play failed:', e));
                 }
-            } catch (e) {
-                console.error('Audio play error:', e);
-            }
+            } catch (e) {}
         }
 
         // ============================================
@@ -584,6 +623,7 @@
             const notif = document.getElementById('notification');
             document.getElementById('notifTitle').innerText = title;
             document.getElementById('notifMessage').innerText = message;
+            document.getElementById('notifIcon').innerHTML = isError ? 'error' : 'check_circle';
             notif.className = `notification show ${isError ? 'error' : ''}`;
             
             if (playAudio) {
@@ -595,16 +635,13 @@
 
         function updateProgress(percent) {
             const progressFill = document.getElementById('progressFill');
-            if (progressFill) {
-                progressFill.style.width = percent + '%';
-            }
+            if (progressFill) progressFill.style.width = percent + '%';
         }
 
         function formatJam(decimalJam) {
             if (!decimalJam || decimalJam <= 0) return '-';
             const jam = Math.floor(decimalJam);
             const minit = Math.round((decimalJam - jam) * 60);
-            
             if (minit === 0) return `${jam}j`;
             if (minit < 10) return `${jam}j 0${minit}m`;
             return `${jam}j ${minit}m`;
@@ -643,12 +680,8 @@
             const offsetY = (containerHeight - displayHeight) / 2;
             
             return {
-                videoWidth,
-                videoHeight,
-                displayWidth,
-                displayHeight,
-                offsetX,
-                offsetY,
+                videoWidth, videoHeight, displayWidth, displayHeight,
+                offsetX, offsetY,
                 scaleX: displayWidth / videoWidth,
                 scaleY: displayHeight / videoHeight
             };
@@ -672,19 +705,15 @@
             const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
             
             try {
-                console.log('🔄 Loading face models...');
-                
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
                 
                 modelsLoaded = true;
-                console.log('✅ All face models loaded successfully');
                 return true;
-                
             } catch (error) {
-                console.error('❌ Failed to load models:', error);
+                console.error('Failed to load models:', error);
                 showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true, false);
                 return false;
             }
@@ -782,14 +811,12 @@
         }
 
         // ============================================
-        // CHECK TODAY ATTENDANCE - DIPERBAIKI
+        // CHECK TODAY ATTENDANCE
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
             
             const today = new Date().toISOString().split('T')[0];
-            
-            console.log('Checking attendance for user:', currentUser.uid, 'date:', today);
             
             try {
                 const result = await callAPI('getAttendance', { 
@@ -798,113 +825,69 @@
                     endDate: today 
                 });
                 
-                console.log('Attendance API response:', result);
-                
                 const statusEl = document.getElementById('attendanceStatus');
                 const clockInBtn = document.getElementById('clockInBtn');
                 const clockOutBtn = document.getElementById('clockOutBtn');
                 
-                // RESET BUTTONS TO DEFAULT ENABLED STATE FIRST
+                // Reset to default
                 clockInBtn.disabled = false;
-                clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
+                clockInBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
                 clockOutBtn.disabled = true;
-                clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
+                clockOutBtn.className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
                 
-                // Jika gagal mendapatkan data, set default
-                if (!result.success) {
-                    console.error('Failed to get attendance:', result.error);
-                    statusEl.innerText = 'BELUM MASUK';
-                    statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                    return;
-                }
-                
-                // Jika tiada rekod hari ini
-                if (!result.data || result.data.length === 0) {
-                    console.log('No attendance record for today');
+                if (!result.success || !result.data || result.data.length === 0) {
                     statusEl.innerText = 'BELUM MASUK';
                     statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     return;
                 }
                 
                 const record = result.data[0];
-                console.log('Today record:', record);
                 
-                // SEMAK BERDASARKAN STATUS FIELD
                 if (record.status === 'clocked_in') {
-                    console.log('User is clocked in (status)');
                     statusEl.innerText = 'DALAM BERTUGAS';
                     statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
-                    
                     clockInBtn.disabled = true;
-                    clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                    clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                     clockOutBtn.disabled = false;
-                    clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
-                    
+                    clockOutBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
                 } else if (record.status === 'clocked_out') {
-                    console.log('User is clocked out (status)');
                     statusEl.innerText = 'SELESAI';
                     statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
-                    
                     clockInBtn.disabled = true;
-                    clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                    clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                     clockOutBtn.disabled = true;
-                    clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
-                    
+                    clockOutBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                 } else {
-                    // FALLBACK: Semak berdasarkan clockIn dan clockOut values
-                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '0';
-                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '0';
-                    
-                    console.log('Fallback check - hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
+                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
+                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
                     
                     if (hasClockIn && !hasClockOut) {
-                        console.log('User is clocked in (fallback)');
                         statusEl.innerText = 'DALAM BERTUGAS';
                         statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
-                        
                         clockInBtn.disabled = true;
-                        clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                        clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                         clockOutBtn.disabled = false;
-                        clockOutBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
-                        
+                        clockOutBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
                     } else if (hasClockIn && hasClockOut) {
-                        console.log('User is clocked out (fallback)');
                         statusEl.innerText = 'SELESAI';
                         statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
-                        
                         clockInBtn.disabled = true;
-                        clockInBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
+                        clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                         clockOutBtn.disabled = true;
-                        clockOutBtn.className = 'bg-gray-400 text-white py-4 rounded-2xl font-bold cursor-not-allowed opacity-50';
-                        
+                        clockOutBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                     } else {
-                        console.log('User has no clock in today (fallback)');
                         statusEl.innerText = 'BELUM MASUK';
                         statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                        // Butang sudah dalam keadaan default (clockIn enabled, clockOut disabled)
                     }
                 }
-                
             } catch (error) {
-                console.error('❌ Ralat menyemak attendance:', error);
-                // Reset to default state on error
-                const statusEl = document.getElementById('attendanceStatus');
-                const clockInBtn = document.getElementById('clockInBtn');
-                const clockOutBtn = document.getElementById('clockOutBtn');
-                
-                statusEl.innerText = 'BELUM MASUK';
-                statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                clockInBtn.disabled = false;
-                clockInBtn.className = 'bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition-colors';
-                clockOutBtn.disabled = true;
-                clockOutBtn.className = 'bg-gray-200 text-gray-600 py-4 rounded-2xl font-bold opacity-50 cursor-not-allowed';
+                console.error('Check attendance error:', error);
             }
         }
 
         // ============================================
         // FACE VERIFICATION FUNCTIONS
         // ============================================
-        
         function isSmiling(landmarks) {
             if (!landmarks) return false;
             
@@ -927,7 +910,6 @@
             );
             
             const smileRatio = mouthWidth / (mouthHeight + 0.1);
-            
             return smileRatio > 2.0;
         }
 
@@ -937,10 +919,8 @@
                     .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
                     .withFaceLandmarks()
                     .withFaceDescriptor();
-                
                 return detection;
             } catch (error) {
-                console.error('❌ Error getting face descriptor:', error);
                 return null;
             }
         }
@@ -965,7 +945,6 @@
             scanContainer.classList.remove('hidden');
             clockInBtn.disabled = true;
             clockOutBtn.disabled = true;
-            
             faceOverlay = document.getElementById('faceOverlay');
             
             try {
@@ -982,33 +961,7 @@
                 
                 scanVideo.srcObject = stream;
                 videoStream = stream;
-                
                 await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                let faceDetectionInterval = setInterval(async () => {
-                    if (!scanVideo || !scanVideo.srcObject) return;
-                    
-                    try {
-                        const dims = getVideoDimensions(scanVideo);
-                        const detections = await faceapi.detectAllFaces(scanVideo, 
-                            new faceapi.TinyFaceDetectorOptions());
-                        
-                        if (faceOverlay) faceOverlay.innerHTML = '';
-                        
-                        if (detections.length > 0) {
-                            const box = detections[0].detection.box;
-                            const adjustedBox = adjustFaceBox(box, dims);
-                            
-                            const faceBox = document.createElement('div');
-                            faceBox.className = 'face-box';
-                            faceBox.style.left = `${adjustedBox.x}px`;
-                            faceBox.style.top = `${adjustedBox.y}px`;
-                            faceBox.style.width = `${adjustedBox.width}px`;
-                            faceBox.style.height = `${adjustedBox.height}px`;
-                            faceOverlay.appendChild(faceBox);
-                        }
-                    } catch (e) {}
-                }, 100);
                 
                 updateProgress(30);
                 challengeDisplay.innerText = '😊 SILA SENYUM';
@@ -1030,17 +983,13 @@
                             smileDetected = true;
                             break;
                         }
-                        
                         if (detection.landmarks && isSmiling(detection.landmarks)) {
                             smileDetected = true;
                             break;
                         }
                     }
-                    
                     await new Promise(resolve => setTimeout(resolve, 100));
                 }
-                
-                clearInterval(faceDetectionInterval);
                 
                 if (!smileDetected) {
                     throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
@@ -1049,21 +998,14 @@
                 updateProgress(80);
                 challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
                 scanStatus.innerText = 'Memadankan wajah dengan rekod...';
-                
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 const detection = await getFaceDescriptor(scanVideo);
-                
-                if (!detection) {
-                    throw new Error('Wajah tidak dapat dikesan. Sila pastikan wajah dalam bingkai.');
-                }
-                
-                if (!detection.descriptor) {
-                    throw new Error('Deskriptor wajah tidak dapat dijana');
+                if (!detection || !detection.descriptor) {
+                    throw new Error('Wajah tidak dapat dikesan');
                 }
                 
                 const match = faceMatcher.findBestMatch(detection.descriptor);
-                
                 if (match.label !== currentUser.uid || match.distance >= 0.65) {
                     throw new Error('Wajah tidak sepadan dengan rekod');
                 }
@@ -1071,7 +1013,6 @@
                 updateProgress(100);
                 challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
                 scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
-                
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 videoStream.getTracks().forEach(t => t.stop());
@@ -1081,17 +1022,13 @@
                 return true;
                 
             } catch (error) {
-                console.error('❌ Verification error:', error);
-                
                 if (videoStream) {
                     videoStream.getTracks().forEach(t => t.stop());
                     videoStream = null;
                 }
-                
                 scanContainer.classList.add('hidden');
                 showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true, true);
                 return false;
-                
             } finally {
                 isVerifying = false;
                 clockInBtn.disabled = false;
@@ -1102,14 +1039,13 @@
         }
 
         // ============================================
-        // LOGIN - ENHANCED WITH ANIMATION
+        // LOGIN
         // ============================================
         window.handleLogin = async function() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
             
-            // Reset error styling
             document.getElementById('loginEmail').style.borderColor = '';
             document.getElementById('loginPassword').style.borderColor = '';
 
@@ -1138,14 +1074,11 @@
                                 [new Float32Array(descriptor)]
                             );
                             faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
-                        } catch (e) {
-                            console.error('❌ Failed to create face matcher:', e);
-                        }
+                        } catch (e) {}
                     }
                     
-                    // Success animation
                     btn.style.backgroundColor = '#059669';
-                    btn.innerHTML = '<span class="material-symbols-rounded">check</span> Berjaya';
+                    btn.innerHTML = '<span class="material-symbols-rounded">check</span>';
                     
                     setTimeout(() => {
                         document.getElementById('userName').innerText = escapeHtml(currentUser.name);
@@ -1159,13 +1092,12 @@
                         startLocationTracking();
                         loadAttendanceHistory();
                         startClock();
-                        
+                        initPullToRefresh();
                         initAudio();
                         
                         showNotification('Selamat Datang', `Log masuk berjaya`, false, false);
                     }, 500);
                 } else {
-                    // Error animation
                     btn.style.backgroundColor = '#dc2626';
                     btn.innerHTML = 'Gagal';
                     showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true, true);
@@ -1178,11 +1110,9 @@
                     }, 1000);
                 }
             } catch (error) {
-                console.error('Login error:', error);
                 showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
                 btn.style.backgroundColor = '#dc2626';
                 btn.innerHTML = 'Ralat';
-                
                 setTimeout(() => {
                     btn.style.backgroundColor = '';
                     btn.disabled = false;
@@ -1198,14 +1128,12 @@
             document.getElementById('dashboard').classList.add('hidden');
             document.getElementById('loginPage').classList.remove('hidden');
             
-            // Reset login button
             const btn = document.getElementById('loginBtn');
             btn.style.backgroundColor = '';
             btn.disabled = false;
             btn.classList.remove('loading');
             btn.innerHTML = 'Log Masuk';
             
-            // Reset input fields
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
             document.getElementById('loginEmail').style.borderColor = '';
@@ -1232,9 +1160,7 @@
             }
             
             const verified = await verifyFace();
-            if (!verified) {
-                return;
-            }
+            if (!verified) return;
             
             const btn = document.getElementById('clockInBtn');
             btn.disabled = true;
@@ -1249,18 +1175,14 @@
                 
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan', false, true);
-                    
                     await new Promise(resolve => setTimeout(resolve, 1000));
-                    
                     await checkTodayAttendance();
                     await loadAttendanceHistory();
                     updateLocationDisplay();
-                    
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock in', true, true);
                 }
             } catch (error) {
-                console.error('Clock in error:', error);
                 showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
             } finally {
                 btn.disabled = false;
@@ -1275,9 +1197,7 @@
             }
             
             const verified = await verifyFace();
-            if (!verified) {
-                return;
-            }
+            if (!verified) return;
             
             const btn = document.getElementById('clockOutBtn');
             btn.disabled = true;
@@ -1292,18 +1212,14 @@
                 
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan', false, true);
-                    
                     await new Promise(resolve => setTimeout(resolve, 1000));
-                    
                     await checkTodayAttendance();
                     await loadAttendanceHistory();
                     updateLocationDisplay();
-                    
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock out', true, true);
                 }
             } catch (error) {
-                console.error('Clock out error:', error);
                 showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
             } finally {
                 btn.disabled = false;
@@ -1332,7 +1248,7 @@
                 const historyEl = document.getElementById('attendanceHistory');
                 
                 if (!result.success || !result.data || result.data.length === 0) {
-                    historyEl.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada rekod kehadiran</div>';
+                    historyEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
                     return;
                 }
                 
@@ -1345,58 +1261,46 @@
                     const clockOut = record.clockOut ? new Date(record.clockOut) : null;
                     
                     const clockInTime = clockIn ? clockIn.toLocaleTimeString('ms-MY', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: true 
+                        hour: '2-digit', minute: '2-digit'
                     }) : '--:--';
                     
                     const clockOutTime = clockOut ? clockOut.toLocaleTimeString('ms-MY', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: true 
+                        hour: '2-digit', minute: '2-digit'
                     }) : '--:--';
                     
                     const totalHours = record.totalHours ? parseFloat(record.totalHours).toFixed(1) : '-';
-                    
                     const isToday = record.date === new Date().toISOString().split('T')[0];
                     const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
-                    
-                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'long' });
+                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short' });
                     const formattedDate = date.toLocaleDateString('ms-MY', { 
-                        day: 'numeric', 
-                        month: 'long', 
-                        year: 'numeric' 
+                        day: 'numeric', month: 'short'
                     });
                     
                     html += `
-                        <div class="bg-white p-4 rounded-2xl border hover:shadow-md transition-shadow ${todayClass}">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
-                                    ${escapeHtml(weekday)}
+                        <div class="history-item ${todayClass} active:scale-98 transition-transform">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                    ${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}
                                 </span>
-                                <span class="text-xs text-gray-400">${escapeHtml(formattedDate)}</span>
+                                ${totalHours !== '-' ? `<span class="text-xs font-bold ${totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">${totalHours} jam</span>` : ''}
                             </div>
-                            <div class="flex justify-between items-center">
-                                <div class="flex gap-4">
+                            <div class="flex justify-between items-center mt-2">
+                                <div class="flex gap-3">
                                     <div class="flex items-center gap-1">
                                         <span class="material-symbols-rounded text-sm text-green-600">login</span>
-                                        <span class="text-sm font-bold">${clockInTime}</span>
+                                        <span class="text-sm font-medium">${clockInTime}</span>
                                     </div>
                                     <div class="flex items-center gap-1">
                                         <span class="material-symbols-rounded text-sm text-red-500">logout</span>
-                                        <span class="text-sm font-bold">${clockOutTime}</span>
+                                        <span class="text-sm font-medium">${clockOutTime}</span>
                                     </div>
                                 </div>
-                                <span class="text-xs font-bold ${totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">
-                                    ${totalHours !== '-' ? totalHours + ' jam' : '-'}
-                                </span>
                             </div>
                         </div>
                     `;
                 });
                 
                 historyEl.innerHTML = html;
-                
             } catch (error) {
                 console.error('Load attendance error:', error);
             }
@@ -1409,16 +1313,10 @@
             setInterval(() => {
                 const now = new Date();
                 document.getElementById('realTimeClock').innerText = now.toLocaleTimeString('ms-MY', { 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    second: '2-digit',
-                    hour12: false 
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false 
                 });
                 document.getElementById('displayDate').innerText = now.toLocaleDateString('ms-MY', { 
-                    weekday: 'long', 
-                    day: 'numeric', 
-                    month: 'long', 
-                    year: 'numeric' 
+                    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
                 });
             }, 1000);
         }
@@ -1435,12 +1333,13 @@
                 overlay.id = 'faceOverlay';
                 overlay.className = 'face-overlay';
                 const videoContainer = document.querySelector('.video-wrapper');
-                if (videoContainer) {
-                    videoContainer.appendChild(overlay);
-                }
+                if (videoContainer) videoContainer.appendChild(overlay);
             }
             
-            setTimeout(() => window.scrollTo(0, 0), 100);
+            // Prevent zoom on double tap
+            document.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 1) e.preventDefault();
+            }, { passive: false });
         });
 
         document.getElementById('loginPassword').addEventListener('keypress', (e) => {
@@ -1448,18 +1347,8 @@
         });
 
         window.addEventListener('beforeunload', () => {
-            if (videoStream) {
-                videoStream.getTracks().forEach(t => t.stop());
-            }
-            if (locationWatchId) {
-                navigator.geolocation.clearWatch(locationWatchId);
-            }
-        });
-
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => {
-                if (faceOverlay) faceOverlay.innerHTML = '';
-            }, 300);
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
         });
     </script>
 </body>
