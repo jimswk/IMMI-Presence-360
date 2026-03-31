@@ -2394,7 +2394,7 @@
                 const title = 'Total Time Card';
                 doc.text(title, (pageWidth - doc.getTextWidth(title)) / 2, y);
                 y += 10; doc.setFontSize(10); doc.setFont('times', 'normal');
-                doc.text(`Start Date ${startDateStr} End Date ${endDateStr}`, tableMarginX, y);
+                doc.text(`Start Date: ${startDateStr} End Date: ${endDateStr}`, tableMarginX, y);
                 y += 5; doc.text(`First Name: ${user.name}, Department: ${user.unit || 'Tiada'}`, tableMarginX, y);
                 y += 10; doc.setFont('times', 'bold'); doc.setDrawColor(0); doc.setLineWidth(0.2);
                 let x = tableMarginX;
