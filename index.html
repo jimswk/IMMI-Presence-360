@@ -174,12 +174,13 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 130px;
-            height: 170px;
-            border: 2px solid #fbbf24;
-            border-radius: 70px;
+            width: 150px;
+            height: 190px;
+            border: 3px solid #fbbf24;
+            border-radius: 80px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
             pointer-events: none;
+            transition: all 0.3s ease;
         }
 
         .face-overlay {
@@ -235,18 +236,19 @@
         .challenge-box {
             background: #1e3a8a;
             color: white;
-            padding: 12px;
-            border-radius: 16px;
+            padding: 14px;
+            border-radius: 20px;
             text-align: center;
             margin-bottom: 16px;
             font-weight: bold;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
             animation: pulse 1.5s infinite;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.95; transform: scale(1.01); }
         }
 
         .progress-bar {
@@ -340,6 +342,33 @@
             .notification {
                 margin-bottom: env(safe-area-inset-bottom);
             }
+        }
+
+        .confidence-badge {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .smile-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 20;
         }
     </style>
 </head>
@@ -440,7 +469,7 @@
                         <div class="face-guide"></div>
                         <div id="faceOverlay" class="face-overlay"></div>
                     </div>
-                    <p class="text-center mt-2 text-xs text-blue-600" id="scanStatus">Menyediakan kamera...</p>
+                    <p class="text-center mt-2 text-xs text-blue-600 font-medium" id="scanStatus">Menyediakan kamera...</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 mt-4">
@@ -479,6 +508,7 @@
         let modelsLoaded = false;
         let isVerifying = false;
         let faceOverlay = null;
+        let realTimeDetectionInterval = null;
 
         let audioSuccess = null;
         let audioError = null;
@@ -556,7 +586,6 @@
         // PARSE API RESPONSE HELPER
         // ============================================
         function parseApiResponse(result) {
-            // Jika result.data adalah string JSON, parse
             if (result.data && typeof result.data === 'string') {
                 try {
                     result.data = JSON.parse(result.data);
@@ -605,6 +634,46 @@
         }
 
         // ============================================
+        // IMPROVED SMILE DETECTION FUNCTION
+        // ============================================
+        function isSmiling(landmarks, expressions) {
+            // Gunakan expression detection dahulu (lebih tepat)
+            if (expressions && expressions.happy !== undefined) {
+                return expressions.happy > 0.6;
+            }
+            
+            // Fallback ke landmark detection jika expression tidak tersedia
+            if (!landmarks) return false;
+            
+            try {
+                const mouth = landmarks.getMouth();
+                if (!mouth || mouth.length < 20) return false;
+                
+                // Koordinat mulut yang lebih tepat
+                const leftCorner = mouth[0];   // Sudut kiri mulut
+                const rightCorner = mouth[6];  // Sudut kanan mulut
+                const upperLip = mouth[12];     // Bibir atas tengah
+                const lowerLip = mouth[16];     // Bibir bawah tengah
+                
+                const mouthWidth = Math.hypot(rightCorner.x - leftCorner.x, rightCorner.y - leftCorner.y);
+                const mouthHeight = Math.hypot(lowerLip.y - upperLip.y, lowerLip.x - upperLip.x);
+                
+                // Nisbah lebar:tinggi - senyuman biasanya mempunyai nisbah > 2.2
+                const ratio = mouthWidth / (mouthHeight + 0.1);
+                
+                // Semak sudut mulut (senyuman = sudut mulut naik)
+                const centerY = (upperLip.y + lowerLip.y) / 2;
+                const isLeftCornerUp = leftCorner.y < centerY;
+                const isRightCornerUp = rightCorner.y < centerY;
+                const isCornersUp = isLeftCornerUp && isRightCornerUp;
+                
+                return ratio > 2.2 && isCornersUp;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        // ============================================
         // FACE API MODELS
         // ============================================
         async function loadFaceModels() {
@@ -622,6 +691,62 @@
                 showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', true, false);
                 return false;
             }
+        }
+
+        // ============================================
+        // REAL TIME FACE DETECTION WITH SMILE INDICATOR
+        // ============================================
+        function startRealTimeFaceDetection() {
+            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
+            const video = document.getElementById('scanVideo');
+            if (!video) return;
+            
+            realTimeDetectionInterval = setInterval(async () => {
+                if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
+                try {
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks()
+                        .withFaceExpressions();
+                    
+                    if (detection) {
+                        const dims = getVideoDimensions(video);
+                        const box = adjustFaceBox(detection.detection.box, dims);
+                        const confidence = Math.round(detection.detection.score * 100);
+                        const happyScore = detection.expressions ? Math.round(detection.expressions.happy * 100) : 0;
+                        const isSmilingNow = isSmiling(detection.landmarks, detection.expressions);
+                        
+                        let borderColor = '#fbbf24';
+                        if (isSmilingNow || happyScore > 60) {
+                            borderColor = '#10b981';
+                        } else if (confidence > 70) {
+                            borderColor = '#fbbf24';
+                        }
+                        
+                        const overlay = document.getElementById('faceOverlay');
+                        if (overlay) {
+                            overlay.innerHTML = `
+                                <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};">
+                                    <div class="confidence-badge" style="bottom:-25px; left:0;">
+                                        Keyakinan: ${confidence}% | Senyuman: ${happyScore}%
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        const overlay = document.getElementById('faceOverlay');
+                        if (overlay) overlay.innerHTML = '';
+                    }
+                } catch(e) {}
+            }, 150);
+        }
+
+        function stopRealTimeFaceDetection() {
+            if (realTimeDetectionInterval) {
+                clearInterval(realTimeDetectionInterval);
+                realTimeDetectionInterval = null;
+            }
+            const overlay = document.getElementById('faceOverlay');
+            if (overlay) overlay.innerHTML = '';
         }
 
         // ============================================
@@ -689,7 +814,7 @@
         }
 
         // ============================================
-        // CHECK TODAY ATTENDANCE - DIPERBAIKI
+        // CHECK TODAY ATTENDANCE
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
@@ -704,43 +829,33 @@
                     endDate: today 
                 });
                 
-                console.log('Attendance API result:', result);
-                
-                // Parse data if needed
                 const parsedResult = parseApiResponse(result);
                 
                 const statusEl = document.getElementById('attendanceStatus');
                 const clockInBtn = document.getElementById('clockInBtn');
                 const clockOutBtn = document.getElementById('clockOutBtn');
                 
-                // Reset to default
                 clockInBtn.disabled = false;
                 clockInBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
                 clockOutBtn.disabled = true;
                 clockOutBtn.className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
                 
                 if (!parsedResult.success) {
-                    console.error('API failed:', parsedResult.error);
                     statusEl.innerText = 'BELUM MASUK';
                     statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     return;
                 }
                 
-                // Check if data exists
                 const records = parsedResult.data;
                 if (!records || !Array.isArray(records) || records.length === 0) {
-                    console.log('No records for today');
                     statusEl.innerText = 'BELUM MASUK';
                     statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     return;
                 }
                 
                 const record = records[0];
-                console.log('Today record:', record);
                 
-                // Check status field
                 if (record.status === 'clocked_in') {
-                    console.log('User is clocked in (status)');
                     statusEl.innerText = 'DALAM BERTUGAS';
                     statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
                     clockInBtn.disabled = true;
@@ -749,7 +864,6 @@
                     clockOutBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
                 } 
                 else if (record.status === 'clocked_out') {
-                    console.log('User is clocked out (status)');
                     statusEl.innerText = 'SELESAI';
                     statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
                     clockInBtn.disabled = true;
@@ -758,12 +872,10 @@
                     clockOutBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                 }
                 else {
-                    // Fallback: check clockIn and clockOut values
                     const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
                     const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
                     
                     if (hasClockIn && !hasClockOut) {
-                        console.log('User is clocked in (fallback)');
                         statusEl.innerText = 'DALAM BERTUGAS';
                         statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
                         clockInBtn.disabled = true;
@@ -772,7 +884,6 @@
                         clockOutBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
                     }
                     else if (hasClockIn && hasClockOut) {
-                        console.log('User is clocked out (fallback)');
                         statusEl.innerText = 'SELESAI';
                         statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
                         clockInBtn.disabled = true;
@@ -781,7 +892,6 @@
                         clockOutBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                     }
                     else {
-                        console.log('User has no clock in today');
                         statusEl.innerText = 'BELUM MASUK';
                         statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     }
@@ -789,7 +899,6 @@
                 
             } catch (error) {
                 console.error('Check attendance error:', error);
-                // Reset to default on error
                 document.getElementById('attendanceStatus').innerText = 'BELUM MASUK';
                 document.getElementById('attendanceStatus').className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                 document.getElementById('clockInBtn').disabled = false;
@@ -800,7 +909,7 @@
         }
 
         // ============================================
-        // ATTENDANCE HISTORY - DIPERBAIKI
+        // ATTENDANCE HISTORY
         // ============================================
         async function loadAttendanceHistory() {
             if (!currentUser) return;
@@ -811,8 +920,6 @@
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
             const endDate = today.toISOString().split('T')[0];
             
-            console.log('Loading attendance history from', startDate, 'to', endDate);
-            
             try {
                 const result = await callAPI('getAttendance', { 
                     uid: currentUser.uid,
@@ -821,20 +928,15 @@
                     requestingUser: JSON.stringify(currentUser)
                 });
                 
-                console.log('History API result:', result);
-                
                 const parsedResult = parseApiResponse(result);
                 const historyEl = document.getElementById('attendanceHistory');
                 
                 if (!parsedResult.success || !parsedResult.data || parsedResult.data.length === 0) {
-                    console.log('No history records found');
                     historyEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
                     return;
                 }
                 
                 const records = parsedResult.data;
-                console.log('Found', records.length, 'records');
-                
                 let html = '';
                 records.sort((a, b) => new Date(b.date) - new Date(a.date));
                 
@@ -881,7 +983,6 @@
                 });
                 
                 historyEl.innerHTML = html;
-                console.log('History rendered');
                 
             } catch (error) {
                 console.error('Load attendance error:', error);
@@ -890,61 +991,14 @@
         }
 
         // ============================================
-        // FACE VERIFICATION FUNCTIONS
+        // IMPROVED FACE VERIFICATION WITH LIVENESS
         // ============================================
-        let realTimeDetectionInterval = null;
-
-        function startRealTimeFaceDetection() {
-            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
-            const video = document.getElementById('scanVideo');
-            if (!video) return;
-            realTimeDetectionInterval = setInterval(async () => {
-                if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
-                try {
-                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
-                    if (detection) {
-                        const dims = getVideoDimensions(video);
-                        const box = adjustFaceBox(detection.detection.box, dims);
-                        const confidence = Math.round(detection.detection.score * 100);
-                        const borderColor = detection.detection.score > 0.7 ? '#10b981' : '#fbbf24';
-                        const overlay = document.getElementById('faceOverlay');
-                        if (overlay) {
-                            overlay.innerHTML = `
-                                <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};">
-                                    <div class="confidence-badge" style="position:absolute; bottom:-25px; left:0; background:rgba(0,0,0,0.7); color:white; padding:2px 8px; border-radius:20px; font-size:10px;">Keyakinan: ${confidence}%</div>
-                                </div>
-                            `;
-                        }
-                    } else {
-                        const overlay = document.getElementById('faceOverlay');
-                        if (overlay) overlay.innerHTML = '';
-                    }
-                } catch(e) {}
-            }, 200);
-        }
-
-        function stopRealTimeFaceDetection() {
-            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
-            const overlay = document.getElementById('faceOverlay');
-            if (overlay) overlay.innerHTML = '';
-        }
-
-        function isSmiling(landmarks) {
-            if (!landmarks) return false;
-            const mouth = landmarks.getMouth();
-            if (!mouth || mouth.length < 20) return false;
-            const leftMouthCorner = mouth[0];
-            const rightMouthCorner = mouth[6];
-            const upperLip = mouth[3];
-            const lowerLip = mouth[9];
-            const mouthWidth = Math.hypot(rightMouthCorner.x - leftMouthCorner.x, rightMouthCorner.y - leftMouthCorner.y);
-            const mouthHeight = Math.hypot(lowerLip.x - upperLip.x, lowerLip.y - upperLip.y);
-            return mouthWidth / (mouthHeight + 0.1) > 2.0;
-        }
-
         async function getFaceDescriptor(video) {
             try {
-                return await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+                return await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks()
+                    .withFaceDescriptor()
+                    .withFaceExpressions();
             } catch (error) {
                 return null;
             }
@@ -966,6 +1020,7 @@
             const challengeDisplay = document.getElementById('challengeDisplay');
             const clockInBtn = document.getElementById('clockInBtn');
             const clockOutBtn = document.getElementById('clockOutBtn');
+            const faceGuide = document.querySelector('.face-guide');
             
             scanContainer.classList.remove('hidden');
             clockInBtn.disabled = true;
@@ -975,58 +1030,123 @@
                 await loadFaceModels();
                 
                 scanStatus.innerText = 'Mengakses kamera...';
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+                challengeDisplay.innerText = '📷 MENYEDIAKAN KAMERA...';
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+                });
                 scanVideo.srcObject = stream;
                 videoStream = stream;
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 startRealTimeFaceDetection();
                 
-                updateProgress(30);
-                challengeDisplay.innerText = '😊 SILA SENYUM';
-                scanStatus.innerText = 'Sila senyum lebar...';
+                // ========== PHASE 1: SMILE DETECTION (LIVENESS) ==========
+                updateProgress(20);
+                challengeDisplay.innerText = '😊 SILA SENYUM UNTUK MULAKAN 😊';
+                challengeDisplay.style.backgroundColor = '#1e3a8a';
+                scanStatus.innerText = 'Sila senyum dengan jelas di hadapan kamera...';
+                faceGuide.style.borderColor = '#fbbf24';
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
                 
                 let smileDetected = false;
+                let maxHappyScore = 0;
+                let bestDetection = null;
                 let smileStartTime = Date.now();
                 
-                while (Date.now() - smileStartTime < 5000) {
-                    updateProgress(30 + ((Date.now() - smileStartTime) / 5000) * 40);
-                    const detection = await faceapi.detectSingleFace(scanVideo, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
-                    if (detection) {
-                        if ((detection.expressions && detection.expressions.happy > 0.5) || (detection.landmarks && isSmiling(detection.landmarks))) {
-                            smileDetected = true;
-                            break;
+                while (Date.now() - smileStartTime < 6000) {
+                    const elapsed = Date.now() - smileStartTime;
+                    updateProgress(20 + (elapsed / 6000) * 40);
+                    
+                    try {
+                        const detection = await faceapi.detectSingleFace(scanVideo, new faceapi.TinyFaceDetectorOptions())
+                            .withFaceLandmarks()
+                            .withFaceExpressions();
+                        
+                        if (detection) {
+                            bestDetection = detection;
+                            const happyScore = detection.expressions ? detection.expressions.happy : 0;
+                            maxHappyScore = Math.max(maxHappyScore, happyScore);
+                            const isSmilingNow = isSmiling(detection.landmarks, detection.expressions);
+                            
+                            scanStatus.innerText = `Mengesan senyuman: ${Math.round(happyScore * 100)}%`;
+                            
+                            if (isSmilingNow || happyScore > 0.65) {
+                                smileDetected = true;
+                                scanStatus.innerText = '✅ Senyuman berjaya dikesan!';
+                                challengeDisplay.innerText = '✅ SENYUMAN DISAHKAN!';
+                                challengeDisplay.style.backgroundColor = '#059669';
+                                faceGuide.style.borderColor = '#10b981';
+                                await new Promise(resolve => setTimeout(resolve, 800));
+                                break;
+                            } else if (happyScore > 0.5) {
+                                challengeDisplay.innerText = '😊 BAGUS! TERUSKAN SENYUM 😊';
+                                challengeDisplay.style.backgroundColor = '#f59e0b';
+                                faceGuide.style.borderColor = '#f59e0b';
+                            } else if (happyScore > 0.3) {
+                                challengeDisplay.innerText = '😐 SENYUM LAGI... 😐';
+                                challengeDisplay.style.backgroundColor = '#f59e0b';
+                                faceGuide.style.borderColor = '#fbbf24';
+                            } else {
+                                challengeDisplay.innerText = '😞 SILA SENYUM 😞';
+                                challengeDisplay.style.backgroundColor = '#1e3a8a';
+                                faceGuide.style.borderColor = '#fbbf24';
+                            }
+                        } else {
+                            scanStatus.innerText = '🔍 Tiada wajah dikesan...';
+                            challengeDisplay.innerText = '🔍 PASTIKAN WAJAH DALAM BULATAN';
                         }
+                    } catch(e) {
+                        console.log('Detection error:', e);
                     }
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    await new Promise(resolve => setTimeout(resolve, 150));
                 }
                 
-                if (!smileDetected) throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
+                if (!smileDetected) {
+                    throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
+                }
                 
-                updateProgress(80);
-                challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
+                // ========== PHASE 2: FACE MATCHING ==========
+                updateProgress(70);
+                challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH...';
+                challengeDisplay.style.backgroundColor = '#1e3a8a';
                 scanStatus.innerText = 'Memadankan wajah dengan rekod...';
+                faceGuide.style.borderColor = '#3b82f6';
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 const detection = await getFaceDescriptor(scanVideo);
-                if (!detection || !detection.descriptor) throw new Error('Wajah tidak dapat dikesan');
+                if (!detection || !detection.descriptor) {
+                    throw new Error('Wajah tidak dapat dikesan. Pastikan pencahayaan mencukupi.');
+                }
                 
                 const match = faceMatcher.findBestMatch(detection.descriptor);
-                if (match.label !== currentUser.uid || match.distance >= 0.65) throw new Error('Wajah tidak sepadan dengan rekod');
+                if (match.label !== currentUser.uid || match.distance >= 0.65) {
+                    throw new Error('Wajah tidak sepadan dengan rekod sistem');
+                }
                 
                 updateProgress(100);
-                challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
+                challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA!';
+                challengeDisplay.style.backgroundColor = '#059669';
                 scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
+                faceGuide.style.borderColor = '#10b981';
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 videoStream.getTracks().forEach(t => t.stop());
                 videoStream = null;
                 scanContainer.classList.add('hidden');
                 stopRealTimeFaceDetection();
+                faceGuide.style.borderColor = '#fbbf24';
+                
                 return true;
                 
             } catch (error) {
-                if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+                console.error('Verification error:', error);
+                if (videoStream) {
+                    videoStream.getTracks().forEach(t => t.stop());
+                    videoStream = null;
+                }
                 scanContainer.classList.add('hidden');
                 stopRealTimeFaceDetection();
                 showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true, true);
@@ -1036,6 +1156,8 @@
                 clockInBtn.disabled = false;
                 clockOutBtn.disabled = false;
                 updateProgress(0);
+                const faceGuide = document.querySelector('.face-guide');
+                if (faceGuide) faceGuide.style.borderColor = '#fbbf24';
             }
         }
 
@@ -1069,7 +1191,9 @@
                             const descriptor = JSON.parse(currentUser.faceDescriptor);
                             const labeledDescriptor = new faceapi.LabeledFaceDescriptors(currentUser.uid, [new Float32Array(descriptor)]);
                             faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
-                        } catch (e) {}
+                        } catch (e) {
+                            console.error('Face matcher error:', e);
+                        }
                     }
                     
                     btn.style.backgroundColor = '#059669';
@@ -1117,6 +1241,7 @@
         window.handleLogout = function() {
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            stopRealTimeFaceDetection();
             document.getElementById('dashboard').classList.add('hidden');
             document.getElementById('loginPage').classList.remove('hidden');
             const btn = document.getElementById('loginBtn');
@@ -1126,6 +1251,8 @@
             btn.innerHTML = 'Log Masuk';
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
+            document.getElementById('loginEmail').style.borderColor = '';
+            document.getElementById('loginPassword').style.borderColor = '';
         };
 
         // ============================================
@@ -1225,6 +1352,7 @@
                 const videoContainer = document.querySelector('.video-wrapper');
                 if (videoContainer) videoContainer.appendChild(overlay);
             }
+            faceOverlay = document.getElementById('faceOverlay');
         });
 
         document.getElementById('loginPassword').addEventListener('keypress', (e) => {
@@ -1234,6 +1362,7 @@
         window.addEventListener('beforeunload', () => {
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
+            stopRealTimeFaceDetection();
         });
     </script>
 </body>
