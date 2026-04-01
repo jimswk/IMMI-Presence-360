@@ -174,30 +174,12 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 180px;
-            height: 180px;
+            width: 130px;
+            height: 170px;
             border: 2px solid #fbbf24;
-            border-radius: 50%;
+            border-radius: 70px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
             pointer-events: none;
-        }
-
-        .circle-guide {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 220px;
-            height: 220px;
-            border: 1px dashed rgba(251, 191, 36, 0.5);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: rotate 4s linear infinite;
-        }
-
-        @keyframes rotate {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         .face-overlay {
@@ -251,29 +233,35 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .challenge-box {
-            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            background: #1e3a8a;
             color: white;
-            padding: 14px;
-            border-radius: 20px;
+            padding: 12px;
+            border-radius: 16px;
             text-align: center;
             margin-bottom: 16px;
             font-weight: bold;
             font-size: 0.9rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
         }
 
         .progress-bar {
-            height: 6px;
+            height: 4px;
             background: #e2e8f0;
-            border-radius: 3px;
+            border-radius: 2px;
             overflow: hidden;
             margin: 12px 0;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #fbbf24, #10b981);
+            background: #1e3a8a;
             width: 0%;
-            transition: width 0.3s ease;
+            transition: width 0.3s;
         }
 
         .status-badge {
@@ -352,33 +340,6 @@
             .notification {
                 margin-bottom: env(safe-area-inset-bottom);
             }
-        }
-
-        /* Direction indicators for circle */
-        .direction-dots {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 12px;
-        }
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #cbd5e1;
-            transition: all 0.2s;
-        }
-        .dot.completed {
-            background: #10b981;
-            transform: scale(1.2);
-        }
-        .dot.active {
-            background: #fbbf24;
-            animation: pulse 0.8s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.2); }
         }
     </style>
 </head>
@@ -469,8 +430,7 @@
 
                 <div id="scanContainer" class="hidden mt-3">
                     <div id="challengeDisplay" class="challenge-box">
-                        <span class="text-lg">🔄</span><br>
-                        Gerakkan kepala dalam bulatan
+                        Sedia untuk pengesahan...
                     </div>
                     <div class="progress-bar">
                         <div id="progressFill" class="progress-fill"></div>
@@ -478,14 +438,7 @@
                     <div class="video-wrapper">
                         <video id="scanVideo" autoplay muted playsinline></video>
                         <div class="face-guide"></div>
-                        <div class="circle-guide"></div>
                         <div id="faceOverlay" class="face-overlay"></div>
-                    </div>
-                    <div class="direction-dots" id="directionDots">
-                        <div class="dot" id="dotUp">⬆️</div>
-                        <div class="dot" id="dotRight">➡️</div>
-                        <div class="dot" id="dotDown">⬇️</div>
-                        <div class="dot" id="dotLeft">⬅️</div>
                     </div>
                     <p class="text-center mt-2 text-xs text-blue-600" id="scanStatus">Menyediakan kamera...</p>
                 </div>
@@ -529,31 +482,6 @@
 
         let audioSuccess = null;
         let audioError = null;
-
-        // ============================================
-        // CIRCLE MOTION DETECTION VARIABLES
-        // ============================================
-        let headPositions = {
-            center: { x: 0, y: 0 },
-            up: false,
-            right: false,
-            down: false,
-            left: false,
-            completed: false
-        };
-        
-        let circleCompletion = 0;
-        let lastDirection = null;
-        let motionStartTime = null;
-        let samples = [];
-
-        // Dot elements for UI
-        const dotElements = {
-            up: null,
-            right: null,
-            down: null,
-            left: null
-        };
 
         // ============================================
         // HELPER FUNCTIONS
@@ -608,33 +536,6 @@
             if (progressFill) progressFill.style.width = percent + '%';
         }
 
-        function updateCircleProgress() {
-            const percent = (circleCompletion / 4) * 100;
-            updateProgress(percent);
-            
-            // Update dot indicators
-            if (dotElements.up) {
-                dotElements.up.classList.remove('active', 'completed');
-                if (headPositions.up) dotElements.up.classList.add('completed');
-                else if (circleCompletion === 0 && !headPositions.up) dotElements.up.classList.add('active');
-            }
-            if (dotElements.right) {
-                dotElements.right.classList.remove('active', 'completed');
-                if (headPositions.right) dotElements.right.classList.add('completed');
-                else if (circleCompletion === 1 && headPositions.up && !headPositions.right) dotElements.right.classList.add('active');
-            }
-            if (dotElements.down) {
-                dotElements.down.classList.remove('active', 'completed');
-                if (headPositions.down) dotElements.down.classList.add('completed');
-                else if (circleCompletion === 2 && headPositions.up && headPositions.right && !headPositions.down) dotElements.down.classList.add('active');
-            }
-            if (dotElements.left) {
-                dotElements.left.classList.remove('active', 'completed');
-                if (headPositions.left) dotElements.left.classList.add('completed');
-                else if (circleCompletion === 3 && headPositions.up && headPositions.right && headPositions.down && !headPositions.left) dotElements.left.classList.add('active');
-            }
-        }
-
         function formatJam(decimalJam) {
             if (!decimalJam || decimalJam <= 0) return '-';
             const jam = Math.floor(decimalJam);
@@ -655,6 +556,7 @@
         // PARSE API RESPONSE HELPER
         // ============================================
         function parseApiResponse(result) {
+            // Jika result.data adalah string JSON, parse
             if (result.data && typeof result.data === 'string') {
                 try {
                     result.data = JSON.parse(result.data);
@@ -723,261 +625,6 @@
         }
 
         // ============================================
-        // CIRCLE MOTION DETECTION
-        // ============================================
-        function detectHeadDirection(landmarks) {
-            if (!landmarks) return 'center';
-            
-            const nose = landmarks.getNose();
-            if (!nose || nose.length < 2) return 'center';
-            
-            const leftEye = landmarks.getLeftEye();
-            const rightEye = landmarks.getRightEye();
-            const mouth = landmarks.getMouth();
-            
-            if (!leftEye || !rightEye || !mouth) return 'center';
-            
-            // Calculate center of face
-            const leftEyeCenter = leftEye.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
-            const rightEyeCenter = rightEye.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
-            const mouthCenter = mouth.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
-            
-            leftEyeCenter.x /= leftEye.length;
-            leftEyeCenter.y /= leftEye.length;
-            rightEyeCenter.x /= rightEye.length;
-            rightEyeCenter.y /= rightEye.length;
-            mouthCenter.x /= mouth.length;
-            mouthCenter.y /= mouth.length;
-            
-            const eyeDistance = Math.abs(leftEyeCenter.x - rightEyeCenter.x);
-            const faceWidth = eyeDistance * 3;
-            const faceHeight = Math.abs(mouthCenter.y - leftEyeCenter.y) * 2;
-            
-            const noseX = nose[0].x;
-            const noseY = nose[0].y;
-            
-            // Normalize position relative to face center
-            const faceCenterX = (leftEyeCenter.x + rightEyeCenter.x) / 2;
-            const faceCenterY = (leftEyeCenter.y + mouthCenter.y) / 2;
-            
-            const normalizedX = (noseX - faceCenterX) / (faceWidth / 2);
-            const normalizedY = (noseY - faceCenterY) / (faceHeight / 2);
-            
-            // Determine direction based on normalized position
-            if (normalizedY < -0.3) return 'up';
-            if (normalizedX > 0.3) return 'right';
-            if (normalizedY > 0.3) return 'down';
-            if (normalizedX < -0.3) return 'left';
-            return 'center';
-        }
-
-        async function detectCircleMotion(video) {
-            try {
-                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks();
-                
-                if (!detection) return false;
-                
-                const direction = detectHeadDirection(detection.landmarks);
-                
-                // Update direction dots UI
-                if (direction !== 'center') {
-                    const dotMap = { up: '⬆️', right: '➡️', down: '⬇️', left: '⬅️' };
-                    document.getElementById('scanStatus').innerHTML = `Mengesan: ${dotMap[direction] || '...'}`;
-                }
-                
-                // Detect circular motion sequence: up -> right -> down -> left
-                if (direction === 'up' && !headPositions.up && circleCompletion === 0) {
-                    headPositions.up = true;
-                    circleCompletion = 1;
-                    updateCircleProgress();
-                    playSound('success');
-                }
-                else if (direction === 'right' && headPositions.up && !headPositions.right && circleCompletion === 1) {
-                    headPositions.right = true;
-                    circleCompletion = 2;
-                    updateCircleProgress();
-                    playSound('success');
-                }
-                else if (direction === 'down' && headPositions.up && headPositions.right && !headPositions.down && circleCompletion === 2) {
-                    headPositions.down = true;
-                    circleCompletion = 3;
-                    updateCircleProgress();
-                    playSound('success');
-                }
-                else if (direction === 'left' && headPositions.up && headPositions.right && headPositions.down && !headPositions.left && circleCompletion === 3) {
-                    headPositions.left = true;
-                    circleCompletion = 4;
-                    updateCircleProgress();
-                    return true; // Circle completed
-                }
-                
-                return false;
-            } catch (e) {
-                console.log('Detection error:', e);
-                return false;
-            }
-        }
-
-        async function runCircleMotionDetection() {
-            const scanVideo = document.getElementById('scanVideo');
-            const challengeDisplay = document.getElementById('challengeDisplay');
-            const scanStatus = document.getElementById('scanStatus');
-            
-            // Reset state
-            headPositions = {
-                up: false, right: false, down: false, left: false, completed: false
-            };
-            circleCompletion = 0;
-            updateCircleProgress();
-            
-            challengeDisplay.innerHTML = `
-                <span class="text-lg">🔄</span><br>
-                Gerakkan kepala dalam bulatan<br>
-                <span class="text-xs opacity-80">⬆️ ➡️ ⬇️ ⬅️</span>
-            `;
-            scanStatus.innerText = 'Mula gerakkan kepala dalam bulatan...';
-            
-            const startTime = Date.now();
-            const timeout = 15000; // 15 seconds timeout
-            
-            while (Date.now() - startTime < timeout && circleCompletion < 4) {
-                const completed = await detectCircleMotion(scanVideo);
-                if (completed) break;
-                await new Promise(r => setTimeout(r, 100));
-            }
-            
-            if (circleCompletion < 4) {
-                throw new Error('Pergerakan bulatan tidak lengkap. Sila cuba lagi.');
-            }
-            
-            challengeDisplay.innerHTML = `
-                <span class="text-lg">✅</span><br>
-                Pergerakan bulatan berjaya
-            `;
-            scanStatus.innerText = 'Pengesahan pergerakan selesai...';
-            await new Promise(r => setTimeout(r, 1000));
-            
-            return true;
-        }
-
-        // ============================================
-        // FACE VERIFICATION FUNCTIONS
-        // ============================================
-        async function getFaceDescriptor(video) {
-            try {
-                return await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks()
-                    .withFaceDescriptor();
-            } catch (error) {
-                return null;
-            }
-        }
-
-        async function verifyFace() {
-            if (isVerifying) return false;
-            isVerifying = true;
-            
-            if (!faceMatcher) {
-                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true, false);
-                isVerifying = false;
-                return false;
-            }
-            
-            const scanContainer = document.getElementById('scanContainer');
-            const scanVideo = document.getElementById('scanVideo');
-            const scanStatus = document.getElementById('scanStatus');
-            const challengeDisplay = document.getElementById('challengeDisplay');
-            const clockInBtn = document.getElementById('clockInBtn');
-            const clockOutBtn = document.getElementById('clockOutBtn');
-            
-            scanContainer.classList.remove('hidden');
-            clockInBtn.disabled = true;
-            clockOutBtn.disabled = true;
-            
-            try {
-                await loadFaceModels();
-                
-                scanStatus.innerText = 'Mengakses kamera...';
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'user',
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    } 
-                });
-                
-                scanVideo.srcObject = stream;
-                videoStream = stream;
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Reset progress
-                updateProgress(0);
-                
-                // Step 1: Get face centered
-                challengeDisplay.innerHTML = `
-                    <span class="text-lg">🎯</span><br>
-                    Posisikan wajah di tengah
-                `;
-                scanStatus.innerText = 'Pastikan wajah dalam bulatan...';
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Step 2: Run circle motion detection
-                const motionPassed = await runCircleMotionDetection();
-                if (!motionPassed) {
-                    throw new Error('Pengesahan pergerakan gagal');
-                }
-                
-                // Step 3: Verify face against stored descriptor
-                scanStatus.innerText = 'Memadankan wajah dengan rekod...';
-                challengeDisplay.innerHTML = `
-                    <span class="text-lg">👤</span><br>
-                    Mengesahkan wajah...
-                `;
-                updateProgress(80);
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                const detection = await getFaceDescriptor(scanVideo);
-                if (!detection || !detection.descriptor) {
-                    throw new Error('Wajah tidak dapat dikesan');
-                }
-                
-                const match = faceMatcher.findBestMatch(detection.descriptor);
-                if (match.label !== currentUser.uid || match.distance >= 0.65) {
-                    throw new Error('Wajah tidak sepadan dengan rekod');
-                }
-                
-                updateProgress(100);
-                challengeDisplay.innerHTML = `
-                    <span class="text-lg">✅</span><br>
-                    PENGESAHAN BERJAYA
-                `;
-                scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                videoStream.getTracks().forEach(t => t.stop());
-                videoStream = null;
-                scanContainer.classList.add('hidden');
-                
-                return true;
-                
-            } catch (error) {
-                if (videoStream) {
-                    videoStream.getTracks().forEach(t => t.stop());
-                    videoStream = null;
-                }
-                scanContainer.classList.add('hidden');
-                showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true, true);
-                return false;
-            } finally {
-                isVerifying = false;
-                clockInBtn.disabled = false;
-                clockOutBtn.disabled = false;
-                updateProgress(0);
-            }
-        }
-
-        // ============================================
         // LOCATION FUNCTIONS
         // ============================================
         function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -1042,12 +689,13 @@
         }
 
         // ============================================
-        // CHECK TODAY ATTENDANCE
+        // CHECK TODAY ATTENDANCE - DIPERBAIKI
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
             
             const today = new Date().toISOString().split('T')[0];
+            console.log('Checking attendance for:', currentUser.uid, today);
             
             try {
                 const result = await callAPI('getAttendance', { 
@@ -1056,6 +704,9 @@
                     endDate: today 
                 });
                 
+                console.log('Attendance API result:', result);
+                
+                // Parse data if needed
                 const parsedResult = parseApiResponse(result);
                 
                 const statusEl = document.getElementById('attendanceStatus');
@@ -1068,58 +719,88 @@
                 clockOutBtn.disabled = true;
                 clockOutBtn.className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
                 
-                if (!parsedResult.success || !parsedResult.data || parsedResult.data.length === 0) {
+                if (!parsedResult.success) {
+                    console.error('API failed:', parsedResult.error);
                     statusEl.innerText = 'BELUM MASUK';
                     statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     return;
                 }
                 
-                const record = parsedResult.data[0];
+                // Check if data exists
+                const records = parsedResult.data;
+                if (!records || !Array.isArray(records) || records.length === 0) {
+                    console.log('No records for today');
+                    statusEl.innerText = 'BELUM MASUK';
+                    statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+                    return;
+                }
                 
+                const record = records[0];
+                console.log('Today record:', record);
+                
+                // Check status field
                 if (record.status === 'clocked_in') {
+                    console.log('User is clocked in (status)');
                     statusEl.innerText = 'DALAM BERTUGAS';
                     statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
                     clockInBtn.disabled = true;
                     clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                     clockOutBtn.disabled = false;
                     clockOutBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
-                } else if (record.status === 'clocked_out') {
+                } 
+                else if (record.status === 'clocked_out') {
+                    console.log('User is clocked out (status)');
                     statusEl.innerText = 'SELESAI';
                     statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
                     clockInBtn.disabled = true;
                     clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                     clockOutBtn.disabled = true;
                     clockOutBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
-                } else {
+                }
+                else {
+                    // Fallback: check clockIn and clockOut values
                     const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
                     const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
                     
                     if (hasClockIn && !hasClockOut) {
+                        console.log('User is clocked in (fallback)');
                         statusEl.innerText = 'DALAM BERTUGAS';
                         statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
                         clockInBtn.disabled = true;
                         clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                         clockOutBtn.disabled = false;
                         clockOutBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
-                    } else if (hasClockIn && hasClockOut) {
+                    }
+                    else if (hasClockIn && hasClockOut) {
+                        console.log('User is clocked out (fallback)');
                         statusEl.innerText = 'SELESAI';
                         statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
                         clockInBtn.disabled = true;
                         clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
                         clockOutBtn.disabled = true;
                         clockOutBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
-                    } else {
+                    }
+                    else {
+                        console.log('User has no clock in today');
                         statusEl.innerText = 'BELUM MASUK';
                         statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
                     }
                 }
+                
             } catch (error) {
                 console.error('Check attendance error:', error);
+                // Reset to default on error
+                document.getElementById('attendanceStatus').innerText = 'BELUM MASUK';
+                document.getElementById('attendanceStatus').className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+                document.getElementById('clockInBtn').disabled = false;
+                document.getElementById('clockInBtn').className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
+                document.getElementById('clockOutBtn').disabled = true;
+                document.getElementById('clockOutBtn').className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
             }
         }
 
         // ============================================
-        // ATTENDANCE HISTORY
+        // ATTENDANCE HISTORY - DIPERBAIKI
         // ============================================
         async function loadAttendanceHistory() {
             if (!currentUser) return;
@@ -1130,6 +811,8 @@
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
             const endDate = today.toISOString().split('T')[0];
             
+            console.log('Loading attendance history from', startDate, 'to', endDate);
+            
             try {
                 const result = await callAPI('getAttendance', { 
                     uid: currentUser.uid,
@@ -1138,16 +821,21 @@
                     requestingUser: JSON.stringify(currentUser)
                 });
                 
+                console.log('History API result:', result);
+                
                 const parsedResult = parseApiResponse(result);
                 const historyEl = document.getElementById('attendanceHistory');
                 
                 if (!parsedResult.success || !parsedResult.data || parsedResult.data.length === 0) {
+                    console.log('No history records found');
                     historyEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
                     return;
                 }
                 
-                let html = '';
                 const records = parsedResult.data;
+                console.log('Found', records.length, 'records');
+                
+                let html = '';
                 records.sort((a, b) => new Date(b.date) - new Date(a.date));
                 
                 records.forEach(record => {
@@ -1193,9 +881,161 @@
                 });
                 
                 historyEl.innerHTML = html;
+                console.log('History rendered');
+                
             } catch (error) {
                 console.error('Load attendance error:', error);
                 document.getElementById('attendanceHistory').innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Ralat memuat rekod</div>';
+            }
+        }
+
+        // ============================================
+        // FACE VERIFICATION FUNCTIONS
+        // ============================================
+        let realTimeDetectionInterval = null;
+
+        function startRealTimeFaceDetection() {
+            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
+            const video = document.getElementById('scanVideo');
+            if (!video) return;
+            realTimeDetectionInterval = setInterval(async () => {
+                if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
+                try {
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+                    if (detection) {
+                        const dims = getVideoDimensions(video);
+                        const box = adjustFaceBox(detection.detection.box, dims);
+                        const confidence = Math.round(detection.detection.score * 100);
+                        const borderColor = detection.detection.score > 0.7 ? '#10b981' : '#fbbf24';
+                        const overlay = document.getElementById('faceOverlay');
+                        if (overlay) {
+                            overlay.innerHTML = `
+                                <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};">
+                                    <div class="confidence-badge" style="position:absolute; bottom:-25px; left:0; background:rgba(0,0,0,0.7); color:white; padding:2px 8px; border-radius:20px; font-size:10px;">Keyakinan: ${confidence}%</div>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        const overlay = document.getElementById('faceOverlay');
+                        if (overlay) overlay.innerHTML = '';
+                    }
+                } catch(e) {}
+            }, 200);
+        }
+
+        function stopRealTimeFaceDetection() {
+            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
+            const overlay = document.getElementById('faceOverlay');
+            if (overlay) overlay.innerHTML = '';
+        }
+
+        function isSmiling(landmarks) {
+            if (!landmarks) return false;
+            const mouth = landmarks.getMouth();
+            if (!mouth || mouth.length < 20) return false;
+            const leftMouthCorner = mouth[0];
+            const rightMouthCorner = mouth[6];
+            const upperLip = mouth[3];
+            const lowerLip = mouth[9];
+            const mouthWidth = Math.hypot(rightMouthCorner.x - leftMouthCorner.x, rightMouthCorner.y - leftMouthCorner.y);
+            const mouthHeight = Math.hypot(lowerLip.x - upperLip.x, lowerLip.y - upperLip.y);
+            return mouthWidth / (mouthHeight + 0.1) > 2.0;
+        }
+
+        async function getFaceDescriptor(video) {
+            try {
+                return await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
+            } catch (error) {
+                return null;
+            }
+        }
+
+        async function verifyFace() {
+            if (isVerifying) return false;
+            isVerifying = true;
+            
+            if (!faceMatcher) {
+                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true, false);
+                isVerifying = false;
+                return false;
+            }
+            
+            const scanContainer = document.getElementById('scanContainer');
+            const scanVideo = document.getElementById('scanVideo');
+            const scanStatus = document.getElementById('scanStatus');
+            const challengeDisplay = document.getElementById('challengeDisplay');
+            const clockInBtn = document.getElementById('clockInBtn');
+            const clockOutBtn = document.getElementById('clockOutBtn');
+            
+            scanContainer.classList.remove('hidden');
+            clockInBtn.disabled = true;
+            clockOutBtn.disabled = true;
+            
+            try {
+                await loadFaceModels();
+                
+                scanStatus.innerText = 'Mengakses kamera...';
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+                scanVideo.srcObject = stream;
+                videoStream = stream;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                startRealTimeFaceDetection();
+                
+                updateProgress(30);
+                challengeDisplay.innerText = '😊 SILA SENYUM';
+                scanStatus.innerText = 'Sila senyum lebar...';
+                
+                let smileDetected = false;
+                let smileStartTime = Date.now();
+                
+                while (Date.now() - smileStartTime < 5000) {
+                    updateProgress(30 + ((Date.now() - smileStartTime) / 5000) * 40);
+                    const detection = await faceapi.detectSingleFace(scanVideo, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions();
+                    if (detection) {
+                        if ((detection.expressions && detection.expressions.happy > 0.5) || (detection.landmarks && isSmiling(detection.landmarks))) {
+                            smileDetected = true;
+                            break;
+                        }
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                if (!smileDetected) throw new Error('Senyum tidak dikesan. Sila senyum dengan jelas.');
+                
+                updateProgress(80);
+                challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
+                scanStatus.innerText = 'Memadankan wajah dengan rekod...';
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const detection = await getFaceDescriptor(scanVideo);
+                if (!detection || !detection.descriptor) throw new Error('Wajah tidak dapat dikesan');
+                
+                const match = faceMatcher.findBestMatch(detection.descriptor);
+                if (match.label !== currentUser.uid || match.distance >= 0.65) throw new Error('Wajah tidak sepadan dengan rekod');
+                
+                updateProgress(100);
+                challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
+                scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                videoStream.getTracks().forEach(t => t.stop());
+                videoStream = null;
+                scanContainer.classList.add('hidden');
+                stopRealTimeFaceDetection();
+                return true;
+                
+            } catch (error) {
+                if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+                scanContainer.classList.add('hidden');
+                stopRealTimeFaceDetection();
+                showNotification('Pengesahan Gagal', error.message || 'Gagal mengesahkan wajah', true, true);
+                return false;
+            } finally {
+                isVerifying = false;
+                clockInBtn.disabled = false;
+                clockOutBtn.disabled = false;
+                updateProgress(0);
             }
         }
 
@@ -1247,12 +1087,6 @@
                         loadAttendanceHistory();
                         startClock();
                         initAudio();
-                        
-                        // Initialize dot elements
-                        dotElements.up = document.getElementById('dotUp');
-                        dotElements.right = document.getElementById('dotRight');
-                        dotElements.down = document.getElementById('dotDown');
-                        dotElements.left = document.getElementById('dotLeft');
                         
                         showNotification('Selamat Datang', `Log masuk berjaya`, false, false);
                     }, 500);
