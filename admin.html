@@ -746,7 +746,7 @@
                                     <th class="text-center">Tindakan</th>
                                 </thead>
                             <tbody id="usersTableBody"></tbody>
-                        </table>
+                         </table>
                     </div>
                 </div>
             </div>
@@ -865,15 +865,19 @@
                                 <div id="progressFill" class="progress-fill"></div>
                             </div>
 
+                            <div id="challengeDisplay" class="challenge-box">
+                                Sedia untuk pengesahan...
+                            </div>
+
                             <div id="faceStatus" class="max-w-md mx-auto text-center bg-gray-50 p-6 rounded-[32px] border border-gray-100 mb-8">
                                 <p class="text-sm font-bold text-gray-500" id="faceStatusMsg">Sedia untuk melakukan pengesahan biometrik wajah...</p>
                             </div>
 
                             <div class="direction-dots" id="directionDots">
-                                <div class="dot" id="dotUp">⬆️</div>
-                                <div class="dot" id="dotRight">➡️</div>
-                                <div class="dot" id="dotDown">⬇️</div>
-                                <div class="dot" id="dotLeft">⬅️</div>
+                                <div class="dot" id="dotUp"></div>
+                                <div class="dot" id="dotRight"></div>
+                                <div class="dot" id="dotDown"></div>
+                                <div class="dot" id="dotLeft"></div>
                             </div>
 
                             <div class="flex justify-center gap-4">
@@ -1242,7 +1246,6 @@
             up: false, right: false, down: false, left: false
         };
         let circleCompletion = 0;
-        let motionStartTime = null;
         
         let dotElements = {
             up: null, right: null, down: null, left: null
@@ -1354,6 +1357,7 @@
             const percent = (circleCompletion / 4) * 100;
             updateProgress(percent);
             
+            // Update dot indicators
             if (dotElements.up) dotElements.up.classList.remove('active', 'completed');
             if (dotElements.right) dotElements.right.classList.remove('active', 'completed');
             if (dotElements.down) dotElements.down.classList.remove('active', 'completed');
@@ -1428,6 +1432,38 @@
             const confidence = Math.round(detection.detection.score * 100);
             const borderColor = detection.detection.score > 0.7 ? '#10b981' : '#fbbf24';
             overlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};"><div class="confidence-badge" style="bottom:-25px; left:0;">Keyakinan: ${confidence}%</div></div>`;
+        }
+
+        // ============================================
+        // REAL TIME FACE DETECTION
+        // ============================================
+        function startRealTimeFaceDetection() {
+            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
+            const video = document.getElementById('faceVideo');
+            const statusMsg = document.getElementById('faceStatusMsg');
+            realTimeDetectionInterval = setInterval(async () => {
+                if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
+                try {
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+                    if (detection) {
+                        drawFaceOverlay(video, detection);
+                        const confidence = Math.round(detection.detection.score * 100);
+                        if (detection.detection.score > 0.7) {
+                            statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan dengan baik (${confidence}%)</span><br><span class='text-xs'>Sedia untuk imbasan</span>`;
+                        } else {
+                            statusMsg.innerHTML = `<span class='text-amber-600 font-black'>⚠️ Wajah dikesan (${confidence}%)</span><br><span class='text-xs'>Pastikan wajah jelas dan pencahayaan mencukupi</span>`;
+                        }
+                    } else {
+                        if (faceOverlay) faceOverlay.innerHTML = '';
+                        statusMsg.innerHTML = "<span class='text-amber-600 font-black'>🔍 Tiada wajah dikesan</span><br><span class='text-xs'>Pastikan wajah berada dalam bulatan panduan</span>";
+                    }
+                } catch (e) {}
+            }, 200);
+        }
+
+        function stopRealTimeFaceDetection() {
+            if (realTimeDetectionInterval) { clearInterval(realTimeDetectionInterval); realTimeDetectionInterval = null; }
+            if (faceOverlay) faceOverlay.innerHTML = '';
         }
 
         // ============================================
@@ -1510,6 +1546,9 @@
             } catch(e) {}
         }
 
+        // ============================================
+        // CIRCLE MOTION CAPTURE (FIXED VERSION)
+        // ============================================
         async function startCircleMotionCapture() {
             if (isProcessing) return;
             isProcessing = true;
@@ -1517,7 +1556,7 @@
             const btn = document.getElementById('captureBtn');
             const video = document.getElementById('faceVideo');
             const statusMsg = document.getElementById('faceStatusMsg');
-            const challengeBox = document.querySelector('.challenge-box');
+            const challengeBox = document.getElementById('challengeDisplay');
             
             if (!video.srcObject) {
                 showAlert("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", 'warning');
@@ -1534,13 +1573,13 @@
             updateCircleProgress();
             
             // Step 1: Center face
-            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>🎯 Sila posisikan wajah di tengah</span>";
-            challengeBox.innerHTML = '<span class="text-lg">🎯</span><br>Posisikan wajah di tengah';
+            if (statusMsg) statusMsg.innerHTML = "<span class='text-blue-600 font-black'>🎯 Sila posisikan wajah di tengah</span>";
+            if (challengeBox) challengeBox.innerHTML = '<span class="text-lg">🎯</span><br>Posisikan wajah di tengah';
             await new Promise(r => setTimeout(r, 2000));
             
             // Step 2: Start circle motion
-            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>🔄 Gerakkan kepala dalam bulatan</span>";
-            challengeBox.innerHTML = '<span class="text-lg">🔄</span><br>Gerakkan kepala dalam bulatan<br><span class="text-xs">⬆️ ➡️ ⬇️ ⬅️</span>';
+            if (statusMsg) statusMsg.innerHTML = "<span class='text-blue-600 font-black'>🔄 Gerakkan kepala dalam bulatan</span>";
+            if (challengeBox) challengeBox.innerHTML = '<span class="text-lg">🔄</span><br>Gerakkan kepala dalam bulatan<br><span class="text-xs">⬆️ ➡️ ⬇️ ⬅️</span>';
             
             updateProgress(0);
             let startTime = Date.now();
@@ -1554,7 +1593,7 @@
             }
             
             if (circleCompletion < 4) {
-                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ PERGERAKAN BULATAN TIDAK LENGKAP</span>";
+                if (statusMsg) statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ PERGERAKAN BULATAN TIDAK LENGKAP</span>";
                 showAlert("Gagal", "Pergerakan bulatan tidak lengkap. Sila cuba lagi.", 'error');
                 btn.disabled = false;
                 btn.innerHTML = "Mula Pengesahan";
@@ -1564,8 +1603,8 @@
             }
             
             updateProgress(80);
-            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 Merekod data wajah...</span>";
-            challengeBox.innerHTML = '<span class="text-lg">📸</span><br>Merekod data wajah';
+            if (statusMsg) statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 Merekod data wajah...</span>";
+            if (challengeBox) challengeBox.innerHTML = '<span class="text-lg">📸</span><br>Merekod data wajah';
             
             await new Promise(r => setTimeout(r, 500));
             
@@ -1580,15 +1619,15 @@
                 }
                 
                 document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
-                statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
-                challengeBox.innerHTML = '<span class="text-lg">✅</span><br>Pendaftaran berjaya';
+                if (statusMsg) statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
+                if (challengeBox) challengeBox.innerHTML = '<span class="text-lg">✅</span><br>Pendaftaran berjaya';
                 btn.classList.add('hidden');
                 document.getElementById('resetFaceBtn').classList.remove('hidden');
                 updateProgress(100);
                 
                 showAlert("Berjaya", "Data biometrik telah direkodkan.", 'success');
             } catch (e) {
-                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
+                if (statusMsg) statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
                 showAlert("Ralat", e.message || "Ralat semasa pemprosesan biometrik", 'error');
                 updateProgress(0);
             } finally {
@@ -1596,96 +1635,6 @@
                 btn.innerHTML = "Mula Pengesahan";
                 isProcessing = false;
             }
-        }
-
-        // ============================================
-        // FACE MODELS & CAMERA
-        // ============================================
-        async function loadFaceModels() {
-            if (modelsLoaded) return true;
-            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
-            try {
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-                modelsLoaded = true;
-                return true;
-            } catch (error) {
-                showAlert('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', 'warning');
-                return false;
-            }
-        }
-
-        async function initCamera() {
-            const statusMsg = document.getElementById('faceStatusMsg');
-            const retryBtn = document.getElementById('retryCamBtn');
-            const captureBtn = document.getElementById('captureBtn');
-            retryBtn.classList.add('hidden');
-            captureBtn.classList.remove('hidden');
-            statusMsg.innerHTML = "Menyambung ke kamera peranti...";
-            try {
-                if (videoStream) stopCamera();
-                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
-                const video = document.getElementById('faceVideo');
-                video.srcObject = videoStream;
-                statusMsg.innerHTML = "<span class='text-green-600 font-black'>✅ Kamera Aktif. Sila posisikan wajah di tengah.</span>";
-                faceOverlay = document.getElementById('faceOverlay');
-                
-                startRealTimeFaceDetection();
-            } catch (err) {
-                captureBtn.classList.add('hidden');
-                retryBtn.classList.remove('hidden');
-                statusMsg.innerHTML = `<span class='text-red-500 font-bold'>❌ Akses Kamera Disekat</span><br><small>Sila benarkan akses kamera pada pelayar.</small>`;
-                showAlert("Ralat Kamera", "Sila benarkan akses kamera pada pelayar.", 'error');
-            }
-        }
-        
-        function stopCamera() { 
-            if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; } 
-            if (faceOverlay) faceOverlay.innerHTML = '';
-            stopRealTimeFaceDetection();
-        }
-        
-        function resetFace() { 
-            document.getElementById('faceDescriptor').value = ""; 
-            document.getElementById('faceStatusMsg').innerHTML = "<span class='text-gray-500'>Sedia untuk imbasan semula...</span>"; 
-            document.getElementById('captureBtn').classList.remove('hidden'); 
-            document.getElementById('resetFaceBtn').classList.add('hidden'); 
-            updateProgress(0); 
-            headPositions = { up: false, right: false, down: false, left: false };
-            circleCompletion = 0;
-            updateCircleProgress();
-            if (faceOverlay) faceOverlay.innerHTML = ''; 
-        }
-        
-        function startRealTimeFaceDetection() {
-            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
-            const video = document.getElementById('faceVideo');
-            const statusMsg = document.getElementById('faceStatusMsg');
-            realTimeDetectionInterval = setInterval(async () => {
-                if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
-                try {
-                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
-                    if (detection) {
-                        drawFaceOverlay(video, detection);
-                        const confidence = Math.round(detection.detection.score * 100);
-                        if (detection.detection.score > 0.7) {
-                            statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan dengan baik (${confidence}%)</span><br><span class='text-xs'>Sedia untuk imbasan</span>`;
-                        } else {
-                            statusMsg.innerHTML = `<span class='text-amber-600 font-black'>⚠️ Wajah dikesan (${confidence}%)</span><br><span class='text-xs'>Pastikan wajah jelas dan pencahayaan mencukupi</span>`;
-                        }
-                    } else {
-                        if (faceOverlay) faceOverlay.innerHTML = '';
-                        statusMsg.innerHTML = "<span class='text-amber-600 font-black'>🔍 Tiada wajah dikesan</span><br><span class='text-xs'>Pastikan wajah berada dalam bulatan panduan</span>";
-                    }
-                } catch (e) {}
-            }, 200);
-        }
-
-        function stopRealTimeFaceDetection() {
-            if (realTimeDetectionInterval) { clearInterval(realTimeDetectionInterval); realTimeDetectionInterval = null; }
-            if (faceOverlay) faceOverlay.innerHTML = '';
         }
 
         // ============================================
@@ -1845,6 +1794,70 @@
         }
 
         // ============================================
+        // FACE MODELS
+        // ============================================
+        async function loadFaceModels() {
+            if (modelsLoaded) return true;
+            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
+            try {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                modelsLoaded = true;
+                return true;
+            } catch (error) {
+                showAlert('Amaran', 'Pengesahan wajah mungkin tidak berfungsi', 'warning');
+                return false;
+            }
+        }
+
+        // ============================================
+        // CAMERA FUNCTIONS
+        // ============================================
+        async function initCamera() {
+            const statusMsg = document.getElementById('faceStatusMsg');
+            const retryBtn = document.getElementById('retryCamBtn');
+            const captureBtn = document.getElementById('captureBtn');
+            retryBtn.classList.add('hidden');
+            captureBtn.classList.remove('hidden');
+            statusMsg.innerHTML = "Menyambung ke kamera peranti...";
+            try {
+                if (videoStream) stopCamera();
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
+                const video = document.getElementById('faceVideo');
+                video.srcObject = videoStream;
+                statusMsg.innerHTML = "<span class='text-green-600 font-black'>✅ Kamera Aktif. Sila posisikan wajah di tengah.</span>";
+                faceOverlay = document.getElementById('faceOverlay');
+                
+                startRealTimeFaceDetection();
+            } catch (err) {
+                captureBtn.classList.add('hidden');
+                retryBtn.classList.remove('hidden');
+                statusMsg.innerHTML = `<span class='text-red-500 font-bold'>❌ Akses Kamera Disekat</span><br><small>Sila benarkan akses kamera pada pelayar.</small>`;
+                showAlert("Ralat Kamera", "Sila benarkan akses kamera pada pelayar.", 'error');
+            }
+        }
+        
+        function stopCamera() { 
+            if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; } 
+            if (faceOverlay) faceOverlay.innerHTML = '';
+            stopRealTimeFaceDetection();
+        }
+        
+        function resetFace() { 
+            document.getElementById('faceDescriptor').value = ""; 
+            document.getElementById('faceStatusMsg').innerHTML = "<span class='text-gray-500'>Sedia untuk imbasan semula...</span>"; 
+            document.getElementById('captureBtn').classList.remove('hidden'); 
+            document.getElementById('resetFaceBtn').classList.add('hidden'); 
+            updateProgress(0); 
+            headPositions = { up: false, right: false, down: false, left: false };
+            circleCompletion = 0;
+            updateCircleProgress();
+            if (faceOverlay) faceOverlay.innerHTML = ''; 
+        }
+
+        // ============================================
         // USERS MANAGEMENT
         // ============================================
         async function loadUsers() {
@@ -1867,7 +1880,7 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '32r<td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td>32r';
+                tbody.innerHTML = '32r<td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui<\/td><\/tr>';
                 return;
             }
             tbody.innerHTML = users.map(u => `
@@ -1931,7 +1944,7 @@
                 const result = await callAPI('getAttendance', { uid: selectedUser.uid, startDate, endDate });
                 const tbody = document.getElementById('userAttendanceBody');
                 if (!result.success || !result.data || result.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran<\/td><\/tr>';
                     return;
                 }
                 let html = '';
@@ -1946,16 +1959,30 @@
                     let jumlahJam = record.totalHours ? formatJam(record.totalHours) : '-';
                     let jumlahOT = record.totalOT ? formatJam(record.totalOT) : '-';
                     let statusText = '', statusClass = '';
-                    if (record.status === 'clocked_in') { statusText = 'DALAM BERTUGAS'; statusClass = 'bg-blue-100 text-blue-700'; }
-                    else if (record.status === 'clocked_out') { statusText = 'SELESAI'; statusClass = 'bg-green-100 text-green-700'; }
+                    
+                    if (record.status === 'clocked_in') { 
+                        statusText = 'DALAM BERTUGAS'; 
+                        statusClass = 'bg-blue-100 text-blue-700'; 
+                    }
+                    else if (record.status === 'clocked_out') { 
+                        statusText = 'SELESAI'; 
+                        statusClass = 'bg-green-100 text-green-700'; 
+                    }
                     else {
                         const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
                         const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                        if (hasClockIn && !hasClockOut) { statusText = 'DALAM BERTUGAS'; statusClass = 'bg-blue-100 text-blue-700'; }
-                        else if (hasClockIn && hasClockOut) { statusText = 'SELESAI'; statusClass = 'bg-green-100 text-green-700'; }
-                        else { statusText = '-'; statusClass = 'bg-gray-100 text-gray-600'; }
+                        if (hasClockIn && !hasClockOut) {
+                            statusText = 'DALAM BERTUGAS';
+                            statusClass = 'bg-blue-100 text-blue-700';
+                        } else if (hasClockIn && hasClockOut) {
+                            statusText = 'SELESAI';
+                            statusClass = 'bg-green-100 text-green-700';
+                        } else {
+                            statusText = '-';
+                            statusClass = 'bg-gray-100 text-gray-600';
+                        }
                     }
-                    html += `<tr><td>${tarikh}</td><td>${hari}</td><td class="text-center">${jamMasuk}</td><td class="text-center">${jamKeluar}</td><td class="text-center">${jumlahJam}</td><td class="text-center">${jumlahOT}</td><td class="text-center"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td></tr>`;
+                    html += `<tr><td>${tarikh}<\/td><td>${hari}<\/td><td class="text-center">${jamMasuk}<\/td><td class="text-center">${jamKeluar}<\/td><td class="text-center">${jumlahJam}<\/td><td class="text-center">${jumlahOT}<\/td><td class="text-center"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}<\/span><\/td><\/tr>`;
                 });
                 tbody.innerHTML = html;
             } catch (error) { showAlert('Ralat', 'Gagal memuat rekod kehadiran', 'error'); }
