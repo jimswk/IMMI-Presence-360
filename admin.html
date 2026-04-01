@@ -1066,9 +1066,9 @@
                                         <th>Status</th>
                                     </thead>
                                 <tbody id="userAttendanceBody">
-                                    32r<td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td>
+                                    32r<td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod<\/td><\/tr>
                                 </tbody>
-                             </table>
+                              </table>
                         </div>
                     </div>
                 </div>
@@ -1357,7 +1357,6 @@
             const percent = (circleCompletion / 4) * 100;
             updateProgress(percent);
             
-            // Update dot indicators
             if (dotElements.up) dotElements.up.classList.remove('active', 'completed');
             if (dotElements.right) dotElements.right.classList.remove('active', 'completed');
             if (dotElements.down) dotElements.down.classList.remove('active', 'completed');
@@ -1467,41 +1466,68 @@
         }
 
         // ============================================
-        // HEAD DIRECTION DETECTION
+        // HEAD DIRECTION DETECTION - VERSI DIPERBAIKI
         // ============================================
         function detectHeadDirection(landmarks) {
             if (!landmarks) return 'center';
-            const nose = landmarks.getNose();
-            const leftEye = landmarks.getLeftEye();
-            const rightEye = landmarks.getRightEye();
-            const mouth = landmarks.getMouth();
-            if (!nose || !leftEye || !rightEye || !mouth) return 'center';
             
-            const leftEyeCenter = leftEye.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
-            const rightEyeCenter = rightEye.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
-            const mouthCenter = mouth.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
-            leftEyeCenter.x /= leftEye.length; leftEyeCenter.y /= leftEye.length;
-            rightEyeCenter.x /= rightEye.length; rightEyeCenter.y /= rightEye.length;
-            mouthCenter.x /= mouth.length; mouthCenter.y /= mouth.length;
-            
-            const faceCenterX = (leftEyeCenter.x + rightEyeCenter.x) / 2;
-            const faceCenterY = (leftEyeCenter.y + mouthCenter.y) / 2;
-            const faceWidth = Math.abs(leftEyeCenter.x - rightEyeCenter.x) * 3;
-            const faceHeight = Math.abs(mouthCenter.y - leftEyeCenter.y) * 2;
-            const noseX = nose[0].x;
-            const noseY = nose[0].y;
-            const normalizedX = (noseX - faceCenterX) / (faceWidth / 2);
-            const normalizedY = (noseY - faceCenterY) / (faceHeight / 2);
-            
-            if (normalizedY < -0.3) return 'up';
-            if (normalizedX > 0.3) return 'right';
-            if (normalizedY > 0.3) return 'down';
-            if (normalizedX < -0.3) return 'left';
-            return 'center';
+            try {
+                const nose = landmarks.getNose();
+                const leftEye = landmarks.getLeftEye();
+                const rightEye = landmarks.getRightEye();
+                const mouth = landmarks.getMouth();
+                
+                if (!nose || !leftEye || !rightEye || !mouth || nose.length < 2) return 'center';
+                
+                // Calculate center points
+                let leftEyeCenter = { x: 0, y: 0 };
+                let rightEyeCenter = { x: 0, y: 0 };
+                let mouthCenter = { x: 0, y: 0 };
+                
+                leftEye.forEach(p => { leftEyeCenter.x += p.x; leftEyeCenter.y += p.y; });
+                rightEye.forEach(p => { rightEyeCenter.x += p.x; rightEyeCenter.y += p.y; });
+                mouth.forEach(p => { mouthCenter.x += p.x; mouthCenter.y += p.y; });
+                
+                leftEyeCenter.x /= leftEye.length;
+                leftEyeCenter.y /= leftEye.length;
+                rightEyeCenter.x /= rightEye.length;
+                rightEyeCenter.y /= rightEye.length;
+                mouthCenter.x /= mouth.length;
+                mouthCenter.y /= mouth.length;
+                
+                // Calculate face dimensions
+                const faceCenterX = (leftEyeCenter.x + rightEyeCenter.x) / 2;
+                const faceCenterY = (leftEyeCenter.y + mouthCenter.y) / 2;
+                const eyeDistance = Math.abs(leftEyeCenter.x - rightEyeCenter.x);
+                const faceWidth = eyeDistance * 2.5;
+                const faceHeight = Math.abs(mouthCenter.y - leftEyeCenter.y) * 1.8;
+                
+                // Get nose tip position
+                const noseTip = nose[0];
+                
+                // Calculate normalized position
+                const normalizedX = (noseTip.x - faceCenterX) / (faceWidth / 2);
+                const normalizedY = (noseTip.y - faceCenterY) / (faceHeight / 2);
+                
+                // LOWER THRESHOLD for better sensitivity
+                const threshold = 0.18;
+                
+                // Determine direction
+                if (normalizedY < -threshold) return 'up';
+                if (normalizedX > threshold) return 'right';
+                if (normalizedY > threshold) return 'down';
+                if (normalizedX < -threshold) return 'left';
+                
+                return 'center';
+                
+            } catch (e) {
+                console.error('Direction detection error:', e);
+                return 'center';
+            }
         }
 
         // ============================================
-        // CIRCLE MOTION DETECTION
+        // CIRCLE MOTION DETECTION - DIPERBAIKI
         // ============================================
         async function detectCircleMotion(video) {
             try {
@@ -1509,33 +1535,53 @@
                 if (!detection) return false;
                 
                 const direction = detectHeadDirection(detection.landmarks);
+                const statusMsg = document.getElementById('faceStatusMsg');
                 
+                // Show current direction on screen
+                if (direction !== 'center' && statusMsg) {
+                    const directionIcon = direction === 'up' ? '⬆️' : direction === 'right' ? '➡️' : direction === 'down' ? '⬇️' : '⬅️';
+                    statusMsg.innerHTML = `<span class='text-blue-600 font-black'>🔄 Mengesan: ${directionIcon}</span><br><span class='text-xs'>Teruskan pergerakan...</span>`;
+                }
+                
+                // Check sequence: up -> right -> down -> left
                 if (direction === 'up' && !headPositions.up && circleCompletion === 0) {
                     headPositions.up = true;
                     circleCompletion = 1;
                     updateCircleProgress();
                     playSuccessSound();
+                    if (statusMsg) statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ ATAS dikesan! Seterusnya: KANAN →</span>";
+                    return false;
                 }
                 else if (direction === 'right' && headPositions.up && !headPositions.right && circleCompletion === 1) {
                     headPositions.right = true;
                     circleCompletion = 2;
                     updateCircleProgress();
                     playSuccessSound();
+                    if (statusMsg) statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ KANAN dikesan! Seterusnya: BAWAH ↓</span>";
+                    return false;
                 }
                 else if (direction === 'down' && headPositions.up && headPositions.right && !headPositions.down && circleCompletion === 2) {
                     headPositions.down = true;
                     circleCompletion = 3;
                     updateCircleProgress();
                     playSuccessSound();
+                    if (statusMsg) statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ BAWAH dikesan! Seterusnya: KIRI ←</span>";
+                    return false;
                 }
                 else if (direction === 'left' && headPositions.up && headPositions.right && headPositions.down && !headPositions.left && circleCompletion === 3) {
                     headPositions.left = true;
                     circleCompletion = 4;
                     updateCircleProgress();
+                    playSuccessSound();
+                    if (statusMsg) statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ BULATAN LENGKAP!</span>";
                     return true;
                 }
+                
                 return false;
-            } catch (e) { return false; }
+            } catch (e) { 
+                console.error('Circle motion error:', e);
+                return false; 
+            }
         }
 
         function playSuccessSound() {
@@ -1547,7 +1593,7 @@
         }
 
         // ============================================
-        // CIRCLE MOTION CAPTURE (FIXED VERSION)
+        // CIRCLE MOTION CAPTURE - DIPERBAIKI
         // ============================================
         async function startCircleMotionCapture() {
             if (isProcessing) return;
@@ -1583,7 +1629,7 @@
             
             updateProgress(0);
             let startTime = Date.now();
-            const timeout = 15000;
+            const timeout = 20000; // 20 seconds - more time for movement
             let completed = false;
             
             while (Date.now() - startTime < timeout && circleCompletion < 4) {
@@ -1885,17 +1931,17 @@
             }
             tbody.innerHTML = users.map(u => `
                 <tr>
-                    <td><div class="font-black text-gray-800">${escapeHtml(u.name)}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.email)}</div></td>
-                    <td><div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.branch)}</div></td>
-                    <td>${u.faceDescriptor ? '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full">TIADA REKOD</span>'}</td>
-                    <td><div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${escapeHtml(u.location || 'Pejabat Am')}</div><div class="text-[10px] text-blue-500">${u.radius || 500}m Radius</div></td>
+                    <td><div class="font-black text-gray-800">${escapeHtml(u.name)}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.email)}</div><\/td>
+                    <td><div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.branch)}</div><\/td>
+                    <td>${u.faceDescriptor ? '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full">TIADA REKOD</span>'}<\/td>
+                    <td><div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${escapeHtml(u.location || 'Pejabat Am')}</div><div class="text-[10px] text-blue-500">${u.radius || 500}m Radius</div><\/td>
                     <td><div class="flex gap-2 justify-center">
-                        <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100" title="Lihat Rekod"><span class="material-symbols-rounded text-xl">visibility</span></button>
-                        <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100" title="Edit"><span class="material-symbols-rounded text-xl">edit</span></button>
-                        ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100" title="Reset Wajah"><span class="material-symbols-rounded text-xl">face_4</span></button>` : ''}
-                        <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100" title="Padam"><span class="material-symbols-rounded text-xl">delete</span></button>
-                    </div></td>
-                </tr>
+                        <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100" title="Lihat Rekod"><span class="material-symbols-rounded text-xl">visibility</span><\/button>
+                        <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100" title="Edit"><span class="material-symbols-rounded text-xl">edit</span><\/button>
+                        ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100" title="Reset Wajah"><span class="material-symbols-rounded text-xl">face_4</span><\/button>` : ''}
+                        <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100" title="Padam"><span class="material-symbols-rounded text-xl">delete</span><\/button>
+                    <\/div><\/td>
+                <\/tr>
             `).join('');
         }
 
