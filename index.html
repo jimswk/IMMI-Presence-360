@@ -174,12 +174,30 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 130px;
-            height: 170px;
+            width: 180px;
+            height: 180px;
             border: 2px solid #fbbf24;
-            border-radius: 70px;
+            border-radius: 50%;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
             pointer-events: none;
+        }
+
+        .circle-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 220px;
+            height: 220px;
+            border: 1px dashed rgba(251, 191, 36, 0.5);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: rotate 4s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         .face-overlay {
@@ -233,26 +251,20 @@
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .challenge-box {
-            background: #1e3a8a;
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
             color: white;
-            padding: 12px;
-            border-radius: 16px;
+            padding: 14px;
+            border-radius: 20px;
             text-align: center;
             margin-bottom: 16px;
             font-weight: bold;
             font-size: 0.9rem;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
         }
 
         .progress-bar {
-            height: 8px;
+            height: 6px;
             background: #e2e8f0;
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
             margin: 12px 0;
         }
@@ -342,27 +354,31 @@
             }
         }
 
-        /* Guide arrow indicators */
-        .direction-guide {
+        /* Direction indicators for circle */
+        .direction-dots {
             display: flex;
             justify-content: center;
-            gap: 20px;
-            margin-top: 10px;
+            gap: 12px;
+            margin-top: 12px;
         }
-        .direction-icon {
-            width: 40px;
-            height: 40px;
+        .dot {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            background: #cbd5e1;
             transition: all 0.2s;
         }
-        .direction-icon.active {
+        .dot.completed {
+            background: #10b981;
+            transform: scale(1.2);
+        }
+        .dot.active {
             background: #fbbf24;
-            color: #1e3a8a;
-            transform: scale(1.1);
+            animation: pulse 0.8s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
         }
     </style>
 </head>
@@ -453,7 +469,8 @@
 
                 <div id="scanContainer" class="hidden mt-3">
                     <div id="challengeDisplay" class="challenge-box">
-                        Sedia untuk pengesahan...
+                        <span class="text-lg">🔄</span><br>
+                        Gerakkan kepala dalam bulatan
                     </div>
                     <div class="progress-bar">
                         <div id="progressFill" class="progress-fill"></div>
@@ -461,12 +478,14 @@
                     <div class="video-wrapper">
                         <video id="scanVideo" autoplay muted playsinline></video>
                         <div class="face-guide"></div>
+                        <div class="circle-guide"></div>
                         <div id="faceOverlay" class="face-overlay"></div>
                     </div>
-                    <div class="direction-guide" id="directionGuide">
-                        <div class="direction-icon" id="iconSmile">😊</div>
-                        <div class="direction-icon" id="iconLeft">⬅️</div>
-                        <div class="direction-icon" id="iconRight">➡️</div>
+                    <div class="direction-dots" id="directionDots">
+                        <div class="dot" id="dotUp">⬆️</div>
+                        <div class="dot" id="dotRight">➡️</div>
+                        <div class="dot" id="dotDown">⬇️</div>
+                        <div class="dot" id="dotLeft">⬅️</div>
                     </div>
                     <p class="text-center mt-2 text-xs text-blue-600" id="scanStatus">Menyediakan kamera...</p>
                 </div>
@@ -512,17 +531,29 @@
         let audioError = null;
 
         // ============================================
-        // ACTIVE LIVENESS VARIABLES
+        // CIRCLE MOTION DETECTION VARIABLES
         // ============================================
-        const CHALLENGES = [
-            { name: "senyum", text: "😊 SILA SENYUM", icon: "iconSmile", progress: 33 },
-            { name: "pusingKiri", text: "⬅️ PUSING MUKA KE KIRI", icon: "iconLeft", progress: 66 },
-            { name: "pusingKanan", text: "➡️ PUSING MUKA KE KANAN", icon: "iconRight", progress: 100 }
-        ];
+        let headPositions = {
+            center: { x: 0, y: 0 },
+            up: false,
+            right: false,
+            down: false,
+            left: false,
+            completed: false
+        };
         
-        let currentChallengeIndex = 0;
-        let challengesCompleted = 0;
-        let livenessProgress = 0;
+        let circleCompletion = 0;
+        let lastDirection = null;
+        let motionStartTime = null;
+        let samples = [];
+
+        // Dot elements for UI
+        const dotElements = {
+            up: null,
+            right: null,
+            down: null,
+            left: null
+        };
 
         // ============================================
         // HELPER FUNCTIONS
@@ -577,19 +608,30 @@
             if (progressFill) progressFill.style.width = percent + '%';
         }
 
-        function updateLivenessProgress(progress) {
-            livenessProgress = progress;
-            updateProgress(progress);
-        }
-
-        function highlightIcon(iconId, isActive) {
-            const icon = document.getElementById(iconId);
-            if (icon) {
-                if (isActive) {
-                    icon.classList.add('active');
-                } else {
-                    icon.classList.remove('active');
-                }
+        function updateCircleProgress() {
+            const percent = (circleCompletion / 4) * 100;
+            updateProgress(percent);
+            
+            // Update dot indicators
+            if (dotElements.up) {
+                dotElements.up.classList.remove('active', 'completed');
+                if (headPositions.up) dotElements.up.classList.add('completed');
+                else if (circleCompletion === 0 && !headPositions.up) dotElements.up.classList.add('active');
+            }
+            if (dotElements.right) {
+                dotElements.right.classList.remove('active', 'completed');
+                if (headPositions.right) dotElements.right.classList.add('completed');
+                else if (circleCompletion === 1 && headPositions.up && !headPositions.right) dotElements.right.classList.add('active');
+            }
+            if (dotElements.down) {
+                dotElements.down.classList.remove('active', 'completed');
+                if (headPositions.down) dotElements.down.classList.add('completed');
+                else if (circleCompletion === 2 && headPositions.up && headPositions.right && !headPositions.down) dotElements.down.classList.add('active');
+            }
+            if (dotElements.left) {
+                dotElements.left.classList.remove('active', 'completed');
+                if (headPositions.left) dotElements.left.classList.add('completed');
+                else if (circleCompletion === 3 && headPositions.up && headPositions.right && headPositions.down && !headPositions.left) dotElements.left.classList.add('active');
             }
         }
 
@@ -681,122 +723,139 @@
         }
 
         // ============================================
-        // ACTIVE LIVENESS DETECTION FUNCTIONS
+        // CIRCLE MOTION DETECTION
         // ============================================
-        function isSmiling(expressions) {
-            return expressions && expressions.happy > 0.7;
-        }
-
-        function isHeadTurnedLeft(landmarks) {
-            if (!landmarks) return false;
+        function detectHeadDirection(landmarks) {
+            if (!landmarks) return 'center';
+            
             const nose = landmarks.getNose();
-            if (nose && nose.length >= 2) {
-                const leftNose = nose[0];
-                const rightNose = nose[nose.length - 1];
-                return (rightNose.x - leftNose.x) < -15;
-            }
-            return false;
+            if (!nose || nose.length < 2) return 'center';
+            
+            const leftEye = landmarks.getLeftEye();
+            const rightEye = landmarks.getRightEye();
+            const mouth = landmarks.getMouth();
+            
+            if (!leftEye || !rightEye || !mouth) return 'center';
+            
+            // Calculate center of face
+            const leftEyeCenter = leftEye.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
+            const rightEyeCenter = rightEye.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
+            const mouthCenter = mouth.reduce((sum, p) => ({ x: sum.x + p.x, y: sum.y + p.y }), { x: 0, y: 0 });
+            
+            leftEyeCenter.x /= leftEye.length;
+            leftEyeCenter.y /= leftEye.length;
+            rightEyeCenter.x /= rightEye.length;
+            rightEyeCenter.y /= rightEye.length;
+            mouthCenter.x /= mouth.length;
+            mouthCenter.y /= mouth.length;
+            
+            const eyeDistance = Math.abs(leftEyeCenter.x - rightEyeCenter.x);
+            const faceWidth = eyeDistance * 3;
+            const faceHeight = Math.abs(mouthCenter.y - leftEyeCenter.y) * 2;
+            
+            const noseX = nose[0].x;
+            const noseY = nose[0].y;
+            
+            // Normalize position relative to face center
+            const faceCenterX = (leftEyeCenter.x + rightEyeCenter.x) / 2;
+            const faceCenterY = (leftEyeCenter.y + mouthCenter.y) / 2;
+            
+            const normalizedX = (noseX - faceCenterX) / (faceWidth / 2);
+            const normalizedY = (noseY - faceCenterY) / (faceHeight / 2);
+            
+            // Determine direction based on normalized position
+            if (normalizedY < -0.3) return 'up';
+            if (normalizedX > 0.3) return 'right';
+            if (normalizedY > 0.3) return 'down';
+            if (normalizedX < -0.3) return 'left';
+            return 'center';
         }
 
-        function isHeadTurnedRight(landmarks) {
-            if (!landmarks) return false;
-            const nose = landmarks.getNose();
-            if (nose && nose.length >= 2) {
-                const leftNose = nose[0];
-                const rightNose = nose[nose.length - 1];
-                return (rightNose.x - leftNose.x) > 15;
+        async function detectCircleMotion(video) {
+            try {
+                const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceLandmarks();
+                
+                if (!detection) return false;
+                
+                const direction = detectHeadDirection(detection.landmarks);
+                
+                // Update direction dots UI
+                if (direction !== 'center') {
+                    const dotMap = { up: '⬆️', right: '➡️', down: '⬇️', left: '⬅️' };
+                    document.getElementById('scanStatus').innerHTML = `Mengesan: ${dotMap[direction] || '...'}`;
+                }
+                
+                // Detect circular motion sequence: up -> right -> down -> left
+                if (direction === 'up' && !headPositions.up && circleCompletion === 0) {
+                    headPositions.up = true;
+                    circleCompletion = 1;
+                    updateCircleProgress();
+                    playSound('success');
+                }
+                else if (direction === 'right' && headPositions.up && !headPositions.right && circleCompletion === 1) {
+                    headPositions.right = true;
+                    circleCompletion = 2;
+                    updateCircleProgress();
+                    playSound('success');
+                }
+                else if (direction === 'down' && headPositions.up && headPositions.right && !headPositions.down && circleCompletion === 2) {
+                    headPositions.down = true;
+                    circleCompletion = 3;
+                    updateCircleProgress();
+                    playSound('success');
+                }
+                else if (direction === 'left' && headPositions.up && headPositions.right && headPositions.down && !headPositions.left && circleCompletion === 3) {
+                    headPositions.left = true;
+                    circleCompletion = 4;
+                    updateCircleProgress();
+                    return true; // Circle completed
+                }
+                
+                return false;
+            } catch (e) {
+                console.log('Detection error:', e);
+                return false;
             }
-            return false;
         }
 
-        async function detectChallenge(challengeName, video, landmarks, expressions) {
-            switch(challengeName) {
-                case 'senyum':
-                    return isSmiling(expressions);
-                case 'pusingKiri':
-                    return isHeadTurnedLeft(landmarks);
-                case 'pusingKanan':
-                    return isHeadTurnedRight(landmarks);
-                default:
-                    return false;
-            }
-        }
-
-        async function runActiveLiveness() {
+        async function runCircleMotionDetection() {
             const scanVideo = document.getElementById('scanVideo');
             const challengeDisplay = document.getElementById('challengeDisplay');
             const scanStatus = document.getElementById('scanStatus');
             
             // Reset state
-            currentChallengeIndex = 0;
-            challengesCompleted = 0;
-            updateLivenessProgress(0);
+            headPositions = {
+                up: false, right: false, down: false, left: false, completed: false
+            };
+            circleCompletion = 0;
+            updateCircleProgress();
             
-            // Hide all icon highlights
-            CHALLENGES.forEach(c => highlightIcon(c.icon, false));
+            challengeDisplay.innerHTML = `
+                <span class="text-lg">🔄</span><br>
+                Gerakkan kepala dalam bulatan<br>
+                <span class="text-xs opacity-80">⬆️ ➡️ ⬇️ ⬅️</span>
+            `;
+            scanStatus.innerText = 'Mula gerakkan kepala dalam bulatan...';
             
-            // Run each challenge sequentially
-            for (let i = 0; i < CHALLENGES.length; i++) {
-                const challenge = CHALLENGES[i];
-                currentChallengeIndex = i;
-                
-                // Highlight current challenge icon
-                highlightIcon(challenge.icon, true);
-                
-                // Update display
-                challengeDisplay.innerText = challenge.text;
-                scanStatus.innerText = `Sila ${challenge.name === 'senyum' ? 'senyum' : (challenge.name === 'pusingKiri' ? 'pusing ke kiri' : 'pusing ke kanan')}...`;
-                
-                let detected = false;
-                let startTime = Date.now();
-                const timeout = 5000; // 5 seconds per challenge
-                
-                while (Date.now() - startTime < timeout && !detected) {
-                    try {
-                        const detection = await faceapi.detectSingleFace(scanVideo, new faceapi.TinyFaceDetectorOptions())
-                            .withFaceLandmarks()
-                            .withFaceExpressions();
-                        
-                        if (detection) {
-                            detected = await detectChallenge(
-                                challenge.name, 
-                                scanVideo, 
-                                detection.landmarks, 
-                                detection.expressions
-                            );
-                            
-                            if (detected) {
-                                // Small delay to show detection success
-                                await new Promise(r => setTimeout(r, 300));
-                            }
-                        }
-                    } catch (e) {
-                        console.log('Detection error:', e);
-                    }
-                    await new Promise(r => setTimeout(r, 100));
-                }
-                
-                if (!detected) {
-                    // Remove highlight on failure
-                    highlightIcon(challenge.icon, false);
-                    throw new Error(`Arahan "${challenge.text}" tidak dikesan. Sila cuba lagi.`);
-                }
-                
-                // Challenge completed - update progress
-                challengesCompleted++;
-                updateLivenessProgress(challenge.progress);
-                
-                // Remove highlight after completion
-                highlightIcon(challenge.icon, false);
-                
-                // Short pause between challenges
-                await new Promise(r => setTimeout(r, 500));
+            const startTime = Date.now();
+            const timeout = 15000; // 15 seconds timeout
+            
+            while (Date.now() - startTime < timeout && circleCompletion < 4) {
+                const completed = await detectCircleMotion(scanVideo);
+                if (completed) break;
+                await new Promise(r => setTimeout(r, 100));
             }
             
-            // All challenges completed
-            updateLivenessProgress(100);
-            challengeDisplay.innerText = '✅ SEMUA PENGESAHAN BERJAYA';
-            scanStatus.innerText = 'Liveness detection selesai. Memadankan wajah...';
+            if (circleCompletion < 4) {
+                throw new Error('Pergerakan bulatan tidak lengkap. Sila cuba lagi.');
+            }
+            
+            challengeDisplay.innerHTML = `
+                <span class="text-lg">✅</span><br>
+                Pergerakan bulatan berjaya
+            `;
+            scanStatus.innerText = 'Pengesahan pergerakan selesai...';
             await new Promise(r => setTimeout(r, 1000));
             
             return true;
@@ -852,23 +911,30 @@
                 videoStream = stream;
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Reset progress and start active liveness
-                updateLivenessProgress(0);
-                challengeDisplay.innerText = 'MULA PENGESAHAN...';
-                scanStatus.innerText = 'Sedia untuk pengesahan liveness';
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Reset progress
+                updateProgress(0);
                 
-                // Run active liveness detection (3 challenges)
-                const livenessPassed = await runActiveLiveness();
-                if (!livenessPassed) {
-                    throw new Error('Pengesahan liveness gagal');
+                // Step 1: Get face centered
+                challengeDisplay.innerHTML = `
+                    <span class="text-lg">🎯</span><br>
+                    Posisikan wajah di tengah
+                `;
+                scanStatus.innerText = 'Pastikan wajah dalam bulatan...';
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Step 2: Run circle motion detection
+                const motionPassed = await runCircleMotionDetection();
+                if (!motionPassed) {
+                    throw new Error('Pengesahan pergerakan gagal');
                 }
                 
-                // Now verify face against stored descriptor
+                // Step 3: Verify face against stored descriptor
                 scanStatus.innerText = 'Memadankan wajah dengan rekod...';
-                challengeDisplay.innerText = '👤 MENGESAHKAN WAJAH';
-                updateLivenessProgress(80);
-                
+                challengeDisplay.innerHTML = `
+                    <span class="text-lg">👤</span><br>
+                    Mengesahkan wajah...
+                `;
+                updateProgress(80);
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
                 const detection = await getFaceDescriptor(scanVideo);
@@ -881,8 +947,11 @@
                     throw new Error('Wajah tidak sepadan dengan rekod');
                 }
                 
-                updateLivenessProgress(100);
-                challengeDisplay.innerText = '✅ PENGESAHAN BERJAYA';
+                updateProgress(100);
+                challengeDisplay.innerHTML = `
+                    <span class="text-lg">✅</span><br>
+                    PENGESAHAN BERJAYA
+                `;
                 scanStatus.innerText = 'Wajah disahkan. Sila tunggu...';
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
@@ -1178,6 +1247,12 @@
                         loadAttendanceHistory();
                         startClock();
                         initAudio();
+                        
+                        // Initialize dot elements
+                        dotElements.up = document.getElementById('dotUp');
+                        dotElements.right = document.getElementById('dotRight');
+                        dotElements.down = document.getElementById('dotDown');
+                        dotElements.left = document.getElementById('dotLeft');
                         
                         showNotification('Selamat Datang', `Log masuk berjaya`, false, false);
                     }, 500);
