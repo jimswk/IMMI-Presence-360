@@ -527,6 +527,22 @@
             white-space: nowrap;
         }
 
+        .refresh-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .refresh-btn:hover {
+            background: #e2e8f0;
+        }
+
         @media (max-width: 640px) {
             .floating-input {
                 padding: 16px 14px 6px 14px;
@@ -689,9 +705,14 @@
                             <span id="currentUnitName" class="text-green-600 font-bold"></span>
                         </p>
                     </div>
-                    <div class="relative w-72">
-                        <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                        <input type="text" id="searchUser" placeholder="Cari nama atau emel..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all" onkeyup="searchUsers()">
+                    <div class="flex gap-3">
+                        <button onclick="refreshUsersList()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula data">
+                            <span class="material-symbols-rounded text-sm">refresh</span>
+                        </button>
+                        <div class="relative w-72">
+                            <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                            <input type="text" id="searchUser" placeholder="Cari nama atau emel..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all" onkeyup="searchUsers()">
+                        </div>
                     </div>
                 </div>
 
@@ -1006,7 +1027,7 @@
                         <div class="overflow-x-auto">
                             <table class="w-full">
                                 <thead>
-                                    32r
+                                    <tr>
                                         <th>Tarikh</th>
                                         <th>Hari</th>
                                         <th>Jam Masuk</th>
@@ -1016,7 +1037,7 @@
                                         <th>Status</th>
                                     </thead>
                                 <tbody id="userAttendanceBody">
-                                    32r<td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td>
+                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1194,19 +1215,118 @@
         // ============================================
         const WBF_CONFIG = {
             STANDARD_WORK_HOURS: 9,
-            WORK_START: 7.5,      // 7:30 AM
-            WORK_END: 16.5,       // 4:30 PM
-            OVERTIME_THRESHOLD: 16.5, // 4:30 PM - OT dikira selepas waktu ini
+            WORK_START: 7.5,
+            WORK_END: 16.5,
+            OVERTIME_THRESHOLD: 16.5,
             BREAK_CONFIG: {
                 'Sunday': { duration: 0, startHour: 0 },
-                'Monday': { duration: 1.0, startHour: 13.0 },    // 1:00 PM - 2:00 PM
+                'Monday': { duration: 1.0, startHour: 13.0 },
                 'Tuesday': { duration: 1.0, startHour: 13.0 },
                 'Wednesday': { duration: 1.0, startHour: 13.0 },
                 'Thursday': { duration: 1.0, startHour: 13.0 },
-                'Friday': { duration: 2.5, startHour: 11.75 },   // 11:45 AM - 2:15 PM
+                'Friday': { duration: 2.5, startHour: 11.75 },
                 'Saturday': { duration: 0, startHour: 0 }
             }
         };
+
+        // ============================================
+        // EMAIL NOTIFICATION FUNCTIONS
+        // ============================================
+        
+        async function sendEmailNotification(to, subject, body) {
+            try {
+                const result = await callAPI('sendEmail', { to: to, subject: subject, body: body });
+                return result.success;
+            } catch (error) {
+                console.error('Email send error:', error);
+                return false;
+            }
+        }
+
+        async function notifySuperadminUserChange(userName, changeDetails, reason, adminName, adminBranch) {
+            const subject = `[IMMI Presence 360] Perubahan Data Pengguna: ${userName}`;
+            const body = `Assalamualaikum dan Salam Sejahtera,
+
+Tuan/Puan/Encik/Cik,
+
+Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
+
+MAKLUMAT PERUBAHAN:
+====================
+Pengguna: ${userName}
+Jenis Perubahan: ${changeDetails}
+Sebab Perubahan: ${reason}
+
+Dibuat oleh: ${adminName}
+Cawangan: ${adminBranch}
+Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
+
+Sila semak dan sahkan perubahan ini di dalam sistem.
+
+Sekian, terima kasih.
+
+--
+IMMI Presence 360 - Sistem Kehadiran Pintar
+Jabatan Imigresen Malaysia`;
+            
+            try {
+                const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
+                if (result.success) {
+                    const superadmins = result.data.filter(a => a.role === 'superadmin' && a.email && a.email !== 'superadmin@imi.gov.my');
+                    for (const sa of superadmins) {
+                        await sendEmailNotification(sa.email, subject, body);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to send superadmin notification:', error);
+            }
+        }
+
+        async function notifySuperadminNewUser(userName, userEmail, userBranch, userUnit, adminName, adminBranch, reason) {
+            const subject = `[IMMI Presence 360] Pendaftaran Pengguna Baru: ${userName}`;
+            const body = `Assalamualaikum dan Salam Sejahtera,
+
+Tuan/Puan/Encik/Cik,
+
+Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
+
+MAKLUMAT PENDAFTARAN PENGGUNA BARU:
+====================================
+Nama: ${userName}
+Email: ${userEmail}
+Cawangan: ${userBranch}
+Unit: ${userUnit}
+Sebab Pendaftaran: ${reason}
+
+Didaftarkan oleh: ${adminName}
+Cawangan Admin: ${adminBranch}
+Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
+
+Sila semak dan sahkan pendaftaran ini di dalam sistem.
+
+Sekian, terima kasih.
+
+--
+IMMI Presence 360 - Sistem Kehadiran Pintar
+Jabatan Imigresen Malaysia`;
+            
+            try {
+                const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
+                if (result.success) {
+                    const superadmins = result.data.filter(a => a.role === 'superadmin' && a.email && a.email !== 'superadmin@imi.gov.my');
+                    for (const sa of superadmins) {
+                        await sendEmailNotification(sa.email, subject, body);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to send new user notification:', error);
+            }
+        }
+
+        function refreshUsersList() {
+            loadUsers();
+            showNotif("Berjaya", "Senarai pengguna dikemaskini", false);
+        }
 
         // ============================================
         // CUSTOM ALERT & CONFIRM FUNCTIONS
@@ -1654,7 +1774,7 @@
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '32r<td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td>32r';
+                tbody.innerHTML = '32r<td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></td>';
                 return;
             }
             tbody.innerHTML = users.map(u => `
@@ -1669,7 +1789,7 @@
                         ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100" title="Reset Wajah"><span class="material-symbols-rounded text-xl">face_4</span></button>` : ''}
                         <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100" title="Padam"><span class="material-symbols-rounded text-xl">delete</span></button>
                     </div></td>
-                 </tr>
+                  </tr>
             `).join('');
         }
 
@@ -1710,7 +1830,7 @@
         };
 
         // ============================================
-        // LOAD USER ATTENDANCE - DIPERBAIKI DENGAN FALLBACK
+        // LOAD USER ATTENDANCE
         // ============================================
         async function loadUserAttendance() {
             if (!selectedUser) return;
@@ -1737,7 +1857,6 @@
                     let jumlahOT = record.totalOT ? formatJam(record.totalOT) : '-';
                     let statusText = '', statusClass = '';
                     
-                    // Semak status berdasarkan field status
                     if (record.status === 'clocked_in') { 
                         statusText = 'DALAM BERTUGAS'; 
                         statusClass = 'bg-blue-100 text-blue-700'; 
@@ -1747,7 +1866,6 @@
                         statusClass = 'bg-green-100 text-green-700'; 
                     }
                     else {
-                        // Fallback: semak berdasarkan clockIn dan clockOut
                         const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
                         const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
                         if (hasClockIn && !hasClockOut) {
@@ -1873,43 +1991,63 @@
             const btn = document.getElementById('updateBtn');
             const uid = document.getElementById('editUserId').value;
             const oldUserData = users.find(u => u.uid === uid);
+            
+            const changes = [];
+            const newUnit = document.getElementById('editUserUnit').value;
+            const newLocation = document.getElementById('editUserLocation').value;
+            const newRadius = document.getElementById('editUserRadius').value;
+            
+            if (oldUserData.unit !== newUnit && newUnit) changes.push({ type: 'unit', oldValue: oldUserData.unit || '-', newValue: newUnit });
+            if (oldUserData.location !== newLocation && newLocation) changes.push({ type: 'location', oldValue: oldUserData.location || '-', newValue: newLocation });
+            if ((parseFloat(oldUserData.radius) || 500) !== (parseFloat(newRadius) || 500)) changes.push({ type: 'radius', oldValue: oldUserData.radius || 500, newValue: newRadius });
+            
+            let reason = '';
+            if (changes.length > 0) {
+                reason = prompt("Sila nyatakan sebab perubahan data ini:", "Pertukaran unit / Kemaskini maklumat");
+                if (!reason) {
+                    showAlert("Ralat", "Sila nyatakan sebab perubahan", 'warning');
+                    return;
+                }
+            }
+            
             const data = {
                 uid: uid,
                 name: document.getElementById('editUserName').value,
                 email: document.getElementById('editUserEmail').value,
-                unit: document.getElementById('editUserUnit').value,
+                unit: newUnit,
                 branch: currentUser.branch,
                 password: document.getElementById('editUserPassword').value,
-                location: document.getElementById('editUserLocation').value,
+                location: newLocation,
                 lat: document.getElementById('editUserLat').value,
                 lng: document.getElementById('editUserLng').value,
-                radius: document.getElementById('editUserRadius').value
+                radius: newRadius
             };
+            
             if (!data.name || !data.email) { showAlert("Ralat", "Nama dan Emel wajib diisi", 'error'); return; }
+            
             btn.disabled = true; btn.innerHTML = 'Sedang Mengemaskini...';
+            
             try {
                 const result = await callAPI('updateUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
                 if (result.success) {
                     showAlert("Berjaya", "Maklumat kakitangan telah dikemaskini.", 'success');
-                    if (oldUserData) {
-                        const changes = [];
-                        if (oldUserData.unit !== data.unit && data.unit) changes.push({ type: 'unit', oldValue: oldUserData.unit || '-', newValue: data.unit });
-                        if (oldUserData.location !== data.location && data.location) changes.push({ type: 'location', oldValue: oldUserData.location || '-', newValue: data.location });
-                        if ((parseFloat(oldUserData.radius) || 500) !== (parseFloat(data.radius) || 500)) changes.push({ type: 'radius', oldValue: oldUserData.radius || 500, newValue: data.radius });
-                        if (changes.length > 0) {
-                            const changeDesc = changes.map(c => c.type === 'unit' ? 'unit' : (c.type === 'radius' ? 'radius' : 'lokasi')).join(', ');
-                            await callAPI('createNotification', { data: JSON.stringify({
-                                title: `Perubahan Data Pengguna: ${data.name}`,
-                                message: `${currentUser.name} (${currentUser.branch}) telah membuat perubahan pada ${changeDesc} untuk pengguna ${data.name}.`,
-                                details: { userId: uid, userName: data.name, adminName: currentUser.name, adminBranch: currentUser.branch, adminUnit: currentUser.unit, branch: data.branch, unit: data.unit, changeType: changes.map(c => c.type).join(','), oldUnit: changes.find(c => c.type === 'unit')?.oldValue, newUnit: changes.find(c => c.type === 'unit')?.newValue, oldLocation: changes.find(c => c.type === 'location')?.oldValue, newLocation: changes.find(c => c.type === 'location')?.newValue, oldRadius: changes.find(c => c.type === 'radius')?.oldValue, newRadius: changes.find(c => c.type === 'radius')?.newValue },
-                                type: 'change', createdBy: currentUser.uid
-                            })});
-                        }
+                    
+                    if (changes.length > 0 && reason) {
+                        const changeDesc = changes.map(c => c.type === 'unit' ? 'Unit' : (c.type === 'radius' ? 'Radius Geofencing' : 'Lokasi Pejabat')).join(', ');
+                        await notifySuperadminUserChange(data.name, changeDesc, reason, currentUser.name, currentUser.branch);
                     }
+                    
                     cancelEdit(); loadUsers();
-                } else { showAlert("Ralat", result.error || "Gagal mengemaskini data", 'error'); }
-            } catch (error) { showAlert("Ralat", "Gagal mengemaskini data", 'error'); }
-            finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan'; }
+                } else { 
+                    showAlert("Ralat", result.error || "Gagal mengemaskini data", 'error'); 
+                }
+            } catch (error) { 
+                showAlert("Ralat", "Gagal mengemaskini data", 'error'); 
+            }
+            finally { 
+                btn.disabled = false; 
+                btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan'; 
+            }
         };
 
         // ============================================
@@ -2172,7 +2310,21 @@
         window.saveUser = async function() {
             const btn = document.getElementById('saveBtn');
             const isResetMode = document.getElementById('resetMode').value === 'true';
-            if (isResetMode) { await updateUserFaceOnly(); return; }
+            
+            let reason = '';
+            if (!isResetMode) {
+                reason = prompt("Sila nyatakan sebab pendaftaran kakitangan ini:", "Penempatan baru / Pertukaran unit");
+                if (!reason) {
+                    showAlert("Ralat", "Sila nyatakan sebab pendaftaran", 'warning');
+                    return;
+                }
+            }
+            
+            if (isResetMode) { 
+                await updateUserFaceOnly(); 
+                return;
+            }
+            
             const data = {
                 uid: document.getElementById('userId').value,
                 name: document.getElementById('userName').value,
@@ -2187,16 +2339,50 @@
                 faceDescriptor: document.getElementById('faceDescriptor').value,
                 createdBy: currentUser.uid
             };
-            if (!data.name || !data.email || !data.password) { showAlert("Ralat", "Sila isi semua maklumat wajib", 'warning'); return; }
-            if (data.password.length < 6) { showAlert("Ralat", "Kata laluan minimum 6 aksara", 'error'); return; }
-            btn.disabled = true; btn.innerHTML = 'Sedang Menyimpan...';
+            
+            if (!data.name || !data.email || !data.password) { 
+                showAlert("Ralat", "Sila isi semua maklumat wajib", 'warning'); 
+                return; 
+            }
+            if (data.password.length < 6) { 
+                showAlert("Ralat", "Kata laluan minimum 6 aksara", 'error'); 
+                return; 
+            }
+            
+            btn.disabled = true; 
+            btn.innerHTML = 'Sedang Menyimpan...';
+            
             try {
                 const result = await callAPI('createUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
-                if (result.success) { showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success'); resetFormAfterSave(); switchTab('users'); loadUsers(); }
-                else { showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); }
-            } catch (error) { showAlert("Ralat", "Gagal menyimpan data", 'error'); }
-            finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; }
+                if (result.success) { 
+                    showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success');
+                    
+                    await notifySuperadminNewUser(
+                        data.name, 
+                        data.email, 
+                        data.branch, 
+                        data.unit, 
+                        currentUser.name, 
+                        currentUser.branch,
+                        reason
+                    );
+                    
+                    resetFormAfterSave(); 
+                    switchTab('users'); 
+                    loadUsers(); 
+                }
+                else { 
+                    showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); 
+                }
+            } catch (error) { 
+                showAlert("Ralat", "Gagal menyimpan data", 'error'); 
+            }
+            finally { 
+                btn.disabled = false; 
+                btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; 
+            }
         };
+        
         async function updateUserFaceOnly() {
             const btn = document.getElementById('saveBtn');
             const uid = document.getElementById('userId').value;
@@ -2212,7 +2398,7 @@
         }
 
         // ============================================
-        // DELETE USER - Menggunakan showConfirm
+        // DELETE USER
         // ============================================
         window.confirmDelete = function(uid, name) {
             const user = users.find(u => u.uid === uid);
