@@ -1037,7 +1037,7 @@
                                         <th>Status</th>
                                     </thead>
                                 <tbody id="userAttendanceBody">
-                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
+                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td>
                                 </tbody>
                             </table>
                         </div>
@@ -1243,7 +1243,28 @@
             }
         }
 
-        async function notifySuperadminUserChange(userName, changeDetails, reason, adminName, adminBranch) {
+        async function notifySuperadminUserChangeDetailed(userName, changes, reason, adminName, adminBranch) {
+            // Bina butiran perubahan yang lengkap
+            let changesDetails = '';
+            
+            for (const change of changes) {
+                if (change.type === 'unit') {
+                    changesDetails += `\n• UNIT: "${change.oldValue}" → "${change.newValue}"`;
+                } 
+                else if (change.type === 'location') {
+                    changesDetails += `\n• LOKASI PEJABAT:`;
+                    changesDetails += `\n  Alamat Lama: ${change.oldValue}`;
+                    changesDetails += `\n  Alamat Baru: ${change.newValue}`;
+                    if (change.oldLat && change.newLat) {
+                        changesDetails += `\n  Koordinat Lama: ${change.oldLat}, ${change.oldLng}`;
+                        changesDetails += `\n  Koordinat Baru: ${change.newLat}, ${change.newLng}`;
+                    }
+                }
+                else if (change.type === 'radius') {
+                    changesDetails += `\n• RADIUS GEOFENCING: ${change.oldValue}m → ${change.newValue}m`;
+                }
+            }
+            
             const subject = `[IMMI Presence 360] Perubahan Data Pengguna: ${userName}`;
             const body = `Assalamualaikum dan Salam Sejahtera,
 
@@ -1251,15 +1272,18 @@ Tuan/Puan/Encik/Cik,
 
 Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
 
-MAKLUMAT PERUBAHAN:
-====================
-Pengguna: ${userName}
-Jenis Perubahan: ${changeDetails}
-Sebab Perubahan: ${reason}
+MAKLUMAT PERUBAHAN DATA PENGGUNA:
+==================================
+Nama Pengguna: ${userName}
+Tarikh Perubahan: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
+Dibuat oleh: ${adminName} (${adminBranch})
 
-Dibuat oleh: ${adminName}
-Cawangan: ${adminBranch}
-Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
+BUTIRAN PERUBAHAN:
+==================${changesDetails}
+
+SEBAB PERUBAHAN:
+================
+${reason}
 
 Sila semak dan sahkan perubahan ini di dalam sistem.
 
@@ -1276,13 +1300,14 @@ Jabatan Imigresen Malaysia`;
                     for (const sa of superadmins) {
                         await sendEmailNotification(sa.email, subject, body);
                     }
+                    console.log('Email notification sent to', superadmins.length, 'superadmins');
                 }
             } catch (error) {
                 console.error('Failed to send superadmin notification:', error);
             }
         }
 
-        async function notifySuperadminNewUser(userName, userEmail, userBranch, userUnit, adminName, adminBranch, reason) {
+        async function notifySuperadminNewUserDetailed(userName, userEmail, userBranch, userUnit, userLocation, userRadius, adminName, adminBranch, reason) {
             const subject = `[IMMI Presence 360] Pendaftaran Pengguna Baru: ${userName}`;
             const body = `Assalamualaikum dan Salam Sejahtera,
 
@@ -1296,11 +1321,16 @@ Nama: ${userName}
 Email: ${userEmail}
 Cawangan: ${userBranch}
 Unit: ${userUnit}
-Sebab Pendaftaran: ${reason}
+Lokasi Pejabat: ${userLocation}
+Radius Geofencing: ${userRadius}m
+
+SEBAB PENDAFTARAN:
+==================
+${reason}
 
 Didaftarkan oleh: ${adminName}
 Cawangan Admin: ${adminBranch}
-Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
+Tarikh Pendaftaran: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
 
 Sila semak dan sahkan pendaftaran ini di dalam sistem.
 
@@ -1774,7 +1804,7 @@ Jabatan Imigresen Malaysia`;
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '32r<td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></td>';
+                tbody.innerHTML = '32r<td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
                 return;
             }
             tbody.innerHTML = users.map(u => `
@@ -1992,18 +2022,58 @@ Jabatan Imigresen Malaysia`;
             const uid = document.getElementById('editUserId').value;
             const oldUserData = users.find(u => u.uid === uid);
             
+            // Kumpul semua perubahan dengan nilai lama dan baru
             const changes = [];
+            const newName = document.getElementById('editUserName').value;
+            const newEmail = document.getElementById('editUserEmail').value;
             const newUnit = document.getElementById('editUserUnit').value;
             const newLocation = document.getElementById('editUserLocation').value;
             const newRadius = document.getElementById('editUserRadius').value;
+            const newLat = document.getElementById('editUserLat').value;
+            const newLng = document.getElementById('editUserLng').value;
             
-            if (oldUserData.unit !== newUnit && newUnit) changes.push({ type: 'unit', oldValue: oldUserData.unit || '-', newValue: newUnit });
-            if (oldUserData.location !== newLocation && newLocation) changes.push({ type: 'location', oldValue: oldUserData.location || '-', newValue: newLocation });
-            if ((parseFloat(oldUserData.radius) || 500) !== (parseFloat(newRadius) || 500)) changes.push({ type: 'radius', oldValue: oldUserData.radius || 500, newValue: newRadius });
+            // Semak perubahan unit
+            if (oldUserData.unit !== newUnit && newUnit) {
+                changes.push({ 
+                    type: 'unit', 
+                    oldValue: oldUserData.unit || '-', 
+                    newValue: newUnit 
+                });
+            }
+            
+            // Semak perubahan lokasi (alamat)
+            if (oldUserData.location !== newLocation && newLocation) {
+                changes.push({ 
+                    type: 'location', 
+                    oldValue: oldUserData.location || '-', 
+                    newValue: newLocation,
+                    oldLat: oldUserData.lat,
+                    oldLng: oldUserData.lng,
+                    newLat: newLat,
+                    newLng: newLng
+                });
+            }
+            
+            // Semak perubahan radius
+            if ((parseFloat(oldUserData.radius) || 500) !== (parseFloat(newRadius) || 500)) {
+                changes.push({ 
+                    type: 'radius', 
+                    oldValue: oldUserData.radius || 500, 
+                    newValue: newRadius 
+                });
+            }
             
             let reason = '';
             if (changes.length > 0) {
-                reason = prompt("Sila nyatakan sebab perubahan data ini:", "Pertukaran unit / Kemaskini maklumat");
+                // Bina mesej ringkasan perubahan untuk prompt
+                let changeSummary = changes.map(c => {
+                    if (c.type === 'unit') return `Unit: "${c.oldValue}" → "${c.newValue}"`;
+                    if (c.type === 'location') return `Lokasi: "${c.oldValue.substring(0, 50)}..." → "${c.newValue.substring(0, 50)}..."`;
+                    if (c.type === 'radius') return `Radius: ${c.oldValue}m → ${c.newValue}m`;
+                    return c.type;
+                }).join('\n• ');
+                
+                reason = prompt(`Sila nyatakan sebab perubahan berikut:\n\n• ${changeSummary}\n\nSebab perubahan:`, "Pertukaran unit / Kemaskini maklumat");
                 if (!reason) {
                     showAlert("Ralat", "Sila nyatakan sebab perubahan", 'warning');
                     return;
@@ -2012,14 +2082,14 @@ Jabatan Imigresen Malaysia`;
             
             const data = {
                 uid: uid,
-                name: document.getElementById('editUserName').value,
-                email: document.getElementById('editUserEmail').value,
+                name: newName,
+                email: newEmail,
                 unit: newUnit,
                 branch: currentUser.branch,
                 password: document.getElementById('editUserPassword').value,
                 location: newLocation,
-                lat: document.getElementById('editUserLat').value,
-                lng: document.getElementById('editUserLng').value,
+                lat: newLat,
+                lng: newLng,
                 radius: newRadius
             };
             
@@ -2033,8 +2103,14 @@ Jabatan Imigresen Malaysia`;
                     showAlert("Berjaya", "Maklumat kakitangan telah dikemaskini.", 'success');
                     
                     if (changes.length > 0 && reason) {
-                        const changeDesc = changes.map(c => c.type === 'unit' ? 'Unit' : (c.type === 'radius' ? 'Radius Geofencing' : 'Lokasi Pejabat')).join(', ');
-                        await notifySuperadminUserChange(data.name, changeDesc, reason, currentUser.name, currentUser.branch);
+                        // Hantar emel dengan butiran perubahan lengkap
+                        await notifySuperadminUserChangeDetailed(
+                            data.name, 
+                            changes, 
+                            reason, 
+                            currentUser.name, 
+                            currentUser.branch
+                        );
                     }
                     
                     cancelEdit(); loadUsers();
@@ -2357,11 +2433,13 @@ Jabatan Imigresen Malaysia`;
                 if (result.success) { 
                     showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success');
                     
-                    await notifySuperadminNewUser(
+                    await notifySuperadminNewUserDetailed(
                         data.name, 
                         data.email, 
                         data.branch, 
                         data.unit, 
+                        data.location,
+                        data.radius,
                         currentUser.name, 
                         currentUser.branch,
                         reason
