@@ -141,31 +141,11 @@ async function clockOut(uid, location, requestingUser) {
 }
 
 // ============================================
-// FUNGSI UNTUK NOTIFIKASI - DENGAN HISTORY
+// FUNGSI UNTUK EMAIL
 // ============================================
 
-async function getNotifications() {
-    return await callAPI('getNotifications');
-}
-
-async function getNotificationHistory() {
-    return await callAPI('getNotificationHistory');
-}
-
-async function createNotification(data) {
-    return await callAPI('createNotification', { data: JSON.stringify(data) });
-}
-
-async function markNotificationRead(id) {
-    return await callAPI('markNotificationRead', { data: JSON.stringify({ id: id }) });
-}
-
-async function markAllNotificationsRead() {
-    return await callAPI('markAllNotificationsRead');
-}
-
-async function clearNotificationHistory() {
-    return await callAPI('clearNotificationHistory');
+async function sendEmail(to, subject, body) {
+    return await callAPI('sendEmail', { to: to, subject: subject, body: body });
 }
 
 // ============================================
@@ -192,20 +172,17 @@ async function fixInconsistentData() {
     return await callAPI('fixInconsistentData');
 }
 
-// ============================================
-// FUNGSI UTILITY - RECALCULATE OVERTIME
-// ============================================
-
-/**
- * Kira semula Overtime untuk rekod lama
- * @param {string} startDate - Tarikh mula (YYYY-MM-DD)
- * @param {string} endDate - Tarikh tamat (YYYY-MM-DD)
- * @returns {Promise} - Hasil pengiraan semula
- */
 async function recalculateOvertime(startDate, endDate) {
     return await callAPI('recalculateOvertime', { 
         startDate: startDate, 
         endDate: endDate 
+    });
+}
+
+async function resetTodayAttendance(data) {
+    return await callAPI('resetTodayAttendance', { 
+        uid: data.uid,
+        date: data.date
     });
 }
 
@@ -228,13 +205,9 @@ if (typeof module !== 'undefined' && module.exports) {
         getAttendance,
         clockIn,
         clockOut,
-        getNotifications,
-        getNotificationHistory,
-        createNotification,
-        markNotificationRead,
-        markAllNotificationsRead,
-        clearNotificationHistory,
         recalculateOvertime,
+        resetTodayAttendance,
+        sendEmail,
         login,
         userLogin,
         setupSheets,
