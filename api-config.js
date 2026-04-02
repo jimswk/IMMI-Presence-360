@@ -1,4 +1,3 @@
-// Konfigurasi API - TUKAR URL INI selepas deploy
 const CONFIG = {
     API_BASE_URL: 'https://script.google.com/macros/s/AKfycbwXKIM8LMK9c93r4wFHEA2grIaF7T87FSexUALcH8KgfOD5GRgzxPwt-bTXwYm4vWhvNw/exec'
 };
