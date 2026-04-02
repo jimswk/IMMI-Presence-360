@@ -1037,7 +1037,7 @@
                                         <th>Status</th>
                                     </thead>
                                 <tbody id="userAttendanceBody">
-                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td>
+                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1244,7 +1244,6 @@
         }
 
         async function notifySuperadminUserChangeDetailed(userName, changes, reason, adminName, adminBranch) {
-            // Bina butiran perubahan yang lengkap
             let changesDetails = '';
             
             for (const change of changes) {
@@ -1300,7 +1299,6 @@ Jabatan Imigresen Malaysia`;
                     for (const sa of superadmins) {
                         await sendEmailNotification(sa.email, subject, body);
                     }
-                    console.log('Email notification sent to', superadmins.length, 'superadmins');
                 }
             } catch (error) {
                 console.error('Failed to send superadmin notification:', error);
@@ -2022,7 +2020,6 @@ Jabatan Imigresen Malaysia`;
             const uid = document.getElementById('editUserId').value;
             const oldUserData = users.find(u => u.uid === uid);
             
-            // Kumpul semua perubahan dengan nilai lama dan baru
             const changes = [];
             const newName = document.getElementById('editUserName').value;
             const newEmail = document.getElementById('editUserEmail').value;
@@ -2032,40 +2029,20 @@ Jabatan Imigresen Malaysia`;
             const newLat = document.getElementById('editUserLat').value;
             const newLng = document.getElementById('editUserLng').value;
             
-            // Semak perubahan unit
             if (oldUserData.unit !== newUnit && newUnit) {
-                changes.push({ 
-                    type: 'unit', 
-                    oldValue: oldUserData.unit || '-', 
-                    newValue: newUnit 
-                });
+                changes.push({ type: 'unit', oldValue: oldUserData.unit || '-', newValue: newUnit });
             }
             
-            // Semak perubahan lokasi (alamat)
             if (oldUserData.location !== newLocation && newLocation) {
-                changes.push({ 
-                    type: 'location', 
-                    oldValue: oldUserData.location || '-', 
-                    newValue: newLocation,
-                    oldLat: oldUserData.lat,
-                    oldLng: oldUserData.lng,
-                    newLat: newLat,
-                    newLng: newLng
-                });
+                changes.push({ type: 'location', oldValue: oldUserData.location || '-', newValue: newLocation, oldLat: oldUserData.lat, oldLng: oldUserData.lng, newLat: newLat, newLng: newLng });
             }
             
-            // Semak perubahan radius
             if ((parseFloat(oldUserData.radius) || 500) !== (parseFloat(newRadius) || 500)) {
-                changes.push({ 
-                    type: 'radius', 
-                    oldValue: oldUserData.radius || 500, 
-                    newValue: newRadius 
-                });
+                changes.push({ type: 'radius', oldValue: oldUserData.radius || 500, newValue: newRadius });
             }
             
             let reason = '';
             if (changes.length > 0) {
-                // Bina mesej ringkasan perubahan untuk prompt
                 let changeSummary = changes.map(c => {
                     if (c.type === 'unit') return `Unit: "${c.oldValue}" → "${c.newValue}"`;
                     if (c.type === 'location') return `Lokasi: "${c.oldValue.substring(0, 50)}..." → "${c.newValue.substring(0, 50)}..."`;
@@ -2081,16 +2058,9 @@ Jabatan Imigresen Malaysia`;
             }
             
             const data = {
-                uid: uid,
-                name: newName,
-                email: newEmail,
-                unit: newUnit,
-                branch: currentUser.branch,
-                password: document.getElementById('editUserPassword').value,
-                location: newLocation,
-                lat: newLat,
-                lng: newLng,
-                radius: newRadius
+                uid: uid, name: newName, email: newEmail, unit: newUnit, branch: currentUser.branch,
+                password: document.getElementById('editUserPassword').value, location: newLocation,
+                lat: newLat, lng: newLng, radius: newRadius
             };
             
             if (!data.name || !data.email) { showAlert("Ralat", "Nama dan Emel wajib diisi", 'error'); return; }
@@ -2101,29 +2071,13 @@ Jabatan Imigresen Malaysia`;
                 const result = await callAPI('updateUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
                 if (result.success) {
                     showAlert("Berjaya", "Maklumat kakitangan telah dikemaskini.", 'success');
-                    
                     if (changes.length > 0 && reason) {
-                        // Hantar emel dengan butiran perubahan lengkap
-                        await notifySuperadminUserChangeDetailed(
-                            data.name, 
-                            changes, 
-                            reason, 
-                            currentUser.name, 
-                            currentUser.branch
-                        );
+                        await notifySuperadminUserChangeDetailed(data.name, changes, reason, currentUser.name, currentUser.branch);
                     }
-                    
                     cancelEdit(); loadUsers();
-                } else { 
-                    showAlert("Ralat", result.error || "Gagal mengemaskini data", 'error'); 
-                }
-            } catch (error) { 
-                showAlert("Ralat", "Gagal mengemaskini data", 'error'); 
-            }
-            finally { 
-                btn.disabled = false; 
-                btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan'; 
-            }
+                } else { showAlert("Ralat", result.error || "Gagal mengemaskini data", 'error'); }
+            } catch (error) { showAlert("Ralat", "Gagal mengemaskini data", 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan'; }
         };
 
         // ============================================
@@ -2177,7 +2131,6 @@ Jabatan Imigresen Malaysia`;
                 video.srcObject = videoStream;
                 statusMsg.innerHTML = "<span class='text-green-600 font-black'>✅ Kamera Aktif. Sila posisikan wajah di tengah.</span>";
                 faceOverlay = document.getElementById('faceOverlay');
-                
                 startRealTimeFaceDetection();
             } catch (err) {
                 captureBtn.classList.add('hidden');
@@ -2188,10 +2141,7 @@ Jabatan Imigresen Malaysia`;
         }
         
         function stopCamera() { 
-            if (videoStream) { 
-                videoStream.getTracks().forEach(track => track.stop()); 
-                videoStream = null; 
-            } 
+            if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; } 
             if (faceOverlay) faceOverlay.innerHTML = '';
             stopRealTimeFaceDetection();
         }
@@ -2204,8 +2154,7 @@ Jabatan Imigresen Malaysia`;
             const statusMsg = document.getElementById('faceStatusMsg');
             if (!video.srcObject) { 
                 showAlert("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", 'warning'); 
-                isProcessing = false; 
-                return; 
+                isProcessing = false; return; 
             }
             btn.disabled = true;
             btn.innerHTML = 'Mengesan...';
@@ -2221,40 +2170,27 @@ Jabatan Imigresen Malaysia`;
                 updateProgress(20 + ((Date.now() - detectionStartTime) / 5000) * 40);
                 try {
                     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                        .withFaceLandmarks()
-                        .withFaceDescriptor()
-                        .withFaceExpressions();
+                        .withFaceLandmarks().withFaceDescriptor().withFaceExpressions();
                     
                     if (detection) {
                         drawFaceOverlay(video, detection);
-                        
-                        if (!bestDetection || (detection.detection.score > bestDetection.detection.score)) {
-                            bestDetection = detection;
-                        }
-                        
+                        if (!bestDetection || (detection.detection.score > bestDetection.detection.score)) { bestDetection = detection; }
                         const confidence = Math.round(detection.detection.score * 100);
                         statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan! (${confidence}%)</span><br><span class='text-xs'>Teruskan pegang stabil...</span>`;
-                        
-                        if (detection.detection.score > 0.7 && attemptCount > 3) {
-                            break;
-                        }
+                        if (detection.detection.score > 0.7 && attemptCount > 3) { break; }
                     } else {
                         if (faceOverlay) faceOverlay.innerHTML = '';
                         statusMsg.innerHTML = "<span class='text-amber-600 font-black'>⚠️ Tiada wajah dikesan. Pastikan wajah berada dalam bulatan...</span>";
                     }
-                } catch (e) {
-                    console.log('Detection attempt error:', e);
-                }
+                } catch (e) { console.log('Detection attempt error:', e); }
                 await new Promise(resolve => setTimeout(resolve, 200));
             }
             
             if (!bestDetection) {
                 statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ TIADA WAJAH DIKESAN</span>";
                 showAlert("Gagal", "Tiada wajah dikesan. Pastikan pencahayaan mencukupi dan wajah berada di hadapan kamera.", 'error');
-                btn.disabled = false;
-                btn.innerHTML = "Imbas Wajah Kakitangan";
-                updateProgress(0);
-                isProcessing = false;
+                btn.disabled = false; btn.innerHTML = "Imbas Wajah Kakitangan";
+                updateProgress(0); isProcessing = false;
                 if (faceOverlay) faceOverlay.innerHTML = '';
                 return;
             }
@@ -2264,32 +2200,19 @@ Jabatan Imigresen Malaysia`;
             
             try {
                 const detection = bestDetection;
-                
                 const dims = getVideoDimensions(video);
                 const faceWidth = detection.detection.box.width;
                 const faceHeight = detection.detection.box.height;
-                
                 let qualityIssues = [];
-                
-                if (faceWidth < 60 || faceHeight < 60) {
-                    qualityIssues.push("wajah terlalu jauh");
-                }
-                if (faceWidth > 280 || faceHeight > 280) {
-                    qualityIssues.push("wajah terlalu dekat");
-                }
-                
-                if (detection.detection.score < 0.6) {
-                    qualityIssues.push("keyakinan rendah");
-                }
+                if (faceWidth < 60 || faceHeight < 60) { qualityIssues.push("wajah terlalu jauh"); }
+                if (faceWidth > 280 || faceHeight > 280) { qualityIssues.push("wajah terlalu dekat"); }
+                if (detection.detection.score < 0.6) { qualityIssues.push("keyakinan rendah"); }
                 
                 if (qualityIssues.length > 0) {
                     statusMsg.innerHTML = `<span class='text-red-600 font-black'>✗ Kualiti wajah rendah: ${qualityIssues.join(", ")}</span>`;
                     showAlert("Gagal", `Sila laraskan jarak - ${qualityIssues.join(", ")}`, 'warning');
-                    updateProgress(0);
-                    btn.disabled = false;
-                    btn.innerHTML = "Imbas Wajah Kakitangan";
-                    isProcessing = false;
-                    return;
+                    updateProgress(0); btn.disabled = false; btn.innerHTML = "Imbas Wajah Kakitangan";
+                    isProcessing = false; return;
                 }
                 
                 document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
@@ -2301,22 +2224,10 @@ Jabatan Imigresen Malaysia`;
                 if (faceOverlay) {
                     const dims = getVideoDimensions(video);
                     const box = adjustFaceBox(detection.detection.box, dims);
-                    faceOverlay.innerHTML = `
-                        <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:#10b981; box-shadow:0 0 20px rgba(16,185,129,0.5);">
-                            <div class="confidence-badge" style="background:#10b981; top:-25px; bottom:auto;">
-                                ✓ BERJAYA
-                            </div>
-                        </div>
-                    `;
-                    setTimeout(() => {
-                        if (faceOverlay && !realTimeDetectionInterval) {
-                            faceOverlay.innerHTML = '';
-                        }
-                    }, 2000);
+                    faceOverlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:#10b981; box-shadow:0 0 20px rgba(16,185,129,0.5);"><div class="confidence-badge" style="background:#10b981; top:-25px; bottom:auto;">✓ BERJAYA</div></div>`;
+                    setTimeout(() => { if (faceOverlay && !realTimeDetectionInterval) { faceOverlay.innerHTML = ''; } }, 2000);
                 }
-                
                 showAlert("Berjaya", "Data biometrik telah direkodkan.", 'success');
-                
             } catch (e) {
                 console.error('Face capture error:', e);
                 statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
@@ -2324,8 +2235,7 @@ Jabatan Imigresen Malaysia`;
                 updateProgress(0);
                 if (faceOverlay) faceOverlay.innerHTML = '';
             } finally {
-                btn.disabled = false;
-                btn.innerHTML = "Imbas Wajah Kakitangan";
+                btn.disabled = false; btn.innerHTML = "Imbas Wajah Kakitangan";
                 isProcessing = false;
             }
         }
@@ -2396,69 +2306,31 @@ Jabatan Imigresen Malaysia`;
                 }
             }
             
-            if (isResetMode) { 
-                await updateUserFaceOnly(); 
-                return;
-            }
+            if (isResetMode) { await updateUserFaceOnly(); return; }
             
             const data = {
-                uid: document.getElementById('userId').value,
-                name: document.getElementById('userName').value,
-                email: document.getElementById('userEmail').value,
-                unit: document.getElementById('userUnit').value,
-                branch: currentUser.branch,
-                password: document.getElementById('userPassword').value,
-                location: document.getElementById('userLocation').value,
-                lat: document.getElementById('userLat').value,
-                lng: document.getElementById('userLng').value,
-                radius: document.getElementById('userRadius').value,
-                faceDescriptor: document.getElementById('faceDescriptor').value,
-                createdBy: currentUser.uid
+                uid: document.getElementById('userId').value, name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value, unit: document.getElementById('userUnit').value,
+                branch: currentUser.branch, password: document.getElementById('userPassword').value,
+                location: document.getElementById('userLocation').value, lat: document.getElementById('userLat').value,
+                lng: document.getElementById('userLng').value, radius: document.getElementById('userRadius').value,
+                faceDescriptor: document.getElementById('faceDescriptor').value, createdBy: currentUser.uid
             };
             
-            if (!data.name || !data.email || !data.password) { 
-                showAlert("Ralat", "Sila isi semua maklumat wajib", 'warning'); 
-                return; 
-            }
-            if (data.password.length < 6) { 
-                showAlert("Ralat", "Kata laluan minimum 6 aksara", 'error'); 
-                return; 
-            }
+            if (!data.name || !data.email || !data.password) { showAlert("Ralat", "Sila isi semua maklumat wajib", 'warning'); return; }
+            if (data.password.length < 6) { showAlert("Ralat", "Kata laluan minimum 6 aksara", 'error'); return; }
             
-            btn.disabled = true; 
-            btn.innerHTML = 'Sedang Menyimpan...';
+            btn.disabled = true; btn.innerHTML = 'Sedang Menyimpan...';
             
             try {
                 const result = await callAPI('createUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
                 if (result.success) { 
                     showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success');
-                    
-                    await notifySuperadminNewUserDetailed(
-                        data.name, 
-                        data.email, 
-                        data.branch, 
-                        data.unit, 
-                        data.location,
-                        data.radius,
-                        currentUser.name, 
-                        currentUser.branch,
-                        reason
-                    );
-                    
-                    resetFormAfterSave(); 
-                    switchTab('users'); 
-                    loadUsers(); 
-                }
-                else { 
-                    showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); 
-                }
-            } catch (error) { 
-                showAlert("Ralat", "Gagal menyimpan data", 'error'); 
-            }
-            finally { 
-                btn.disabled = false; 
-                btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; 
-            }
+                    await notifySuperadminNewUserDetailed(data.name, data.email, data.branch, data.unit, data.location, data.radius, currentUser.name, currentUser.branch, reason);
+                    resetFormAfterSave(); switchTab('users'); loadUsers(); 
+                } else { showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); }
+            } catch (error) { showAlert("Ralat", "Gagal menyimpan data", 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; }
         };
         
         async function updateUserFaceOnly() {
@@ -2487,15 +2359,9 @@ Jabatan Imigresen Malaysia`;
             showConfirm('Padam Kakitangan', `Anda pasti mahu memadamkan ${name}? Tindakan ini tidak boleh dibatalkan.`, async function() {
                 try {
                     const result = await callAPI('deleteUser', { data: JSON.stringify({ uid }), requestingUser: JSON.stringify(currentUser) });
-                    if (result.success) { 
-                        showAlert('Berjaya', 'Rekod kakitangan telah dikeluarkan daripada sistem.', 'success');
-                        loadUsers(); 
-                    } else { 
-                        showAlert('Ralat', result.error || 'Gagal memadam rekod', 'error');
-                    }
-                } catch (error) { 
-                    showAlert('Ralat', 'Gagal memadam rekod', 'error');
-                }
+                    if (result.success) { showAlert('Berjaya', 'Rekod kakitangan telah dikeluarkan daripada sistem.', 'success'); loadUsers(); } 
+                    else { showAlert('Ralat', result.error || 'Gagal memadam rekod', 'error'); }
+                } catch (error) { showAlert('Ralat', 'Gagal memadam rekod', 'error'); }
             });
         };
 
@@ -2538,31 +2404,18 @@ Jabatan Imigresen Malaysia`;
         async function recalculateOvertime() {
             const startDate = document.getElementById('recalcStartDate').value;
             const endDate = document.getElementById('recalcEndDate').value;
-            
-            if (!startDate || !endDate) {
-                showAlert('Ralat', 'Sila pilih tarikh mula dan tamat', 'warning');
-                return;
-            }
-            
-            if (startDate > endDate) {
-                showAlert('Ralat', 'Tarikh mula tidak boleh lepas tarikh tamat', 'error');
-                return;
-            }
-            
-            showConfirm('Kira Semula OT', `Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)\n• Standard kerja: 9 jam sehari`, async function() {
+            if (!startDate || !endDate) { showAlert('Ralat', 'Sila pilih tarikh mula dan tamat', 'warning'); return; }
+            if (startDate > endDate) { showAlert('Ralat', 'Tarikh mula tidak boleh lepas tarikh tamat', 'error'); return; }
+            showConfirm('Kira Semula OT', `Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?`, async function() {
                 const btn = document.getElementById('recalcBtn');
                 const resultDiv = document.getElementById('recalcResult');
                 const resultMsg = document.getElementById('recalcMessage');
-                
-                btn.disabled = true;
-                btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula...';
+                btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula...';
                 resultDiv.classList.add('hidden');
-                
                 try {
                     const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
-                    
                     if (result.success) {
-                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak (Isnin-Khamis rehat 1 jam, Jumaat rehat 2.5 jam, OT selepas 4:30 PM).`;
+                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula.`;
                         resultDiv.classList.remove('hidden');
                         resultDiv.className = 'mt-6 p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3';
                         showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success');
@@ -2588,28 +2441,20 @@ Jabatan Imigresen Malaysia`;
         async function recalculateAllOvertime() {
             const startDate = '2020-01-01';
             const endDate = new Date().toISOString().split('T')[0];
-            
-            showConfirm('Kira Semua OT', `Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)\n• Standard kerja: 9 jam sehari`, async function() {
+            showConfirm('Kira Semua OT', `Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama.`, async function() {
                 const btn = document.getElementById('recalcAllBtn');
                 const resultDiv = document.getElementById('recalcResult');
                 const resultMsg = document.getElementById('recalcMessage');
-                
-                btn.disabled = true;
-                btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula semua data...';
+                btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula semua data...';
                 resultDiv.classList.add('hidden');
-                
                 try {
                     const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
-                    
                     if (result.success) {
-                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak (Isnin-Khamis rehat 1 jam, Jumaat rehat 2.5 jam, OT selepas 4:30 PM).`;
+                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula.`;
                         resultDiv.classList.remove('hidden');
                         resultDiv.className = 'mt-6 p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3';
                         showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success');
-                        
-                        if (typeof loadUsers === 'function') {
-                            loadUsers();
-                        }
+                        if (typeof loadUsers === 'function') { loadUsers(); }
                     } else {
                         resultMsg.innerHTML = result.error || 'Gagal mengira semula';
                         resultDiv.classList.remove('hidden');
