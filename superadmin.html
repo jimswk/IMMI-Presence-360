@@ -823,10 +823,6 @@
             return admins.filter(admin => admin.branch === branch && admin.email && admin.email !== 'superadmin@imi.gov.my').map(admin => admin.email);
         }
 
-        function getAllAdminEmails() {
-            return admins.filter(admin => admin.email && admin.email !== 'superadmin@imi.gov.my').map(admin => admin.email);
-        }
-
         // ============================================
         // EMAIL FUNCTIONS
         // ============================================
@@ -840,82 +836,10 @@
             }
         }
 
-        async function sendUserChangeNotification(userName, changeDetails, reason, adminName, adminBranch) {
-            const subject = `[IMMI Presence 360] Perubahan Data Pengguna: ${userName}`;
-            const body = `Assalamualaikum dan Salam Sejahtera,
-
-Tuan/Puan/Encik/Cik,
-
-Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
-
-MAKLUMAT PERUBAHAN:
-====================
-Pengguna: ${userName}
-Jenis Perubahan: ${changeDetails}
-Sebab Perubahan: ${reason}
-
-Dibuat oleh: ${adminName}
-Cawangan: ${adminBranch}
-Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
-
-Sila semak dan sahkan perubahan ini di dalam sistem.
-
-Sekian, terima kasih.
-
---
-IMMI Presence 360 - Sistem Kehadiran Pintar
-Jabatan Imigresen Malaysia`;
-            
-            const superadminEmails = admins.filter(a => a.role === 'superadmin' && a.email && a.email !== 'superadmin@imi.gov.my').map(a => a.email);
-            
-            let success = true;
-            for (const email of superadminEmails) {
-                const sent = await sendEmailNotification(email, subject, body);
-                if (!sent) success = false;
-            }
-            return success;
-        }
-
-        async function sendNewUserNotification(userName, userEmail, userBranch, userUnit, adminName, adminBranch, reason) {
-            const subject = `[IMMI Presence 360] Pendaftaran Pengguna Baru: ${userName}`;
-            const body = `Assalamualaikum dan Salam Sejahtera,
-
-Tuan/Puan/Encik/Cik,
-
-Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
-
-MAKLUMAT PENDAFTARAN PENGGUNA BARU:
-====================================
-Nama: ${userName}
-Email: ${userEmail}
-Cawangan: ${userBranch}
-Unit: ${userUnit}
-Sebab Pendaftaran: ${reason}
-
-Didaftarkan oleh: ${adminName}
-Cawangan Admin: ${adminBranch}
-Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
-
-Sila semak dan sahkan pendaftaran ini di dalam sistem.
-
-Sekian, terima kasih.
-
---
-IMMI Presence 360 - Sistem Kehadiran Pintar
-Jabatan Imigresen Malaysia`;
-            
-            const superadminEmails = admins.filter(a => a.role === 'superadmin' && a.email && a.email !== 'superadmin@imi.gov.my').map(a => a.email);
-            
-            let success = true;
-            for (const email of superadminEmails) {
-                const sent = await sendEmailNotification(email, subject, body);
-                if (!sent) success = false;
-            }
-            return success;
-        }
-
-        async function sendBranchChangeNotification(targetName, targetType, oldBranch, newBranch, reason, adminName, targetEmail = null) {
+        async function sendBranchChangeNotificationDetailed(targetName, targetType, oldBranch, newBranch, reason, adminName, targetEmail = null) {
             const subject = `[IMMI Presence 360] Perubahan Cawangan: ${targetName}`;
+            const typeText = targetType === 'admin' ? 'Admin' : 'Pengguna';
+            
             const body = `Assalamualaikum dan Salam Sejahtera,
 
 Tuan/Puan/Encik/Cik,
@@ -925,15 +849,22 @@ Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
 MAKLUMAT PERUBAHAN CAWANGAN:
 =============================
 Nama: ${targetName}
-Jenis: ${targetType === 'admin' ? 'Admin' : 'Pengguna'}
-Cawangan Lama: ${oldBranch}
-Cawangan Baru: ${newBranch}
-Sebab Perubahan: ${reason}
+Jenis: ${typeText}
+**CAWANGAN LAMA: ${oldBranch}**
+**CAWANGAN BARU: ${newBranch}**
 
-Dibuat oleh: ${adminName}
+SEBAB PERUBAHAN:
+================
+${reason}
+
+Dibuat oleh: ${adminName} (Superadmin)
 Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
 
-Sila ambil perhatian bahawa akses sistem mungkin terjejas dengan perubahan ini.
+Kesan Perubahan:
+================
+• ${typeText} ini kini akan menguruskan kakitangan di cawangan ${newBranch}
+• Akses sistem akan terhad kepada cawangan ${newBranch}
+• Sila kemaskini rekod tempatan jika perlu
 
 Sekian, terima kasih.
 
@@ -941,6 +872,7 @@ Sekian, terima kasih.
 IMMI Presence 360 - Sistem Kehadiran Pintar
 Jabatan Imigresen Malaysia`;
             
+            // Hantar emel kepada admin cawangan BARU
             let targetEmails = [];
             if (targetEmail) {
                 targetEmails.push(targetEmail);
@@ -948,13 +880,58 @@ Jabatan Imigresen Malaysia`;
                 targetEmails = getAdminEmailsByBranch(newBranch);
             }
             
+            // Juga hantar kepada admin di cawangan LAMA untuk makluman
+            const oldBranchEmails = getAdminEmailsByBranch(oldBranch);
+            
             let success = true;
+            
+            // Hantar ke cawangan baru
             for (const email of targetEmails) {
                 if (email && email !== 'superadmin@imi.gov.my') {
                     const sent = await sendEmailNotification(email, subject, body);
                     if (!sent) success = false;
                 }
             }
+            
+            // Hantar ke cawangan lama (makluman)
+            if (oldBranchEmails.length > 0 && oldBranch !== newBranch) {
+                const oldSubject = `[IMMI Presence 360] Makluman: ${targetName} telah bertukar dari cawangan ${oldBranch}`;
+                const oldBody = `Assalamualaikum dan Salam Sejahtera,
+
+Tuan/Puan/Encik/Cik,
+
+Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
+
+MAKLUMAN PERTUKARAN CAWANGAN:
+==============================
+Nama: ${targetName}
+Jenis: ${typeText}
+Telah bertukar DARI cawangan: ${oldBranch}
+KE cawangan: ${newBranch}
+
+SEBAB PERTUKARAN:
+=================
+${reason}
+
+Dibuat oleh: ${adminName} (Superadmin)
+Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
+
+Untuk makluman pihak tuan/puan.
+
+Sekian, terima kasih.
+
+--
+IMMI Presence 360 - Sistem Kehadiran Pintar
+Jabatan Imigresen Malaysia`;
+                
+                for (const email of oldBranchEmails) {
+                    if (email && email !== 'superadmin@imi.gov.my') {
+                        const sent = await sendEmailNotification(email, oldSubject, oldBody);
+                        if (!sent) success = false;
+                    }
+                }
+            }
+            
             return success;
         }
 
@@ -1111,7 +1088,7 @@ Jabatan Imigresen Malaysia`;
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '32r<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '32r<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td>32r';
                 return;
             }
 
@@ -1278,6 +1255,10 @@ Jabatan Imigresen Malaysia`;
             btn.disabled = true;
             btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             
+            const oldBranch = changeBranchTarget.currentBranch;
+            const targetName = changeBranchTarget.name;
+            const targetEmail = changeBranchTarget.email;
+            
             try {
                 let result;
                 if (changeBranchType === 'admin') {
@@ -1285,7 +1266,7 @@ Jabatan Imigresen Malaysia`;
                         data: JSON.stringify({ 
                             uid: changeBranchTarget.uid, 
                             branch: newBranch,
-                            name: changeBranchTarget.name
+                            name: targetName
                         }),
                         requestingUser: JSON.stringify(currentUser)
                     });
@@ -1294,24 +1275,24 @@ Jabatan Imigresen Malaysia`;
                         data: JSON.stringify({ 
                             uid: changeBranchTarget.uid, 
                             branch: newBranch,
-                            name: changeBranchTarget.name
+                            name: targetName
                         }),
                         requestingUser: JSON.stringify(currentUser)
                     });
                 }
                 
                 if (result.success) {
-                    await sendBranchChangeNotification(
-                        changeBranchTarget.name,
+                    await sendBranchChangeNotificationDetailed(
+                        targetName,
                         changeBranchType,
-                        changeBranchTarget.currentBranch,
+                        oldBranch,
                         newBranch,
                         reason,
                         currentUser.name,
-                        changeBranchTarget.email
+                        targetEmail
                     );
                     
-                    showAlert('Berjaya', `Cawangan ${changeBranchTarget.name} telah ditukar ke ${newBranch}`, 'success');
+                    showAlert('Berjaya', `Cawangan ${targetName} telah ditukar dari ${oldBranch} ke ${newBranch}`, 'success');
                     closeChangeBranchModal();
                     await loadAdmins();
                     await loadAllUsers();
@@ -1406,8 +1387,8 @@ Jabatan Imigresen Malaysia`;
         window.getAdminLocation = function() {
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    const lat = pos.coordinates.latitude;
-                    const lng = pos.coordinates.longitude;
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
                     document.getElementById('adminLat').value = lat;
                     document.getElementById('adminLng').value = lng;
                     adminMarker.setLatLng([lat, lng]);
