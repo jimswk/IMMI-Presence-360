@@ -547,18 +547,6 @@
                 padding: 20px;
             }
         }
-        .refresh-btn {
-                background: none;
-                border: none;
-                cursor: pointer;
-                padding: 8px;
-                border-radius: 50%;
-                transition: all 0.2s;
-        }
-            
-        .refresh-btn:hover {
-                background: #e2e8f0;
-        }
     </style>
 </head>
 <body>
@@ -701,14 +689,9 @@
                             <span id="currentUnitName" class="text-green-600 font-bold"></span>
                         </p>
                     </div>
-                    <div class="flex gap-3">
-                        <button onclick="refreshUsersList()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula data">
-                            <span class="material-symbols-rounded text-sm">refresh</span>
-                        </button>
-                        <div class="relative w-72">
-                            <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                            <input type="text" id="searchUser" placeholder="Cari nama atau emel..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all" onkeyup="searchUsers()">
-                        </div>
+                    <div class="relative w-72">
+                        <span class="material-symbols-rounded absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                        <input type="text" id="searchUser" placeholder="Cari nama atau emel..." class="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-50 transition-all" onkeyup="searchUsers()">
                     </div>
                 </div>
 
@@ -2186,149 +2169,47 @@
         // ============================================
         // SAVE USER
         // ============================================
-// Modified saveUser function with reason prompt
-window.saveUser = async function() {
-    const btn = document.getElementById('saveBtn');
-    const isResetMode = document.getElementById('resetMode').value === 'true';
-    
-    // Prompt for reason if it's a new user registration
-    let reason = '';
-    if (!isResetMode) {
-        reason = prompt("Sila nyatakan sebab pendaftaran kakitangan ini:", "Penempatan baru / Pertukaran unit");
-        if (!reason) {
-            showAlert("Ralat", "Sila nyatakan sebab pendaftaran", 'warning');
-            return;
+        window.saveUser = async function() {
+            const btn = document.getElementById('saveBtn');
+            const isResetMode = document.getElementById('resetMode').value === 'true';
+            if (isResetMode) { await updateUserFaceOnly(); return; }
+            const data = {
+                uid: document.getElementById('userId').value,
+                name: document.getElementById('userName').value,
+                email: document.getElementById('userEmail').value,
+                unit: document.getElementById('userUnit').value,
+                branch: currentUser.branch,
+                password: document.getElementById('userPassword').value,
+                location: document.getElementById('userLocation').value,
+                lat: document.getElementById('userLat').value,
+                lng: document.getElementById('userLng').value,
+                radius: document.getElementById('userRadius').value,
+                faceDescriptor: document.getElementById('faceDescriptor').value,
+                createdBy: currentUser.uid
+            };
+            if (!data.name || !data.email || !data.password) { showAlert("Ralat", "Sila isi semua maklumat wajib", 'warning'); return; }
+            if (data.password.length < 6) { showAlert("Ralat", "Kata laluan minimum 6 aksara", 'error'); return; }
+            btn.disabled = true; btn.innerHTML = 'Sedang Menyimpan...';
+            try {
+                const result = await callAPI('createUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
+                if (result.success) { showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success'); resetFormAfterSave(); switchTab('users'); loadUsers(); }
+                else { showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); }
+            } catch (error) { showAlert("Ralat", "Gagal menyimpan data", 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; }
+        };
+        async function updateUserFaceOnly() {
+            const btn = document.getElementById('saveBtn');
+            const uid = document.getElementById('userId').value;
+            const faceDescriptor = document.getElementById('faceDescriptor').value;
+            if (!faceDescriptor) { showAlert("Ralat", "Sila imbas wajah terlebih dahulu.", 'warning'); return; }
+            btn.disabled = true; btn.innerHTML = 'Mengemaskini...';
+            try {
+                const result = await callAPI('updateUserFace', { uid, faceDescriptor });
+                if (result.success) { showAlert("Berjaya", "Wajah kakitangan telah dikemaskini.", 'success'); document.getElementById('resetMode').value = 'false'; resetFormAfterSave(); switchTab('users'); loadUsers(); }
+                else { showAlert("Ralat", result.error || "Gagal mengemaskini wajah", 'error'); }
+            } catch (error) { showAlert("Ralat", "Gagal menghubungi server", 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; }
         }
-    }
-    
-    if (isResetMode) { 
-        await updateUserFaceOnly(); 
-        return;
-    }
-    
-    const data = {
-        uid: document.getElementById('userId').value,
-        name: document.getElementById('userName').value,
-        email: document.getElementById('userEmail').value,
-        unit: document.getElementById('userUnit').value,
-        branch: currentUser.branch,
-        password: document.getElementById('userPassword').value,
-        location: document.getElementById('userLocation').value,
-        lat: document.getElementById('userLat').value,
-        lng: document.getElementById('userLng').value,
-        radius: document.getElementById('userRadius').value,
-        faceDescriptor: document.getElementById('faceDescriptor').value,
-        createdBy: currentUser.uid
-    };
-    
-    if (!data.name || !data.email || !data.password) { 
-        showAlert("Ralat", "Sila isi semua maklumat wajib", 'warning'); 
-        return; 
-    }
-    if (data.password.length < 6) { 
-        showAlert("Ralat", "Kata laluan minimum 6 aksara", 'error'); 
-        return; 
-    }
-    
-    btn.disabled = true; 
-    btn.innerHTML = 'Sedang Menyimpan...';
-    
-    try {
-        const result = await callAPI('createUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
-        if (result.success) { 
-            showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success');
-            
-            // Send email notification to superadmin
-            await notifySuperadminNewUser(
-                data.name, 
-                data.email, 
-                data.branch, 
-                data.unit, 
-                currentUser.name, 
-                currentUser.branch,
-                reason
-            );
-            
-            resetFormAfterSave(); 
-            switchTab('users'); 
-            loadUsers(); 
-        }
-        else { 
-            showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); 
-        }
-    } catch (error) { 
-        showAlert("Ralat", "Gagal menyimpan data", 'error'); 
-    }
-    finally { 
-        btn.disabled = false; 
-        btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; 
-    }
-};
-
-// Modified updateUser function with reason prompt
-window.updateUser = async function() {
-    const btn = document.getElementById('updateBtn');
-    const uid = document.getElementById('editUserId').value;
-    const oldUserData = users.find(u => u.uid === uid);
-    
-    // Collect changes for notification
-    const changes = [];
-    const newUnit = document.getElementById('editUserUnit').value;
-    const newLocation = document.getElementById('editUserLocation').value;
-    const newRadius = document.getElementById('editUserRadius').value;
-    
-    if (oldUserData.unit !== newUnit && newUnit) changes.push({ type: 'unit', oldValue: oldUserData.unit || '-', newValue: newUnit });
-    if (oldUserData.location !== newLocation && newLocation) changes.push({ type: 'location', oldValue: oldUserData.location || '-', newValue: newLocation });
-    if ((parseFloat(oldUserData.radius) || 500) !== (parseFloat(newRadius) || 500)) changes.push({ type: 'radius', oldValue: oldUserData.radius || 500, newValue: newRadius });
-    
-    let reason = '';
-    if (changes.length > 0) {
-        reason = prompt("Sila nyatakan sebab perubahan data ini:", "Pertukaran unit / Kemaskini maklumat");
-        if (!reason) {
-            showAlert("Ralat", "Sila nyatakan sebab perubahan", 'warning');
-            return;
-        }
-    }
-    
-    const data = {
-        uid: uid,
-        name: document.getElementById('editUserName').value,
-        email: document.getElementById('editUserEmail').value,
-        unit: newUnit,
-        branch: currentUser.branch,
-        password: document.getElementById('editUserPassword').value,
-        location: newLocation,
-        lat: document.getElementById('editUserLat').value,
-        lng: document.getElementById('editUserLng').value,
-        radius: newRadius
-    };
-    
-    if (!data.name || !data.email) { showAlert("Ralat", "Nama dan Emel wajib diisi", 'error'); return; }
-    
-    btn.disabled = true; btn.innerHTML = 'Sedang Mengemaskini...';
-    
-    try {
-        const result = await callAPI('updateUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
-        if (result.success) {
-            showAlert("Berjaya", "Maklumat kakitangan telah dikemaskini.", 'success');
-            
-            if (changes.length > 0 && reason) {
-                const changeDesc = changes.map(c => c.type === 'unit' ? 'Unit' : (c.type === 'radius' ? 'Radius Geofencing' : 'Lokasi Pejabat')).join(', ');
-                await notifySuperadminUserChange(data.name, changeDesc, reason, currentUser.name, currentUser.branch);
-            }
-            
-            cancelEdit(); loadUsers();
-        } else { 
-            showAlert("Ralat", result.error || "Gagal mengemaskini data", 'error'); 
-        }
-    } catch (error) { 
-        showAlert("Ralat", "Gagal mengemaskini data", 'error'); 
-    }
-    finally { 
-        btn.disabled = false; 
-        btn.innerHTML = '<span class="material-symbols-rounded">save</span> Kemaskini Kakitangan'; 
-    }
-};
 
         // ============================================
         // DELETE USER - Menggunakan showConfirm
@@ -2566,108 +2447,9 @@ window.updateUser = async function() {
             }
             faceOverlay = document.getElementById('faceOverlay');
         });
-
-        // ============================================
-// EMAIL NOTIFICATION FUNCTIONS FOR ADMIN
-// ============================================
-
-async function sendEmailNotification(to, subject, body) {
-    try {
-        const result = await callAPI('sendEmail', { to: to, subject: subject, body: body });
-        return result.success;
-    } catch (error) {
-        console.error('Email send error:', error);
-        return false;
-    }
-}
-
-async function notifySuperadminUserChange(userName, changeDetails, reason, adminName, adminBranch) {
-    const subject = `[IMMI Presence 360] Perubahan Data Pengguna: ${userName}`;
-    const body = `Assalamualaikum dan Salam Sejahtera,
-
-Tuan/Puan/Encik/Cik,
-
-Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
-
-MAKLUMAT PERUBAHAN:
-====================
-Pengguna: ${userName}
-Jenis Perubahan: ${changeDetails}
-Sebab Perubahan: ${reason}
-
-Dibuat oleh: ${adminName}
-Cawangan: ${adminBranch}
-Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
-
-Sila semak dan sahkan perubahan ini di dalam sistem.
-
-Sekian, terima kasih.
-
---
-IMMI Presence 360 - Sistem Kehadiran Pintar
-Jabatan Imigresen Malaysia`;
-    
-    // Get superadmin emails from the system
-    try {
-        const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
-        if (result.success) {
-            const superadmins = result.data.filter(a => a.role === 'superadmin' && a.email && a.email !== 'superadmin@imi.gov.my');
-            for (const sa of superadmins) {
-                await sendEmailNotification(sa.email, subject, body);
-            }
-        }
-    } catch (error) {
-        console.error('Failed to send superadmin notification:', error);
-    }
-}
-
-async function notifySuperadminNewUser(userName, userEmail, userBranch, userUnit, adminName, adminBranch, reason) {
-    const subject = `[IMMI Presence 360] Pendaftaran Pengguna Baru: ${userName}`;
-    const body = `Assalamualaikum dan Salam Sejahtera,
-
-Tuan/Puan/Encik/Cik,
-
-Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
-
-MAKLUMAT PENDAFTARAN PENGGUNA BARU:
-====================================
-Nama: ${userName}
-Email: ${userEmail}
-Cawangan: ${userBranch}
-Unit: ${userUnit}
-Sebab Pendaftaran: ${reason}
-
-Didaftarkan oleh: ${adminName}
-Cawangan Admin: ${adminBranch}
-Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
-
-Sila semak dan sahkan pendaftaran ini di dalam sistem.
-
-Sekian, terima kasih.
-
---
-IMMI Presence 360 - Sistem Kehadiran Pintar
-Jabatan Imigresen Malaysia`;
-    
-    try {
-        const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
-        if (result.success) {
-            const superadmins = result.data.filter(a => a.role === 'superadmin' && a.email && a.email !== 'superadmin@imi.gov.my');
-            for (const sa of superadmins) {
-                await sendEmailNotification(sa.email, subject, body);
-            }
-        }
-    } catch (error) {
-        console.error('Failed to send new user notification:', error);
-    }
-}
-
-// Add refresh function
-function refreshUsersList() {
-    loadUsers();
-    showNotif("Berjaya", "Senarai pengguna dikemaskini", false);
-}
     </script>
 </body>
 </html>
+
+
 
