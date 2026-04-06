@@ -34,13 +34,6 @@
             min-height: 100vh;
         }
         
-        /* Desktop Container */
-        .desktop-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
         /* Login Styles */
         .login-container {
             min-height: 100vh;
@@ -134,30 +127,105 @@
             cursor: not-allowed;
         }
         
-        /* Dashboard Header */
-        .dashboard-header {
+        /* Main App Container */
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #f5f7fa;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 80px;
+        }
+        
+        /* Header */
+        .app-header {
             background: white;
-            border-radius: 28px;
-            padding: 24px;
-            margin-bottom: 20px;
+            padding: 20px;
+            border-bottom-left-radius: 28px;
+            border-bottom-right-radius: 28px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
         
-        /* Stats Cards */
-        .stat-card {
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
             background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 20px 20px;
+            border-top-left-radius: 28px;
+            border-top-right-radius: 28px;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+            max-width: 500px;
+            margin: 0 auto;
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            padding: 8px 16px;
             border-radius: 24px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .nav-item .material-symbols-rounded {
+            font-size: 24px;
+            color: #9ca3af;
             transition: all 0.2s;
         }
         
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        .nav-item span:not(.material-symbols-rounded) {
+            font-size: 10px;
+            font-weight: 600;
+            color: #9ca3af;
         }
         
-        /* Main Action Card */
+        .nav-item.active .material-symbols-rounded {
+            color: #1e3a8a;
+        }
+        
+        .nav-item.active span:not(.material-symbols-rounded) {
+            color: #1e3a8a;
+        }
+        
+        .nav-item:active {
+            transform: scale(0.95);
+        }
+        
+        /* Content Pages */
+        .page {
+            display: none;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Stat Cards */
+        .stat-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        
+        /* Action Card */
         .action-card {
             background: white;
             border-radius: 28px;
@@ -165,7 +233,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
         
-        /* Clock In/Out Buttons */
+        /* Clock Buttons */
         .clock-btn {
             padding: 16px;
             border-radius: 20px;
@@ -173,6 +241,7 @@
             font-size: 1rem;
             transition: all 0.2s;
             text-align: center;
+            cursor: pointer;
         }
         
         .clock-btn:active {
@@ -196,204 +265,7 @@
             box-shadow: 0 4px 12px rgba(239,68,68,0.3);
         }
         
-        /* Location Badge */
-        .location-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #f0fdf4;
-            padding: 8px 16px;
-            border-radius: 100px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #059669;
-        }
-        
-        .location-badge.outside {
-            background: #fef2f2;
-            color: #dc2626;
-        }
-        
-        /* History Item */
-        .history-item {
-            background: white;
-            border-radius: 20px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: all 0.2s;
-        }
-        
-        .history-item:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-        
-        /* Video Container */
-        .video-container {
-            position: relative;
-            width: 100%;
-            border-radius: 24px;
-            overflow: hidden;
-            background: #000;
-            aspect-ratio: 4/3;
-        }
-        
-        .video-container video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transform: scaleX(-1);
-        }
-        
-        .face-guide {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 160px;
-            height: 200px;
-            border: 3px dashed #fbbf24;
-            border-radius: 80px;
-            box-shadow: 0 0 0 1000px rgba(0,0,0,0.4);
-            pointer-events: none;
-        }
-        
-        .face-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-        
-        .face-box {
-            position: absolute;
-            border: 3px solid #fbbf24;
-            border-radius: 12px;
-            pointer-events: none;
-        }
-        
-        /* Progress Bar */
-        .progress-bar {
-            height: 4px;
-            background: #e5e7eb;
-            border-radius: 2px;
-            overflow: hidden;
-            margin: 16px 0;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: #1e3a8a;
-            width: 0%;
-            transition: width 0.3s;
-        }
-        
-        /* Challenge Box */
-        .challenge-box {
-            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-            color: white;
-            padding: 16px;
-            border-radius: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-        
-        /* Notification */
-        .notification {
-            position: fixed;
-            bottom: 24px;
-            left: 16px;
-            right: 16px;
-            background: white;
-            border-radius: 20px;
-            padding: 14px 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            z-index: 9999;
-            border-left: 4px solid #10b981;
-            transform: translateY(200px);
-            transition: transform 0.3s ease;
-        }
-        
-        @media (min-width: 768px) {
-            .notification {
-                top: 24px;
-                bottom: auto;
-                right: 24px;
-                left: auto;
-                max-width: 380px;
-                transform: translateX(450px);
-            }
-            .notification.show { transform: translateX(0); }
-        }
-        
-        .notification.show { transform: translateY(0); }
-        .notification.error { border-left-color: #ef4444; }
-        
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .hidden { display: none !important; }
-        
-        /* Grid Layout */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-        
-        @media (min-width: 768px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-        
-        @media (min-width: 1024px) {
-            .dashboard-grid {
-                grid-template-columns: 1.2fr 0.8fr;
-            }
-        }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 10px;
-        }
-        
-        .clock-text {
-            font-size: 2.5rem;
-            font-weight: 800;
-        }
-        
-        @media (min-width: 768px) {
-            .clock-text {
-                font-size: 2rem;
-            }
-        }
-        
+        /* Status Badge */
         .status-badge {
             display: inline-block;
             padding: 6px 14px;
@@ -415,6 +287,225 @@
         .status-pending {
             background: #fef3c7;
             color: #92400e;
+        }
+        
+        /* Location Badge */
+        .location-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .location-safe {
+            background: #f0fdf4;
+            color: #059669;
+        }
+        
+        .location-unsafe {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        /* History Item */
+        .history-item {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        /* Calendar */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            margin-bottom: 12px;
+        }
+        
+        .calendar-weekdays span {
+            font-size: 12px;
+            font-weight: 600;
+            color: #9ca3af;
+            padding: 8px 0;
+        }
+        
+        .calendar-dates {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            gap: 4px;
+        }
+        
+        .calendar-date {
+            padding: 10px 0;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .calendar-date.selected {
+            background: #1e3a8a;
+            color: white;
+        }
+        
+        .calendar-date.today {
+            background: #e0e7ff;
+            color: #1e3a8a;
+        }
+        
+        /* Video Modal */
+        .video-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .video-modal.active {
+            display: flex;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 32px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 3/4;
+        }
+        
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+        
+        .face-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 200px;
+            border: 3px dashed #fbbf24;
+            border-radius: 80px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        
+        .face-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+        
+        .face-box {
+            position: absolute;
+            border: 3px solid #fbbf24;
+            border-radius: 12px;
+            pointer-events: none;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #1e3a8a;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .challenge-box {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 90px;
+            left: 16px;
+            right: 16px;
+            background: white;
+            border-radius: 20px;
+            padding: 14px 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            z-index: 9999;
+            border-left: 4px solid #10b981;
+            transform: translateY(200px);
+            transition: transform 0.3s ease;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .notification.show { transform: translateY(0); }
+        .notification.error { border-left-color: #ef4444; }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .hidden { display: none !important; }
+        
+        .clock-text {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+        
+        /* Pull to refresh */
+        .pull-to-refresh {
+            text-align: center;
+            padding: 12px;
+            color: #9ca3af;
+            font-size: 0.7rem;
         }
     </style>
 </head>
@@ -463,107 +554,168 @@
         </div>
     </div>
 
-    <!-- Dashboard -->
-    <div id="dashboard" class="hidden">
-        <div class="desktop-container">
+    <!-- Main App -->
+    <div id="app" class="hidden">
+        <div class="app-container">
             <!-- Header -->
-            <div class="dashboard-header">
-                <div class="flex justify-between items-start">
+            <div class="app-header">
+                <div class="flex justify-between items-center">
                     <div>
-                        <h1 class="text-xl font-bold text-gray-800" id="userName">-</h1>
-                        <p class="text-sm text-gray-500 mt-1" id="userDetail">-</p>
+                        <h1 class="text-lg font-bold text-gray-800" id="userName">-</h1>
+                        <p class="text-xs text-gray-500 mt-0.5" id="userDetail">-</p>
                     </div>
-                    <button onclick="handleLogout()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
-                        <span class="material-symbols-rounded text-gray-500">logout</span>
+                    <button onclick="handleLogout()" class="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                        <span class="material-symbols-rounded text-gray-500 text-xl">logout</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Dashboard Grid -->
-            <div class="dashboard-grid">
-                <!-- Left Column - Main Content -->
-                <div>
-                    <!-- Stats Row -->
-                    <div class="grid grid-cols-2 gap-4 mb-5">
-                        <div class="stat-card">
-                            <span class="material-symbols-rounded text-gray-400 text-sm">schedule</span>
-                            <p class="text-2xl font-bold text-gray-800 mt-2" id="totalHoursStat">0</p>
-                            <p class="text-xs text-gray-400">Jumlah Jam</p>
-                        </div>
-                        <div class="stat-card">
-                            <span class="material-symbols-rounded text-gray-400 text-sm">bolt</span>
-                            <p class="text-2xl font-bold text-gray-800 mt-2" id="totalOTStat">0</p>
-                            <p class="text-xs text-gray-400">Jumlah OT</p>
-                        </div>
+            <!-- Page 1: Home / Dashboard -->
+            <div id="homePage" class="page active">
+                <!-- Stats Row -->
+                <div class="grid grid-cols-2 gap-4 mb-5">
+                    <div class="stat-card">
+                        <span class="material-symbols-rounded text-gray-400 text-sm">schedule</span>
+                        <p class="text-2xl font-bold text-gray-800 mt-2" id="totalHoursStat">0</p>
+                        <p class="text-xs text-gray-400">Jumlah Jam</p>
                     </div>
-
-                    <!-- Clock In/Out Card -->
-                    <div class="action-card mb-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <p class="text-xs text-gray-400">Kehadiran Hari Ini</p>
-                                <p class="text-2xl font-black text-gray-800 clock-text" id="realTimeClock">--:--:--</p>
-                                <p class="text-xs text-gray-400 mt-1" id="displayDate">-</p>
-                            </div>
-                            <div id="attendanceStatus" class="status-badge status-pending">BELUM MASUK</div>
-                        </div>
-
-                        <!-- Location Status -->
-                        <div class="flex items-center justify-between mb-5">
-                            <div class="flex items-center gap-2" id="locationStatus">
-                                <span class="material-symbols-rounded text-green-600 text-sm">location_on</span>
-                                <span class="text-xs font-medium text-green-600">Mengesan...</span>
-                            </div>
-                            <span class="text-xs text-gray-400" id="distanceStatus">-</span>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="grid grid-cols-2 gap-3">
-                            <button onclick="handleClockIn()" id="clockInBtn" class="clock-btn btn-clockin">
-                                <span class="material-symbols-rounded text-sm align-middle mr-1">login</span>
-                                MASUK
-                            </button>
-                            <button onclick="handleClockOut()" id="clockOutBtn" class="clock-btn btn-clockout" disabled>
-                                <span class="material-symbols-rounded text-sm align-middle mr-1">logout</span>
-                                KELUAR
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activity -->
-                    <div class="action-card">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-gray-800">Aktiviti Terkini</h3>
-                            <button onclick="loadAttendanceHistory()" class="text-xs text-blue-600 font-medium">Lihat semua</button>
-                        </div>
-                        <div id="recentActivity" class="space-y-3">
-                            <div class="text-center py-8 text-gray-400 text-sm">Loading...</div>
-                        </div>
+                    <div class="stat-card">
+                        <span class="material-symbols-rounded text-gray-400 text-sm">bolt</span>
+                        <p class="text-2xl font-bold text-gray-800 mt-2" id="totalOTStat">0</p>
+                        <p class="text-xs text-gray-400">Jumlah OT</p>
                     </div>
                 </div>
 
-                <!-- Right Column - History -->
+                <!-- Clock In/Out Card -->
+                <div class="action-card mb-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <p class="text-xs text-gray-400">Kehadiran Hari Ini</p>
+                            <p class="clock-text font-black text-gray-800" id="realTimeClock">--:--:--</p>
+                            <p class="text-xs text-gray-400 mt-1" id="displayDate">-</p>
+                        </div>
+                        <div id="attendanceStatus" class="status-badge status-pending">BELUM MASUK</div>
+                    </div>
+
+                    <!-- Location Status -->
+                    <div class="mb-5" id="locationContainer">
+                        <div class="location-badge location-safe" id="locationStatus">
+                            <span class="material-symbols-rounded text-sm">check_circle</span>
+                            <span>Mengesan lokasi...</span>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2" id="distanceStatus">-</p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="handleClockIn()" id="clockInBtn" class="clock-btn btn-clockin">
+                            <span class="material-symbols-rounded text-sm align-middle mr-1">login</span>
+                            MASUK
+                        </button>
+                        <button onclick="handleClockOut()" id="clockOutBtn" class="clock-btn btn-clockout" disabled>
+                            <span class="material-symbols-rounded text-sm align-middle mr-1">logout</span>
+                            KELUAR
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
                 <div class="action-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-800">Aktiviti Terkini</h3>
+                        <button onclick="switchToHistory()" class="text-xs text-blue-600 font-medium">Lihat semua</button>
+                    </div>
+                    <div id="recentActivity" class="space-y-3">
+                        <div class="text-center py-8 text-gray-400 text-sm">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page 2: History -->
+            <div id="historyPage" class="page">
+                <div class="action-card mb-5">
                     <h3 class="font-bold text-gray-800 mb-4">Sejarah Kehadiran</h3>
-                    <div id="attendanceHistory" class="space-y-2 max-h-[500px] overflow-y-auto"></div>
-                    <div class="text-center pt-3 text-gray-400 text-xs">
+                    
+                    <!-- Pilih Tarikh -->
+                    <p class="text-xs text-gray-400 mb-3">Pilih Tarikh</p>
+                    
+                    <!-- Calendar -->
+                    <div class="calendar-header">
+                        <button onclick="prevMonth()" class="p-2 hover:bg-gray-100 rounded-full">
+                            <span class="material-symbols-rounded text-gray-500">chevron_left</span>
+                        </button>
+                        <span class="font-bold text-gray-800" id="currentMonthYear">April 2026</span>
+                        <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 rounded-full">
+                            <span class="material-symbols-rounded text-gray-500">chevron_right</span>
+                        </button>
+                    </div>
+                    
+                    <div class="calendar-weekdays">
+                        <span>Isn</span><span>Sel</span><span>Rab</span><span>Kha</span><span>Jum</span><span>Sab</span><span>Aha</span>
+                    </div>
+                    <div id="calendarDates" class="calendar-dates"></div>
+                </div>
+                
+                <!-- Selected Date Details -->
+                <div class="action-card mb-5" id="selectedDateDetails">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-gray-800" id="selectedDateTitle">Isnin, 6 April 2026</h3>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-gray-400">Clock In</p>
+                                <p class="text-lg font-bold text-gray-800" id="detailClockIn">--:--</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs text-gray-400">Status</p>
+                                <p class="text-sm font-medium text-green-600" id="detailStatus">Dalam Bertugas</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-xs text-gray-400">Clock Out</p>
+                                <p class="text-lg font-bold text-gray-800" id="detailClockOut">--:--</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                            <div>
+                                <p class="text-xs text-gray-400">Jumlah Jam</p>
+                                <p class="text-xl font-bold text-gray-800" id="detailTotalHours">0 Jam</p>
+                                <p class="text-[10px] text-gray-400" id="detailTotalHoursDate">Kemaskini, -</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-400">Jumlah OT</p>
+                                <p class="text-xl font-bold text-gray-800" id="detailTotalOT">0 Jam</p>
+                                <p class="text-[10px] text-gray-400" id="detailTotalOTDate">Kemaskini, -</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- History List -->
+                <div class="action-card">
+                    <h3 class="font-bold text-gray-800 mb-4">REKOD KEHADIRAN (30 HARI LEPAS)</h3>
+                    <div id="attendanceHistory" class="space-y-2 max-h-[300px] overflow-y-auto"></div>
+                    <div class="pull-to-refresh">
                         <span class="material-symbols-rounded text-sm inline-block animate-pulse">swap_vert</span>
                         Tarik untuk muat semula
                     </div>
                 </div>
             </div>
 
-            <!-- Face Verification Modal (Hidden by default) -->
-            <div id="scanContainer" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-3xl max-w-md w-full p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-lg">Pengesahan Wajah</h3>
-                        <button onclick="closeScanModal()" class="p-2 hover:bg-gray-100 rounded-full">
-                            <span class="material-symbols-rounded">close</span>
-                        </button>
+            <!-- Page 3: Verification (Face Scan) -->
+            <div id="verifyPage" class="page">
+                <div class="action-card">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <span class="material-symbols-rounded text-4xl text-blue-800">face</span>
+                        </div>
+                        <h3 class="font-bold text-gray-800">Pengesahan Wajah</h3>
+                        <p class="text-xs text-gray-400 mt-1">Sila senyum ringan di hadapan kamera</p>
                     </div>
                     
-                    <div id="challengeDisplay" class="challenge-box">Sedia untuk pengesahan...</div>
+                    <div id="challengeDisplay" class="challenge-box">📷 Sedia untuk pengesahan...</div>
                     
                     <div class="progress-bar">
                         <div id="progressFill" class="progress-fill"></div>
@@ -576,7 +728,28 @@
                     </div>
                     
                     <p class="text-center mt-3 text-xs text-gray-500" id="scanStatus">Menyediakan kamera...</p>
+                    
+                    <div class="grid grid-cols-2 gap-3 mt-5">
+                        <button onclick="closeVerifyPage()" class="py-3 rounded-xl bg-gray-100 text-gray-600 font-medium">Batal</button>
+                        <button onclick="startVerification()" id="startVerifyBtn" class="py-3 rounded-xl bg-blue-800 text-white font-medium">Mula Pengesahan</button>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <button class="nav-item active" onclick="switchPage('home')" id="navHome">
+                    <span class="material-symbols-rounded">home</span>
+                    <span>Utama</span>
+                </button>
+                <button class="nav-item" onclick="switchPage('history')" id="navHistory">
+                    <span class="material-symbols-rounded">history</span>
+                    <span>Sejarah</span>
+                </button>
+                <button class="nav-item" onclick="switchPage('verify')" id="navVerify">
+                    <span class="material-symbols-rounded">fingerprint</span>
+                    <span>Pengesahan</span>
+                </button>
             </div>
         </div>
     </div>
@@ -608,14 +781,24 @@
         let isVerifying = false;
         let faceOverlay = null;
         let realTimeDetectionInterval = null;
+        let pendingAction = null;
+        
+        // Calendar state
+        let currentDate = new Date();
+        let selectedDate = new Date();
+        let attendanceRecords = {};
 
         // ============================================
-        // TIMEZONE HELPER
+        // HELPER FUNCTIONS
         // ============================================
         function getCurrentDateMalaysia() {
             const now = new Date();
             const malaysiaDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
             return malaysiaDate.toISOString().split('T')[0];
+        }
+
+        function formatDateKey(date) {
+            return date.toISOString().split('T')[0];
         }
 
         function togglePasswordVisibility() {
@@ -667,16 +850,6 @@
             cancelBtn.addEventListener('click', handleCancel);
         }
 
-        function closeScanModal() {
-            const container = document.getElementById('scanContainer');
-            container.classList.add('hidden');
-            if (videoStream) {
-                videoStream.getTracks().forEach(t => t.stop());
-                videoStream = null;
-            }
-            stopRealTimeFaceDetection();
-        }
-
         function updateProgress(percent) {
             const progressFill = document.getElementById('progressFill');
             if (progressFill) progressFill.style.width = percent + '%';
@@ -690,7 +863,48 @@
         }
 
         // ============================================
-        // VIDEO DIMENSIONS
+        // PAGE NAVIGATION
+        // ============================================
+        function switchPage(page) {
+            document.getElementById('homePage').classList.remove('active');
+            document.getElementById('historyPage').classList.remove('active');
+            document.getElementById('verifyPage').classList.remove('active');
+            
+            document.getElementById('navHome').classList.remove('active');
+            document.getElementById('navHistory').classList.remove('active');
+            document.getElementById('navVerify').classList.remove('active');
+            
+            if (page === 'home') {
+                document.getElementById('homePage').classList.add('active');
+                document.getElementById('navHome').classList.add('active');
+                loadRecentActivity();
+            } else if (page === 'history') {
+                document.getElementById('historyPage').classList.add('active');
+                document.getElementById('navHistory').classList.add('active');
+                renderCalendar();
+                loadAttendanceHistory();
+            } else if (page === 'verify') {
+                document.getElementById('verifyPage').classList.add('active');
+                document.getElementById('navVerify').classList.add('active');
+                initCameraForVerify();
+            }
+        }
+        
+        function switchToHistory() {
+            switchPage('history');
+        }
+        
+        function closeVerifyPage() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(t => t.stop());
+                videoStream = null;
+            }
+            stopRealTimeFaceDetection();
+            switchPage('home');
+        }
+        
+        // ============================================
+        // VIDEO & FACE DETECTION
         // ============================================
         function getVideoDimensions(videoEl) {
             const videoWidth = videoEl.videoWidth;
@@ -762,7 +976,6 @@
                     
                     if (detection) {
                         drawFaceOverlay(video, detection);
-                        const confidence = Math.round(detection.detection.score * 100);
                         const happyScore = detection.expressions ? Math.round(detection.expressions.happy * 100) : 0;
                         document.getElementById('scanStatus').innerHTML = `Mengesan senyuman: ${happyScore}%`;
                         
@@ -788,85 +1001,6 @@
             if (overlay) overlay.innerHTML = '';
         }
 
-        // ============================================
-        // LOCATION FUNCTIONS
-        // ============================================
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                    Math.cos(φ1) * Math.cos(φ2) *
-                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        function updateLocationDisplay() {
-            if (!currentUser || !currentUser.lat || !currentUser.lng || !userLocation) {
-                document.getElementById('locationStatus').innerHTML = `
-                    <span class="material-symbols-rounded text-gray-400 text-sm">location_off</span>
-                    <span class="text-xs text-gray-500">Mengesan...</span>
-                `;
-                return;
-            }
-            const distance = calculateDistance(
-                userLocation.lat, userLocation.lng,
-                parseFloat(currentUser.lat), parseFloat(currentUser.lng)
-            );
-            const radius = parseInt(currentUser.radius) || 500;
-            const within = distance <= radius;
-            
-            const locationDiv = document.getElementById('locationStatus');
-            const distanceSpan = document.getElementById('distanceStatus');
-            
-            if (within) {
-                locationDiv.innerHTML = `
-                    <span class="material-symbols-rounded text-green-600 text-sm">check_circle</span>
-                    <span class="text-xs font-medium text-green-600">DALAM KAWASAN BERTUGAS</span>
-                `;
-            } else {
-                locationDiv.innerHTML = `
-                    <span class="material-symbols-rounded text-red-500 text-sm">warning</span>
-                    <span class="text-xs font-medium text-red-500">LUAR KAWASAN BERTUGAS</span>
-                `;
-            }
-            distanceSpan.innerText = `${Math.round(distance)}m / ${radius}m`;
-        }
-
-        function startLocationTracking() {
-            if (!navigator.geolocation) {
-                document.getElementById('locationStatus').innerHTML = `
-                    <span class="material-symbols-rounded text-red-500 text-sm">gps_off</span>
-                    <span class="text-xs text-red-500">GPS tidak disokong</span>
-                `;
-                return;
-            }
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    updateLocationDisplay();
-                },
-                (error) => {
-                    console.error('GPS error:', error);
-                },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-            locationWatchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    updateLocationDisplay();
-                },
-                (error) => console.error('GPS watch error:', error),
-                { enableHighAccuracy: true, maximumAge: 30000 }
-            );
-        }
-
-        // ============================================
-        // FACE API MODELS
-        // ============================================
         async function loadFaceModels() {
             if (modelsLoaded) return true;
             const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
@@ -883,9 +1017,27 @@
             }
         }
 
-        // ============================================
-        // FACE VERIFICATION
-        // ============================================
+        async function initCameraForVerify() {
+            await loadFaceModels();
+            const video = document.getElementById('scanVideo');
+            const scanStatus = document.getElementById('scanStatus');
+            
+            try {
+                if (videoStream) {
+                    videoStream.getTracks().forEach(t => t.stop());
+                }
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+                });
+                video.srcObject = videoStream;
+                scanStatus.innerText = 'Kamera sedia';
+                startRealTimeFaceDetection();
+            } catch (err) {
+                scanStatus.innerText = 'Gagal mengakses kamera';
+                showNotification('Ralat', 'Sila benarkan akses kamera', true);
+            }
+        }
+
         async function getFaceDescriptor(video) {
             try {
                 return await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
@@ -897,42 +1049,29 @@
             }
         }
 
-        async function verifyFace() {
-            if (isVerifying) return false;
+        async function startVerification() {
+            if (isVerifying) return;
             isVerifying = true;
             
             if (!faceMatcher) {
                 showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin', true);
                 isVerifying = false;
-                return false;
+                return;
             }
             
-            const scanContainer = document.getElementById('scanContainer');
             const scanVideo = document.getElementById('scanVideo');
             const scanStatus = document.getElementById('scanStatus');
             const challengeDisplay = document.getElementById('challengeDisplay');
+            const startBtn = document.getElementById('startVerifyBtn');
             
-            scanContainer.classList.remove('hidden');
-            challengeDisplay.innerHTML = '📷 MENYEDIAKAN KAMERA...';
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            challengeDisplay.innerHTML = '😊 SILA SENYUM RINGAN';
             challengeDisplay.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)';
             
             try {
-                await loadFaceModels();
-                
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
-                });
-                scanVideo.srcObject = stream;
-                videoStream = stream;
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                startRealTimeFaceDetection();
-                
                 // Smile detection phase
                 updateProgress(20);
-                challengeDisplay.innerHTML = '😊 SILA SENYUM RINGAN';
-                scanStatus.innerText = 'Sila senyum di hadapan kamera...';
-                
                 let smileDetected = false;
                 let smileStartTime = Date.now();
                 
@@ -982,22 +1121,113 @@
                 challengeDisplay.style.background = '#059669';
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                closeScanModal();
-                return true;
+                // Close verify page and execute pending action
+                closeVerifyPage();
+                if (pendingAction === 'clockin') {
+                    await executeClockIn();
+                } else if (pendingAction === 'clockout') {
+                    await executeClockOut();
+                }
+                pendingAction = null;
                 
             } catch (error) {
                 console.error('Verification error:', error);
-                closeScanModal();
                 showNotification('Pengesahan Gagal', error.message, true);
-                return false;
+                updateProgress(0);
+                challengeDisplay.innerHTML = '❌ PENGESAHAN GAGAL';
+                challengeDisplay.style.background = '#dc2626';
+                setTimeout(() => {
+                    challengeDisplay.innerHTML = '📷 Sedia untuk pengesahan...';
+                    challengeDisplay.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)';
+                    updateProgress(0);
+                }, 2000);
             } finally {
                 isVerifying = false;
-                updateProgress(0);
+                startBtn.disabled = false;
+                startBtn.innerHTML = 'Mula Pengesahan';
             }
         }
 
         // ============================================
-        // CHECK TODAY ATTENDANCE
+        // LOCATION FUNCTIONS
+        // ============================================
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                    Math.cos(φ1) * Math.cos(φ2) *
+                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function updateLocationDisplay() {
+            if (!currentUser || !currentUser.lat || !currentUser.lng || !userLocation) {
+                document.getElementById('locationStatus').innerHTML = `
+                    <span class="material-symbols-rounded text-sm">location_off</span>
+                    <span>Mengesan...</span>
+                `;
+                return;
+            }
+            const distance = calculateDistance(
+                userLocation.lat, userLocation.lng,
+                parseFloat(currentUser.lat), parseFloat(currentUser.lng)
+            );
+            const radius = parseInt(currentUser.radius) || 500;
+            const within = distance <= radius;
+            
+            const locationDiv = document.getElementById('locationStatus');
+            const distanceSpan = document.getElementById('distanceStatus');
+            
+            if (within) {
+                locationDiv.innerHTML = `
+                    <span class="material-symbols-rounded text-sm">check_circle</span>
+                    <span>DALAM KAWASAN BERTUGAS</span>
+                `;
+                locationDiv.className = 'location-badge location-safe';
+            } else {
+                locationDiv.innerHTML = `
+                    <span class="material-symbols-rounded text-sm">warning</span>
+                    <span>LUAR KAWASAN BERTUGAS</span>
+                `;
+                locationDiv.className = 'location-badge location-unsafe';
+            }
+            distanceSpan.innerText = `${Math.round(distance)}m / ${radius}m`;
+        }
+
+        function startLocationTracking() {
+            if (!navigator.geolocation) {
+                document.getElementById('locationStatus').innerHTML = `
+                    <span class="material-symbols-rounded text-sm">gps_off</span>
+                    <span>GPS tidak disokong</span>
+                `;
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+                    updateLocationDisplay();
+                },
+                (error) => {
+                    console.error('GPS error:', error);
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
+            locationWatchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+                    updateLocationDisplay();
+                },
+                (error) => console.error('GPS watch error:', error),
+                { enableHighAccuracy: true, maximumAge: 30000 }
+            );
+        }
+
+        // ============================================
+        // ATTENDANCE FUNCTIONS
         // ============================================
         async function checkTodayAttendance() {
             if (!currentUser) return;
@@ -1059,9 +1289,61 @@
             }
         }
 
-        // ============================================
-        // ATTENDANCE HISTORY
-        // ============================================
+        async function loadRecentActivity() {
+            if (!currentUser) return;
+            
+            const today = new Date();
+            const malaysiaToday = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
+            const sevenDaysAgo = new Date(malaysiaToday);
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            
+            const startDate = sevenDaysAgo.toISOString().split('T')[0];
+            const endDate = malaysiaToday.toISOString().split('T')[0];
+            
+            try {
+                const result = await callAPI('getAttendance', { 
+                    uid: currentUser.uid,
+                    startDate: startDate,
+                    endDate: endDate
+                });
+                
+                const recentEl = document.getElementById('recentActivity');
+                
+                if (!result.success || !result.data || result.data.length === 0) {
+                    recentEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada aktiviti</div>';
+                    return;
+                }
+                
+                const records = result.data;
+                records.sort((a, b) => b.date.localeCompare(a.date));
+                
+                let html = '';
+                records.slice(0, 5).forEach(record => {
+                    const date = new Date(record.date);
+                    const formattedDate = date.toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
+                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+                    
+                    html += `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">Clock In</p>
+                                <p class="text-xs text-gray-400">${escapeHtml(formattedDate)}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-bold text-gray-800">${clockIn}</p>
+                                <p class="text-xs ${hasClockOut ? 'text-green-600' : 'text-blue-600'}">${hasClockOut ? 'Selesai' : 'Dalam Bertugas'}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                recentEl.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Load recent activity error:', error);
+            }
+        }
+
         async function loadAttendanceHistory() {
             if (!currentUser) return;
             
@@ -1081,41 +1363,22 @@
                 });
                 
                 const historyEl = document.getElementById('attendanceHistory');
-                const recentEl = document.getElementById('recentActivity');
                 
                 if (!result.success || !result.data || result.data.length === 0) {
                     historyEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
-                    recentEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada aktiviti</div>';
                     return;
                 }
+                
+                // Store records for calendar
+                attendanceRecords = {};
+                result.data.forEach(record => {
+                    attendanceRecords[record.date] = record;
+                });
                 
                 const records = result.data;
                 records.sort((a, b) => b.date.localeCompare(a.date));
                 
-                // Recent activity (latest 3)
-                let recentHtml = '';
-                records.slice(0, 3).forEach(record => {
-                    const date = new Date(record.date);
-                    const formattedDate = date.toLocaleDateString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
-                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    
-                    recentHtml += `
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="text-sm font-medium text-gray-800">Clock In</p>
-                                <p class="text-xs text-gray-400">${escapeHtml(formattedDate)}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-sm font-bold text-gray-800">${clockIn}</p>
-                                <p class="text-xs text-green-600">Dalam Bertugas</p>
-                            </div>
-                        </div>
-                    `;
-                });
-                recentEl.innerHTML = recentHtml || '<div class="text-center py-6 text-gray-400 text-sm">Tiada aktiviti</div>';
-                
-                // Full history
-                let historyHtml = '';
+                let html = '';
                 records.forEach(record => {
                     const date = new Date(record.date);
                     const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
@@ -1123,7 +1386,7 @@
                     const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
                     const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
                     
-                    historyHtml += `
+                    html += `
                         <div class="history-item">
                             <div class="flex justify-between items-center">
                                 <div>
@@ -1138,17 +1401,125 @@
                         </div>
                     `;
                 });
-                historyEl.innerHTML = historyHtml;
+                historyEl.innerHTML = html;
+                
+                // Update selected date details
+                updateSelectedDateDetails();
                 
             } catch (error) {
                 console.error('Load attendance error:', error);
             }
         }
-
+        
+        async function loadAttendanceForDate(date) {
+            const dateStr = formatDateKey(date);
+            const record = attendanceRecords[dateStr];
+            
+            if (record) {
+                const clockInTime = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                const clockOutTime = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+                
+                document.getElementById('detailClockIn').innerText = clockInTime;
+                document.getElementById('detailClockOut').innerText = clockOutTime;
+                document.getElementById('detailStatus').innerText = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
+                document.getElementById('detailStatus').className = `text-sm font-medium ${hasClockOut ? 'text-green-600' : 'text-blue-600'}`;
+                document.getElementById('detailTotalHours').innerHTML = record.totalHours ? `${record.totalHours.toFixed(1)} Jam` : '0 Jam';
+                document.getElementById('detailTotalOT').innerHTML = record.totalOT ? `${record.totalOT.toFixed(1)} Jam` : '0 Jam';
+                
+                const updateDate = new Date(dateStr);
+                const formattedUpdateDate = updateDate.toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+                document.getElementById('detailTotalHoursDate').innerHTML = `Kemaskini, ${formattedUpdateDate}`;
+                document.getElementById('detailTotalOTDate').innerHTML = `Kemaskini, ${formattedUpdateDate}`;
+            } else {
+                document.getElementById('detailClockIn').innerText = '--:--';
+                document.getElementById('detailClockOut').innerText = '--:--';
+                document.getElementById('detailStatus').innerText = 'Tiada Rekod';
+                document.getElementById('detailStatus').className = 'text-sm font-medium text-gray-400';
+                document.getElementById('detailTotalHours').innerHTML = '0 Jam';
+                document.getElementById('detailTotalOT').innerHTML = '0 Jam';
+                document.getElementById('detailTotalHoursDate').innerHTML = 'Kemaskini, -';
+                document.getElementById('detailTotalOTDate').innerHTML = 'Kemaskini, -';
+            }
+        }
+        
+        function updateSelectedDateDetails() {
+            const weekday = selectedDate.toLocaleDateString('ms-MY', { weekday: 'long', timeZone: 'Asia/Kuching' });
+            const day = selectedDate.getDate();
+            const month = selectedDate.toLocaleDateString('ms-MY', { month: 'long', timeZone: 'Asia/Kuching' });
+            const year = selectedDate.getFullYear();
+            document.getElementById('selectedDateTitle').innerText = `${weekday}, ${day} ${month} ${year}`;
+            loadAttendanceForDate(selectedDate);
+        }
+        
         // ============================================
-        // CLOCK IN / OUT
+        // CALENDAR FUNCTIONS
         // ============================================
-        window.handleClockIn = async function() {
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            
+            const startDayOfWeek = firstDay.getDay();
+            // Adjust for Monday as first day (0 = Sunday, 1 = Monday, ...)
+            let startOffset = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
+            
+            const dates = [];
+            for (let i = 0; i < startOffset; i++) {
+                dates.push(null);
+            }
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                dates.push(new Date(year, month, i));
+            }
+            
+            document.getElementById('currentMonthYear').innerText = currentDate.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+            
+            const container = document.getElementById('calendarDates');
+            let html = '';
+            
+            dates.forEach(date => {
+                if (!date) {
+                    html += '<div></div>';
+                } else {
+                    const dateNum = date.getDate();
+                    const isToday = formatDateKey(date) === getCurrentDateMalaysia();
+                    const isSelected = formatDateKey(date) === formatDateKey(selectedDate);
+                    const hasRecord = attendanceRecords[formatDateKey(date)];
+                    
+                    let classes = 'calendar-date';
+                    if (isSelected) classes += ' selected';
+                    if (isToday) classes += ' today';
+                    if (hasRecord) classes += ' font-bold';
+                    
+                    html += `<div class="${classes}" onclick="selectDate(${date.getFullYear()}, ${date.getMonth()}, ${dateNum})">${dateNum}</div>`;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function selectDate(year, month, day) {
+            selectedDate = new Date(year, month, day);
+            updateSelectedDateDetails();
+            renderCalendar();
+        }
+        
+        function prevMonth() {
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+            renderCalendar();
+        }
+        
+        function nextMonth() {
+            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+            renderCalendar();
+        }
+        
+        // ============================================
+        // CLOCK ACTIONS
+        // ============================================
+        async function executeClockIn() {
             if (!userLocation) {
                 showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
                 return;
@@ -1160,9 +1531,6 @@
                 return;
             }
             
-            const verified = await verifyFace();
-            if (!verified) return;
-            
             const btn = document.getElementById('clockInBtn');
             btn.disabled = true;
             btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
@@ -1172,8 +1540,8 @@
                 
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan', false);
-                    await new Promise(resolve => setTimeout(resolve, 1500));
                     await checkTodayAttendance();
+                    await loadRecentActivity();
                     await loadAttendanceHistory();
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock in', true);
@@ -1184,16 +1552,13 @@
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-rounded text-sm align-middle mr-1">login</span>MASUK';
             }
-        };
-
-        window.handleClockOut = async function() {
+        }
+        
+        async function executeClockOut() {
             if (!userLocation) {
                 showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
                 return;
             }
-            
-            const verified = await verifyFace();
-            if (!verified) return;
             
             const btn = document.getElementById('clockOutBtn');
             btn.disabled = true;
@@ -1204,8 +1569,8 @@
                 
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan', false);
-                    await new Promise(resolve => setTimeout(resolve, 1500));
                     await checkTodayAttendance();
+                    await loadRecentActivity();
                     await loadAttendanceHistory();
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock out', true);
@@ -1216,6 +1581,16 @@
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-rounded text-sm align-middle mr-1">logout</span>KELUAR';
             }
+        }
+        
+        window.handleClockIn = function() {
+            pendingAction = 'clockin';
+            switchPage('verify');
+        };
+        
+        window.handleClockOut = function() {
+            pendingAction = 'clockout';
+            switchPage('verify');
         };
 
         // ============================================
@@ -1256,11 +1631,12 @@
                         document.getElementById('userName').innerText = escapeHtml(currentUser.name);
                         document.getElementById('userDetail').innerText = `${escapeHtml(currentUser.branch)} • ${escapeHtml(currentUser.unit)}`;
                         document.getElementById('loginPage').classList.add('hidden');
-                        document.getElementById('dashboard').classList.remove('hidden');
+                        document.getElementById('app').classList.remove('hidden');
                         
                         loadFaceModels();
                         checkTodayAttendance();
                         startLocationTracking();
+                        loadRecentActivity();
                         loadAttendanceHistory();
                         startClock();
                         
@@ -1294,10 +1670,11 @@
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             stopRealTimeFaceDetection();
-            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('app').classList.add('hidden');
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
+            pendingAction = null;
         };
 
         // ============================================
