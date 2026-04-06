@@ -472,7 +472,7 @@
             font-weight: 700;
         }
         
-        /* Camera Section (Clock In/Out Page) */
+        /* Camera Section (Clock In/Out Page) - Updated */
         .camera-section {
             padding: 0;
         }
@@ -528,6 +528,37 @@
             margin-top: 8px;
         }
         
+        /* Location Status in Camera Page */
+        .camera-location {
+            padding: 16px 20px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .location-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .location-badge.safe {
+            color: #10b981;
+        }
+        
+        .location-badge.unsafe {
+            color: #ef4444;
+        }
+        
+        .location-distance {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
         .camera-actions {
             display: flex;
             gap: 12px;
@@ -554,6 +585,11 @@
             color: white;
         }
         
+        .action-btn--masuk:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+        
         .action-btn--keluar {
             background: #f1f5f9;
             color: #94a3b8;
@@ -562,6 +598,12 @@
         .action-btn--keluar.active {
             background: #ef4444;
             color: white;
+        }
+        
+        .action-btn--keluar:disabled {
+            background: #cbd5e1;
+            color: white;
+            cursor: not-allowed;
         }
         
         .camera-viewport {
@@ -625,7 +667,7 @@
         }
         
         .progress-container {
-            padding: 0 20px 20px;
+            padding: 16px 20px 20px;
         }
         
         .progress-bar {
@@ -648,6 +690,12 @@
             font-weight: 600;
             color: #1e3a8a;
             margin: 16px 0 8px;
+        }
+        
+        .smile-percent {
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
         }
         
         /* History Page */
@@ -738,7 +786,7 @@
             border-bottom: none;
         }
         
-        /* Location History Modal */
+        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -1047,37 +1095,50 @@
                 </div>
             </div>
 
-            <!-- Page 3: Clock In/Out (Camera) -->
+            <!-- Page 3: Clock In/Out (Camera) - Updated Layout -->
             <div id="cameraPage" class="page">
                 <section class="camera-section">
                     <div class="camera-card">
                         <div class="camera-header">
                             <div class="camera-title">
-                                <span class="material-symbols-rounded">calendar_range</span>
+                                <span class="material-symbols-rounded">calendar_today</span>
                                 <span>Kehadiran Hari Ini</span>
                             </div>
                             <span class="camera-status" id="cameraStatus">BELUM MASUK</span>
                         </div>
+                        
                         <div class="digital-clock">
                             <div class="clock-time" id="cameraClockTime">--:--:--</div>
                             <div class="clock-date" id="cameraClockDate">--</div>
                         </div>
-                        <div class="camera-actions">
-                            <button class="action-btn action-btn--masuk" id="cameraClockInBtn" onclick="cameraClockIn()">Masuk</button>
-                            <button class="action-btn action-btn--keluar" id="cameraClockOutBtn" onclick="cameraClockOut()" disabled>Keluar</button>
+                        
+                        <!-- Location Status -->
+                        <div class="camera-location">
+                            <div class="location-badge" id="cameraLocationBadge">
+                                <span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span>
+                                <span id="cameraLocationText">Mengesan lokasi...</span>
+                            </div>
+                            <div class="location-distance" id="cameraLocationDistance">-</div>
                         </div>
+                        
+                        <div class="camera-actions">
+                            <button class="action-btn action-btn--masuk" id="cameraClockInBtn" onclick="cameraClockIn()">MASUK</button>
+                            <button class="action-btn action-btn--keluar" id="cameraClockOutBtn" onclick="cameraClockOut()" disabled>KELUAR</button>
+                        </div>
+                        
                         <div class="camera-viewport">
                             <video id="scanVideo" autoplay muted playsinline></video>
                             <div class="face-target"></div>
                             <div id="faceOverlay" class="face-overlay"></div>
                             <span class="camera-hint" id="cameraHint">Pastikan wajah berada dalam bulatan</span>
                         </div>
+                        
                         <div class="progress-container">
                             <div class="progress-bar">
                                 <div id="progressFill" class="progress-fill"></div>
                             </div>
                             <div class="smile-text" id="smileText">😊 SILA SENYUM RINGAN</div>
-                            <div class="smile-percent" id="smilePercent" style="text-align: center; font-size: 12px; color: #64748b;">Mengesan senyuman: 0%</div>
+                            <div class="smile-percent" id="smilePercent">Mengesan senyuman: 0%</div>
                         </div>
                     </div>
                 </section>
@@ -1131,7 +1192,6 @@
         let attendanceRecords = {};
         let currentDate = new Date();
         let selectedDate = new Date();
-        let locationHistory = [];
 
         // Helper functions
         function getCurrentDateMalaysia() {
@@ -1192,6 +1252,7 @@
                 loadAttendanceHistory();
             } else if (page === 'camera') {
                 updateCameraClock();
+                updateCameraUI();
                 initCameraForVerify();
             }
         }
@@ -1262,6 +1323,35 @@
         }
         
         setInterval(updateCameraClock, 1000);
+        
+        function updateCameraLocationDisplay() {
+            if (!currentUser || !currentUser.lat || !currentUser.lng || !userLocation) {
+                document.getElementById('cameraLocationText').innerText = 'Mengesan lokasi...';
+                document.getElementById('cameraLocationDistance').innerText = '-';
+                return;
+            }
+            
+            const distance = calculateDistance(
+                userLocation.lat, userLocation.lng,
+                parseFloat(currentUser.lat), parseFloat(currentUser.lng)
+            );
+            const radius = parseInt(currentUser.radius) || 500;
+            const within = distance <= radius;
+            
+            const locationBadge = document.getElementById('cameraLocationBadge');
+            const locationText = document.getElementById('cameraLocationText');
+            const locationDistance = document.getElementById('cameraLocationDistance');
+            
+            if (within) {
+                locationBadge.className = 'location-badge safe';
+                locationBadge.innerHTML = '<span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span><span>DALAM KAWASAN BERTUGAS</span>';
+                locationDistance.innerText = `${Math.round(distance)}m / ${radius}m`;
+            } else {
+                locationBadge.className = 'location-badge unsafe';
+                locationBadge.innerHTML = '<span class="material-symbols-rounded" style="font-size: 18px;">warning</span><span>LUAR KAWASAN BERTUGAS</span>';
+                locationDistance.innerText = `${Math.round(distance)}m / ${radius}m`;
+            }
+        }
         
         function getVideoDimensions(videoEl) {
             const videoWidth = videoEl.videoWidth;
@@ -1505,6 +1595,7 @@
                     if (currentUser && currentUser.lat && currentUser.lng) {
                         initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
                     }
+                    updateCameraLocationDisplay();
                 },
                 (error) => console.error('GPS error:', error),
                 { enableHighAccuracy: true, timeout: 10000 }
@@ -1513,6 +1604,7 @@
             locationWatchId = navigator.geolocation.watchPosition(
                 (position) => {
                     userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
+                    updateCameraLocationDisplay();
                 },
                 (error) => console.error('GPS watch error:', error),
                 { enableHighAccuracy: true, maximumAge: 30000 }
@@ -1539,6 +1631,7 @@
                     showNotification('Berjaya', 'Clock In direkodkan', false);
                     await loadHomeData();
                     await loadAttendanceHistory();
+                    updateCameraUI();
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock in', true);
                 }
@@ -1560,6 +1653,7 @@
                     showNotification('Berjaya', 'Clock Out direkodkan', false);
                     await loadHomeData();
                     await loadAttendanceHistory();
+                    updateCameraUI();
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock out', true);
                 }
@@ -1569,6 +1663,19 @@
         }
         
         async function cameraClockIn() {
+            // Check if already clocked in
+            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && 
+                (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '')) {
+                showNotification('Makluman', 'Anda sudah clock in untuk hari ini', false);
+                return;
+            }
+            
+            // Check if already clocked out (completed)
+            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockOut) {
+                showNotification('Makluman', 'Kehadiran hari ini sudah lengkap', false);
+                return;
+            }
+            
             const success = await startVerification('clockin');
             if (success) {
                 updateCameraUI();
@@ -1576,6 +1683,20 @@
         }
         
         async function cameraClockOut() {
+            // Check if already clocked out
+            if (currentAttendanceRecord && currentAttendanceRecord.clockOut && 
+                currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null') {
+                showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false);
+                return;
+            }
+            
+            // Check if clocked in first
+            if (!currentAttendanceRecord || !currentAttendanceRecord.clockIn || 
+                currentAttendanceRecord.clockIn === '' || currentAttendanceRecord.clockIn === 'null') {
+                showNotification('Makluman', 'Sila clock in terlebih dahulu', true);
+                return;
+            }
+            
             const success = await startVerification('clockout');
             if (success) {
                 updateCameraUI();
@@ -1583,25 +1704,47 @@
         }
         
         function updateCameraUI() {
-            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '')) {
-                document.getElementById('cameraStatus').innerText = 'DALAM BERTUGAS';
-                document.getElementById('cameraStatus').style.background = '#dbeafe';
-                document.getElementById('cameraStatus').style.color = '#1e3a8a';
-                document.getElementById('cameraClockOutBtn').disabled = false;
-                document.getElementById('cameraClockOutBtn').classList.add('active');
-            } else if (currentAttendanceRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockOut) {
-                document.getElementById('cameraStatus').innerText = 'SELESAI';
-                document.getElementById('cameraStatus').style.background = '#dcfce7';
-                document.getElementById('cameraStatus').style.color = '#166534';
-                document.getElementById('cameraClockInBtn').disabled = true;
-                document.getElementById('cameraClockOutBtn').disabled = true;
+            const hasClockIn = currentAttendanceRecord && currentAttendanceRecord.clockIn && 
+                              currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null';
+            const hasClockOut = currentAttendanceRecord && currentAttendanceRecord.clockOut && 
+                               currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null';
+            
+            const cameraStatus = document.getElementById('cameraStatus');
+            const masukBtn = document.getElementById('cameraClockInBtn');
+            const keluarBtn = document.getElementById('cameraClockOutBtn');
+            
+            if (hasClockIn && !hasClockOut) {
+                // Sudah clock in, belum clock out
+                cameraStatus.innerText = 'DALAM BERTUGAS';
+                cameraStatus.style.background = '#dbeafe';
+                cameraStatus.style.color = '#1e3a8a';
+                masukBtn.disabled = true;
+                masukBtn.style.background = '#cbd5e1';
+                keluarBtn.disabled = false;
+                keluarBtn.classList.add('active');
+            } else if (hasClockIn && hasClockOut) {
+                // Sudah clock in dan clock out (selesai)
+                cameraStatus.innerText = 'SELESAI';
+                cameraStatus.style.background = '#dcfce7';
+                cameraStatus.style.color = '#166534';
+                masukBtn.disabled = true;
+                masukBtn.style.background = '#cbd5e1';
+                keluarBtn.disabled = true;
+                keluarBtn.classList.remove('active');
+                keluarBtn.style.background = '#cbd5e1';
             } else {
-                document.getElementById('cameraStatus').innerText = 'BELUM MASUK';
-                document.getElementById('cameraStatus').style.background = '#fef3c7';
-                document.getElementById('cameraStatus').style.color = '#92400e';
-                document.getElementById('cameraClockOutBtn').disabled = true;
-                document.getElementById('cameraClockOutBtn').classList.remove('active');
+                // Belum clock in
+                cameraStatus.innerText = 'BELUM MASUK';
+                cameraStatus.style.background = '#fef3c7';
+                cameraStatus.style.color = '#92400e';
+                masukBtn.disabled = false;
+                masukBtn.style.background = '#10b981';
+                keluarBtn.disabled = true;
+                keluarBtn.classList.remove('active');
+                keluarBtn.style.background = '#f1f5f9';
             }
+            
+            updateCameraLocationDisplay();
         }
         
         function handleClockIn() {
@@ -1683,10 +1826,8 @@
                 
                 currentAttendanceRecord = record;
                 
-                // Update camera UI
-                if (document.getElementById('cameraPage').classList.contains('active')) {
-                    updateCameraUI();
-                }
+                // Update camera UI if camera page is active
+                updateCameraUI();
                 
             } catch (error) {
                 console.error('Load home data error:', error);
