@@ -882,193 +882,187 @@
         // ============================================
         // CHECK TODAY ATTENDANCE - DIPERBAIKI DENGAN TIMEZONE
         // ============================================
-        async function checkTodayAttendance() {
-            if (!currentUser) return;
-            
-            const today = getCurrentDateMalaysia();
-            console.log('Checking attendance for:', currentUser.uid, today);
-            console.log('System time:', new Date().toString());
-            console.log('Malaysia time:', new Date().toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
-            
-            try {
-                const result = await callAPI('getAttendance', { 
-                    uid: currentUser.uid, 
-                    startDate: today, 
-                    endDate: today 
-                });
-                
-                console.log('Attendance API result:', result);
-                
-                const parsedResult = parseApiResponse(result);
-                
-                const statusEl = document.getElementById('attendanceStatus');
-                const clockInBtn = document.getElementById('clockInBtn');
-                const clockOutBtn = document.getElementById('clockOutBtn');
-                
-                // Reset to default - butang MASUK aktif
-                clockInBtn.disabled = false;
-                clockInBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
-                clockOutBtn.disabled = true;
-                clockOutBtn.className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
-                
-                if (!parsedResult.success) {
-                    console.log('API failed:', parsedResult.error);
-                    statusEl.innerText = 'BELUM MASUK';
-                    statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                    return;
-                }
-                
-                const records = parsedResult.data;
-                
-                // Jika tiada rekod untuk hari ini
-                if (!records || !Array.isArray(records) || records.length === 0) {
-                    console.log('No records for today - BELUM MASUK');
-                    statusEl.innerText = 'BELUM MASUK';
-                    statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                    return;
-                }
-                
-                const record = records[0];
-                console.log('Today record:', record);
-                
-                // Semak sama ada rekod ini VALID atau tidak
-                const hasValidClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
-                const hasValidClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                
-                console.log('Has valid clock in:', hasValidClockIn);
-                console.log('Has valid clock out:', hasValidClockOut);
-                
-                // PRIORITI: Semak berdasarkan clockIn DAN clockOut yang VALID
-                if (hasValidClockIn && !hasValidClockOut) {
-                    console.log('User is clocked in (has clockIn, no clockOut)');
-                    statusEl.innerText = 'DALAM BERTUGAS';
-                    statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
-                    clockInBtn.disabled = true;
-                    clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
-                    clockOutBtn.disabled = false;
-                    clockOutBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
-                }
-                else if (hasValidClockIn && hasValidClockOut) {
-                    console.log('User is clocked out (has both clockIn and clockOut)');
-                    statusEl.innerText = 'SELESAI';
-                    statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
-                    clockInBtn.disabled = true;
-                    clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
-                    clockOutBtn.disabled = true;
-                    clockOutBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
-                }
-                else if (!hasValidClockIn && hasValidClockOut) {
-                    console.log('ANOMALY: clockOut without clockIn - treating as no attendance');
-                    statusEl.innerText = 'BELUM MASUK';
-                    statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                    clockInBtn.disabled = false;
-                    clockInBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
-                    clockOutBtn.disabled = true;
-                    clockOutBtn.className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
-                    showNotification('Perhatian', 'Terdapat rekod tidak lengkap. Sila clock in semula.', false, false);
-                }
-                else {
-                    console.log('No valid clock in - BELUM MASUK');
-                    statusEl.innerText = 'BELUM MASUK';
-                    statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                }
-                
-            } catch (error) {
-                console.error('Check attendance error:', error);
-                document.getElementById('attendanceStatus').innerText = 'BELUM MASUK';
-                document.getElementById('attendanceStatus').className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
-                document.getElementById('clockInBtn').disabled = false;
-                document.getElementById('clockInBtn').className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
-                document.getElementById('clockOutBtn').disabled = true;
-                document.getElementById('clockOutBtn').className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
-            }
+async function checkTodayAttendance() {
+    if (!currentUser) return;
+    
+    const today = getCurrentDateMalaysia();
+    console.log('Checking attendance for:', currentUser.uid, today);
+    
+    try {
+        const result = await callAPI('getAttendance', { 
+            uid: currentUser.uid, 
+            startDate: today, 
+            endDate: today 
+        });
+        
+        console.log('Attendance API result:', result);
+        
+        const statusEl = document.getElementById('attendanceStatus');
+        const clockInBtn = document.getElementById('clockInBtn');
+        const clockOutBtn = document.getElementById('clockOutBtn');
+        
+        // Reset to default - butang MASUK aktif
+        clockInBtn.disabled = false;
+        clockInBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
+        clockOutBtn.disabled = true;
+        clockOutBtn.className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
+        
+        if (!result.success) {
+            console.log('API failed:', result.error);
+            statusEl.innerText = 'BELUM MASUK';
+            statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+            return;
         }
+        
+        const records = result.data;
+        
+        // Check if records is array and has data
+        if (!records || !Array.isArray(records) || records.length === 0) {
+            console.log('No records for today - BELUM MASUK');
+            statusEl.innerText = 'BELUM MASUK';
+            statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+            return;
+        }
+        
+        const record = records[0];
+        console.log('Today record:', record);
+        
+        // Check if record has valid clockIn (not empty string or null)
+        const hasValidClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
+        const hasValidClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+        
+        console.log('Has valid clock in:', hasValidClockIn);
+        console.log('Has valid clock out:', hasValidClockOut);
+        
+        if (hasValidClockIn && !hasValidClockOut) {
+            console.log('User is clocked in (has clockIn, no clockOut)');
+            statusEl.innerText = 'DALAM BERTUGAS';
+            statusEl.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold';
+            clockInBtn.disabled = true;
+            clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
+            clockOutBtn.disabled = false;
+            clockOutBtn.className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
+        }
+        else if (hasValidClockIn && hasValidClockOut) {
+            console.log('User is clocked out (has both clockIn and clockOut)');
+            statusEl.innerText = 'SELESAI';
+            statusEl.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold';
+            clockInBtn.disabled = true;
+            clockInBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
+            clockOutBtn.disabled = true;
+            clockOutBtn.className = 'action-btn bg-gray-400 text-white py-4 rounded-2xl font-bold opacity-50';
+        }
+        else if (!hasValidClockIn && hasValidClockOut) {
+            // Anomaly: clockOut without clockIn
+            console.log('ANOMALY: clockOut without clockIn - treating as no attendance');
+            statusEl.innerText = 'BELUM MASUK';
+            statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+            clockInBtn.disabled = false;
+            clockOutBtn.disabled = true;
+            showNotification('Perhatian', 'Terdapat rekod tidak lengkap. Sila clock in semula.', false, false);
+        }
+        else {
+            console.log('No valid clock in - BELUM MASUK');
+            statusEl.innerText = 'BELUM MASUK';
+            statusEl.className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+        }
+        
+    } catch (error) {
+        console.error('Check attendance error:', error);
+        document.getElementById('attendanceStatus').innerText = 'BELUM MASUK';
+        document.getElementById('attendanceStatus').className = 'px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold';
+        document.getElementById('clockInBtn').disabled = false;
+        document.getElementById('clockInBtn').className = 'action-btn bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md active:scale-95';
+        document.getElementById('clockOutBtn').disabled = true;
+        document.getElementById('clockOutBtn').className = 'action-btn bg-gray-200 text-gray-500 py-4 rounded-2xl font-bold opacity-50';
+    }
+}
 
         // ============================================
         // ATTENDANCE HISTORY - DIPERBAIKI DENGAN TIMEZONE
         // ============================================
-        async function loadAttendanceHistory() {
-            if (!currentUser) return;
+async function loadAttendanceHistory() {
+    if (!currentUser) return;
+    
+    const today = new Date();
+    const malaysiaToday = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
+    const thirtyDaysAgo = new Date(malaysiaToday);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+    const endDate = malaysiaToday.toISOString().split('T')[0];
+    
+    console.log('Loading attendance history from', startDate, 'to', endDate);
+    
+    try {
+        const result = await callAPI('getAttendance', { 
+            uid: currentUser.uid,
+            startDate: startDate,
+            endDate: endDate
+        });
+        
+        console.log('History API result:', result);
+        
+        const historyEl = document.getElementById('attendanceHistory');
+        
+        if (!result.success || !result.data || result.data.length === 0) {
+            historyEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
+            return;
+        }
+        
+        const records = result.data;
+        let html = '';
+        
+        // Records are already sorted by date descending from backend
+        records.forEach(record => {
+            const date = new Date(record.date);
+            const clockIn = record.clockIn ? new Date(record.clockIn) : null;
+            const clockOut = record.clockOut ? new Date(record.clockOut) : null;
             
-            const today = new Date();
-            const malaysiaToday = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
-            const thirtyDaysAgo = new Date(malaysiaToday);
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const clockInTime = clockIn ? clockIn.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+            const clockOutTime = clockOut ? clockOut.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
             
-            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
-            const endDate = malaysiaToday.toISOString().split('T')[0];
+            let totalHours = '-';
+            if (record.totalHours && record.totalHours > 0) {
+                totalHours = parseFloat(record.totalHours).toFixed(1);
+            }
             
-            console.log('Loading attendance history from', startDate, 'to', endDate);
+            const isToday = record.date === endDate;
+            const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
+            const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short', timeZone: 'Asia/Kuching' });
+            const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
             
-            try {
-                const result = await callAPI('getAttendance', { 
-                    uid: currentUser.uid,
-                    startDate: startDate,
-                    endDate: endDate,
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                
-                const parsedResult = parseApiResponse(result);
-                const historyEl = document.getElementById('attendanceHistory');
-                
-                if (!parsedResult.success || !parsedResult.data || parsedResult.data.length === 0) {
-                    historyEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
-                    return;
-                }
-                
-                const records = parsedResult.data;
-                let html = '';
-                records.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                records.forEach(record => {
-                    const date = new Date(record.date);
-                    const clockIn = record.clockIn ? new Date(record.clockIn) : null;
-                    const clockOut = record.clockOut ? new Date(record.clockOut) : null;
-                    
-                    const clockInTime = clockIn ? clockIn.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    const clockOutTime = clockOut ? clockOut.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    
-                    let totalHours = '-';
-                    if (record.totalHours && record.totalHours > 0) {
-                        totalHours = parseFloat(record.totalHours).toFixed(1);
-                    }
-                    
-                    const isToday = record.date === endDate;
-                    const todayClass = isToday ? 'border-l-4 border-blue-500' : '';
-                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short', timeZone: 'Asia/Kuching' });
-                    const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
-                    
-                    html += `
-                        <div class="history-item ${todayClass}">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                    ${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}
-                                </span>
-                                ${totalHours !== '-' ? `<span class="text-xs font-bold ${totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">${totalHours} jam</span>` : ''}
+            html += `
+                <div class="history-item ${todayClass}">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                            ${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}
+                        </span>
+                        ${totalHours !== '-' ? `<span class="text-xs font-bold ${totalHours >= 8 ? 'text-green-600' : 'text-orange-500'}">${totalHours} jam</span>` : ''}
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <div class="flex gap-3">
+                            <div class="flex items-center gap-1">
+                                <span class="material-symbols-rounded text-sm text-green-600">login</span>
+                                <span class="text-sm font-medium">${clockInTime}</span>
                             </div>
-                            <div class="flex justify-between items-center mt-2">
-                                <div class="flex gap-3">
-                                    <div class="flex items-center gap-1">
-                                        <span class="material-symbols-rounded text-sm text-green-600">login</span>
-                                        <span class="text-sm font-medium">${clockInTime}</span>
-                                    </div>
-                                    <div class="flex items-center gap-1">
-                                        <span class="material-symbols-rounded text-sm text-red-500">logout</span>
-                                        <span class="text-sm font-medium">${clockOutTime}</span>
-                                    </div>
-                                </div>
+                            <div class="flex items-center gap-1">
+                                <span class="material-symbols-rounded text-sm text-red-500">logout</span>
+                                <span class="text-sm font-medium">${clockOutTime}</span>
                             </div>
                         </div>
-                    `;
-                });
-                
-                historyEl.innerHTML = html;
-                
-            } catch (error) {
-                console.error('Load attendance error:', error);
-                document.getElementById('attendanceHistory').innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Ralat memuat rekod</div>';
-            }
-        }
+                    </div>
+                </div>
+            `;
+        });
+        
+        historyEl.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Load attendance error:', error);
+        document.getElementById('attendanceHistory').innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Ralat memuat rekod</div>';
+    }
+}
 
         // ============================================
         // FACE VERIFICATION WITH LIVENESS
@@ -1366,77 +1360,82 @@
         // ============================================
         // CLOCK IN / OUT
         // ============================================
-        window.handleClockIn = async function() {
-            if (!userLocation) {
-                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
-                return;
-            }
-            
-            const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
-            if (distance > (parseInt(currentUser.radius) || 500)) {
-                showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan untuk clock in', true, true);
-                return;
-            }
-            
-            const verified = await verifyFace();
-            if (!verified) return;
-            
-            const btn = document.getElementById('clockInBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            
-            try {
-                const result = await callAPI('clockIn', { uid: currentUser.uid, location: JSON.stringify(userLocation), requestingUser: JSON.stringify(currentUser) });
-                if (result.success) {
-                    showNotification('Berjaya', 'Clock In direkodkan', false, true);
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    await checkTodayAttendance();
-                    await loadAttendanceHistory();
-                    updateLocationDisplay();
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal clock in', true, true);
-                }
-            } catch (error) {
-                console.error('Clock in error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'MASUK';
-            }
-        };
+window.handleClockIn = async function() {
+    if (!userLocation) {
+        showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
+        return;
+    }
+    
+    const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
+    if (distance > (parseInt(currentUser.radius) || 500)) {
+        showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan untuk clock in', true, true);
+        return;
+    }
+    
+    const verified = await verifyFace();
+    if (!verified) return;
+    
+    const btn = document.getElementById('clockInBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+    
+    try {
+        const result = await callAPI('clockIn', { uid: currentUser.uid, location: JSON.stringify(userLocation) });
+        console.log('Clock in result:', result);
+        
+        if (result.success) {
+            showNotification('Berjaya', 'Clock In direkodkan', false, true);
+            // Tunggu sebentar sebelum refresh status
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            await checkTodayAttendance();
+            await loadAttendanceHistory();
+            updateLocationDisplay();
+        } else {
+            showNotification('Ralat', result.error || 'Gagal clock in', true, true);
+        }
+    } catch (error) {
+        console.error('Clock in error:', error);
+        showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'MASUK';
+    }
+};
 
-        window.handleClockOut = async function() {
-            if (!userLocation) {
-                showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
-                return;
-            }
-            
-            const verified = await verifyFace();
-            if (!verified) return;
-            
-            const btn = document.getElementById('clockOutBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            
-            try {
-                const result = await callAPI('clockOut', { uid: currentUser.uid, location: JSON.stringify(userLocation), requestingUser: JSON.stringify(currentUser) });
-                if (result.success) {
-                    showNotification('Berjaya', 'Clock Out direkodkan', false, true);
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    await checkTodayAttendance();
-                    await loadAttendanceHistory();
-                    updateLocationDisplay();
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal clock out', true, true);
-                }
-            } catch (error) {
-                console.error('Clock out error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'KELUAR';
-            }
-        };
+window.handleClockOut = async function() {
+    if (!userLocation) {
+        showNotification('Ralat Lokasi', 'Lokasi tidak dapat dikesan. Sila pastikan GPS dihidupkan.', true, true);
+        return;
+    }
+    
+    const verified = await verifyFace();
+    if (!verified) return;
+    
+    const btn = document.getElementById('clockOutBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+    
+    try {
+        const result = await callAPI('clockOut', { uid: currentUser.uid, location: JSON.stringify(userLocation) });
+        console.log('Clock out result:', result);
+        
+        if (result.success) {
+            showNotification('Berjaya', 'Clock Out direkodkan', false, true);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            await checkTodayAttendance();
+            await loadAttendanceHistory();
+            updateLocationDisplay();
+        } else {
+            showNotification('Ralat', result.error || 'Gagal clock out', true, true);
+        }
+    } catch (error) {
+        console.error('Clock out error:', error);
+        showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true, true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'KELUAR';
+    }
+};
 
         // ============================================
         // CLOCK - DIPERBAIKI DENGAN TIMEZONE
