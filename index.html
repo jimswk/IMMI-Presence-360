@@ -34,22 +34,168 @@
             min-height: 100vh;
         }
         
-        /* Header Styles */
+        /* Login Page */
+        .login-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 32px;
+            padding: 40px 28px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+        }
+        
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        
+        .login-logo-icon {
+            width: 64px;
+            height: 64px;
+            background: #eff6ff;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        
+        .login-logo-icon span {
+            font-size: 32px;
+            color: #1e3a8a;
+        }
+        
+        .login-logo h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        
+        .login-logo p {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+        
+        .input-group {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        
+        .input-group input {
+            width: 100%;
+            padding: 16px 14px 6px 14px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 15px;
+            background: #f8fafc;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .input-group input:focus {
+            border-color: #1e3a8a;
+            background: white;
+        }
+        
+        .input-group label {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 500;
+            pointer-events: none;
+            transition: all 0.2s;
+            background: transparent;
+            padding: 0 4px;
+        }
+        
+        .input-group input:focus ~ label,
+        .input-group input:not(:placeholder-shown) ~ label {
+            top: 0px;
+            transform: translateY(-50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: #1e3a8a;
+            background: white;
+            left: 10px;
+        }
+        
+        .password-wrapper {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94a3b8;
+        }
+        
+        .login-btn {
+            width: 100%;
+            background: #1e3a8a;
+            color: white;
+            padding: 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+        
+        .login-btn:active {
+            transform: scale(0.97);
+        }
+        
+        .login-btn.loading {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        
+        /* Main App Container */
+        .app-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #f5f7fb;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 70px;
+        }
+        
+        /* Header */
         .header {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            padding: 20px 20px 30px;
+            padding: 20px;
             border-bottom-left-radius: 28px;
             border-bottom-right-radius: 28px;
         }
         
-        .header-top-bar {
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
         
-        .menu-button, .logout-button {
+        .menu-btn, .logout-btn {
             background: rgba(255,255,255,0.1);
             border: none;
             width: 40px;
@@ -59,16 +205,6 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .menu-button:hover, .logout-button:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        .menu-button img, .logout-button img {
-            width: 20px;
-            height: 20px;
         }
         
         .status-pill {
@@ -76,7 +212,7 @@
             color: #0f172a;
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             display: inline-block;
         }
@@ -94,24 +230,69 @@
             color: #94a3b8;
         }
         
-        /* Main Content */
-        .main-content {
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 20px 20px;
+            border-top: 1px solid #e2e8f0;
+            max-width: 500px;
+            margin: 0 auto;
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 24px;
+            cursor: pointer;
+        }
+        
+        .nav-item .material-symbols-rounded {
+            font-size: 24px;
+            color: #94a3b8;
+        }
+        
+        .nav-item span:not(.material-symbols-rounded) {
+            font-size: 11px;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+        
+        .nav-item.active .material-symbols-rounded {
+            color: #1e3a8a;
+        }
+        
+        .nav-item.active span:not(.material-symbols-rounded) {
+            color: #1e3a8a;
+        }
+        
+        /* Pages */
+        .page {
+            display: none;
             padding: 20px;
-            padding-bottom: 80px;
         }
         
-        /* Overview Panel */
-        .overview-panel {
-            margin-bottom: 24px;
+        .page.active {
+            display: block;
         }
         
+        /* Overview Cards */
         .overview-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
-            flex-wrap: wrap;
-            gap: 10px;
         }
         
         .overview-header h2 {
@@ -130,51 +311,35 @@
             font-size: 12px;
             font-weight: 500;
             color: #374151;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         
-        .date-pill img {
-            width: 14px;
-            height: 14px;
-        }
-        
-        /* Cards Grid */
         .cards-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 12px;
+            margin-bottom: 20px;
         }
         
-        /* Card Styles */
-        .card-clock-in, .card-clock-out, .card-jumlah-jam, .card-jumlah-ot {
+        .card {
             background: white;
             border-radius: 20px;
             padding: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            transition: all 0.2s;
         }
         
-        .card-clock-in:hover, .card-clock-out:hover, 
-        .card-jumlah-jam:hover, .card-jumlah-ot:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        }
-        
-        /* Card Header */
-        .cls-sb0g51, .cls-ttdody, .cls-f4fyf4, .cls-fn41uk {
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 12px;
         }
         
-        .cls-qsq5mo, .cls-lloh93, .cls-rxapkg, .cls-tij4zf {
+        .card-title {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
         
-        .cls-gyn0lm, .cls-uppfre, .cls-gq6kss, .cls-k4mjg1 {
+        .card-icon {
             width: 28px;
             height: 28px;
             background: #eff6ff;
@@ -184,42 +349,30 @@
             justify-content: center;
         }
         
-        .cls-gyn0lm img, .cls-uppfre img, .cls-gq6kss img, .cls-k4mjg1 img {
+        .card-icon img {
             width: 16px;
             height: 16px;
         }
         
-        .cls-cvalx6, .cls-uwlkdg, .cls-6dr9sq, .cls-sb9a19 {
+        .card-title span {
             font-size: 12px;
             font-weight: 600;
             color: #64748b;
         }
         
-        /* Card Body */
-        .cls-3ebpaj, .cls-zp0qne, .cls-xui4v2, .cls-41id0q {
-            margin-bottom: 8px;
-        }
-        
-        .cls-wmilhk, .cls-wv4wve, .cls-8nv430, .cls-qwfcgc {
+        .card-value {
             font-size: 28px;
             font-weight: 800;
             color: #1e293b;
-            display: inline-block;
         }
         
-        .cls-ms2383 {
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-        }
-        
-        .cls-4diapa {
-            font-size: 12px;
-            font-weight: 500;
+        .card-sub {
+            font-size: 10px;
             color: #94a3b8;
+            margin-top: 8px;
         }
         
-        .masuk-button {
+        .clockin-btn {
             background: #10b981;
             color: white;
             border: none;
@@ -227,143 +380,90 @@
             border-radius: 40px;
             font-size: 13px;
             font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
             margin-top: 8px;
+            width: 100%;
+            cursor: pointer;
         }
         
-        .masuk-button:active {
-            transform: scale(0.96);
-        }
-        
-        .masuk-button:disabled {
+        .clockin-btn:disabled {
             background: #cbd5e1;
             cursor: not-allowed;
         }
         
-        .keluar-button {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 40px;
-            font-size: 13px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 8px;
-        }
-        
-        .keluar-button:active {
-            transform: scale(0.96);
-        }
-        
-        .keluar-button:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
-        }
-        
-        .cls-pvfe0s {
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-        }
-        
-        .cls-7ulhtw, .cls-u7olbv, .cls-zkfpuh, .cls-5jt8po {
-            font-size: 10px;
-            color: #94a3b8;
-            margin-top: 8px;
-        }
-        
-        .cls-zkfpuh, .cls-5jt8po {
-            text-align: right;
-        }
-        
-        /* Recent Activity Section */
-        .recent-activity {
+        /* Recent Activity */
+        .recent-card {
             background: white;
             border-radius: 24px;
             padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
         
-        .cls-elq620 {
+        .recent-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
         }
         
-        .cls-elq620 h3 {
+        .recent-header h3 {
             font-size: 16px;
             font-weight: 700;
-            color: #1e293b;
         }
         
-        .cls-xyko8i {
+        .recent-link {
             display: flex;
             align-items: center;
             gap: 6px;
             font-size: 12px;
-            font-weight: 500;
             color: #f97316;
             text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
         }
         
-        .cls-xyko8i img {
-            width: 14px;
-            height: 14px;
-        }
-        
-        /* Map Card */
-        .map-card {
+        .location-map {
+            height: 180px;
+            width: 100%;
             border-radius: 16px;
             overflow: hidden;
-            border: 1px solid #e2e8f0;
+            margin-top: 12px;
         }
         
-        .cls-pexrfh {
+        .recent-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            background: #f8fafc;
+            padding: 12px 0;
             border-bottom: 1px solid #e2e8f0;
         }
         
-        .cls-rv6crx {
+        .recent-item-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
         
-        .cls-1ywvr4 {
-            width: 32px;
-            height: 32px;
+        .recent-icon {
+            width: 40px;
+            height: 40px;
             background: #eff6ff;
-            border-radius: 16px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
         
-        .cls-1ywvr4 img {
-            width: 18px;
-            height: 18px;
+        .recent-label {
+            font-size: 14px;
+            font-weight: 600;
         }
         
-        .cls-s1nf9k {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1e293b;
-        }
-        
-        .cls-0efsjd {
-            font-size: 10px;
+        .recent-date {
+            font-size: 11px;
             color: #94a3b8;
         }
         
-        .cls-y9kyej {
+        .recent-status {
             background: #dbeafe;
             color: #1e3a8a;
             padding: 4px 12px;
@@ -372,131 +472,140 @@
             font-weight: 700;
         }
         
-        .location-map {
-            height: 200px;
-            width: 100%;
+        /* Camera Section (Clock In/Out Page) */
+        .camera-section {
+            padding: 0;
         }
         
-        /* Footer */
-        .footer {
-            background: white;
-            padding: 16px 20px;
-            border-top: 1px solid #e2e8f0;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        
-        .cls-qu5day {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        
-        .cls-qu5day p {
-            font-size: 11px;
-            color: #94a3b8;
-        }
-        
-        .footer-links {
-            display: flex;
-            gap: 16px;
-        }
-        
-        .footer-links a {
-            font-size: 11px;
-            color: #94a3b8;
-            text-decoration: none;
-        }
-        
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 20px;
-        }
-        
-        .modal-overlay.active {
-            display: flex;
-        }
-        
-        .modal-content {
+        .camera-card {
             background: white;
             border-radius: 28px;
-            max-width: 400px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
+            overflow: hidden;
         }
         
-        .modal-header {
+        .camera-header {
             padding: 20px;
-            border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid #e2e8f0;
         }
         
-        .modal-header h3 {
-            font-size: 18px;
+        .camera-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
             font-weight: 700;
         }
         
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #94a3b8;
+        .camera-status {
+            background: #dbeafe;
+            color: #1e3a8a;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
         }
         
-        .modal-body {
+        .digital-clock {
+            text-align: center;
+            padding: 24px 20px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        
+        .clock-time {
+            font-size: 48px;
+            font-weight: 800;
+            color: #1e3a8a;
+            letter-spacing: 2px;
+            font-family: 'Inter', monospace;
+        }
+        
+        .clock-date {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        
+        .camera-actions {
+            display: flex;
+            gap: 12px;
             padding: 20px;
         }
         
-        /* Video Container for Face Scan */
-        .video-container {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 3/4;
-            background: #000;
-            border-radius: 20px;
-            overflow: hidden;
-            margin-bottom: 16px;
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 15px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
         }
         
-        .video-container video {
+        .action-btn:active {
+            transform: scale(0.97);
+        }
+        
+        .action-btn--masuk {
+            background: #10b981;
+            color: white;
+        }
+        
+        .action-btn--keluar {
+            background: #f1f5f9;
+            color: #94a3b8;
+        }
+        
+        .action-btn--keluar.active {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .camera-viewport {
+            position: relative;
+            background: #000;
+            aspect-ratio: 4/3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .camera-viewport video {
             width: 100%;
             height: 100%;
             object-fit: cover;
             transform: scaleX(-1);
         }
         
-        .face-guide {
+        .face-target {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 150px;
-            height: 190px;
+            width: 160px;
+            height: 200px;
             border: 3px dashed #fbbf24;
             border-radius: 80px;
             box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);
             pointer-events: none;
+            z-index: 2;
+        }
+        
+        .camera-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            background: rgba(0,0,0,0.6);
+            padding: 8px;
+            z-index: 2;
         }
         
         .face-overlay {
@@ -506,7 +615,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 10;
+            z-index: 3;
         }
         
         .face-box {
@@ -515,12 +624,15 @@
             border-radius: 12px;
         }
         
+        .progress-container {
+            padding: 0 20px 20px;
+        }
+        
         .progress-bar {
             height: 4px;
             background: #e2e8f0;
             border-radius: 2px;
             overflow: hidden;
-            margin: 16px 0;
         }
         
         .progress-fill {
@@ -530,184 +642,20 @@
             transition: width 0.3s;
         }
         
-        .challenge-text {
+        .smile-text {
             text-align: center;
             font-size: 14px;
             font-weight: 600;
             color: #1e3a8a;
-            margin-bottom: 12px;
-        }
-        
-        .smile-percent {
-            text-align: center;
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 16px;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 20px;
-        }
-        
-        .modal-buttons button {
-            flex: 1;
-            padding: 14px;
-            border-radius: 16px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn-cancel {
-            background: #f1f5f9;
-            color: #64748b;
-        }
-        
-        .btn-verify {
-            background: #1e3a8a;
-            color: white;
-        }
-        
-        /* Notification */
-        .notification {
-            position: fixed;
-            bottom: 80px;
-            left: 16px;
-            right: 16px;
-            background: white;
-            border-radius: 16px;
-            padding: 14px 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1100;
-            border-left: 4px solid #10b981;
-            transform: translateY(200px);
-            transition: transform 0.3s ease;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        
-        .notification.show { transform: translateY(0); }
-        .notification.error { border-left-color: #ef4444; }
-        
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .hidden { display: none !important; }
-        
-        /* Login Page */
-        .login-container {
-            min-height: 100vh;
-            background: linear-gradient(165deg, #0b1e33 0%, #132b41 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        
-        .login-card {
-            background: white;
-            border-radius: 36px;
-            padding: 32px 24px;
-            width: 100%;
-            max-width: 360px;
-            box-shadow: 0 50px 70px -20px rgba(0,0,0,0.5);
-        }
-        
-        .floating-group {
-            position: relative;
-            margin-bottom: 24px;
-        }
-        
-        .floating-input {
-            width: 100%;
-            padding: 16px 14px 6px 14px;
-            border: 2px solid #e2e8f0;
-            border-radius: 16px;
-            font-size: 0.95rem;
-            background: #f8fafc;
-            transition: all 0.2s ease;
-            outline: none;
-        }
-        
-        .floating-input:focus {
-            border-color: #1e3a8a;
-            background: white;
-        }
-        
-        .floating-label {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #94a3b8;
-            font-size: 0.9rem;
-            font-weight: 500;
-            pointer-events: none;
-            transition: all 0.2s ease;
-            background: transparent;
-            padding: 0 4px;
-        }
-        
-        .floating-input:focus ~ .floating-label,
-        .floating-input:not(:placeholder-shown) ~ .floating-label {
-            top: 0px;
-            transform: translateY(-50%);
-            font-size: 0.65rem;
-            font-weight: 600;
-            color: #1e3a8a;
-            background: white;
-            left: 10px;
-        }
-        
-        .login-btn {
-            width: 100%;
-            background: #1e3a8a;
-            color: white;
-            padding: 16px;
-            border-radius: 20px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .login-btn:active {
-            transform: scale(0.97);
+            margin: 16px 0 8px;
         }
         
         /* History Page */
-        .history-page {
-            display: none;
-            padding: 20px;
-            padding-bottom: 80px;
-        }
-        
-        .history-page.active {
-            display: block;
-        }
-        
         .history-header {
             background: white;
             border-radius: 24px;
             padding: 20px;
             margin-bottom: 20px;
-        }
-        
-        .history-header h3 {
-            font-size: 16px;
-            font-weight: 700;
-            margin-bottom: 16px;
         }
         
         .calendar-weekdays {
@@ -778,12 +726,6 @@
             padding: 20px;
         }
         
-        .history-list h3 {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-        
         .history-record {
             display: flex;
             justify-content: space-between;
@@ -796,69 +738,93 @@
             border-bottom: none;
         }
         
-        .history-date {
-            font-size: 13px;
-            font-weight: 600;
-        }
-        
-        .history-times {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 2px;
-        }
-        
-        .history-hours {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1e3a8a;
-        }
-        
-        /* Bottom Navigation */
-        .bottom-nav {
+        /* Location History Modal */
+        .modal-overlay {
             position: fixed;
-            bottom: 0;
+            top: 0;
             left: 0;
             right: 0;
-            background: white;
-            display: flex;
-            justify-content: space-around;
-            padding: 12px 20px 20px;
-            border-top: 1px solid #e2e8f0;
-            max-width: 500px;
-            margin: 0 auto;
-            z-index: 100;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            padding: 20px;
         }
         
-        .nav-item {
+        .modal-overlay.active {
             display: flex;
-            flex-direction: column;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 28px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 4px;
+        }
+        
+        .close-modal {
             background: none;
             border: none;
-            padding: 8px 20px;
-            border-radius: 24px;
+            font-size: 24px;
             cursor: pointer;
         }
         
-        .nav-item .material-symbols-rounded {
-            font-size: 24px;
-            color: #94a3b8;
+        .modal-body {
+            padding: 20px;
         }
         
-        .nav-item span:not(.material-symbols-rounded) {
-            font-size: 11px;
-            font-weight: 500;
-            color: #94a3b8;
+        .location-history-item {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
         }
         
-        .nav-item.active .material-symbols-rounded {
-            color: #1e3a8a;
+        /* Notification */
+        .notification {
+            position: fixed;
+            bottom: 80px;
+            left: 16px;
+            right: 16px;
+            background: white;
+            border-radius: 16px;
+            padding: 14px 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 300;
+            border-left: 4px solid #10b981;
+            transform: translateY(200px);
+            transition: transform 0.3s ease;
+            max-width: 500px;
+            margin: 0 auto;
         }
         
-        .nav-item.active span:not(.material-symbols-rounded) {
-            color: #1e3a8a;
+        .notification.show { transform: translateY(0); }
+        .notification.error { border-left-color: #ef4444; }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
         }
+        
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -875,180 +841,166 @@
     <!-- Login Page -->
     <div id="loginPage" class="login-container">
         <div class="login-card">
-            <div class="text-center mb-6">
-                <div class="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto">
-                    <span class="material-symbols-rounded text-4xl text-blue-800">fingerprint</span>
+            <div class="login-logo">
+                <div class="login-logo-icon">
+                    <span class="material-symbols-rounded">fingerprint</span>
                 </div>
-                <h1 class="text-2xl font-black text-gray-800 mt-3">IMMI Presence</h1>
-                <p class="text-gray-400 text-xs">Sistem Kehadiran Pintar 360</p>
+                <h1>IMMI Presence</h1>
+                <p>Sistem Kehadiran Pintar 360</p>
             </div>
             
-            <div class="space-y-3">
-                <div class="floating-group">
-                    <input type="email" id="loginEmail" class="floating-input" placeholder=" " autocomplete="email">
-                    <label class="floating-label">Email</label>
-                </div>
-                
-                <div class="floating-group">
-                    <div class="password-wrapper">
-                        <input type="password" id="loginPassword" class="floating-input" placeholder=" " autocomplete="current-password">
-                        <label class="floating-label">Kata Laluan</label>
-                        <button type="button" class="password-eye" onclick="togglePasswordVisibility()">
-                            <span class="material-symbols-rounded text-lg">visibility_off</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <button onclick="handleLogin()" id="loginBtn" class="login-btn">
-                    Log Masuk
-                </button>
+            <div class="input-group">
+                <input type="email" id="loginEmail" placeholder=" " autocomplete="email">
+                <label>Email</label>
             </div>
+            
+            <div class="input-group">
+                <div class="password-wrapper">
+                    <input type="password" id="loginPassword" placeholder=" " autocomplete="current-password">
+                    <label>Kata Laluan</label>
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility()">
+                        <span class="material-symbols-rounded">visibility_off</span>
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="handleLogin()" id="loginBtn" class="login-btn">
+                Log Masuk
+            </button>
         </div>
     </div>
 
-    <!-- Main Dashboard -->
-    <div id="dashboard" class="hidden">
-        <div style="max-width: 500px; margin: 0 auto; position: relative; min-height: 100vh; background: #f5f7fb;">
+    <!-- Main App -->
+    <div id="app" class="hidden">
+        <div class="app-container">
+            <!-- Header -->
             <header class="header">
-                <div class="header-top-bar">
-                    <button type="button" aria-label="Menu" class="menu-button" id="menuBtn">
-                        <img alt="Menu" src="https://api.iconify.design/lucide-align-justify.svg?color=white" />
+                <div class="header-top">
+                    <button class="menu-btn">
+                        <span class="material-symbols-rounded" style="color: white;">menu</span>
                     </button>
-                    <button type="button" aria-label="Log Keluar" class="logout-button" onclick="handleLogout()">
-                        <img alt="Log Keluar" src="https://api.iconify.design/lucide-log-out.svg?color=white" />
+                    <button class="logout-btn" onclick="handleLogout()">
+                        <span class="material-symbols-rounded" style="color: white;">logout</span>
                     </button>
                 </div>
-                <div class="header-content">
-                    <div>
-                        <span class="status-pill" id="statusPill">AKTIF</span>
-                    </div>
-                    <h1 class="user-name" id="userName">Mohammad Azzer bin Taip</h1>
-                    <p class="user-meta" id="userMeta">Kuching • UPSKK</p>
+                <div>
+                    <span class="status-pill" id="statusPill">AKTIF</span>
                 </div>
+                <h1 class="user-name" id="userName">Mohammad Azzer bin Taip</h1>
+                <p class="user-meta" id="userMeta">Kuching • UPSKK</p>
             </header>
 
-            <!-- Home Page -->
-            <main class="main-content" id="homePage">
-                <section class="overview-panel">
-                    <div class="overview-header">
-                        <h2>Overview</h2>
-                        <div class="date-pill">
-                            <img alt="Calendar" src="https://api.iconify.design/lucide-calendar.svg?color=%23374151" />
-                            <span id="currentDateDisplay">Isnin, 6 April 2026</span>
-                        </div>
+            <!-- Page 1: Home / Dashboard -->
+            <div id="homePage" class="page active">
+                <div class="overview-header">
+                    <h2>Overview</h2>
+                    <div class="date-pill">
+                        <span class="material-symbols-rounded" style="font-size: 14px;">calendar_today</span>
+                        <span id="currentDateDisplay">Isnin, 6 April 2026</span>
                     </div>
-                    <div class="cards-grid">
-                        <!-- Clock In Card -->
-                        <article class="card-clock-in">
-                            <div class="cls-sb0g51">
-                                <div class="cls-qsq5mo">
-                                    <span class="cls-gyn0lm">
-                                        <img alt="Arrow Right" src="https://api.iconify.design/lucide-arrow-up-right.svg?color=%231c64f2" />
-                                    </span>
-                                    <span class="cls-cvalx6">Clock In</span>
-                                </div>
-                            </div>
-                            <div class="cls-3ebpaj">
-                                <div class="cls-ms2383">
-                                    <div class="cls-wmilhk" id="clockInTime">--:--</div>
-                                    <span class="cls-4diapa" id="clockInAmPm">AM</span>
-                                </div>
-                                <button type="button" class="masuk-button" id="clockInBtn" onclick="handleClockIn()">MASUK</button>
-                            </div>
-                            <p class="cls-7ulhtw" id="clockInStatus">Belum Masuk</p>
-                        </article>
-                        
-                        <!-- Clock Out Card -->
-                        <article class="card-clock-out">
-                            <div class="cls-ttdody">
-                                <div class="cls-lloh93">
-                                    <span class="cls-uppfre">
-                                        <img alt="Arrow Down" src="https://api.iconify.design/lucide-arrow-down-left.svg?color=%231c64f2" />
-                                    </span>
-                                    <span class="cls-uwlkdg">Clock Out</span>
-                                </div>
-                            </div>
-                            <div class="cls-zp0qne">
-                                <div class="cls-wv4wve" id="clockOutTime">— • —</div>
-                                <div class="cls-pvfe0s">
-                                    <span id="clockOutAmPm">AM</span>
-                                    <span class="cls-a912u7">|</span>
-                                    <span id="clockOutNa">N/A</span>
-                                </div>
-                            </div>
-                            <p class="cls-u7olbv" id="clockOutStatus">Belum tamat waktu bertugas</p>
-                        </article>
-                        
-                        <!-- Jumlah Jam Card -->
-                        <article class="card-jumlah-jam">
-                            <div class="cls-f4fyf4">
-                                <div class="cls-rxapkg">
-                                    <span class="cls-gq6kss">
-                                        <img alt="Timer" src="https://api.iconify.design/lucide-timer.svg?color=%231c64f2" />
-                                    </span>
-                                    <span class="cls-6dr9sq">Jumlah Jam</span>
-                                </div>
-                            </div>
-                            <div class="cls-xui4v2">
-                                <div class="cls-cxurbe">
-                                    <div class="cls-8nv430" id="totalHours">0</div>
-                                    <span class="cls-8dgzxv">Jam</span>
-                                </div>
-                            </div>
-                            <p class="cls-zkfpuh" id="totalHoursDate">Kemaskini, -</p>
-                        </article>
-                        
-                        <!-- Jumlah OT Card -->
-                        <article class="card-jumlah-ot">
-                            <div class="cls-fn41uk">
-                                <div class="cls-tij4zf">
-                                    <span class="cls-k4mjg1">
-                                        <img alt="Timer" src="https://api.iconify.design/lucide-timer.svg?color=%231c64f2" />
-                                    </span>
-                                    <span class="cls-sb9a19">Jumlah OT</span>
-                                </div>
-                            </div>
-                            <div class="cls-41id0q">
-                                <div class="cls-4u87f9">
-                                    <div class="cls-qwfcgc" id="totalOT">0</div>
-                                    <span class="cls-ody9yr">Jam</span>
-                                </div>
-                            </div>
-                            <p class="cls-5jt8po" id="totalOTDate">Kemaskini, -</p>
-                        </article>
-                    </div>
-                </section>
+                </div>
                 
-                <section class="recent-activity">
-                    <div class="cls-elq620">
-                        <h3>Aktiviti Terkini</h3>
-                        <a href="#" class="cls-xyko8i" onclick="switchToHistory(); return false;">
-                            Lihat semua
-                            <img alt="Arrow" src="https://api.iconify.design/lucide-arrow-right.svg?color=%23f97316" />
-                        </a>
+                <div class="cards-grid">
+                    <!-- Clock In Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <img alt="Arrow Right" src="https://api.iconify.design/lucide-arrow-up-right.svg?color=%231c64f2" />
+                                </div>
+                                <span>Clock In</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="card-value" id="clockInTime">--:--</span>
+                            <span id="clockInAmPm" style="font-size: 12px; color: #94a3b8;">AM</span>
+                        </div>
+                        <button class="clockin-btn" id="clockInBtn" onclick="handleClockIn()">MASUK</button>
+                        <div class="card-sub" id="clockInStatus">Belum Masuk</div>
                     </div>
-                    <div class="map-card">
-                        <div class="cls-pexrfh">
-                            <div class="cls-rv6crx">
-                                <span class="cls-1ywvr4">
-                                    <img alt="Pin" src="https://api.iconify.design/lucide-map-pin.svg?color=%231c64f2" />
-                                </span>
+                    
+                    <!-- Clock Out Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <img alt="Arrow Down" src="https://api.iconify.design/lucide-arrow-down-left.svg?color=%231c64f2" />
+                                </div>
+                                <span>Clock Out</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="card-value" id="clockOutTime">— • —</span>
+                        </div>
+                        <div class="card-sub" id="clockOutStatus">Belum tamat waktu bertugas</div>
+                    </div>
+                    
+                    <!-- Jumlah Jam Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <img alt="Timer" src="https://api.iconify.design/lucide-timer.svg?color=%231c64f2" />
+                                </div>
+                                <span>Jumlah Jam</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="card-value" id="totalHours">0</span>
+                            <span style="font-size: 12px;">Jam</span>
+                        </div>
+                        <div class="card-sub" id="totalHoursDate">Kemaskini, -</div>
+                    </div>
+                    
+                    <!-- Jumlah OT Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <div class="card-icon">
+                                    <img alt="Timer" src="https://api.iconify.design/lucide-timer.svg?color=%231c64f2" />
+                                </div>
+                                <span>Jumlah OT</span>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="card-value" id="totalOT">0</span>
+                            <span style="font-size: 12px;">Jam</span>
+                        </div>
+                        <div class="card-sub" id="totalOTDate">Kemaskini, -</div>
+                    </div>
+                </div>
+                
+                <!-- Aktiviti Terkini -->
+                <div class="recent-card">
+                    <div class="recent-header">
+                        <h3>Aktiviti Terkini</h3>
+                        <button class="recent-link" onclick="showLocationHistory()">
+                            Lihat semua
+                            <span class="material-symbols-rounded" style="font-size: 14px;">arrow_forward</span>
+                        </button>
+                    </div>
+                    <div id="recentActivityList">
+                        <div class="recent-item">
+                            <div class="recent-item-left">
+                                <div class="recent-icon">
+                                    <span class="material-symbols-rounded" style="font-size: 18px; color: #1e3a8a;">login</span>
+                                </div>
                                 <div>
-                                    <div class="cls-s1nf9k" id="recentClockInLabel">Clock In</div>
-                                    <div class="cls-0efsjd" id="recentClockInDate">Isnin, 6 April 2026</div>
+                                    <div class="recent-label">Clock In</div>
+                                    <div class="recent-date" id="recentDate">Isnin, 6 April 2026</div>
                                 </div>
                             </div>
-                            <span class="cls-y9kyej" id="recentClockInStatus">MASUK</span>
+                            <div class="recent-status" id="recentStatus">MASUK</div>
                         </div>
-                        <div id="recentLocationMap" class="location-map"></div>
                     </div>
-                </section>
-            </main>
+                    <div id="recentLocationMap" class="location-map"></div>
+                </div>
+            </div>
 
-            <!-- History Page -->
-            <div id="historyPage" class="history-page">
+            <!-- Page 2: History -->
+            <div id="historyPage" class="page">
                 <div class="history-header">
-                    <h3>Sejarah Kehadiran</h3>
+                    <h3 style="margin-bottom: 16px;">Sejarah Kehadiran</h3>
                     <div class="text-sm text-gray-500 mb-3">Pilih Tarikh</div>
                     <div class="text-base font-bold text-gray-800 mb-3" id="selectedDateTitle">Isnin, 6 April 2026</div>
                     
@@ -1066,7 +1018,7 @@
                         </div>
                         <div class="text-right">
                             <div class="detail-label">Status</div>
-                            <div class="detail-value" id="detailStatus" style="font-size:13px; color:#10b981;">-</div>
+                            <div class="detail-value" id="detailStatus" style="font-size:13px;">-</div>
                         </div>
                     </div>
                     <div class="detail-row">
@@ -1090,9 +1042,45 @@
                 </div>
 
                 <div class="history-list">
-                    <h3>REKOD KEHADIRAN (30 HARI LEPAS)</h3>
+                    <h3 style="margin-bottom: 16px;">REKOD KEHADIRAN (30 HARI LEPAS)</h3>
                     <div id="attendanceHistoryList"></div>
                 </div>
+            </div>
+
+            <!-- Page 3: Clock In/Out (Camera) -->
+            <div id="cameraPage" class="page">
+                <section class="camera-section">
+                    <div class="camera-card">
+                        <div class="camera-header">
+                            <div class="camera-title">
+                                <span class="material-symbols-rounded">calendar_range</span>
+                                <span>Kehadiran Hari Ini</span>
+                            </div>
+                            <span class="camera-status" id="cameraStatus">BELUM MASUK</span>
+                        </div>
+                        <div class="digital-clock">
+                            <div class="clock-time" id="cameraClockTime">--:--:--</div>
+                            <div class="clock-date" id="cameraClockDate">--</div>
+                        </div>
+                        <div class="camera-actions">
+                            <button class="action-btn action-btn--masuk" id="cameraClockInBtn" onclick="cameraClockIn()">Masuk</button>
+                            <button class="action-btn action-btn--keluar" id="cameraClockOutBtn" onclick="cameraClockOut()" disabled>Keluar</button>
+                        </div>
+                        <div class="camera-viewport">
+                            <video id="scanVideo" autoplay muted playsinline></video>
+                            <div class="face-target"></div>
+                            <div id="faceOverlay" class="face-overlay"></div>
+                            <span class="camera-hint" id="cameraHint">Pastikan wajah berada dalam bulatan</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div id="progressFill" class="progress-fill"></div>
+                            </div>
+                            <div class="smile-text" id="smileText">😊 SILA SENYUM RINGAN</div>
+                            <div class="smile-percent" id="smilePercent" style="text-align: center; font-size: 12px; color: #64748b;">Mengesan senyuman: 0%</div>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <!-- Bottom Navigation -->
@@ -1105,36 +1093,23 @@
                     <span class="material-symbols-rounded">history</span>
                     <span>Sejarah</span>
                 </button>
-                <button class="nav-item" onclick="switchPage('verify')" id="navVerify">
+                <button class="nav-item" onclick="switchPage('camera')" id="navCamera">
                     <span class="material-symbols-rounded">fingerprint</span>
-                    <span>Pengesahan</span>
+                    <span>Clock In/Out</span>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Face Verification Modal -->
-    <div id="verifyModal" class="modal-overlay">
+    <!-- Location History Modal -->
+    <div id="locationModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Pengesahan Wajah</h3>
-                <button class="close-modal" onclick="closeVerifyModal()">&times;</button>
+                <h3>Sejarah Lokasi Clock In/Out</h3>
+                <button class="close-modal" onclick="closeLocationModal()">&times;</button>
             </div>
-            <div class="modal-body">
-                <div class="challenge-text" id="challengeText">📷 Sedia untuk pengesahan</div>
-                <div class="progress-bar">
-                    <div id="progressFill" class="progress-fill"></div>
-                </div>
-                <div class="video-container">
-                    <video id="scanVideo" autoplay muted playsinline></video>
-                    <div class="face-guide"></div>
-                    <div id="faceOverlay" class="face-overlay"></div>
-                </div>
-                <div class="smile-percent" id="smilePercent">Mengesan senyuman: 0%</div>
-                <div class="modal-buttons">
-                    <button class="btn-cancel" onclick="closeVerifyModal()">Batal</button>
-                    <button class="btn-verify" id="startVerifyBtn" onclick="startVerification()">Mula Pengesahan</button>
-                </div>
+            <div class="modal-body" id="locationHistoryList">
+                <div class="text-center py-6 text-gray-400">Loading...</div>
             </div>
         </div>
     </div>
@@ -1153,11 +1128,10 @@
         let currentAttendanceRecord = null;
         let userMap = null;
         let userMarker = null;
-        
-        // Calendar state
+        let attendanceRecords = {};
         let currentDate = new Date();
         let selectedDate = new Date();
-        let attendanceRecords = {};
+        let locationHistory = [];
 
         // Helper functions
         function getCurrentDateMalaysia() {
@@ -1172,7 +1146,7 @@
 
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('loginPassword');
-            const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
+            const eyeIcon = document.querySelector('.password-toggle .material-symbols-rounded');
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
                 eyeIcon.innerText = 'visibility';
@@ -1205,45 +1179,90 @@
 
         // Navigation
         function switchPage(page) {
-            document.getElementById('homePage').style.display = page === 'home' ? 'block' : 'none';
+            document.getElementById('homePage').classList.toggle('active', page === 'home');
             document.getElementById('historyPage').classList.toggle('active', page === 'history');
+            document.getElementById('cameraPage').classList.toggle('active', page === 'camera');
             
             document.getElementById('navHome').classList.toggle('active', page === 'home');
             document.getElementById('navHistory').classList.toggle('active', page === 'history');
-            document.getElementById('navVerify').classList.toggle('active', page === 'verify');
+            document.getElementById('navCamera').classList.toggle('active', page === 'camera');
             
             if (page === 'history') {
                 renderCalendar();
                 loadAttendanceHistory();
-            } else if (page === 'verify') {
-                openVerifyModal();
+            } else if (page === 'camera') {
+                updateCameraClock();
+                initCameraForVerify();
             }
         }
         
-        function switchToHistory() {
-            switchPage('history');
-        }
-        
-        // Modal functions
-        function openVerifyModal() {
-            const modal = document.getElementById('verifyModal');
+        function showLocationHistory() {
+            const modal = document.getElementById('locationModal');
             modal.classList.add('active');
-            initCameraForVerify();
+            loadLocationHistory();
         }
         
-        function closeVerifyModal() {
-            const modal = document.getElementById('verifyModal');
+        function closeLocationModal() {
+            const modal = document.getElementById('locationModal');
             modal.classList.remove('active');
-            if (videoStream) {
-                videoStream.getTracks().forEach(t => t.stop());
-                videoStream = null;
-            }
-            stopRealTimeFaceDetection();
-            pendingAction = null;
-            switchPage('home');
         }
         
-        // Face detection functions
+        async function loadLocationHistory() {
+            if (!currentUser) return;
+            
+            const today = getCurrentDateMalaysia();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            
+            try {
+                const result = await callAPI('getAttendance', { 
+                    uid: currentUser.uid,
+                    startDate: startDate,
+                    endDate: today
+                });
+                
+                const container = document.getElementById('locationHistoryList');
+                
+                if (!result.success || !result.data || result.data.length === 0) {
+                    container.innerHTML = '<div class="text-center py-6 text-gray-400">Tiada rekod lokasi</div>';
+                    return;
+                }
+                
+                let html = '';
+                result.data.forEach(record => {
+                    const date = new Date(record.date);
+                    const formattedDate = date.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                    
+                    html += `
+                        <div class="location-history-item">
+                            <div style="font-weight: 600; margin-bottom: 8px;">${escapeHtml(formattedDate)}</div>
+                            <div style="display: flex; gap: 16px; font-size: 13px;">
+                                <div>🟢 Masuk: ${clockIn}</div>
+                                <div>🔴 Keluar: ${clockOut}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Load location history error:', error);
+            }
+        }
+        
+        // Camera functions
+        function updateCameraClock() {
+            const now = new Date();
+            const malaysiaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
+            document.getElementById('cameraClockTime').innerText = malaysiaTime.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Kuching' });
+            document.getElementById('cameraClockDate').innerText = malaysiaTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+        }
+        
+        setInterval(updateCameraClock, 1000);
+        
         function getVideoDimensions(videoEl) {
             const videoWidth = videoEl.videoWidth;
             const videoHeight = videoEl.videoHeight;
@@ -1294,7 +1313,11 @@
                         document.getElementById('smilePercent').innerHTML = `Mengesan senyuman: ${happyScore}%`;
                         
                         if (detection.expressions.happy > 0.35) {
-                            document.getElementById('challengeText').innerHTML = '✅ Senyuman dikesan!';
+                            document.getElementById('smileText').innerHTML = '✅ SENYUMAN DISAHKAN!';
+                            document.getElementById('smileText').style.color = '#10b981';
+                        } else {
+                            document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
+                            document.getElementById('smileText').style.color = '#1e3a8a';
                         }
                         
                         const overlay = document.getElementById('faceOverlay');
@@ -1305,6 +1328,8 @@
                         }
                     } else {
                         document.getElementById('smilePercent').innerHTML = 'Mengesan senyuman: 0%';
+                        document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
+                        document.getElementById('smileText').style.color = '#1e3a8a';
                         const overlay = document.getElementById('faceOverlay');
                         if (overlay) overlay.innerHTML = '';
                     }
@@ -1350,8 +1375,8 @@
                 });
                 video.srcObject = videoStream;
                 startRealTimeFaceDetection();
-                document.getElementById('challengeText').innerHTML = '😊 SILA SENYUM RINGAN';
             } catch (err) {
+                document.getElementById('cameraHint').innerText = '❌ Sila benarkan akses kamera';
                 showNotification('Ralat', 'Sila benarkan akses kamera', true);
             }
         }
@@ -1367,21 +1392,17 @@
             }
         }
 
-        async function startVerification() {
-            if (isVerifying) return;
+        async function startVerification(action) {
+            if (isVerifying) return false;
             isVerifying = true;
             
             if (!faceMatcher) {
-                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin', true);
+                showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true);
                 isVerifying = false;
-                return;
+                return false;
             }
             
             const scanVideo = document.getElementById('scanVideo');
-            const startBtn = document.getElementById('startVerifyBtn');
-            
-            startBtn.disabled = true;
-            startBtn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             
             try {
                 // Smile detection phase
@@ -1400,7 +1421,6 @@
                         if (detection && detection.expressions && detection.expressions.happy > 0.35) {
                             smileDetected = true;
                             document.getElementById('smilePercent').innerHTML = '✅ Senyuman dikesan!';
-                            document.getElementById('challengeText').innerHTML = '✅ SENYUMAN DISAHKAN!';
                             await new Promise(resolve => setTimeout(resolve, 800));
                             break;
                         }
@@ -1410,12 +1430,12 @@
                 }
                 
                 if (!smileDetected) {
-                    throw new Error('Senyuman tidak dikesan');
+                    throw new Error('Senyuman tidak dikesan. Sila cuba lagi.');
                 }
                 
                 // Face matching phase
                 updateProgress(70);
-                document.getElementById('challengeText').innerHTML = '👤 MENGESAHKAN WAJAH...';
+                document.getElementById('smileText').innerHTML = '👤 MENGESAHKAN WAJAH...';
                 
                 const detection = await getFaceDescriptor(scanVideo);
                 if (!detection || !detection.descriptor) {
@@ -1424,30 +1444,31 @@
                 
                 const match = faceMatcher.findBestMatch(detection.descriptor);
                 if (match.label !== currentUser.uid || match.distance >= 0.65) {
-                    throw new Error('Wajah tidak sepadan');
+                    throw new Error('Wajah tidak sepadan dengan rekod sistem');
                 }
                 
                 updateProgress(100);
-                document.getElementById('challengeText').innerHTML = '✅ PENGESAHAN BERJAYA!';
+                document.getElementById('smileText').innerHTML = '✅ PENGESAHAN BERJAYA!';
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Execute clock action
-                if (pendingAction === 'clockin') {
+                // Execute action
+                if (action === 'clockin') {
                     await executeClockIn();
-                } else if (pendingAction === 'clockout') {
+                } else if (action === 'clockout') {
                     await executeClockOut();
                 }
                 
-                closeVerifyModal();
+                return true;
                 
             } catch (error) {
                 console.error('Verification error:', error);
                 showNotification('Pengesahan Gagal', error.message, true);
                 updateProgress(0);
+                return false;
             } finally {
                 isVerifying = false;
-                startBtn.disabled = false;
-                startBtn.innerHTML = 'Mula Pengesahan';
+                updateProgress(0);
+                document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
             }
         }
 
@@ -1518,7 +1539,6 @@
                     showNotification('Berjaya', 'Clock In direkodkan', false);
                     await loadHomeData();
                     await loadAttendanceHistory();
-                    await loadRecentActivity();
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock in', true);
                 }
@@ -1540,7 +1560,6 @@
                     showNotification('Berjaya', 'Clock Out direkodkan', false);
                     await loadHomeData();
                     await loadAttendanceHistory();
-                    await loadRecentActivity();
                 } else {
                     showNotification('Ralat', result.error || 'Gagal clock out', true);
                 }
@@ -1549,14 +1568,44 @@
             }
         }
         
-        function handleClockIn() {
-            pendingAction = 'clockin';
-            openVerifyModal();
+        async function cameraClockIn() {
+            const success = await startVerification('clockin');
+            if (success) {
+                updateCameraUI();
+            }
         }
         
-        function handleClockOut() {
-            pendingAction = 'clockout';
-            openVerifyModal();
+        async function cameraClockOut() {
+            const success = await startVerification('clockout');
+            if (success) {
+                updateCameraUI();
+            }
+        }
+        
+        function updateCameraUI() {
+            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '')) {
+                document.getElementById('cameraStatus').innerText = 'DALAM BERTUGAS';
+                document.getElementById('cameraStatus').style.background = '#dbeafe';
+                document.getElementById('cameraStatus').style.color = '#1e3a8a';
+                document.getElementById('cameraClockOutBtn').disabled = false;
+                document.getElementById('cameraClockOutBtn').classList.add('active');
+            } else if (currentAttendanceRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockOut) {
+                document.getElementById('cameraStatus').innerText = 'SELESAI';
+                document.getElementById('cameraStatus').style.background = '#dcfce7';
+                document.getElementById('cameraStatus').style.color = '#166534';
+                document.getElementById('cameraClockInBtn').disabled = true;
+                document.getElementById('cameraClockOutBtn').disabled = true;
+            } else {
+                document.getElementById('cameraStatus').innerText = 'BELUM MASUK';
+                document.getElementById('cameraStatus').style.background = '#fef3c7';
+                document.getElementById('cameraStatus').style.color = '#92400e';
+                document.getElementById('cameraClockOutBtn').disabled = true;
+                document.getElementById('cameraClockOutBtn').classList.remove('active');
+            }
+        }
+        
+        function handleClockIn() {
+            switchPage('camera');
         }
 
         // Load Home Data
@@ -1566,6 +1615,7 @@
             const today = getCurrentDateMalaysia();
             const displayDate = new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
             document.getElementById('currentDateDisplay').innerText = displayDate;
+            document.getElementById('recentDate').innerText = displayDate;
             
             try {
                 const result = await callAPI('getAttendance', { 
@@ -1593,6 +1643,10 @@
                     const clockInBtn = document.getElementById('clockInBtn');
                     clockInBtn.disabled = hasClockOut;
                     clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
+                    
+                    document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
+                    document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
+                    document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
                 } else {
                     document.getElementById('clockInTime').innerText = '--:--';
                     document.getElementById('clockInAmPm').innerText = '';
@@ -1605,14 +1659,10 @@
                     const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kuching' });
                     const timeParts = clockOutTime.split(' ');
                     document.getElementById('clockOutTime').innerText = timeParts[0];
-                    document.getElementById('clockOutAmPm').innerText = timeParts[1] || '';
-                    document.getElementById('clockOutNa').innerText = '';
                     document.getElementById('clockOutStatus').innerHTML = 'Tamat bertugas';
                     document.getElementById('clockOutStatus').style.color = '#10b981';
                 } else {
                     document.getElementById('clockOutTime').innerText = '— • —';
-                    document.getElementById('clockOutAmPm').innerText = 'AM';
-                    document.getElementById('clockOutNa').innerText = 'N/A';
                     document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
                     document.getElementById('clockOutStatus').style.color = '#94a3b8';
                 }
@@ -1633,23 +1683,13 @@
                 
                 currentAttendanceRecord = record;
                 
+                // Update camera UI
+                if (document.getElementById('cameraPage').classList.contains('active')) {
+                    updateCameraUI();
+                }
+                
             } catch (error) {
                 console.error('Load home data error:', error);
-            }
-        }
-        
-        async function loadRecentActivity() {
-            if (!currentUser) return;
-            
-            const today = new Date();
-            const malaysiaToday = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
-            const formattedDate = malaysiaToday.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
-            
-            document.getElementById('recentClockInDate').innerText = formattedDate;
-            
-            // Update map if user has location
-            if (currentUser.lat && currentUser.lng) {
-                initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
             }
         }
         
@@ -1679,7 +1719,6 @@
                     return;
                 }
                 
-                // Store records for calendar
                 attendanceRecords = {};
                 result.data.forEach(record => {
                     attendanceRecords[record.date] = record;
@@ -1756,7 +1795,6 @@
             loadAttendanceForDate(selectedDate);
         }
         
-        // Calendar functions
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
@@ -1805,16 +1843,6 @@
             renderCalendar();
         }
         
-        function prevMonth() {
-            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-            renderCalendar();
-        }
-        
-        function nextMonth() {
-            currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-            renderCalendar();
-        }
-        
         // Login
         window.handleLogin = async function() {
             const email = document.getElementById('loginEmail').value;
@@ -1827,6 +1855,7 @@
             }
 
             btn.disabled = true;
+            btn.classList.add('loading');
             btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
 
             try {
@@ -1843,41 +1872,41 @@
                         } catch (e) {}
                     }
                     
-                    btn.style.backgroundColor = '#10b981';
+                    btn.style.background = '#10b981';
                     btn.innerHTML = '✓';
                     
                     setTimeout(() => {
                         document.getElementById('userName').innerText = escapeHtml(currentUser.name);
                         document.getElementById('userMeta').innerText = `${escapeHtml(currentUser.branch)} • ${escapeHtml(currentUser.unit)}`;
                         document.getElementById('loginPage').classList.add('hidden');
-                        document.getElementById('dashboard').classList.remove('hidden');
+                        document.getElementById('app').classList.remove('hidden');
                         
                         loadFaceModels();
                         loadHomeData();
-                        loadRecentActivity();
                         loadAttendanceHistory();
                         startLocationTracking();
-                        startClock();
                         
                         showNotification('Selamat Datang', `Log masuk berjaya`, false);
                     }, 500);
                 } else {
-                    btn.style.backgroundColor = '#ef4444';
+                    btn.style.background = '#ef4444';
                     btn.innerHTML = '✗';
                     showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true);
                     setTimeout(() => {
-                        btn.style.backgroundColor = '';
+                        btn.style.background = '';
                         btn.disabled = false;
+                        btn.classList.remove('loading');
                         btn.innerHTML = 'Log Masuk';
                     }, 1000);
                 }
             } catch (error) {
                 showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
-                btn.style.backgroundColor = '#ef4444';
+                btn.style.background = '#ef4444';
                 btn.innerHTML = '✗';
                 setTimeout(() => {
-                    btn.style.backgroundColor = '';
+                    btn.style.background = '';
                     btn.disabled = false;
+                    btn.classList.remove('loading');
                     btn.innerHTML = 'Log Masuk';
                 }, 1000);
             }
@@ -1887,32 +1916,21 @@
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             stopRealTimeFaceDetection();
-            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('app').classList.add('hidden');
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
-            pendingAction = null;
         };
         
         // Expose functions to global
-        window.handleClockIn = handleClockIn;
-        window.handleClockOut = handleClockOut;
         window.switchPage = switchPage;
-        window.switchToHistory = switchToHistory;
-        window.closeVerifyModal = closeVerifyModal;
-        window.startVerification = startVerification;
+        window.showLocationHistory = showLocationHistory;
+        window.closeLocationModal = closeLocationModal;
+        window.cameraClockIn = cameraClockIn;
+        window.cameraClockOut = cameraClockOut;
+        window.handleClockIn = handleClockIn;
         window.selectDate = selectDate;
-        window.prevMonth = prevMonth;
-        window.nextMonth = nextMonth;
-
-        // Clock
-        function startClock() {
-            setInterval(() => {
-                const now = new Date();
-                const malaysiaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
-                const timeStr = malaysiaTime.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Kuching' });
-            }, 1000);
-        }
+        window.togglePasswordVisibility = togglePasswordVisibility;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
