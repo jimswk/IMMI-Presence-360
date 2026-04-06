@@ -429,6 +429,13 @@
             margin-top: 12px;
         }
         
+        /* Fix: Map container with proper constraints */
+        .map-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        
         .recent-item {
             display: flex;
             justify-content: space-between;
@@ -472,7 +479,7 @@
             font-weight: 700;
         }
         
-        /* Camera Section (Clock In/Out Page) - Updated */
+        /* Camera Section (Clock In/Out Page) */
         .camera-section {
             padding: 0;
         }
@@ -839,10 +846,10 @@
             border-bottom: 1px solid #e2e8f0;
         }
         
-        /* Notification */
+        /* Notification - DIPINDAHKAN KE ATAS */
         .notification {
             position: fixed;
-            bottom: 80px;
+            top: 20px;
             left: 16px;
             right: 16px;
             background: white;
@@ -851,14 +858,19 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             z-index: 300;
             border-left: 4px solid #10b981;
-            transform: translateY(200px);
+            transform: translateY(-200px);
             transition: transform 0.3s ease;
             max-width: 500px;
             margin: 0 auto;
         }
         
-        .notification.show { transform: translateY(0); }
-        .notification.error { border-left-color: #ef4444; }
+        .notification.show { 
+            transform: translateY(0); 
+        }
+        
+        .notification.error { 
+            border-left-color: #ef4444; 
+        }
         
         .loading-spinner {
             display: inline-block;
@@ -873,9 +885,22 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         
         .hidden { display: none !important; }
+        
+        /* Fix untuk scroll - map tidak menutupi bottom nav */
+        .main-content-scroll {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            max-height: calc(100vh - 180px);
+        }
+        
+        /* Pastikan map container tidak overflow */
+        .leaflet-container {
+            z-index: 1;
+        }
     </style>
 </head>
 <body>
+    <!-- Notification - Di atas -->
     <div id="notification" class="notification">
         <div class="flex items-center gap-3">
             <span id="notifIcon" class="material-symbols-rounded text-xl text-green-600">check_circle</span>
@@ -1041,7 +1066,9 @@
                             <div class="recent-status" id="recentStatus">MASUK</div>
                         </div>
                     </div>
-                    <div id="recentLocationMap" class="location-map"></div>
+                    <div class="map-container">
+                        <div id="recentLocationMap" class="location-map"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1095,7 +1122,7 @@
                 </div>
             </div>
 
-            <!-- Page 3: Clock In/Out (Camera) - Updated Layout -->
+            <!-- Page 3: Clock In/Out (Camera) -->
             <div id="cameraPage" class="page">
                 <section class="camera-section">
                     <div class="camera-card">
@@ -1339,7 +1366,6 @@
             const within = distance <= radius;
             
             const locationBadge = document.getElementById('cameraLocationBadge');
-            const locationText = document.getElementById('cameraLocationText');
             const locationDistance = document.getElementById('cameraLocationDistance');
             
             if (within) {
