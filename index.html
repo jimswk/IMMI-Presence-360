@@ -429,7 +429,6 @@
             margin-top: 12px;
         }
         
-        /* Fix: Map container with proper constraints */
         .map-container {
             position: relative;
             width: 100%;
@@ -623,6 +622,11 @@
             overflow: hidden;
         }
         
+        /* Hide camera viewport by default - hanya muncul bila klik butang */
+        .camera-viewport.hidden-camera {
+            display: none;
+        }
+        
         .camera-viewport video {
             width: 100%;
             height: 100%;
@@ -677,6 +681,10 @@
             padding: 16px 20px 20px;
         }
         
+        .progress-container.hidden-progress {
+            display: none;
+        }
+        
         .progress-bar {
             height: 4px;
             background: #e2e8f0;
@@ -703,6 +711,15 @@
             text-align: center;
             font-size: 12px;
             color: #64748b;
+        }
+        
+        /* Hide verification UI initially */
+        .verification-ui {
+            display: none;
+        }
+        
+        .verification-ui.active {
+            display: block;
         }
         
         /* History Page */
@@ -846,7 +863,7 @@
             border-bottom: 1px solid #e2e8f0;
         }
         
-        /* Notification - DIPINDAHKAN KE ATAS */
+        /* Notification - Di atas */
         .notification {
             position: fixed;
             top: 20px;
@@ -886,14 +903,6 @@
         
         .hidden { display: none !important; }
         
-        /* Fix untuk scroll - map tidak menutupi bottom nav */
-        .main-content-scroll {
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            max-height: calc(100vh - 180px);
-        }
-        
-        /* Pastikan map container tidak overflow */
         .leaflet-container {
             z-index: 1;
         }
@@ -1122,7 +1131,7 @@
                 </div>
             </div>
 
-            <!-- Page 3: Clock In/Out (Camera) -->
+            <!-- Page 3: Clock In/Out (Camera) - Kamera hanya aktif bila klik butang -->
             <div id="cameraPage" class="page">
                 <section class="camera-section">
                     <div class="camera-card">
@@ -1149,23 +1158,27 @@
                         </div>
                         
                         <div class="camera-actions">
-                            <button class="action-btn action-btn--masuk" id="cameraClockInBtn" onclick="cameraClockIn()">MASUK</button>
-                            <button class="action-btn action-btn--keluar" id="cameraClockOutBtn" onclick="cameraClockOut()" disabled>KELUAR</button>
+                            <button class="action-btn action-btn--masuk" id="cameraClockInBtn" onclick="showCameraAndClockIn()">MASUK</button>
+                            <button class="action-btn action-btn--keluar" id="cameraClockOutBtn" onclick="showCameraAndClockOut()" disabled>KELUAR</button>
                         </div>
                         
-                        <div class="camera-viewport">
+                        <!-- Camera Viewport - Hidden initially -->
+                        <div id="cameraViewport" class="camera-viewport hidden-camera">
                             <video id="scanVideo" autoplay muted playsinline></video>
                             <div class="face-target"></div>
                             <div id="faceOverlay" class="face-overlay"></div>
                             <span class="camera-hint" id="cameraHint">Pastikan wajah berada dalam bulatan</span>
                         </div>
                         
-                        <div class="progress-container">
-                            <div class="progress-bar">
-                                <div id="progressFill" class="progress-fill"></div>
+                        <!-- Progress & Verification UI - Hidden initially -->
+                        <div id="verificationUI" class="verification-ui">
+                            <div class="progress-container">
+                                <div class="progress-bar">
+                                    <div id="progressFill" class="progress-fill"></div>
+                                </div>
+                                <div class="smile-text" id="smileText">😊 SILA SENYUM RINGAN</div>
+                                <div class="smile-percent" id="smilePercent">Mengesan senyuman: 0%</div>
                             </div>
-                            <div class="smile-text" id="smileText">😊 SILA SENYUM RINGAN</div>
-                            <div class="smile-percent" id="smilePercent">Mengesan senyuman: 0%</div>
                         </div>
                     </div>
                 </section>
@@ -1219,6 +1232,7 @@
         let attendanceRecords = {};
         let currentDate = new Date();
         let selectedDate = new Date();
+        let isCameraActive = false;
 
         // Helper functions
         function getCurrentDateMalaysia() {
@@ -1266,6 +1280,11 @@
 
         // Navigation
         function switchPage(page) {
+            // Stop camera if active when leaving page
+            if (isCameraActive) {
+                stopCameraAndReset();
+            }
+            
             document.getElementById('homePage').classList.toggle('active', page === 'home');
             document.getElementById('historyPage').classList.toggle('active', page === 'history');
             document.getElementById('cameraPage').classList.toggle('active', page === 'camera');
@@ -1280,8 +1299,86 @@
             } else if (page === 'camera') {
                 updateCameraClock();
                 updateCameraUI();
-                initCameraForVerify();
+                // Camera is NOT activated here - only when user clicks button
             }
+        }
+        
+        // Stop camera and reset UI
+        function stopCameraAndReset() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(t => t.stop());
+                videoStream = null;
+            }
+            stopRealTimeFaceDetection();
+            isCameraActive = false;
+            
+            // Hide camera viewport and verification UI
+            const cameraViewport = document.getElementById('cameraViewport');
+            const verificationUI = document.getElementById('verificationUI');
+            if (cameraViewport) cameraViewport.classList.add('hidden-camera');
+            if (verificationUI) verificationUI.classList.remove('active');
+            
+            // Reset progress and smile text
+            updateProgress(0);
+            document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
+            document.getElementById('smilePercent').innerHTML = 'Mengesan senyuman: 0%';
+            document.getElementById('smileText').style.color = '#1e3a8a';
+        }
+        
+        // Show camera and start verification for Clock In
+        async function showCameraAndClockIn() {
+            // Check if already clocked in
+            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && 
+                (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '')) {
+                showNotification('Makluman', 'Anda sudah clock in untuk hari ini', false);
+                return;
+            }
+            
+            // Check if already clocked out (completed)
+            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockOut) {
+                showNotification('Makluman', 'Kehadiran hari ini sudah lengkap', false);
+                return;
+            }
+            
+            pendingAction = 'clockin';
+            await showCameraAndStartVerification();
+        }
+        
+        // Show camera and start verification for Clock Out
+        async function showCameraAndClockOut() {
+            // Check if already clocked out
+            if (currentAttendanceRecord && currentAttendanceRecord.clockOut && 
+                currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null') {
+                showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false);
+                return;
+            }
+            
+            // Check if clocked in first
+            if (!currentAttendanceRecord || !currentAttendanceRecord.clockIn || 
+                currentAttendanceRecord.clockIn === '' || currentAttendanceRecord.clockIn === 'null') {
+                showNotification('Makluman', 'Sila clock in terlebih dahulu', true);
+                return;
+            }
+            
+            pendingAction = 'clockout';
+            await showCameraAndStartVerification();
+        }
+        
+        // Show camera and start verification process
+        async function showCameraAndStartVerification() {
+            // Show camera viewport
+            const cameraViewport = document.getElementById('cameraViewport');
+            const verificationUI = document.getElementById('verificationUI');
+            
+            cameraViewport.classList.remove('hidden-camera');
+            verificationUI.classList.add('active');
+            
+            // Initialize camera
+            await initCameraForVerify();
+            isCameraActive = true;
+            
+            // Start verification process
+            await startVerification();
         }
         
         function showLocationHistory() {
@@ -1508,13 +1605,14 @@
             }
         }
 
-        async function startVerification(action) {
+        async function startVerification() {
             if (isVerifying) return false;
             isVerifying = true;
             
             if (!faceMatcher) {
                 showNotification('Wajah Tidak Didaftar', 'Sila hubungi admin untuk pendaftaran wajah', true);
                 isVerifying = false;
+                stopCameraAndReset();
                 return false;
             }
             
@@ -1568,23 +1666,24 @@
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 // Execute action
-                if (action === 'clockin') {
+                if (pendingAction === 'clockin') {
                     await executeClockIn();
-                } else if (action === 'clockout') {
+                } else if (pendingAction === 'clockout') {
                     await executeClockOut();
                 }
                 
+                // Stop camera and reset UI after successful verification
+                stopCameraAndReset();
                 return true;
                 
             } catch (error) {
                 console.error('Verification error:', error);
                 showNotification('Pengesahan Gagal', error.message, true);
                 updateProgress(0);
+                stopCameraAndReset();
                 return false;
             } finally {
                 isVerifying = false;
-                updateProgress(0);
-                document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
             }
         }
 
@@ -1685,47 +1784,6 @@
                 }
             } catch (error) {
                 showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
-            }
-        }
-        
-        async function cameraClockIn() {
-            // Check if already clocked in
-            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && 
-                (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '')) {
-                showNotification('Makluman', 'Anda sudah clock in untuk hari ini', false);
-                return;
-            }
-            
-            // Check if already clocked out (completed)
-            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockOut) {
-                showNotification('Makluman', 'Kehadiran hari ini sudah lengkap', false);
-                return;
-            }
-            
-            const success = await startVerification('clockin');
-            if (success) {
-                updateCameraUI();
-            }
-        }
-        
-        async function cameraClockOut() {
-            // Check if already clocked out
-            if (currentAttendanceRecord && currentAttendanceRecord.clockOut && 
-                currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null') {
-                showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false);
-                return;
-            }
-            
-            // Check if clocked in first
-            if (!currentAttendanceRecord || !currentAttendanceRecord.clockIn || 
-                currentAttendanceRecord.clockIn === '' || currentAttendanceRecord.clockIn === 'null') {
-                showNotification('Makluman', 'Sila clock in terlebih dahulu', true);
-                return;
-            }
-            
-            const success = await startVerification('clockout');
-            if (success) {
-                updateCameraUI();
             }
         }
         
@@ -2087,14 +2145,15 @@
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
+            isCameraActive = false;
         };
         
         // Expose functions to global
         window.switchPage = switchPage;
         window.showLocationHistory = showLocationHistory;
         window.closeLocationModal = closeLocationModal;
-        window.cameraClockIn = cameraClockIn;
-        window.cameraClockOut = cameraClockOut;
+        window.showCameraAndClockIn = showCameraAndClockIn;
+        window.showCameraAndClockOut = showCameraAndClockOut;
         window.handleClockIn = handleClockIn;
         window.selectDate = selectDate;
         window.togglePasswordVisibility = togglePasswordVisibility;
