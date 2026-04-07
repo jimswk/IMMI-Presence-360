@@ -478,6 +478,15 @@
             font-weight: 700;
         }
         
+        /* IP Info Row */
+        .ip-info-row {
+            margin-top: 12px;
+        }
+        
+        .ip-info-row .material-symbols-rounded {
+            vertical-align: middle;
+        }
+        
         /* Camera Section (Clock In/Out Page) */
         .camera-section {
             padding: 0;
@@ -622,7 +631,6 @@
             overflow: hidden;
         }
         
-        /* Hide camera viewport by default - hanya muncul bila klik butang */
         .camera-viewport.hidden-camera {
             display: none;
         }
@@ -713,7 +721,6 @@
             color: #64748b;
         }
         
-        /* Hide verification UI initially */
         .verification-ui {
             display: none;
         }
@@ -863,7 +870,7 @@
             border-bottom: 1px solid #e2e8f0;
         }
         
-        /* Notification - Di atas */
+        /* Notification */
         .notification {
             position: fixed;
             top: 20px;
@@ -909,7 +916,7 @@
     </style>
 </head>
 <body>
-    <!-- Notification - Di atas -->
+    <!-- Notification -->
     <div id="notification" class="notification">
         <div class="flex items-center gap-3">
             <span id="notifIcon" class="material-symbols-rounded text-xl text-green-600">check_circle</span>
@@ -1131,7 +1138,7 @@
                 </div>
             </div>
 
-            <!-- Page 3: Clock In/Out (Camera) - Kamera hanya aktif bila klik butang -->
+            <!-- Page 3: Clock In/Out (Camera) -->
             <div id="cameraPage" class="page">
                 <section class="camera-section">
                     <div class="camera-card">
@@ -1148,7 +1155,6 @@
                             <div class="clock-date" id="cameraClockDate">--</div>
                         </div>
                         
-                        <!-- Location Status -->
                         <div class="camera-location">
                             <div class="location-badge" id="cameraLocationBadge">
                                 <span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span>
@@ -1162,7 +1168,6 @@
                             <button class="action-btn action-btn--keluar" id="cameraClockOutBtn" onclick="showCameraAndClockOut()" disabled>KELUAR</button>
                         </div>
                         
-                        <!-- Camera Viewport - Hidden initially -->
                         <div id="cameraViewport" class="camera-viewport hidden-camera">
                             <video id="scanVideo" autoplay muted playsinline></video>
                             <div class="face-target"></div>
@@ -1170,7 +1175,6 @@
                             <span class="camera-hint" id="cameraHint">Pastikan wajah berada dalam bulatan</span>
                         </div>
                         
-                        <!-- Progress & Verification UI - Hidden initially -->
                         <div id="verificationUI" class="verification-ui">
                             <div class="progress-container">
                                 <div class="progress-bar">
@@ -1216,7 +1220,9 @@
     </div>
 
     <script>
-        // Global variables
+        // ============================================
+        // GLOBAL VARIABLES
+        // ============================================
         let currentUser = null;
         let userLocation = null;
         let videoStream = null;
@@ -1233,8 +1239,51 @@
         let currentDate = new Date();
         let selectedDate = new Date();
         let isCameraActive = false;
+        
+        // IP Location variables
+        let ipLocation = null;
+        let periodicTrackingInterval = null;
 
-        // Helper functions
+        // ============================================
+        // BLOCK ANDROID FROM WEB
+        // ============================================
+        function checkAndBlockAndroid() {
+            const userAgent = navigator.userAgent;
+            const isAndroid = /android/i.test(userAgent);
+            const isNativeApp = userAgent.includes('IMMI-Android-App');
+            
+            if (isAndroid && !isNativeApp) {
+                document.body.innerHTML = `
+                    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px; font-family: 'Inter', sans-serif;">
+                        <div style="background: white; border-radius: 32px; padding: 40px; max-width: 400px; text-align: center;">
+                            <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <span style="font-size: 48px;">📱</span>
+                            </div>
+                            <h2 style="margin: 20px 0 10px; font-size: 24px; font-weight: 800;">Akses Tidak Dibenarkan</h2>
+                            <p style="color: #64748b; margin-bottom: 24px; line-height: 1.5;">
+                                Sila gunakan <strong>Aplikasi Android IMMI Presence 360</strong> untuk akses sistem.
+                            </p>
+                            <div style="background: #f0fdf4; padding: 16px; border-radius: 20px; margin: 20px 0;">
+                                <p style="color: #166534; font-size: 14px; font-weight: 600;">📱 Muat Turun Aplikasi</p>
+                                <p style="color: #166534; font-size: 12px; margin-top: 4px;">Google Play Store</p>
+                            </div>
+                            <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
+                                Versi web hanya untuk pengguna iOS.
+                            </p>
+                            <button onclick="location.reload()" style="margin-top: 24px; background: #1e3a8a; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; cursor: pointer;">
+                                Cuba Lagi
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return true;
+            }
+            return false;
+        }
+
+        // ============================================
+        // HELPER FUNCTIONS
+        // ============================================
         function getCurrentDateMalaysia() {
             const now = new Date();
             const malaysiaDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
@@ -1278,9 +1327,139 @@
             return div.innerHTML;
         }
 
-        // Navigation
+        // ============================================
+        // IP LOCATION FOR MAP (NOT for clock in/out)
+        // ============================================
+        async function getAndDisplayIPLocation() {
+            try {
+                const result = await getCurrentIPLocation();
+                
+                if (result && result.success && result.lat && result.lng) {
+                    ipLocation = {
+                        lat: result.lat,
+                        lng: result.lng,
+                        city: result.city,
+                        region: result.region,
+                        country: result.country,
+                        ip: result.ip
+                    };
+                    
+                    updateMapWithIPLocation();
+                    updateIPInfoDisplay();
+                    
+                    return ipLocation;
+                } else {
+                    document.getElementById('recentLocationMap').innerHTML = 
+                        '<div class="text-center py-6 text-gray-400 text-sm">📍 Lokasi IP tidak dapat dikesan<br><span class="text-xs">Sila semak sambungan internet</span></div>';
+                    return null;
+                }
+            } catch (error) {
+                console.error('IP location error:', error);
+                return null;
+            }
+        }
+
+        function updateMapWithIPLocation() {
+            if (!ipLocation || !ipLocation.lat || !ipLocation.lng) return;
+            
+            const mapContainer = document.getElementById('recentLocationMap');
+            if (!mapContainer) return;
+            
+            if (userMap) {
+                userMap.remove();
+                userMap = null;
+            }
+            
+            userMap = L.map('recentLocationMap').setView([ipLocation.lat, ipLocation.lng], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(userMap);
+            
+            const marker = L.marker([ipLocation.lat, ipLocation.lng]).addTo(userMap);
+            
+            marker.bindPopup(`
+                <b>📍 Lokasi Anggaran (IP)</b><br>
+                IP: ${ipLocation.ip || 'N/A'}<br>
+                Bandar: ${ipLocation.city || 'Unknown'}<br>
+                Kawasan: ${ipLocation.region || 'Unknown'}<br>
+                <span class="text-xs text-gray-500">*Anggaran berdasarkan IP, bukan GPS</span>
+            `).openPopup();
+            
+            L.circle([ipLocation.lat, ipLocation.lng], {
+                color: '#f97316',
+                fillColor: '#f97316',
+                fillOpacity: 0.15,
+                radius: 5000
+            }).addTo(userMap);
+            
+            setTimeout(() => userMap?.invalidateSize(), 200);
+        }
+
+        function updateIPInfoDisplay() {
+            if (!ipLocation) return;
+            
+            let ipInfoRow = document.querySelector('.ip-info-row');
+            
+            if (!ipInfoRow) {
+                const recentCard = document.querySelector('.recent-card');
+                const mapContainer = document.getElementById('recentLocationMap');
+                if (recentCard && mapContainer) {
+                    ipInfoRow = document.createElement('div');
+                    ipInfoRow.className = 'ip-info-row mt-3';
+                    mapContainer.parentNode.insertBefore(ipInfoRow, mapContainer.nextSibling);
+                }
+            }
+            
+            if (ipInfoRow) {
+                ipInfoRow.innerHTML = `
+                    <div style="background: #fef3c7; border-radius: 12px; padding: 10px 14px; font-size: 11px;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span class="material-symbols-rounded" style="font-size: 14px; color: #d97706;">wifi</span>
+                            <span style="font-weight: 600;">IP: ${ipLocation.ip || 'N/A'}</span>
+                            <span class="text-gray-400">•</span>
+                            <span>📍 ${ipLocation.city || 'Unknown'}, ${ipLocation.region || ''}</span>
+                            <span class="text-gray-400">•</span>
+                            <span style="font-size: 10px; color: #92400e;">*Anggaran IP</span>
+                        </div>
+                        <div style="font-size: 10px; color: #78350f; margin-top: 6px;">
+                            <span class="material-symbols-rounded" style="font-size: 10px;">schedule</span>
+                            Lokasi dikemaskini: ${new Date().toLocaleTimeString('ms-MY', { timeZone: 'Asia/Kuching' })}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================
+        // PERIODIC IP TRACKING
+        // ============================================
+        function startPeriodicIPTracking() {
+            if (periodicTrackingInterval) {
+                clearInterval(periodicTrackingInterval);
+            }
+            
+            saveMyLocation();
+            
+            periodicTrackingInterval = setInterval(async () => {
+                if (currentUser) {
+                    await saveMyLocation();
+                    console.log('Periodic IP location saved at', new Date().toLocaleTimeString());
+                }
+            }, 5 * 60 * 1000);
+        }
+
+        function stopPeriodicIPTracking() {
+            if (periodicTrackingInterval) {
+                clearInterval(periodicTrackingInterval);
+                periodicTrackingInterval = null;
+            }
+        }
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
         function switchPage(page) {
-            // Stop camera if active when leaving page
             if (isCameraActive) {
                 stopCameraAndReset();
             }
@@ -1299,11 +1478,9 @@
             } else if (page === 'camera') {
                 updateCameraClock();
                 updateCameraUI();
-                // Camera is NOT activated here - only when user clicks button
             }
         }
         
-        // Stop camera and reset UI
         function stopCameraAndReset() {
             if (videoStream) {
                 videoStream.getTracks().forEach(t => t.stop());
@@ -1312,29 +1489,24 @@
             stopRealTimeFaceDetection();
             isCameraActive = false;
             
-            // Hide camera viewport and verification UI
             const cameraViewport = document.getElementById('cameraViewport');
             const verificationUI = document.getElementById('verificationUI');
             if (cameraViewport) cameraViewport.classList.add('hidden-camera');
             if (verificationUI) verificationUI.classList.remove('active');
             
-            // Reset progress and smile text
             updateProgress(0);
             document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
             document.getElementById('smilePercent').innerHTML = 'Mengesan senyuman: 0%';
             document.getElementById('smileText').style.color = '#1e3a8a';
         }
         
-        // Show camera and start verification for Clock In
         async function showCameraAndClockIn() {
-            // Check if already clocked in
             if (currentAttendanceRecord && currentAttendanceRecord.clockIn && 
                 (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '')) {
                 showNotification('Makluman', 'Anda sudah clock in untuk hari ini', false);
                 return;
             }
             
-            // Check if already clocked out (completed)
             if (currentAttendanceRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockOut) {
                 showNotification('Makluman', 'Kehadiran hari ini sudah lengkap', false);
                 return;
@@ -1344,16 +1516,13 @@
             await showCameraAndStartVerification();
         }
         
-        // Show camera and start verification for Clock Out
         async function showCameraAndClockOut() {
-            // Check if already clocked out
             if (currentAttendanceRecord && currentAttendanceRecord.clockOut && 
                 currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null') {
                 showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false);
                 return;
             }
             
-            // Check if clocked in first
             if (!currentAttendanceRecord || !currentAttendanceRecord.clockIn || 
                 currentAttendanceRecord.clockIn === '' || currentAttendanceRecord.clockIn === 'null') {
                 showNotification('Makluman', 'Sila clock in terlebih dahulu', true);
@@ -1364,20 +1533,16 @@
             await showCameraAndStartVerification();
         }
         
-        // Show camera and start verification process
         async function showCameraAndStartVerification() {
-            // Show camera viewport
             const cameraViewport = document.getElementById('cameraViewport');
             const verificationUI = document.getElementById('verificationUI');
             
             cameraViewport.classList.remove('hidden-camera');
             verificationUI.classList.add('active');
             
-            // Initialize camera
             await initCameraForVerify();
             isCameraActive = true;
             
-            // Start verification process
             await startVerification();
         }
         
@@ -1438,7 +1603,9 @@
             }
         }
         
-        // Camera functions
+        // ============================================
+        // CAMERA FUNCTIONS
+        // ============================================
         function updateCameraClock() {
             const now = new Date();
             const malaysiaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
@@ -1619,7 +1786,6 @@
             const scanVideo = document.getElementById('scanVideo');
             
             try {
-                // Smile detection phase
                 updateProgress(20);
                 let smileDetected = false;
                 let smileStartTime = Date.now();
@@ -1647,7 +1813,6 @@
                     throw new Error('Senyuman tidak dikesan. Sila cuba lagi.');
                 }
                 
-                // Face matching phase
                 updateProgress(70);
                 document.getElementById('smileText').innerHTML = '👤 MENGESAHKAN WAJAH...';
                 
@@ -1665,14 +1830,12 @@
                 document.getElementById('smileText').innerHTML = '✅ PENGESAHAN BERJAYA!';
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Execute action
                 if (pendingAction === 'clockin') {
                     await executeClockIn();
                 } else if (pendingAction === 'clockout') {
                     await executeClockOut();
                 }
                 
-                // Stop camera and reset UI after successful verification
                 stopCameraAndReset();
                 return true;
                 
@@ -1687,7 +1850,9 @@
             }
         }
 
-        // Location functions
+        // ============================================
+        // LOCATION FUNCTIONS
+        // ============================================
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
             const φ1 = lat1 * Math.PI/180;
@@ -1736,7 +1901,9 @@
             );
         }
 
-        // Clock actions
+        // ============================================
+        // CLOCK ACTIONS
+        // ============================================
         async function executeClockIn() {
             if (!userLocation) {
                 showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
@@ -1750,7 +1917,7 @@
             }
             
             try {
-                const result = await callAPI('clockIn', { uid: currentUser.uid, location: JSON.stringify(userLocation) });
+                const result = await clockIn(currentUser.uid, userLocation, currentUser);
                 
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan', false);
@@ -1772,7 +1939,7 @@
             }
             
             try {
-                const result = await callAPI('clockOut', { uid: currentUser.uid, location: JSON.stringify(userLocation) });
+                const result = await clockOut(currentUser.uid, userLocation, currentUser);
                 
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan', false);
@@ -1798,7 +1965,6 @@
             const keluarBtn = document.getElementById('cameraClockOutBtn');
             
             if (hasClockIn && !hasClockOut) {
-                // Sudah clock in, belum clock out
                 cameraStatus.innerText = 'DALAM BERTUGAS';
                 cameraStatus.style.background = '#dbeafe';
                 cameraStatus.style.color = '#1e3a8a';
@@ -1807,7 +1973,6 @@
                 keluarBtn.disabled = false;
                 keluarBtn.classList.add('active');
             } else if (hasClockIn && hasClockOut) {
-                // Sudah clock in dan clock out (selesai)
                 cameraStatus.innerText = 'SELESAI';
                 cameraStatus.style.background = '#dcfce7';
                 cameraStatus.style.color = '#166534';
@@ -1817,7 +1982,6 @@
                 keluarBtn.classList.remove('active');
                 keluarBtn.style.background = '#cbd5e1';
             } else {
-                // Belum clock in
                 cameraStatus.innerText = 'BELUM MASUK';
                 cameraStatus.style.background = '#fef3c7';
                 cameraStatus.style.color = '#92400e';
@@ -1835,7 +1999,9 @@
             switchPage('camera');
         }
 
-        // Load Home Data
+        // ============================================
+        // LOAD HOME DATA
+        // ============================================
         async function loadHomeData() {
             if (!currentUser) return;
             
@@ -1843,6 +2009,8 @@
             const displayDate = new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
             document.getElementById('currentDateDisplay').innerText = displayDate;
             document.getElementById('recentDate').innerText = displayDate;
+            
+            await getAndDisplayIPLocation();
             
             try {
                 const result = await callAPI('getAttendance', { 
@@ -1909,8 +2077,6 @@
                 }
                 
                 currentAttendanceRecord = record;
-                
-                // Update camera UI if camera page is active
                 updateCameraUI();
                 
             } catch (error) {
@@ -1918,7 +2084,9 @@
             }
         }
         
-        // History functions
+        // ============================================
+        // HISTORY FUNCTIONS
+        // ============================================
         async function loadAttendanceHistory() {
             if (!currentUser) return;
             
@@ -2068,7 +2236,9 @@
             renderCalendar();
         }
         
-        // Login
+        // ============================================
+        // LOGIN
+        // ============================================
         window.handleLogin = async function() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
@@ -2084,10 +2254,13 @@
             btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
 
             try {
-                const result = await callAPI('userLogin', { email, password });
+                const result = await userLogin(email, password);
                 
                 if (result.success) {
                     currentUser = result.user;
+                    
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    localStorage.setItem('deviceId', result.deviceId);
                     
                     if (currentUser.faceDescriptor && currentUser.faceDescriptor !== '') {
                         try {
@@ -2110,13 +2283,23 @@
                         loadHomeData();
                         loadAttendanceHistory();
                         startLocationTracking();
+                        startPeriodicIPTracking();
                         
-                        showNotification('Selamat Datang', `Log masuk berjaya`, false);
+                        const platformMsg = result.platform === 'Android' ? 'Android App' : (result.platform === 'iOS' ? 'iOS Web' : 'Web Browser');
+                        const trustMsg = result.trustScore === 100 ? 'Trust: Tinggi' : (result.trustScore === 70 ? 'Trust: Sederhana' : 'Trust: Rendah');
+                        showNotification('Selamat Datang', `Log masuk berjaya (${platformMsg} | ${trustMsg})`, false);
                     }, 500);
                 } else {
-                    btn.style.background = '#ef4444';
-                    btn.innerHTML = '✗';
-                    showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true);
+                    if (result.code === 'ANDROID_WEB_BLOCKED') {
+                        showNotification('Akses Ditolak', 'Sila gunakan aplikasi Android IMMI Presence 360', true);
+                        document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:20px;"><div style="background:white;border-radius:32px;padding:40px;text-align:center;"><h2>📱 Akses Tidak Dibenarkan</h2><p>Sila gunakan aplikasi Android IMMI Presence 360</p></div></div>`;
+                    } else if (result.code === 'MULTIPLE_DEVICE_DETECTED') {
+                        showNotification('Peranti Lain Aktif', result.error, true);
+                    } else {
+                        btn.style.background = '#ef4444';
+                        btn.innerHTML = '✗';
+                        showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true);
+                    }
                     setTimeout(() => {
                         btn.style.background = '';
                         btn.disabled = false;
@@ -2141,6 +2324,9 @@
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             stopRealTimeFaceDetection();
+            stopPeriodicIPTracking();
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('deviceId');
             document.getElementById('app').classList.add('hidden');
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('loginEmail').value = '';
@@ -2158,8 +2344,11 @@
         window.selectDate = selectDate;
         window.togglePasswordVisibility = togglePasswordVisibility;
 
-        // Initialize
+        // Initialize - CHECK ANDROID FIRST
         document.addEventListener('DOMContentLoaded', () => {
+            if (checkAndBlockAndroid()) {
+                return;
+            }
             loadFaceModels();
         });
 
@@ -2171,6 +2360,7 @@
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             stopRealTimeFaceDetection();
+            stopPeriodicIPTracking();
         });
     </script>
 </body>
