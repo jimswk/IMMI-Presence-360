@@ -2270,7 +2270,23 @@ function updateCameraUI() {
                 console.error('Load location history error:', error);
             }
         }
-        
+
+        async function ensureTodayAttendance() {
+            if (!currentUser) return;
+            
+            const today = getCurrentDateMalaysia();
+            
+            try {
+                const result = await getAttendance(currentUser.uid, today, today, currentUser);
+                
+                if (!result.success || !result.data || result.data.length === 0) {
+                    // No record for today, create empty one via API
+                    console.log('No attendance record for today, will be created on first clock in');
+                }
+            } catch (error) {
+                console.error('Error checking attendance:', error);
+            }
+        }
         // ============================================
         // LOGIN
         // ============================================
