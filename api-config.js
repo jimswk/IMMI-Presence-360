@@ -352,36 +352,35 @@ async function getAttendance(uid, startDate, endDate, requestingUser) {
     });
 }
 
-// Enhanced clockIn with IP tracking
-async function clockIn(uid, location, requestingUser) {
-    let clientIP = 'unknown';
-    try {
-        const ipLocation = await getIPLocation();
-        if (ipLocation.success) clientIP = ipLocation.ip;
-    } catch(e) {}
+async function clockIn(uid, location, user) {
+    const url = `${SCRIPT_URL}?method=clockIn&uid=${encodeURIComponent(uid)}&location=${encodeURIComponent(JSON.stringify(location))}&clientIP=${encodeURIComponent(getClientIP())}`;
     
-    return await callAPI('clockIn', { 
-        uid: uid, 
-        location: JSON.stringify(location),
-        clientIP: clientIP,
-        requestingUser: JSON.stringify(requestingUser)
-    });
+    try {
+        const response = await fetch(url);
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Clock in error:', error);
+        return { success: false, error: error.message };
+    }
 }
 
-// Enhanced clockOut with IP tracking
-async function clockOut(uid, location, requestingUser) {
-    let clientIP = 'unknown';
-    try {
-        const ipLocation = await getIPLocation();
-        if (ipLocation.success) clientIP = ipLocation.ip;
-    } catch(e) {}
+async function clockOut(uid, location, user) {
+    const url = `${SCRIPT_URL}?method=clockOut&uid=${encodeURIComponent(uid)}&location=${encodeURIComponent(JSON.stringify(location))}&clientIP=${encodeURIComponent(getClientIP())}`;
     
-    return await callAPI('clockOut', { 
-        uid: uid, 
-        location: JSON.stringify(location),
-        clientIP: clientIP,
-        requestingUser: JSON.stringify(requestingUser)
-    });
+    try {
+        const response = await fetch(url);
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Clock out error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+function getClientIP() {
+    // This will be handled by Google Apps Script
+    return 'web-client';
 }
 
 // ============================================
