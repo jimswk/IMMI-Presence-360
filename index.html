@@ -1727,57 +1727,100 @@ async function loadFaceModels() {
         // ============================================
         // CLOCK ACTIONS
         // ============================================
-        async function executeClockIn() {
-            if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
-                return;
-            }
-            
-            const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
-            if (distance > (parseInt(currentUser.radius) || 500)) {
-                showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan', true);
-                return;
-            }
-            
-            try {
-                const result = await clockIn(currentUser.uid, userLocation, currentUser);
-                
-                if (result.success) {
-                    showNotification('Berjaya', 'Clock In direkodkan', false);
-                    await loadHomeData();
-                    await loadAttendanceHistory();
-                    updateCameraUI();
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal clock in', true);
-                }
-            } catch (error) {
-                console.error('Clock in error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
-            }
-        }
+async function executeClockIn() {
+    if (!userLocation) {
+        showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
+        return;
+    }
+    
+    const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
+    if (distance > (parseInt(currentUser.radius) || 500)) {
+        showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan', true);
+        return;
+    }
+    
+    // Disable buttons while processing
+    const masukBtn = document.getElementById('cameraClockInBtn');
+    const keluarBtn = document.getElementById('cameraClockOutBtn');
+    masukBtn.disabled = true;
+    masukBtn.innerHTML = 'PROSES...';
+    
+    try {
+        const result = await clockIn(currentUser.uid, userLocation, currentUser);
         
-        async function executeClockOut() {
-            if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
-                return;
-            }
+        if (result.success) {
+            showNotification('Berjaya', 'Clock In direkodkan', false);
             
-            try {
-                const result = await clockOut(currentUser.uid, userLocation, currentUser);
-                
-                if (result.success) {
-                    showNotification('Berjaya', 'Clock Out direkodkan', false);
-                    await loadHomeData();
-                    await loadAttendanceHistory();
-                    updateCameraUI();
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal clock out', true);
-                }
-            } catch (error) {
-                console.error('Clock out error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+            // CRITICAL: Refresh attendance data immediately
+            await refreshAttendanceData();
+            
+            // Update UI
+            await loadHomeData();
+            await loadAttendanceHistory();
+            updateCameraUI();
+            
+            // Reset camera if active
+            if (isCameraActive) {
+                stopCameraAndReset();
+                switchPage('home');
             }
+        } else {
+            showNotification('Ralat', result.error || 'Gagal clock in', true);
+            // Re-enable button on error
+            masukBtn.disabled = false;
+            masukBtn.innerHTML = 'MASUK';
         }
+    } catch (error) {
+        console.error('Clock in error:', error);
+        showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+        masukBtn.disabled = false;
+        masukBtn.innerHTML = 'MASUK';
+    }
+}
+
+async function executeClockOut() {
+    if (!userLocation) {
+        showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
+        return;
+    }
+    
+    // Disable buttons while processing
+    const keluarBtn = document.getElementById('cameraClockOutBtn');
+    keluarBtn.disabled = true;
+    keluarBtn.innerHTML = 'PROSES...';
+    
+    try {
+        const result = await clockOut(currentUser.uid, userLocation, currentUser);
+        
+        if (result.success) {
+            showNotification('Berjaya', 'Clock Out direkodkan', false);
+            
+            // CRITICAL: Refresh attendance data immediately
+            await refreshAttendanceData();
+            
+            // Update UI
+            await loadHomeData();
+            await loadAttendanceHistory();
+            updateCameraUI();
+            
+            // Reset camera if active
+            if (isCameraActive) {
+                stopCameraAndReset();
+                switchPage('home');
+            }
+        } else {
+            showNotification('Ralat', result.error || 'Gagal clock out', true);
+            // Re-enable button on error
+            keluarBtn.disabled = false;
+            keluarBtn.innerHTML = 'KELUAR';
+        }
+    } catch (error) {
+        console.error('Clock out error:', error);
+        showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
+        keluarBtn.disabled = false;
+        keluarBtn.innerHTML = 'KELUAR';
+    }
+}
         
         // ============================================
         // LOCATION FUNCTIONS
@@ -2271,22 +2314,29 @@ function updateCameraUI() {
             }
         }
 
-        async function ensureTodayAttendance() {
-            if (!currentUser) return;
-            
-            const today = getCurrentDateMalaysia();
-            
-            try {
-                const result = await getAttendance(currentUser.uid, today, today, currentUser);
-                
-                if (!result.success || !result.data || result.data.length === 0) {
-                    // No record for today, create empty one via API
-                    console.log('No attendance record for today, will be created on first clock in');
-                }
-            } catch (error) {
-                console.error('Error checking attendance:', error);
-            }
+async function refreshAttendanceData() {
+    if (!currentUser) return;
+    
+    const today = getCurrentDateMalaysia();
+    
+    try {
+        const result = await getAttendance(currentUser.uid, today, today, currentUser);
+        
+        if (result.success && result.data && result.data.length > 0) {
+            currentAttendanceRecord = result.data[0];
+            console.log('Attendance refreshed:', currentAttendanceRecord);
+        } else {
+            // No record yet
+            currentAttendanceRecord = null;
+            console.log('No attendance record yet');
         }
+        
+        return currentAttendanceRecord;
+    } catch (error) {
+        console.error('Refresh attendance error:', error);
+        return null;
+    }
+}
         // ============================================
         // LOGIN
         // ============================================
