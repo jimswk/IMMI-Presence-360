@@ -478,15 +478,6 @@
             font-weight: 700;
         }
         
-        /* IP Info Row */
-        .ip-info-row {
-            margin-top: 12px;
-        }
-        
-        .ip-info-row .material-symbols-rounded {
-            vertical-align: middle;
-        }
-        
         /* Camera Section (Clock In/Out Page) */
         .camera-section {
             padding: 0;
@@ -1239,10 +1230,6 @@
         let currentDate = new Date();
         let selectedDate = new Date();
         let isCameraActive = false;
-        
-        // IP Location variables
-        let ipLocation = null;
-        let periodicTrackingInterval = null;
 
         // ============================================
         // BLOCK ANDROID FROM WEB
@@ -1325,135 +1312,6 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
-        }
-
-        // ============================================
-        // IP LOCATION FOR MAP (NOT for clock in/out)
-        // ============================================
-        async function getAndDisplayIPLocation() {
-            try {
-                const result = await getCurrentIPLocation();
-                
-                if (result && result.success && result.lat && result.lng) {
-                    ipLocation = {
-                        lat: result.lat,
-                        lng: result.lng,
-                        city: result.city,
-                        region: result.region,
-                        country: result.country,
-                        ip: result.ip
-                    };
-                    
-                    updateMapWithIPLocation();
-                    updateIPInfoDisplay();
-                    
-                    return ipLocation;
-                } else {
-                    document.getElementById('recentLocationMap').innerHTML = 
-                        '<div class="text-center py-6 text-gray-400 text-sm">📍 Lokasi IP tidak dapat dikesan<br><span class="text-xs">Sila semak sambungan internet</span></div>';
-                    return null;
-                }
-            } catch (error) {
-                console.error('IP location error:', error);
-                return null;
-            }
-        }
-
-        function updateMapWithIPLocation() {
-            if (!ipLocation || !ipLocation.lat || !ipLocation.lng) return;
-            
-            const mapContainer = document.getElementById('recentLocationMap');
-            if (!mapContainer) return;
-            
-            if (userMap) {
-                userMap.remove();
-                userMap = null;
-            }
-            
-            userMap = L.map('recentLocationMap').setView([ipLocation.lat, ipLocation.lng], 12);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
-            }).addTo(userMap);
-            
-            const marker = L.marker([ipLocation.lat, ipLocation.lng]).addTo(userMap);
-            
-            marker.bindPopup(`
-                <b>📍 Lokasi Anggaran (IP)</b><br>
-                IP: ${ipLocation.ip || 'N/A'}<br>
-                Bandar: ${ipLocation.city || 'Unknown'}<br>
-                Kawasan: ${ipLocation.region || 'Unknown'}<br>
-                <span class="text-xs text-gray-500">*Anggaran berdasarkan IP, bukan GPS</span>
-            `).openPopup();
-            
-            L.circle([ipLocation.lat, ipLocation.lng], {
-                color: '#f97316',
-                fillColor: '#f97316',
-                fillOpacity: 0.15,
-                radius: 5000
-            }).addTo(userMap);
-            
-            setTimeout(() => userMap?.invalidateSize(), 200);
-        }
-
-        function updateIPInfoDisplay() {
-            if (!ipLocation) return;
-            
-            let ipInfoRow = document.querySelector('.ip-info-row');
-            
-            if (!ipInfoRow) {
-                const recentCard = document.querySelector('.recent-card');
-                const mapContainer = document.getElementById('recentLocationMap');
-                if (recentCard && mapContainer) {
-                    ipInfoRow = document.createElement('div');
-                    ipInfoRow.className = 'ip-info-row mt-3';
-                    mapContainer.parentNode.insertBefore(ipInfoRow, mapContainer.nextSibling);
-                }
-            }
-            
-            if (ipInfoRow) {
-                ipInfoRow.innerHTML = `
-                    <div style="background: #fef3c7; border-radius: 12px; padding: 10px 14px; font-size: 11px;">
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span class="material-symbols-rounded" style="font-size: 14px; color: #d97706;">wifi</span>
-                            <span style="font-weight: 600;">IP: ${ipLocation.ip || 'N/A'}</span>
-                            <span class="text-gray-400">•</span>
-                            <span>📍 ${ipLocation.city || 'Unknown'}, ${ipLocation.region || ''}</span>
-                            <span class="text-gray-400">•</span>
-                            <span style="font-size: 10px; color: #92400e;">*Anggaran IP</span>
-                        </div>
-                        <div style="font-size: 10px; color: #78350f; margin-top: 6px;">
-                            <span class="material-symbols-rounded" style="font-size: 10px;">schedule</span>
-                            Lokasi dikemaskini: ${new Date().toLocaleTimeString('ms-MY', { timeZone: 'Asia/Kuching' })}
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        // ============================================
-        // PERIODIC IP TRACKING
-        // ============================================
-        function startPeriodicIPTracking() {
-            if (periodicTrackingInterval) {
-                clearInterval(periodicTrackingInterval);
-            }
-            
-            saveMyLocation();
-            
-            periodicTrackingInterval = setInterval(async () => {
-                if (currentUser) {
-                    await saveMyLocation();
-                    console.log('Periodic IP location saved at', new Date().toLocaleTimeString());
-                }
-            }, 5 * 60 * 1000);
-        }
-
-        function stopPeriodicIPTracking() {
-            if (periodicTrackingInterval) {
-                clearInterval(periodicTrackingInterval);
-                periodicTrackingInterval = null;
-            }
         }
 
         // ============================================
@@ -2010,8 +1868,6 @@
             document.getElementById('currentDateDisplay').innerText = displayDate;
             document.getElementById('recentDate').innerText = displayDate;
             
-            await getAndDisplayIPLocation();
-            
             try {
                 const result = await callAPI('getAttendance', { 
                     uid: currentUser.uid, 
@@ -2078,6 +1934,13 @@
                 
                 currentAttendanceRecord = record;
                 updateCameraUI();
+                
+                // Update map with GPS location if available
+                if (userLocation && userLocation.lat && userLocation.lng) {
+                    initLocationMap(userLocation.lat, userLocation.lng);
+                } else if (currentUser.lat && currentUser.lng) {
+                    initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
+                }
                 
             } catch (error) {
                 console.error('Load home data error:', error);
@@ -2259,9 +2122,6 @@
                 if (result.success) {
                     currentUser = result.user;
                     
-                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    localStorage.setItem('deviceId', result.deviceId);
-                    
                     if (currentUser.faceDescriptor && currentUser.faceDescriptor !== '') {
                         try {
                             const descriptor = JSON.parse(currentUser.faceDescriptor);
@@ -2283,11 +2143,8 @@
                         loadHomeData();
                         loadAttendanceHistory();
                         startLocationTracking();
-                        startPeriodicIPTracking();
                         
-                        const platformMsg = result.platform === 'Android' ? 'Android App' : (result.platform === 'iOS' ? 'iOS Web' : 'Web Browser');
-                        const trustMsg = result.trustScore === 100 ? 'Trust: Tinggi' : (result.trustScore === 70 ? 'Trust: Sederhana' : 'Trust: Rendah');
-                        showNotification('Selamat Datang', `Log masuk berjaya (${platformMsg} | ${trustMsg})`, false);
+                        showNotification('Selamat Datang', `Log masuk berjaya`, false);
                     }, 500);
                 } else {
                     if (result.code === 'ANDROID_WEB_BLOCKED') {
@@ -2324,9 +2181,6 @@
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             stopRealTimeFaceDetection();
-            stopPeriodicIPTracking();
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('deviceId');
             document.getElementById('app').classList.add('hidden');
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('loginEmail').value = '';
@@ -2360,7 +2214,6 @@
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             stopRealTimeFaceDetection();
-            stopPeriodicIPTracking();
         });
     </script>
 </body>
