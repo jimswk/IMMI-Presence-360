@@ -1247,6 +1247,21 @@
         };
 
         // ============================================
+        // PASSWORD VISIBILITY TOGGLE
+        // ============================================
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                eyeIcon.innerText = 'visibility';
+            } else {
+                passwordInput.type = 'password';
+                eyeIcon.innerText = 'visibility_off';
+            }
+        }
+
+        // ============================================
         // EMAIL NOTIFICATION FUNCTIONS
         // ============================================
         
@@ -1505,21 +1520,6 @@ Jabatan Imigresen Malaysia`;
             
             okBtn.addEventListener('click', handleOk);
             cancelBtn.addEventListener('click', handleCancel);
-        }
-
-        // ============================================
-        // PASSWORD VISIBILITY TOGGLE
-        // ============================================
-        function togglePasswordVisibility() {
-            const passwordInput = document.getElementById('loginPassword');
-            const eyeIcon = document.querySelector('.password-eye .material-symbols-rounded');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerText = 'visibility';
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerText = 'visibility_off';
-            }
         }
 
         function showNotif(title, msg, isError = false) {
@@ -1867,11 +1867,11 @@ Jabatan Imigresen Malaysia`;
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '32r<td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td>32r';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
                 return;
             }
             tbody.innerHTML = users.map(u => `
-                 <tr>
+                <tr>
                     <td><div class="font-black text-gray-800">${escapeHtml(u.name)}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.email)}</div></td>
                     <td><div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.branch)}</div></td>
                     <td>${u.faceDescriptor ? '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full">TIADA REKOD</span>'}</td>
@@ -2103,12 +2103,10 @@ Jabatan Imigresen Malaysia`;
             }
             
             if (changes.length === 0) {
-                // Tiada perubahan, terus simpan
                 await performUpdate();
                 return;
             }
             
-            // Bina ringkasan perubahan untuk popup
             let changeSummary = changes.map(c => {
                 if (c.type === 'unit') return `Unit: "${c.oldValue}" → "${c.newValue}"`;
                 if (c.type === 'location') return `Lokasi: "${c.oldValue.substring(0, 50)}..." → "${c.newValue.substring(0, 50)}..."`;
@@ -2389,7 +2387,6 @@ Jabatan Imigresen Malaysia`;
             if (!data.name || !data.email || !data.password) { showAlert("Ralat", "Sila isi semua maklumat wajib", 'warning'); return; }
             if (data.password.length < 6) { showAlert("Ralat", "Kata laluan minimum 6 aksara", 'error'); return; }
             
-            // Minta sebab pendaftaran
             showReasonPrompt(
                 'Sebab Pendaftaran Kakitangan',
                 'Sila nyatakan sebab pendaftaran kakitangan ini:',
