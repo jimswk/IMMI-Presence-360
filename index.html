@@ -1404,22 +1404,60 @@
         // FACE VERIFICATION WITH LIVENESS
         // ============================================
         
-        async function loadFaceModels() {
-            if (modelsLoaded) return true;
-            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/models';
-            try {
-                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-                modelsLoaded = true;
-                return true;
-            } catch (error) {
-                console.error('Failed to load models:', error);
-                showNotification('Ralat', 'Gagal memuatkan model muka', true);
-                return false;
-            }
+async function loadFaceModels() {
+    if (modelsLoaded) return true;
+    
+    // CDN yang telah diuji berfungsi
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model';
+    
+    // Atau guna CDN dari unpkg
+    // const MODEL_URL = 'https://unpkg.com/face-api.js@0.22.2/models';
+    
+    try {
+        console.log('Loading models from:', MODEL_URL);
+        
+        // Set timeout untuk loading
+        const loadTimeout = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Model loading timeout')), 30000);
+        });
+        
+        const loadModels = Promise.all([
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+            faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+        ]);
+        
+        await Promise.race([loadModels, loadTimeout]);
+        
+        modelsLoaded = true;
+        console.log('All models loaded successfully');
+        return true;
+        
+    } catch (error) {
+        console.error('Failed to load models:', error);
+        
+        // Cuba dengan URL yang lebih stabil
+        try {
+            console.log('Trying stable CDN...');
+            const STABLE_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
+            
+            await Promise.all([
+                faceapi.nets.tinyFaceDetector.loadFromUri(STABLE_URL),
+                faceapi.nets.faceLandmark68Net.loadFromUri(STABLE_URL),
+                faceapi.nets.faceRecognitionNet.loadFromUri(STABLE_URL),
+                faceapi.nets.faceExpressionNet.loadFromUri(STABLE_URL)
+            ]);
+            
+            modelsLoaded = true;
+            return true;
+        } catch (err) {
+            console.error('All model loading attempts failed:', err);
+            showNotification('Ralat', 'Gagal memuatkan model muka. Sila semak sambungan internet dan cuba lagi.', true);
+            return false;
         }
+    }
+}
         
         async function startFaceVerification(action) {
             if (!currentUser) {
