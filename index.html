@@ -36,7 +36,6 @@
             min-height: 100vh;
         }
         
-        /* Login Page */
         .login-container {
             min-height: 100vh;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -172,7 +171,6 @@
             cursor: not-allowed;
         }
         
-        /* Main App Container */
         .app-container {
             max-width: 500px;
             margin: 0 auto;
@@ -182,7 +180,6 @@
             padding-bottom: 70px;
         }
         
-        /* Header */
         .header {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             padding: 20px;
@@ -232,7 +229,6 @@
             color: #94a3b8;
         }
         
-        /* Bottom Navigation */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -279,7 +275,6 @@
             color: #1e3a8a;
         }
         
-        /* Pages */
         .page {
             display: none;
             padding: 20px;
@@ -289,7 +284,6 @@
             display: block;
         }
         
-        /* Overview Cards */
         .overview-header {
             display: flex;
             justify-content: space-between;
@@ -392,7 +386,6 @@
             cursor: not-allowed;
         }
         
-        /* Recent Activity */
         .recent-card {
             background: white;
             border-radius: 24px;
@@ -480,7 +473,6 @@
             font-weight: 700;
         }
         
-        /* Camera Section (Clock In/Out Page) */
         .camera-section {
             padding: 0;
         }
@@ -536,7 +528,6 @@
             margin-top: 8px;
         }
         
-        /* Location Status in Camera Page */
         .camera-location {
             padding: 16px 20px;
             background: white;
@@ -722,7 +713,6 @@
             display: block;
         }
         
-        /* History Page */
         .history-header {
             background: white;
             border-radius: 24px;
@@ -810,7 +800,6 @@
             border-bottom: none;
         }
         
-        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -863,7 +852,6 @@
             border-bottom: 1px solid #e2e8f0;
         }
         
-        /* Notification */
         .notification {
             position: fixed;
             top: 20px;
@@ -907,7 +895,6 @@
             z-index: 1;
         }
         
-        /* iOS specific fixes */
         @supports (-webkit-touch-callout: none) {
             .camera-viewport video {
                 transform: scaleX(-1);
@@ -919,7 +906,6 @@
     </style>
 </head>
 <body>
-    <!-- Notification -->
     <div id="notification" class="notification">
         <div class="flex items-center gap-3">
             <span id="notifIcon" class="material-symbols-rounded text-xl text-green-600">check_circle</span>
@@ -930,7 +916,6 @@
         </div>
     </div>
 
-    <!-- Login Page -->
     <div id="loginPage" class="login-container">
         <div class="login-card">
             <div class="login-logo">
@@ -962,10 +947,8 @@
         </div>
     </div>
 
-    <!-- Main App -->
     <div id="app" class="hidden">
         <div class="app-container">
-            <!-- Header -->
             <header class="header">
                 <div class="header-top">
                     <button class="menu-btn">
@@ -982,7 +965,6 @@
                 <p class="user-meta" id="userMeta">-</p>
             </header>
 
-            <!-- Page 1: Home / Dashboard -->
             <div id="homePage" class="page active">
                 <div class="overview-header">
                     <h2>Overview</h2>
@@ -1086,7 +1068,6 @@
                 </div>
             </div>
 
-            <!-- Page 2: History -->
             <div id="historyPage" class="page">
                 <div class="history-header">
                     <h3 style="margin-bottom: 16px;">Sejarah Kehadiran</h3>
@@ -1136,7 +1117,6 @@
                 </div>
             </div>
 
-            <!-- Page 3: Clock In/Out (Camera) -->
             <div id="cameraPage" class="page">
                 <section class="camera-section">
                     <div class="camera-card">
@@ -1186,7 +1166,6 @@
                 </section>
             </div>
 
-            <!-- Bottom Navigation -->
             <div class="bottom-nav">
                 <button class="nav-item active" onclick="switchPage('home')" id="navHome">
                     <span class="material-symbols-rounded">home</span>
@@ -1204,7 +1183,6 @@
         </div>
     </div>
 
-    <!-- Location History Modal -->
     <div id="locationModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -1239,45 +1217,33 @@
         let isCameraActive = false;
 
         // ============================================
-        // CHECK IF iOS (Allow) or Android (Block)
+        // PLATFORM CHECK (Allow iOS, Block Android)
         // ============================================
-        function checkPlatform() {
+        function checkPlatformAndBlock() {
             const userAgent = navigator.userAgent;
             const isAndroid = /android/i.test(userAgent);
-            const isIOS = /iphone|ipad|ipod/i.test(userAgent);
+            const isNativeApp = userAgent.includes('IMMI-Android-App');
             
-            // Block Android from web
-            if (isAndroid) {
-                const isNativeApp = userAgent.includes('IMMI-Android-App');
-                if (!isNativeApp) {
-                    document.body.innerHTML = `
-                        <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px; font-family: 'Inter', sans-serif;">
-                            <div style="background: white; border-radius: 32px; padding: 40px; max-width: 400px; text-align: center;">
-                                <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                                    <span style="font-size: 48px;">📱</span>
-                                </div>
-                                <h2 style="margin: 20px 0 10px; font-size: 24px; font-weight: 800;">Akses Tidak Dibenarkan</h2>
-                                <p style="color: #64748b; margin-bottom: 24px; line-height: 1.5;">
-                                    Sila gunakan <strong>Aplikasi Android IMMI Presence 360</strong> untuk akses sistem.
-                                </p>
-                                <div style="background: #f0fdf4; padding: 16px; border-radius: 20px; margin: 20px 0;">
-                                    <p style="color: #166534; font-size: 14px; font-weight: 600;">📱 Muat Turun Aplikasi</p>
-                                    <p style="color: #166534; font-size: 12px; margin-top: 4px;">Google Play Store</p>
-                                </div>
-                                <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
-                                    Versi web hanya untuk pengguna iOS.
-                                </p>
-                                <button onclick="location.reload()" style="margin-top: 24px; background: #1e3a8a; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; cursor: pointer;">
-                                    Cuba Lagi
-                                </button>
+            if (isAndroid && !isNativeApp) {
+                document.body.innerHTML = `
+                    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px; font-family: 'Inter', sans-serif;">
+                        <div style="background: white; border-radius: 32px; padding: 40px; max-width: 400px; text-align: center;">
+                            <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                                <span style="font-size: 48px;">📱</span>
                             </div>
+                            <h2 style="margin: 20px 0 10px; font-size: 24px; font-weight: 800;">Akses Tidak Dibenarkan</h2>
+                            <p style="color: #64748b; margin-bottom: 24px; line-height: 1.5;">Sila gunakan <strong>Aplikasi Android IMMI Presence 360</strong> untuk akses sistem.</p>
+                            <div style="background: #f0fdf4; padding: 16px; border-radius: 20px; margin: 20px 0;">
+                                <p style="color: #166534; font-size: 14px; font-weight: 600;">📱 Muat Turun Aplikasi</p>
+                                <p style="color: #166534; font-size: 12px; margin-top: 4px;">Google Play Store</p>
+                            </div>
+                            <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">Versi web hanya untuk pengguna iOS.</p>
+                            <button onclick="location.reload()" style="margin-top: 24px; background: #1e3a8a; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; cursor: pointer;">Cuba Lagi</button>
                         </div>
-                    `;
-                    return false;
-                }
+                    </div>
+                `;
+                return false;
             }
-            
-            // iOS allowed
             return true;
         }
 
@@ -1334,15 +1300,12 @@
             if (isCameraActive) {
                 stopCameraAndReset();
             }
-            
             document.getElementById('homePage').classList.toggle('active', page === 'home');
             document.getElementById('historyPage').classList.toggle('active', page === 'history');
             document.getElementById('cameraPage').classList.toggle('active', page === 'camera');
-            
             document.getElementById('navHome').classList.toggle('active', page === 'home');
             document.getElementById('navHistory').classList.toggle('active', page === 'history');
             document.getElementById('navCamera').classList.toggle('active', page === 'camera');
-            
             if (page === 'history') {
                 renderCalendar();
                 loadAttendanceHistory();
@@ -1359,12 +1322,10 @@
             }
             stopRealTimeFaceDetection();
             isCameraActive = false;
-            
             const cameraViewport = document.getElementById('cameraViewport');
             const verificationUI = document.getElementById('verificationUI');
             if (cameraViewport) cameraViewport.classList.add('hidden-camera');
             if (verificationUI) verificationUI.classList.remove('active');
-            
             updateProgress(0);
             document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
             document.getElementById('smilePercent').innerHTML = 'Mengesan senyuman: 0%';
@@ -1372,35 +1333,27 @@
         }
         
         async function showCameraAndClockIn() {
-            // Check if already clocked in
-            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && 
-                (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '')) {
+            if (currentAttendanceRecord && currentAttendanceRecord.clockIn && (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '')) {
                 showNotification('Makluman', 'Anda sudah clock in untuk hari ini', false);
                 return;
             }
-            
             if (currentAttendanceRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockOut) {
                 showNotification('Makluman', 'Kehadiran hari ini sudah lengkap', false);
                 return;
             }
-            
             pendingAction = 'clockin';
             await showCameraAndStartVerification();
         }
         
         async function showCameraAndClockOut() {
-            if (currentAttendanceRecord && currentAttendanceRecord.clockOut && 
-                currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null') {
+            if (currentAttendanceRecord && currentAttendanceRecord.clockOut && currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null') {
                 showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false);
                 return;
             }
-            
-            if (!currentAttendanceRecord || !currentAttendanceRecord.clockIn || 
-                currentAttendanceRecord.clockIn === '' || currentAttendanceRecord.clockIn === 'null') {
+            if (!currentAttendanceRecord || !currentAttendanceRecord.clockIn || currentAttendanceRecord.clockIn === '' || currentAttendanceRecord.clockIn === 'null') {
                 showNotification('Makluman', 'Sila clock in terlebih dahulu', true);
                 return;
             }
-            
             pendingAction = 'clockout';
             await showCameraAndStartVerification();
         }
@@ -1408,13 +1361,10 @@
         async function showCameraAndStartVerification() {
             const cameraViewport = document.getElementById('cameraViewport');
             const verificationUI = document.getElementById('verificationUI');
-            
             cameraViewport.classList.remove('hidden-camera');
             verificationUI.classList.add('active');
-            
             await initCameraForVerify();
             isCameraActive = true;
-            
             await startVerification();
         }
         
@@ -1431,48 +1381,27 @@
         
         async function loadLocationHistory() {
             if (!currentUser) return;
-            
             const today = getCurrentDateMalaysia();
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
-            
             try {
-                const result = await callAPI('getAttendance', { 
-                    uid: currentUser.uid,
-                    startDate: startDate,
-                    endDate: today
-                });
-                
+                const result = await callAPI('getAttendance', { uid: currentUser.uid, startDate: startDate, endDate: today });
                 const container = document.getElementById('locationHistoryList');
-                
                 if (!result.success || !result.data || result.data.length === 0) {
                     container.innerHTML = '<div class="text-center py-6 text-gray-400">Tiada rekod lokasi</div>';
                     return;
                 }
-                
                 let html = '';
                 result.data.forEach(record => {
                     const date = new Date(record.date);
                     const formattedDate = date.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
                     const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
                     const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    
-                    html += `
-                        <div class="location-history-item">
-                            <div style="font-weight: 600; margin-bottom: 8px;">${escapeHtml(formattedDate)}</div>
-                            <div style="display: flex; gap: 16px; font-size: 13px;">
-                                <div>🟢 Masuk: ${clockIn}</div>
-                                <div>🔴 Keluar: ${clockOut}</div>
-                            </div>
-                        </div>
-                    `;
+                    html += `<div class="location-history-item"><div style="font-weight: 600; margin-bottom: 8px;">${escapeHtml(formattedDate)}</div><div style="display: flex; gap: 16px; font-size: 13px;"><div>🟢 Masuk: ${clockIn}</div><div>🔴 Keluar: ${clockOut}</div></div></div>`;
                 });
                 container.innerHTML = html;
-                
-            } catch (error) {
-                console.error('Load location history error:', error);
-            }
+            } catch (error) { console.error('Load location history error:', error); }
         }
         
         // ============================================
@@ -1484,7 +1413,6 @@
             document.getElementById('cameraClockTime').innerText = malaysiaTime.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Kuching' });
             document.getElementById('cameraClockDate').innerText = malaysiaTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
         }
-        
         setInterval(updateCameraClock, 1000);
         
         function updateCameraLocationDisplay() {
@@ -1493,17 +1421,11 @@
                 document.getElementById('cameraLocationDistance').innerText = '-';
                 return;
             }
-            
-            const distance = calculateDistance(
-                userLocation.lat, userLocation.lng,
-                parseFloat(currentUser.lat), parseFloat(currentUser.lng)
-            );
+            const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
             const radius = parseInt(currentUser.radius) || 500;
             const within = distance <= radius;
-            
             const locationBadge = document.getElementById('cameraLocationBadge');
             const locationDistance = document.getElementById('cameraLocationDistance');
-            
             if (within) {
                 locationBadge.className = 'location-badge safe';
                 locationBadge.innerHTML = '<span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span><span>DALAM KAWASAN BERTUGAS</span>';
@@ -1532,38 +1454,24 @@
             }
             const offsetX = (containerWidth - displayWidth) / 2;
             const offsetY = (containerHeight - displayHeight) / 2;
-            return {
-                videoWidth, videoHeight, displayWidth, displayHeight,
-                offsetX, offsetY,
-                scaleX: displayWidth / videoWidth,
-                scaleY: displayHeight / videoHeight
-            };
+            return { videoWidth, videoHeight, displayWidth, displayHeight, offsetX, offsetY, scaleX: displayWidth / videoWidth, scaleY: displayHeight / videoHeight };
         }
 
         function adjustFaceBox(box, dims) {
-            return {
-                x: box.x * dims.scaleX + dims.offsetX,
-                y: box.y * dims.scaleY + dims.offsetY,
-                width: box.width * dims.scaleX,
-                height: box.height * dims.scaleY
-            };
+            return { x: box.x * dims.scaleX + dims.offsetX, y: box.y * dims.scaleY + dims.offsetY, width: box.width * dims.scaleX, height: box.height * dims.scaleY };
         }
 
         function startRealTimeFaceDetection() {
             if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
             const video = document.getElementById('scanVideo');
             if (!video) return;
-            
             realTimeDetectionInterval = setInterval(async () => {
                 if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
                 try {
-                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                        .withFaceExpressions();
-                    
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
                     if (detection && detection.expressions) {
                         const happyScore = Math.round(detection.expressions.happy * 100);
                         document.getElementById('smilePercent').innerHTML = `Mengesan senyuman: ${happyScore}%`;
-                        
                         if (detection.expressions.happy > 0.35) {
                             document.getElementById('smileText').innerHTML = '✅ SENYUMAN DISAHKAN!';
                             document.getElementById('smileText').style.color = '#10b981';
@@ -1571,7 +1479,6 @@
                             document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
                             document.getElementById('smileText').style.color = '#1e3a8a';
                         }
-                        
                         const overlay = document.getElementById('faceOverlay');
                         if (overlay && detection.detection) {
                             const dims = getVideoDimensions(video);
@@ -1610,6 +1517,7 @@
                 return true;
             } catch (error) {
                 console.error('Failed to load models:', error);
+                showNotification('Amaran', 'Pengesahan wajah mungkin tidak berfungsi. Sila muat semula halaman.', true);
                 return false;
             }
         }
@@ -1617,19 +1525,18 @@
         async function initCameraForVerify() {
             await loadFaceModels();
             const video = document.getElementById('scanVideo');
-            
             try {
                 if (videoStream) {
                     videoStream.getTracks().forEach(t => t.stop());
                 }
-                videoStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
-                });
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
                 video.srcObject = videoStream;
                 startRealTimeFaceDetection();
+                showNotification('Kamera Aktif', 'Sila pastikan wajah berada dalam bulatan', false);
             } catch (err) {
-                document.getElementById('cameraHint').innerText = '❌ Sila benarkan akses kamera';
-                showNotification('Ralat', 'Sila benarkan akses kamera', true);
+                console.error('Camera error:', err);
+                document.getElementById('cameraHint').innerText = '❌ Sila benarkan akses kamera dalam Settings Safari';
+                showNotification('Ralat Kamera', 'Sila benarkan akses kamera dalam Settings Safari > Kamera', true);
             }
         }
 
@@ -1662,15 +1569,11 @@
                 updateProgress(20);
                 let smileDetected = false;
                 let smileStartTime = Date.now();
-                
                 while (Date.now() - smileStartTime < 6000) {
                     const elapsed = Date.now() - smileStartTime;
                     updateProgress(20 + (elapsed / 6000) * 40);
-                    
                     try {
-                        const detection = await faceapi.detectSingleFace(scanVideo, new faceapi.TinyFaceDetectorOptions())
-                            .withFaceExpressions();
-                        
+                        const detection = await faceapi.detectSingleFace(scanVideo, new faceapi.TinyFaceDetectorOptions()).withFaceExpressions();
                         if (detection && detection.expressions && detection.expressions.happy > 0.35) {
                             smileDetected = true;
                             document.getElementById('smilePercent').innerHTML = '✅ Senyuman dikesan!';
@@ -1678,15 +1581,13 @@
                             break;
                         }
                     } catch(e) {}
-                    
                     await new Promise(resolve => setTimeout(resolve, 150));
                 }
-                
                 if (!smileDetected) {
                     throw new Error('Senyuman tidak dikesan. Sila cuba lagi.');
                 }
                 
-                // Face matching phase
+                // Face matching phase - GET FACE DESCRIPTOR (not video recording)
                 updateProgress(70);
                 document.getElementById('smileText').innerHTML = '👤 MENGESAHKAN WAJAH...';
                 
@@ -1710,10 +1611,8 @@
                 } else if (pendingAction === 'clockout') {
                     await executeClockOut();
                 }
-                
                 stopCameraAndReset();
                 return true;
-                
             } catch (error) {
                 console.error('Verification error:', error);
                 showNotification('Pengesahan Gagal', error.message, true);
@@ -1734,17 +1633,13 @@
             const φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180;
             const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                    Math.cos(φ1) * Math.cos(φ2) *
-                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
             return R * c;
         }
 
         function initLocationMap(lat, lng) {
-            if (userMap) {
-                userMap.remove();
-            }
+            if (userMap) { userMap.remove(); }
             userMap = L.map('recentLocationMap').setView([lat, lng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
             userMarker = L.marker([lat, lng]).addTo(userMap);
@@ -1757,7 +1652,6 @@
                 return;
             }
             
-            // Request location permission on iOS
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
@@ -1765,13 +1659,14 @@
                         initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
                     }
                     updateCameraLocationDisplay();
+                    showNotification('GPS Aktif', 'Lokasi berjaya dikesan', false);
                 },
                 (error) => {
                     console.error('GPS error:', error);
                     let errorMsg = 'Gagal mengesan lokasi. ';
-                    if (error.code === 1) errorMsg += 'Sila benarkan akses lokasi.';
+                    if (error.code === 1) errorMsg += 'Sila benarkan akses lokasi dalam Settings Safari > Lokasi.';
                     else if (error.code === 2) errorMsg += 'GPS tidak tersedia.';
-                    else if (error.code === 3) errorMsg += 'Sambungan GPS timeout.';
+                    else if (error.code === 3) errorMsg += 'Sambungan GPS timeout. Sila cuba lagi.';
                     showNotification('GPS Error', errorMsg, true);
                 },
                 { enableHighAccuracy: true, timeout: 15000 }
@@ -1792,19 +1687,16 @@
         // ============================================
         async function executeClockIn() {
             if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan. Sila aktifkan GPS.', true);
+                showNotification('Ralat', 'Lokasi tidak dapat dikesan. Sila aktifkan GPS dan muat semula halaman.', true);
                 return;
             }
-            
             const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
             if (distance > (parseInt(currentUser.radius) || 500)) {
                 showNotification('Geofencing', `Anda berada di luar kawasan yang dibenarkan (${Math.round(distance)}m > ${currentUser.radius || 500}m)`, true);
                 return;
             }
-            
             try {
                 const result = await clockIn(currentUser.uid, userLocation, currentUser);
-                
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan', false);
                     await loadHomeData();
@@ -1820,13 +1712,11 @@
         
         async function executeClockOut() {
             if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan. Sila aktifkan GPS.', true);
+                showNotification('Ralat', 'Lokasi tidak dapat dikesan. Sila aktifkan GPS dan muat semula halaman.', true);
                 return;
             }
-            
             try {
                 const result = await clockOut(currentUser.uid, userLocation, currentUser);
-                
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan', false);
                     await loadHomeData();
@@ -1841,15 +1731,11 @@
         }
         
         function updateCameraUI() {
-            const hasClockIn = currentAttendanceRecord && currentAttendanceRecord.clockIn && 
-                              currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null';
-            const hasClockOut = currentAttendanceRecord && currentAttendanceRecord.clockOut && 
-                               currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null';
-            
+            const hasClockIn = currentAttendanceRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null';
+            const hasClockOut = currentAttendanceRecord && currentAttendanceRecord.clockOut && currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null';
             const cameraStatus = document.getElementById('cameraStatus');
             const masukBtn = document.getElementById('cameraClockInBtn');
             const keluarBtn = document.getElementById('cameraClockOutBtn');
-            
             if (hasClockIn && !hasClockOut) {
                 cameraStatus.innerText = 'DALAM BERTUGAS';
                 cameraStatus.style.background = '#dbeafe';
@@ -1877,7 +1763,6 @@
                 keluarBtn.classList.remove('active');
                 keluarBtn.style.background = '#f1f5f9';
             }
-            
             updateCameraLocationDisplay();
         }
         
@@ -1890,26 +1775,17 @@
         // ============================================
         async function loadHomeData() {
             if (!currentUser) return;
-            
             const today = getCurrentDateMalaysia();
             const displayDate = new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
             document.getElementById('currentDateDisplay').innerText = displayDate;
             document.getElementById('recentDate').innerText = displayDate;
-            
             try {
-                const result = await callAPI('getAttendance', { 
-                    uid: currentUser.uid, 
-                    startDate: today, 
-                    endDate: today 
-                });
-                
+                const result = await callAPI('getAttendance', { uid: currentUser.uid, startDate: today, endDate: today });
                 const hasRecord = result.success && result.data && result.data.length > 0;
                 const record = hasRecord ? result.data[0] : null;
                 const hasClockIn = record && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
                 const hasClockOut = record && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                
                 const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
-                
                 if (hasClockIn) {
                     const clockInDate = new Date(record.clockIn);
                     const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kuching' });
@@ -1918,11 +1794,9 @@
                     document.getElementById('clockInAmPm').innerText = timeParts[1] || '';
                     document.getElementById('clockInStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
                     document.getElementById('clockInStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
-                    
                     const clockInBtn = document.getElementById('clockInBtn');
                     clockInBtn.disabled = hasClockOut;
                     clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
-                    
                     document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
                     document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
                     document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
@@ -1932,7 +1806,6 @@
                     document.getElementById('clockInStatus').innerHTML = 'Belum Masuk';
                     document.getElementById('clockInStatus').style.color = '#94a3b8';
                 }
-                
                 if (hasClockOut) {
                     const clockOutDate = new Date(record.clockOut);
                     const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kuching' });
@@ -1945,33 +1818,26 @@
                     document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
                     document.getElementById('clockOutStatus').style.color = '#94a3b8';
                 }
-                
                 if (record && record.totalHours) {
                     document.getElementById('totalHours').innerText = record.totalHours.toFixed(1);
                     document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
                 } else {
                     document.getElementById('totalHours').innerText = '0';
                 }
-                
                 if (record && record.totalOT) {
                     document.getElementById('totalOT').innerText = record.totalOT.toFixed(1);
                     document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
                 } else {
                     document.getElementById('totalOT').innerText = '0';
                 }
-                
                 currentAttendanceRecord = record;
                 updateCameraUI();
-                
                 if (userLocation && userLocation.lat && userLocation.lng) {
                     initLocationMap(userLocation.lat, userLocation.lng);
                 } else if (currentUser.lat && currentUser.lng) {
                     initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
                 }
-                
-            } catch (error) {
-                console.error('Load home data error:', error);
-            }
+            } catch (error) { console.error('Load home data error:', error); }
         }
         
         // ============================================
@@ -1979,37 +1845,23 @@
         // ============================================
         async function loadAttendanceHistory() {
             if (!currentUser) return;
-            
             const today = new Date();
             const malaysiaToday = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
             const thirtyDaysAgo = new Date(malaysiaToday);
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
             const endDate = malaysiaToday.toISOString().split('T')[0];
-            
             try {
-                const result = await callAPI('getAttendance', { 
-                    uid: currentUser.uid,
-                    startDate: startDate,
-                    endDate: endDate
-                });
-                
+                const result = await callAPI('getAttendance', { uid: currentUser.uid, startDate: startDate, endDate: endDate });
                 const historyEl = document.getElementById('attendanceHistoryList');
-                
                 if (!result.success || !result.data || result.data.length === 0) {
                     historyEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
                     return;
                 }
-                
                 attendanceRecords = {};
-                result.data.forEach(record => {
-                    attendanceRecords[record.date] = record;
-                });
-                
+                result.data.forEach(record => { attendanceRecords[record.date] = record; });
                 const records = result.data;
                 records.sort((a, b) => b.date.localeCompare(a.date));
-                
                 let html = '';
                 records.forEach(record => {
                     const date = new Date(record.date);
@@ -2017,38 +1869,22 @@
                     const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short', timeZone: 'Asia/Kuching' });
                     const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
                     const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    
-                    html += `
-                        <div class="history-record">
-                            <div>
-                                <div class="history-date">${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}</div>
-                                <div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div>
-                            </div>
-                            ${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}
-                        </div>
-                    `;
+                    html += `<div class="history-record"><div><div class="history-date">${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}</div><div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div></div>${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}</div>`;
                 });
                 historyEl.innerHTML = html;
-                
                 renderCalendar();
                 updateSelectedDateDetails();
-                
-            } catch (error) {
-                console.error('Load attendance error:', error);
-            }
+            } catch (error) { console.error('Load attendance error:', error); }
         }
         
         async function loadAttendanceForDate(date) {
             const dateStr = formatDateKey(date);
             const record = attendanceRecords[dateStr];
-            
             const updateDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
-            
             if (record) {
                 const clockInTime = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
                 const clockOutTime = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
                 const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                
                 document.getElementById('detailClockIn').innerText = clockInTime;
                 document.getElementById('detailClockOut').innerText = clockOutTime;
                 document.getElementById('detailStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
@@ -2081,42 +1917,29 @@
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            
             let startDayOfWeek = firstDay.getDay();
             let startOffset = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
-            
             const dates = [];
-            for (let i = 0; i < startOffset; i++) {
-                dates.push(null);
-            }
-            for (let i = 1; i <= lastDay.getDate(); i++) {
-                dates.push(new Date(year, month, i));
-            }
-            
+            for (let i = 0; i < startOffset; i++) { dates.push(null); }
+            for (let i = 1; i <= lastDay.getDate(); i++) { dates.push(new Date(year, month, i)); }
             const container = document.getElementById('calendarDates');
             let html = '';
-            
             dates.forEach(date => {
-                if (!date) {
-                    html += '<div class="calendar-date"></div>';
-                } else {
+                if (!date) { html += '<div class="calendar-date"></div>'; }
+                else {
                     const dateNum = date.getDate();
                     const isToday = formatDateKey(date) === getCurrentDateMalaysia();
                     const isSelected = formatDateKey(date) === formatDateKey(selectedDate);
                     const hasRecord = attendanceRecords[formatDateKey(date)];
-                    
                     let classes = 'calendar-date';
                     if (isSelected) classes += ' selected';
                     if (isToday) classes += ' today';
                     if (hasRecord) classes += ' font-bold';
-                    
                     html += `<div class="${classes}" onclick="selectDate(${date.getFullYear()}, ${date.getMonth()}, ${dateNum})">${dateNum}</div>`;
                 }
             });
-            
             container.innerHTML = html;
         }
         
@@ -2154,9 +1977,7 @@
                             const descriptor = JSON.parse(currentUser.faceDescriptor);
                             const labeledDescriptor = new faceapi.LabeledFaceDescriptors(currentUser.uid, [new Float32Array(descriptor)]);
                             faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
-                        } catch (e) {
-                            console.error('Face descriptor parse error:', e);
-                        }
+                        } catch (e) { console.error('Face descriptor parse error:', e); }
                     }
                     
                     btn.style.background = '#10b981';
@@ -2228,11 +2049,9 @@
         window.selectDate = selectDate;
         window.togglePasswordVisibility = togglePasswordVisibility;
 
-        // Initialize - CHECK PLATFORM FIRST
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            if (!checkPlatform()) {
-                return;
-            }
+            if (!checkPlatformAndBlock()) { return; }
             loadFaceModels();
         });
 
