@@ -340,7 +340,7 @@ async function updateUserFace(uid, faceDescriptor) {
 }
 
 // ============================================
-// FUNGSI UNTUK KEHADIRAN (Enhanced with IP)
+// FUNGSI UNTUK KEHADIRAN (FIXED - menggunakan callAPI)
 // ============================================
 
 async function getAttendance(uid, startDate, endDate, requestingUser) {
@@ -352,30 +352,22 @@ async function getAttendance(uid, startDate, endDate, requestingUser) {
     });
 }
 
+// FIXED: Gunakan callAPI untuk clockIn
 async function clockIn(uid, location, user) {
-    const url = `${SCRIPT_URL}?method=clockIn&uid=${encodeURIComponent(uid)}&location=${encodeURIComponent(JSON.stringify(location))}&clientIP=${encodeURIComponent(getClientIP())}`;
-    
-    try {
-        const response = await fetch(url);
-        const result = await response.json();
-        return result;
-    } catch (error) {
-        console.error('Clock in error:', error);
-        return { success: false, error: error.message };
-    }
+    return await callAPI('clockIn', {
+        uid: uid,
+        location: JSON.stringify(location),
+        clientIP: getClientIP()
+    });
 }
 
+// FIXED: Gunakan callAPI untuk clockOut
 async function clockOut(uid, location, user) {
-    const url = `${SCRIPT_URL}?method=clockOut&uid=${encodeURIComponent(uid)}&location=${encodeURIComponent(JSON.stringify(location))}&clientIP=${encodeURIComponent(getClientIP())}`;
-    
-    try {
-        const response = await fetch(url);
-        const result = await response.json();
-        return result;
-    } catch (error) {
-        console.error('Clock out error:', error);
-        return { success: false, error: error.message };
-    }
+    return await callAPI('clockOut', {
+        uid: uid,
+        location: JSON.stringify(location),
+        clientIP: getClientIP()
+    });
 }
 
 function getClientIP() {
