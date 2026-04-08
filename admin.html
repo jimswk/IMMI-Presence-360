@@ -5,25 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>IMMI Presence 360 - Panel Pentadbir</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1" />
     
-    <!-- Face API -->
-    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-    
-    <!-- Leaflet for Maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
-    <!-- jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
-    <!-- API Config -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    
     <script src="api-config.js"></script>
     
     <style>
@@ -32,15 +25,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-
-        :root {
-            --gov-blue: #1e3a8a;
-            --gov-blue-light: #2563eb;
-            --gov-navy: #0f172a;
-            --gov-gold: #fbbf24;
-            --gov-success: #059669;
-            --gov-danger: #dc2626;
         }
 
         body {
@@ -85,7 +69,7 @@
         }
 
         .floating-input:focus {
-            border-color: var(--gov-blue);
+            border-color: #1e3a8a;
             background: white;
             box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.1);
         }
@@ -110,7 +94,7 @@
             transform: translateY(-50%);
             font-size: 0.7rem;
             font-weight: 600;
-            color: var(--gov-blue);
+            color: #1e3a8a;
             background: white;
             left: 12px;
         }
@@ -137,12 +121,8 @@
         }
 
         .password-eye:hover {
-            color: var(--gov-blue);
+            color: #1e3a8a;
             background: rgba(30, 58, 138, 0.05);
-        }
-
-        .password-eye:active {
-            transform: translateY(-50%) scale(0.95);
         }
 
         .login-btn {
@@ -206,7 +186,7 @@
         .nav-item.active {
             background: rgba(255, 255, 255, 0.15);
             color: white;
-            border-left: 4px solid var(--gov-gold);
+            border-left: 4px solid #fbbf24;
         }
 
         .main-content {
@@ -445,21 +425,6 @@
             transition: width 0.3s;
         }
 
-        .challenge-box {
-            background: #1e3a8a;
-            color: white;
-            padding: 12px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 16px;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-
         .confirm-modal {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -543,6 +508,20 @@
             background: #e2e8f0;
         }
 
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .badge-android { background: #dcfce7; color: #166534; }
+        .badge-ios { background: #e0e7ff; color: #1e3a8a; }
+        .badge-web { background: #fef3c7; color: #92400e; }
+
         @media (max-width: 640px) {
             .floating-input {
                 padding: 16px 14px 6px 14px;
@@ -585,7 +564,6 @@
         </div>
     </div>
 
-    <!-- Modal Alert Popup -->
     <div id="alertModal" class="confirm-modal" style="display: none;">
         <div class="confirm-content">
             <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4" id="alertIcon">
@@ -599,7 +577,6 @@
         </div>
     </div>
 
-    <!-- Modal Confirm Popup -->
     <div id="confirmModal" class="confirm-modal" style="display: none;">
         <div class="confirm-content">
             <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -614,7 +591,6 @@
         </div>
     </div>
 
-    <!-- Modal Custom Prompt untuk Sebab Perubahan -->
     <div id="reasonModal" class="confirm-modal" style="display: none;">
         <div class="confirm-content" style="max-width: 500px;">
             <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -689,6 +665,10 @@
                         <span class="material-symbols-rounded">person_add</span> 
                         <span class="font-bold">Daftar Pengguna</span>
                     </div>
+                    <div class="nav-item" onclick="switchTab('devices')" id="navDevices">
+                        <span class="material-symbols-rounded">devices</span> 
+                        <span class="font-bold">Peranti Pengguna</span>
+                    </div>
                     <div class="nav-item" onclick="switchTab('reports')" id="navReports">
                         <span class="material-symbols-rounded">summarize</span> 
                         <span class="font-bold">Laporan Kehadiran</span>
@@ -741,6 +721,7 @@
                                     <th>Unit / Bahagian</th>
                                     <th>Status Biometrik</th>
                                     <th>Geofencing</th>
+                                    <th>Platform</th>
                                     <th class="text-center">Tindakan</th>
                                 </tr>
                             </thead>
@@ -1053,7 +1034,7 @@
                                         <th>Status</th>
                                     </thead>
                                 <tbody id="userAttendanceBody">
-                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td>
+                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1083,6 +1064,39 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Devices Tab -->
+            <div id="devicesTab" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-4xl font-black text-gray-800">Peranti Pengguna</h1>
+                    <div class="flex gap-3">
+                        <button onclick="loadUserDevices()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula data">
+                            <span class="material-symbols-rounded text-sm">refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
+                    <table class="w-full min-w-[900px]">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">IP Terkini</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi Anggaran</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Platform</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Terakhir Aktif</th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Trust</th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devicesTableBody">
+                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -1130,6 +1144,10 @@
                         <h3 class="text-5xl font-black text-amber-500" id="presentTodayStat">0</h3>
                     </div>
                 </div>
+                <div class="bg-white rounded-[40px] p-6 border mt-8">
+                    <h2 class="font-bold text-sm mb-4">Taburan Platform Pengguna</h2>
+                    <canvas id="platformChart" height="80"></canvas>
+                </div>
             </div>
 
             <!-- Tools Tab -->
@@ -1162,12 +1180,10 @@
                     
                     <div class="flex gap-4">
                         <button onclick="recalculateOvertime()" id="recalcBtn" class="bg-amber-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-amber-700 transition-all">
-                            <span class="material-symbols-rounded">refresh</span>
-                            Kira Semula OT
+                            <span class="material-symbols-rounded">refresh</span> Kira Semula OT
                         </button>
                         <button onclick="recalculateAllOvertime()" id="recalcAllBtn" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-red-700 transition-all">
-                            <span class="material-symbols-rounded">warning</span>
-                            Kira Semua Data
+                            <span class="material-symbols-rounded">warning</span> Kira Semua Data
                         </button>
                     </div>
                     
@@ -1226,6 +1242,7 @@
         let locationWatchId = null;
         let realTimeDetectionInterval = null;
         let pendingReasonCallback = null;
+        let platformChart = null;
 
         // ============================================
         // WBF SARAWAK CONFIGURATION (FRONTEND)
@@ -1264,7 +1281,6 @@
         // ============================================
         // EMAIL NOTIFICATION FUNCTIONS
         // ============================================
-        
         async function sendEmailNotification(to, subject, body) {
             try {
                 const result = await callAPI('sendEmail', { to: to, subject: subject, body: body });
@@ -1277,52 +1293,20 @@
 
         async function notifySuperadminUserChangeDetailed(userName, changes, reason, adminName, adminBranch) {
             let changesDetails = '';
-            
             for (const change of changes) {
                 if (change.type === 'unit') {
                     changesDetails += `\n• UNIT: "${change.oldValue}" → "${change.newValue}"`;
-                } 
-                else if (change.type === 'location') {
+                } else if (change.type === 'location') {
                     changesDetails += `\n• LOKASI PEJABAT:`;
                     changesDetails += `\n  Alamat Lama: ${change.oldValue}`;
                     changesDetails += `\n  Alamat Baru: ${change.newValue}`;
-                    if (change.oldLat && change.newLat) {
-                        changesDetails += `\n  Koordinat Lama: ${change.oldLat}, ${change.oldLng}`;
-                        changesDetails += `\n  Koordinat Baru: ${change.newLat}, ${change.newLng}`;
-                    }
-                }
-                else if (change.type === 'radius') {
+                } else if (change.type === 'radius') {
                     changesDetails += `\n• RADIUS GEOFENCING: ${change.oldValue}m → ${change.newValue}m`;
                 }
             }
             
             const subject = `[IMMI Presence 360] Perubahan Data Pengguna: ${userName}`;
-            const body = `Assalamualaikum dan Salam Sejahtera,
-
-Tuan/Puan/Encik/Cik,
-
-Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
-
-MAKLUMAT PERUBAHAN DATA PENGGUNA:
-==================================
-Nama Pengguna: ${userName}
-Tarikh Perubahan: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
-Dibuat oleh: ${adminName} (${adminBranch})
-
-BUTIRAN PERUBAHAN:
-==================${changesDetails}
-
-SEBAB PERUBAHAN:
-================
-${reason}
-
-Sila semak dan sahkan perubahan ini di dalam sistem.
-
-Sekian, terima kasih.
-
---
-IMMI Presence 360 - Sistem Kehadiran Pintar
-Jabatan Imigresen Malaysia`;
+            const body = `Assalamualaikum dan Salam Sejahtera,\n\nIni adalah notifikasi automatik daripada Sistem IMMI Presence 360.\n\nMAKLUMAT PERUBAHAN DATA PENGGUNA:\n==================================\nNama Pengguna: ${userName}\nTarikh Perubahan: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}\nDibuat oleh: ${adminName} (${adminBranch})\n\nBUTIRAN PERUBAHAN:\n==================${changesDetails}\n\nSEBAB PERUBAHAN:\n================\n${reason}\n\nSila semak dan sahkan perubahan ini di dalam sistem.\n\nSekian, terima kasih.\n\n--\nIMMI Presence 360 - Sistem Kehadiran Pintar\nJabatan Imigresen Malaysia`;
             
             try {
                 const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
@@ -1339,36 +1323,7 @@ Jabatan Imigresen Malaysia`;
 
         async function notifySuperadminNewUserDetailed(userName, userEmail, userBranch, userUnit, userLocation, userRadius, adminName, adminBranch, reason) {
             const subject = `[IMMI Presence 360] Pendaftaran Pengguna Baru: ${userName}`;
-            const body = `Assalamualaikum dan Salam Sejahtera,
-
-Tuan/Puan/Encik/Cik,
-
-Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
-
-MAKLUMAT PENDAFTARAN PENGGUNA BARU:
-====================================
-Nama: ${userName}
-Email: ${userEmail}
-Cawangan: ${userBranch}
-Unit: ${userUnit}
-Lokasi Pejabat: ${userLocation}
-Radius Geofencing: ${userRadius}m
-
-SEBAB PENDAFTARAN:
-==================
-${reason}
-
-Didaftarkan oleh: ${adminName}
-Cawangan Admin: ${adminBranch}
-Tarikh Pendaftaran: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
-
-Sila semak dan sahkan pendaftaran ini di dalam sistem.
-
-Sekian, terima kasih.
-
---
-IMMI Presence 360 - Sistem Kehadiran Pintar
-Jabatan Imigresen Malaysia`;
+            const body = `Assalamualaikum dan Salam Sejahtera,\n\nIni adalah notifikasi automatik daripada Sistem IMMI Presence 360.\n\nMAKLUMAT PENDAFTARAN PENGGUNA BARU:\n====================================\nNama: ${userName}\nEmail: ${userEmail}\nCawangan: ${userBranch}\nUnit: ${userUnit}\nLokasi Pejabat: ${userLocation}\nRadius Geofencing: ${userRadius}m\n\nSEBAB PENDAFTARAN:\n==================\n${reason}\n\nDidaftarkan oleh: ${adminName}\nCawangan Admin: ${adminBranch}\nTarikh Pendaftaran: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}\n\nSila semak dan sahkan pendaftaran ini di dalam sistem.\n\nSekian, terima kasih.\n\n--\nIMMI Presence 360 - Sistem Kehadiran Pintar\nJabatan Imigresen Malaysia`;
             
             try {
                 const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
@@ -1400,9 +1355,7 @@ Jabatan Imigresen Malaysia`;
             const iconEl = document.getElementById('alertIcon');
             const confirmBtn = document.getElementById('alertConfirmBtn');
             
-            let iconHtml = '';
-            let iconBg = '';
-            let iconColor = '';
+            let iconHtml = '', iconBg = '', iconColor = '';
             switch(icon) {
                 case 'success':
                     iconHtml = 'check_circle';
@@ -1427,12 +1380,9 @@ Jabatan Imigresen Malaysia`;
             
             iconEl.className = `w-16 h-16 ${iconBg} ${iconColor} rounded-full flex items-center justify-center mx-auto mb-4`;
             iconEl.innerHTML = `<span class="material-symbols-rounded text-4xl">${iconHtml}</span>`;
-            
             titleEl.innerText = title;
             messageEl.innerText = message;
-            
             alertCallback = callback;
-            
             modal.style.display = 'flex';
             
             const newBtn = confirmBtn.cloneNode(true);
@@ -1455,7 +1405,6 @@ Jabatan Imigresen Malaysia`;
             
             titleEl.innerText = title;
             messageEl.innerText = message;
-            
             modal.style.display = 'flex';
             
             const newOkBtn = okBtn.cloneNode(true);
@@ -1467,16 +1416,12 @@ Jabatan Imigresen Malaysia`;
                 modal.style.display = 'none';
                 if (onConfirm) onConfirm();
             });
-            
             newCancelBtn.addEventListener('click', function() {
                 modal.style.display = 'none';
                 if (onCancel) onCancel();
             });
         }
 
-        // ============================================
-        // CUSTOM PROMPT MODAL FOR REASON
-        // ============================================
         function showReasonPrompt(title, message, placeholder, callback) {
             const modal = document.getElementById('reasonModal');
             const titleEl = document.getElementById('reasonTitle');
@@ -1489,9 +1434,7 @@ Jabatan Imigresen Malaysia`;
             msgEl.innerText = message;
             inputEl.value = '';
             inputEl.placeholder = placeholder || 'Contoh: Pertukaran unit / Kemaskini maklumat';
-            
             pendingReasonCallback = callback;
-            
             modal.style.display = 'flex';
             
             const handleOk = () => {
@@ -1503,7 +1446,6 @@ Jabatan Imigresen Malaysia`;
                 }
                 cleanup();
             };
-            
             const handleCancel = () => {
                 modal.style.display = 'none';
                 if (pendingReasonCallback) {
@@ -1512,12 +1454,10 @@ Jabatan Imigresen Malaysia`;
                 }
                 cleanup();
             };
-            
             const cleanup = () => {
                 okBtn.removeEventListener('click', handleOk);
                 cancelBtn.removeEventListener('click', handleCancel);
             };
-            
             okBtn.addEventListener('click', handleOk);
             cancelBtn.addEventListener('click', handleCancel);
         }
@@ -1598,45 +1538,28 @@ Jabatan Imigresen Malaysia`;
         function drawFaceOverlay(video, detection) {
             const overlay = document.getElementById('faceOverlay');
             if (!overlay) return;
-            
             if (!detection) {
                 overlay.innerHTML = '';
                 return;
             }
-            
             const dims = getVideoDimensions(video);
             const box = adjustFaceBox(detection.detection.box, dims);
-            
             const confidence = Math.round(detection.detection.score * 100);
             const borderColor = detection.detection.score > 0.7 ? '#10b981' : '#fbbf24';
-            
-            overlay.innerHTML = `
-                <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};">
-                    <div class="confidence-badge" style="bottom:-25px; left:0;">
-                        Keyakinan: ${confidence}%
-                    </div>
-                </div>
-            `;
+            overlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};"><div class="confidence-badge" style="bottom:-25px; left:0;">Keyakinan: ${confidence}%</div></div>`;
         }
 
         // ============================================
         // REAL TIME FACE DETECTION
         // ============================================
         function startRealTimeFaceDetection() {
-            if (realTimeDetectionInterval) {
-                clearInterval(realTimeDetectionInterval);
-            }
-            
+            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
             const video = document.getElementById('faceVideo');
             const statusMsg = document.getElementById('faceStatusMsg');
-            
             realTimeDetectionInterval = setInterval(async () => {
                 if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
-                
                 try {
-                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                        .withFaceLandmarks();
-                    
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
                     if (detection) {
                         drawFaceOverlay(video, detection);
                         const confidence = Math.round(detection.detection.score * 100);
@@ -1649,9 +1572,7 @@ Jabatan Imigresen Malaysia`;
                         if (faceOverlay) faceOverlay.innerHTML = '';
                         statusMsg.innerHTML = "<span class='text-amber-600 font-black'>🔍 Tiada wajah dikesan</span><br><span class='text-xs'>Pastikan wajah berada dalam bulatan panduan</span>";
                     }
-                } catch (e) {
-                    // Silently fail
-                }
+                } catch (e) {}
             }, 200);
         }
 
@@ -1819,6 +1740,118 @@ Jabatan Imigresen Malaysia`;
             
             loadUsers();
             loadFaceModels();
+            loadUserDevices();
+        }
+
+        // ============================================
+        // DEVICE MANAGEMENT FUNCTIONS
+        // ============================================
+        async function loadUserDevices() {
+            try {
+                const result = await getAllUserLocations(currentUser);
+                if (result.success && result.data) {
+                    renderDevicesTable(result.data);
+                    updatePlatformChart(result.data);
+                } else {
+                    document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Tiada data peranti</td></tr>';
+                }
+            } catch (error) {
+                console.error('Load devices error:', error);
+                document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Gagal memuatkan data</td></tr>';
+            }
+        }
+
+        function renderDevicesTable(devices) {
+            const tbody = document.getElementById('devicesTableBody');
+            if (!devices || devices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Tiada data peranti</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            devices.forEach(device => {
+                const lastSeen = device.lastSeen ? new Date(device.lastSeen).toLocaleString('ms-MY') : '-';
+                const trustScore = device.trustScore || (device.source === 'Android' ? 100 : (device.source === 'iOS' ? 70 : 50));
+                const trustColor = trustScore >= 90 ? 'text-green-600' : (trustScore >= 60 ? 'text-amber-600' : 'text-red-600');
+                let platformClass = '';
+                let platformIcon = '';
+                if (device.source === 'Android') {
+                    platformClass = 'badge-android';
+                    platformIcon = '📱';
+                } else if (device.source === 'iOS') {
+                    platformClass = 'badge-ios';
+                    platformIcon = '🍎';
+                } else {
+                    platformClass = 'badge-web';
+                    platformIcon = '💻';
+                }
+                
+                html += `
+                    <tr>
+                        <td class="p-3 font-bold">${escapeHtml(device.name)}</td>
+                        <td class="p-3">${escapeHtml(device.branch)}</td>
+                        <td class="p-3">${escapeHtml(device.unit || '-')}</td>
+                        <td class="p-3 text-sm">${device.ip || '-'}</td>
+                        <td class="p-3 text-sm">${device.city || '-'}, ${device.region || '-'}</td>
+                        <td class="p-3"><span class="badge ${platformClass}">${platformIcon} ${device.source || 'Web'}</span></td>
+                        <td class="p-3 text-sm">${lastSeen}</td>
+                        <td class="p-3 text-center"><span class="${trustColor} font-bold">${trustScore}%</span></td>
+                        <td class="p-3 text-center">
+                            <button onclick="forceLogoutUser('${device.uid}', '${escapeHtml(device.name)}')" 
+                                    class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-all">
+                                Force Logout
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function updatePlatformChart(devices) {
+            const canvas = document.getElementById('platformChart');
+            if (!canvas) return;
+            if (platformChart) platformChart.destroy();
+            
+            let androidCount = 0, iosCount = 0, webCount = 0;
+            devices.forEach(device => {
+                if (device.source === 'Android') androidCount++;
+                else if (device.source === 'iOS') iosCount++;
+                else webCount++;
+            });
+            
+            platformChart = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Android', 'iOS', 'Web'],
+                    datasets: [{
+                        data: [androidCount, iosCount, webCount],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        async function forceLogoutUser(uid, name) {
+            showConfirm('Force Logout', `Anda pasti mahu logout ${name} dari SEMUA peranti?`, async function() {
+                try {
+                    const result = await forceLogoutUser(uid, currentUser);
+                    if (result.success) {
+                        showAlert('Berjaya', `${name} telah dilogout dari semua peranti`, 'success');
+                        loadUserDevices();
+                    } else {
+                        showAlert('Ralat', result.error || 'Gagal logout', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
+                }
+            });
         }
 
         // ============================================
@@ -1867,7 +1900,7 @@ Jabatan Imigresen Malaysia`;
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
                 return;
             }
             tbody.innerHTML = users.map(u => `
@@ -1876,13 +1909,14 @@ Jabatan Imigresen Malaysia`;
                     <td><div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.branch)}</div></td>
                     <td>${u.faceDescriptor ? '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full">TIADA REKOD</span>'}</td>
                     <td><div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${escapeHtml(u.location || 'Pejabat Am')}</div><div class="text-[10px] text-blue-500">${u.radius || 500}m Radius</div></td>
+                    <td>${u.registeredPlatform ? `<span class="badge ${u.registeredPlatform === 'Android' ? 'badge-android' : (u.registeredPlatform === 'iOS' ? 'badge-ios' : 'badge-web')}">${u.registeredPlatform === 'Android' ? '📱' : (u.registeredPlatform === 'iOS' ? '🍎' : '💻')} ${u.registeredPlatform || 'Web'}</span>` : '<span class="text-xs text-gray-400">Belum daftar</span>'}</td>
                     <td><div class="flex gap-2 justify-center">
-                        <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100" title="Lihat Rekod"><span class="material-symbols-rounded text-xl">visibility</span></button>
-                        <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100" title="Edit"><span class="material-symbols-rounded text-xl">edit</span></button>
-                        ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100" title="Reset Wajah"><span class="material-symbols-rounded text-xl">face_4</span></button>` : ''}
-                        <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100" title="Padam"><span class="material-symbols-rounded text-xl">delete</span></button>
+                        <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100"><span class="material-symbols-rounded text-xl">visibility</span></button>
+                        <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100"><span class="material-symbols-rounded text-xl">edit</span></button>
+                        ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100"><span class="material-symbols-rounded text-xl">face_4</span></button>` : ''}
+                        <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100"><span class="material-symbols-rounded text-xl">delete</span></button>
                     </div></td>
-                  </tr>
+                </tr>
             `).join('');
         }
 
@@ -1949,16 +1983,13 @@ Jabatan Imigresen Malaysia`;
                     let jumlahJam = record.totalHours ? formatJam(record.totalHours) : '-';
                     let jumlahOT = record.totalOT ? formatJam(record.totalOT) : '-';
                     let statusText = '', statusClass = '';
-                    
                     if (record.status === 'clocked_in') { 
                         statusText = 'DALAM BERTUGAS'; 
                         statusClass = 'bg-blue-100 text-blue-700'; 
-                    }
-                    else if (record.status === 'clocked_out') { 
+                    } else if (record.status === 'clocked_out') { 
                         statusText = 'SELESAI'; 
                         statusClass = 'bg-green-100 text-green-700'; 
-                    }
-                    else {
+                    } else {
                         const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
                         const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
                         if (hasClockIn && !hasClockOut) {
@@ -2114,18 +2145,13 @@ Jabatan Imigresen Malaysia`;
                 return c.type;
             }).join('\n• ');
             
-            showReasonPrompt(
-                'Sebab Perubahan Data',
-                `Anda akan membuat perubahan berikut:\n\n• ${changeSummary}\n\nSila nyatakan sebab perubahan ini:`,
-                'Contoh: Pertukaran unit / Kemaskini maklumat / Pembetulan alamat',
-                async (reason) => {
-                    if (!reason) {
-                        showAlert("Ralat", "Sila nyatakan sebab perubahan", 'warning');
-                        return;
-                    }
-                    await performUpdate(changes, reason);
+            showReasonPrompt('Sebab Perubahan Data', `Anda akan membuat perubahan berikut:\n\n• ${changeSummary}\n\nSila nyatakan sebab perubahan ini:`, 'Contoh: Pertukaran unit / Kemaskini maklumat / Pembetulan alamat', async (reason) => {
+                if (!reason) {
+                    showAlert("Ralat", "Sila nyatakan sebab perubahan", 'warning');
+                    return;
                 }
-            );
+                await performUpdate(changes, reason);
+            });
             
             async function performUpdate(changesArray, reasonParam = null) {
                 const data = {
@@ -2134,11 +2160,8 @@ Jabatan Imigresen Malaysia`;
                     branch: currentUser.branch, password: document.getElementById('editUserPassword').value,
                     location: newLocation, lat: newLat, lng: newLng, radius: newRadius
                 };
-                
                 if (!data.name || !data.email) { showAlert("Ralat", "Nama dan Emel wajib diisi", 'error'); return; }
-                
                 btn.disabled = true; btn.innerHTML = 'Sedang Mengemaskini...';
-                
                 try {
                     const result = await callAPI('updateUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
                     if (result.success) {
@@ -2244,7 +2267,6 @@ Jabatan Imigresen Malaysia`;
                 try {
                     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
                         .withFaceLandmarks().withFaceDescriptor().withFaceExpressions();
-                    
                     if (detection) {
                         drawFaceOverlay(video, detection);
                         if (!bestDetection || (detection.detection.score > bestDetection.detection.score)) { bestDetection = detection; }
@@ -2280,22 +2302,18 @@ Jabatan Imigresen Malaysia`;
                 if (faceWidth < 60 || faceHeight < 60) { qualityIssues.push("wajah terlalu jauh"); }
                 if (faceWidth > 280 || faceHeight > 280) { qualityIssues.push("wajah terlalu dekat"); }
                 if (detection.detection.score < 0.6) { qualityIssues.push("keyakinan rendah"); }
-                
                 if (qualityIssues.length > 0) {
                     statusMsg.innerHTML = `<span class='text-red-600 font-black'>✗ Kualiti wajah rendah: ${qualityIssues.join(", ")}</span>`;
                     showAlert("Gagal", `Sila laraskan jarak - ${qualityIssues.join(", ")}`, 'warning');
                     updateProgress(0); btn.disabled = false; btn.innerHTML = "Imbas Wajah Kakitangan";
                     isProcessing = false; return;
                 }
-                
                 document.getElementById('faceDescriptor').value = JSON.stringify(Array.from(detection.descriptor));
                 statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
                 btn.classList.add('hidden');
                 document.getElementById('resetFaceBtn').classList.remove('hidden');
                 updateProgress(100);
-                
                 if (faceOverlay) {
-                    const dims = getVideoDimensions(video);
                     const box = adjustFaceBox(detection.detection.box, dims);
                     faceOverlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:#10b981; box-shadow:0 0 20px rgba(16,185,129,0.5);"><div class="confidence-badge" style="background:#10b981; top:-25px; bottom:auto;">✓ BERJAYA</div></div>`;
                     setTimeout(() => { if (faceOverlay && !realTimeDetectionInterval) { faceOverlay.innerHTML = ''; } }, 2000);
@@ -2335,6 +2353,7 @@ Jabatan Imigresen Malaysia`;
             if (navItem) navItem.classList.add('active');
             if (tab === 'register' && document.getElementById('userId').value === "") resetRegisterForm();
             if (tab === 'editUser') setTimeout(() => { if (editUserMap) editUserMap.invalidateSize(); updateEditStepUI(); }, 300);
+            if (tab === 'devices') loadUserDevices();
         };
         window.nextStep = function() {
             if (currentStep === 1) {
@@ -2369,12 +2388,10 @@ Jabatan Imigresen Malaysia`;
         window.saveUser = async function() {
             const btn = document.getElementById('saveBtn');
             const isResetMode = document.getElementById('resetMode').value === 'true';
-            
             if (isResetMode) { 
                 await updateUserFaceOnly(); 
                 return;
             }
-            
             const data = {
                 uid: document.getElementById('userId').value, name: document.getElementById('userName').value,
                 email: document.getElementById('userEmail').value, unit: document.getElementById('userUnit').value,
@@ -2383,33 +2400,24 @@ Jabatan Imigresen Malaysia`;
                 lng: document.getElementById('userLng').value, radius: document.getElementById('userRadius').value,
                 faceDescriptor: document.getElementById('faceDescriptor').value, createdBy: currentUser.uid
             };
-            
             if (!data.name || !data.email || !data.password) { showAlert("Ralat", "Sila isi semua maklumat wajib", 'warning'); return; }
             if (data.password.length < 6) { showAlert("Ralat", "Kata laluan minimum 6 aksara", 'error'); return; }
-            
-            showReasonPrompt(
-                'Sebab Pendaftaran Kakitangan',
-                'Sila nyatakan sebab pendaftaran kakitangan ini:',
-                'Contoh: Penempatan baru / Pertukaran unit / Kontrak baru',
-                async (reason) => {
-                    if (!reason) {
-                        showAlert("Ralat", "Sila nyatakan sebab pendaftaran", 'warning');
-                        return;
-                    }
-                    
-                    btn.disabled = true; btn.innerHTML = 'Sedang Menyimpan...';
-                    
-                    try {
-                        const result = await callAPI('createUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
-                        if (result.success) { 
-                            showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success');
-                            await notifySuperadminNewUserDetailed(data.name, data.email, data.branch, data.unit, data.location, data.radius, currentUser.name, currentUser.branch, reason);
-                            resetFormAfterSave(); switchTab('users'); loadUsers(); 
-                        } else { showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); }
-                    } catch (error) { showAlert("Ralat", "Gagal menyimpan data", 'error'); }
-                    finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; }
+            showReasonPrompt('Sebab Pendaftaran Kakitangan', 'Sila nyatakan sebab pendaftaran kakitangan ini:', 'Contoh: Penempatan baru / Pertukaran unit / Kontrak baru', async (reason) => {
+                if (!reason) {
+                    showAlert("Ralat", "Sila nyatakan sebab pendaftaran", 'warning');
+                    return;
                 }
-            );
+                btn.disabled = true; btn.innerHTML = 'Sedang Menyimpan...';
+                try {
+                    const result = await callAPI('createUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
+                    if (result.success) { 
+                        showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success');
+                        await notifySuperadminNewUserDetailed(data.name, data.email, data.branch, data.unit, data.location, data.radius, currentUser.name, currentUser.branch, reason);
+                        resetFormAfterSave(); switchTab('users'); loadUsers(); 
+                    } else { showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); }
+                } catch (error) { showAlert("Ralat", "Gagal menyimpan data", 'error'); }
+                finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan'; }
+            });
         };
         
         async function updateUserFaceOnly() {
