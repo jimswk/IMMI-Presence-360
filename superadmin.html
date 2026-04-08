@@ -16,6 +16,9 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
+    <!-- Face API untuk reset wajah user -->
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    
     <script src="api-config.js"></script>
     
     <style>
@@ -286,6 +289,88 @@
             transform: scale(1.05);
         }
 
+        /* Video container untuk reset wajah */
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            height: 350px;
+            border-radius: 32px;
+            overflow: hidden;
+            background: #000;
+            margin: 0 auto 20px;
+            border: 4px solid white;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
+        }
+
+        .face-guide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 240px;
+            border: 3px dashed #fbbf24;
+            border-radius: 100px;
+            box-shadow: 0 0 0 1000px rgba(0,0,0,0.4);
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+
+        .face-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .face-box {
+            position: absolute;
+            border: 3px solid #fbbf24;
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+            border-radius: 10px;
+            pointer-events: none;
+            transition: all 0.1s ease;
+        }
+
+        .confidence-badge {
+            position: absolute;
+            bottom: -25px;
+            left: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #5b21b6;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
         @media (max-width: 640px) {
             .floating-input {
                 padding: 16px 14px 6px 14px;
@@ -451,7 +536,7 @@
                 </div>
 
                 <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
-                    <table class="w-full min-w-[800px]">
+                    <table class="w-full min-w-[1000px]">
                         <thead>
                             <tr>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
@@ -601,6 +686,156 @@
             <div class="modal-footer">
                 <button onclick="closeAdminModal()" class="px-6 py-2 rounded-xl border font-bold">Batal</button>
                 <button onclick="saveAdmin()" id="saveAdminBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Daftar Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Admin -->
+    <div id="editAdminModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="text-lg font-black">Edit Admin</h3>
+                <button onclick="closeEditAdminModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editAdminUid">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Nama Penuh</label>
+                        <input type="text" id="editAdminName" class="input-field">
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Email Rasmi</label>
+                        <input type="email" id="editAdminEmail" class="input-field">
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Kata Laluan Baru</label>
+                        <input type="password" id="editAdminPassword" class="input-field" placeholder="Kosongkan jika tidak mahu tukar">
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan</label>
+                        <select id="editAdminBranch" class="input-field">
+                            <option value="Kuching">Kuching</option>
+                            <option value="Kota Samarahan">Kota Samarahan</option>
+                            <option value="Sri Aman">Sri Aman</option>
+                            <option value="Sarikei">Sarikei</option>
+                            <option value="Sibu">Sibu</option>
+                            <option value="Bintulu">Bintulu</option>
+                            <option value="Miri">Miri</option>
+                            <option value="Kapit">Kapit</option>
+                            <option value="Limbang">Limbang</option>
+                            <option value="Lawas">Lawas</option>
+                        </select>
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Unit</label>
+                        <input type="text" id="editAdminUnit" class="input-field">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Lokasi Pejabat</label>
+                        <textarea id="editAdminLocation" class="input-field h-20" placeholder="Alamat pejabat"></textarea>
+                        <div id="editAdminLocationMap" class="location-map"></div>
+                        <input type="hidden" id="editAdminLat">
+                        <input type="hidden" id="editAdminLng">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeEditAdminModal()" class="px-6 py-2 rounded-xl border font-bold">Batal</button>
+                <button onclick="updateAdminData()" id="updateAdminBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Kemaskini</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit User -->
+    <div id="editUserModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="text-lg font-black">Edit Pengguna</h3>
+                <button onclick="closeEditUserModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editUserUid">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Nama Penuh</label>
+                        <input type="text" id="editUserName" class="input-field">
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Email Rasmi</label>
+                        <input type="email" id="editUserEmail" class="input-field">
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Kata Laluan Baru</label>
+                        <input type="password" id="editUserPassword" class="input-field" placeholder="Kosongkan jika tidak mahu tukar">
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Cawangan</label>
+                        <select id="editUserBranch" class="input-field">
+                            <option value="Kuching">Kuching</option>
+                            <option value="Kota Samarahan">Kota Samarahan</option>
+                            <option value="Sri Aman">Sri Aman</option>
+                            <option value="Sarikei">Sarikei</option>
+                            <option value="Sibu">Sibu</option>
+                            <option value="Bintulu">Bintulu</option>
+                            <option value="Miri">Miri</option>
+                            <option value="Kapit">Kapit</option>
+                            <option value="Limbang">Limbang</option>
+                            <option value="Lawas">Lawas</option>
+                        </select>
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Unit</label>
+                        <input type="text" id="editUserUnit" class="input-field">
+                        
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Radius Geofencing (m)</label>
+                        <input type="number" id="editUserRadius" class="input-field" min="100" max="2000" step="100" value="500">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Lokasi Pejabat</label>
+                        <textarea id="editUserLocation" class="input-field h-20" placeholder="Alamat pejabat"></textarea>
+                        <div id="editUserLocationMap" class="location-map"></div>
+                        <input type="hidden" id="editUserLat">
+                        <input type="hidden" id="editUserLng">
+                        <div class="flex gap-2 mt-2">
+                            <button onclick="getEditUserLocation()" class="flex-1 bg-gray-100 py-2 rounded-xl text-sm font-bold">Lokasi Semasa</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeEditUserModal()" class="px-6 py-2 rounded-xl border font-bold">Batal</button>
+                <button onclick="updateUserData()" id="updateUserBtn" class="px-6 py-2 rounded-xl bg-purple-600 text-white font-bold">Kemaskini</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Reset Wajah User -->
+    <div id="resetFaceModal" class="modal-overlay">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="text-lg font-black" id="resetFaceTitle">Reset Pendaftaran Wajah</h3>
+                <button onclick="closeResetFaceModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="resetFaceUid">
+                <p class="text-sm text-gray-600 mb-4" id="resetFaceUserName">Reset wajah untuk:</p>
+                
+                <div class="video-container">
+                    <video id="faceVideo" autoplay muted playsinline></video>
+                    <div class="face-guide"></div>
+                    <div id="faceOverlay" class="face-overlay"></div>
+                </div>
+
+                <div class="progress-bar mt-4">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+
+                <div id="faceStatus" class="max-w-md mx-auto text-center bg-gray-50 p-4 rounded-xl mb-4">
+                    <p class="text-sm font-bold text-gray-500" id="faceStatusMsg">Sedia untuk melakukan pengesahan biometrik wajah...</p>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button onclick="initResetCamera()" id="retryCamBtn" class="hidden bg-purple-600 text-white px-6 py-3 rounded-xl font-bold">Aktifkan Kamera</button>
+                    <button onclick="captureResetFace()" id="captureBtn" class="bg-amber-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2">Imbas Wajah</button>
+                    <button onclick="resetFaceCapture()" id="resetFaceBtn" class="hidden bg-gray-100 text-gray-500 px-6 py-3 rounded-xl font-bold">Padam & Imbas Semula</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeResetFaceModal()" class="px-6 py-2 rounded-xl border font-bold">Batal</button>
+                <button onclick="saveResetFace()" id="saveFaceBtn" class="hidden px-6 py-2 rounded-xl bg-green-600 text-white font-bold">Simpan Wajah</button>
             </div>
         </div>
     </div>
@@ -795,10 +1030,22 @@
         let users = [];
         let adminMap = null;
         let adminMarker = null;
+        let editAdminMap = null;
+        let editAdminMarker = null;
+        let editUserMap = null;
+        let editUserMarker = null;
         let branchChart = null;
         let adminToDelete = null;
         let changeBranchTarget = null;
         let changeBranchType = null;
+        
+        // Face detection variables for reset face
+        let videoStream = null;
+        let modelsLoaded = false;
+        let isProcessing = false;
+        let realTimeDetectionInterval = null;
+        let faceOverlay = null;
+        let currentResetFaceUid = null;
 
         // ============================================
         // UTILITY FUNCTIONS
@@ -819,8 +1066,25 @@
             return div.innerHTML;
         }
 
-        function getAdminEmailsByBranch(branch) {
-            return admins.filter(admin => admin.branch === branch && admin.email && admin.email !== 'superadmin@imi.gov.my').map(admin => admin.email);
+        // ============================================
+        // REVERSE GEOCODING
+        // ============================================
+        async function reverseGeocode(lat, lng, target) {
+            let locationInput;
+            if (target === 'admin') locationInput = document.getElementById('adminLocationInput');
+            else if (target === 'editAdmin') locationInput = document.getElementById('editAdminLocation');
+            else if (target === 'editUser') locationInput = document.getElementById('editUserLocation');
+            else return;
+            
+            if (!locationInput) return;
+            locationInput.value = "Mencari alamat...";
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const data = await response.json();
+                locationInput.value = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            } catch (error) {
+                locationInput.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            }
         }
 
         // ============================================
@@ -834,6 +1098,10 @@
                 console.error('Email send error:', error);
                 return false;
             }
+        }
+
+        function getAdminEmailsByBranch(branch) {
+            return admins.filter(admin => admin.branch === branch && admin.email && admin.email !== 'superadmin@imi.gov.my').map(admin => admin.email);
         }
 
         async function sendBranchChangeNotificationDetailed(targetName, targetType, oldBranch, newBranch, reason, adminName, targetEmail = null) {
@@ -872,7 +1140,6 @@ Sekian, terima kasih.
 IMMI Presence 360 - Sistem Kehadiran Pintar
 Jabatan Imigresen Malaysia`;
             
-            // Hantar emel kepada admin cawangan BARU
             let targetEmails = [];
             if (targetEmail) {
                 targetEmails.push(targetEmail);
@@ -880,12 +1147,10 @@ Jabatan Imigresen Malaysia`;
                 targetEmails = getAdminEmailsByBranch(newBranch);
             }
             
-            // Juga hantar kepada admin di cawangan LAMA untuk makluman
             const oldBranchEmails = getAdminEmailsByBranch(oldBranch);
             
             let success = true;
             
-            // Hantar ke cawangan baru
             for (const email of targetEmails) {
                 if (email && email !== 'superadmin@imi.gov.my') {
                     const sent = await sendEmailNotification(email, subject, body);
@@ -893,7 +1158,6 @@ Jabatan Imigresen Malaysia`;
                 }
             }
             
-            // Hantar ke cawangan lama (makluman)
             if (oldBranchEmails.length > 0 && oldBranch !== newBranch) {
                 const oldSubject = `[IMMI Presence 360] Makluman: ${targetName} telah bertukar dari cawangan ${oldBranch}`;
                 const oldBody = `Assalamualaikum dan Salam Sejahtera,
@@ -982,6 +1246,7 @@ Jabatan Imigresen Malaysia`;
                         
                         loadAdmins();
                         loadAllUsers();
+                        loadFaceModels();
                         
                         showAlert('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`, 'success');
                     }, 500);
@@ -1014,6 +1279,7 @@ Jabatan Imigresen Malaysia`;
         window.handleLogout = function() {
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('superadminDashboard').classList.add('hidden');
+            stopResetCamera();
             
             const btn = document.getElementById('loginBtn');
             btn.style.backgroundColor = '';
@@ -1026,6 +1292,25 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('loginEmail').style.borderColor = '';
             document.getElementById('loginPassword').style.borderColor = '';
         };
+
+        // ============================================
+        // FACE MODELS FOR RESET FACE
+        // ============================================
+        async function loadFaceModels() {
+            if (modelsLoaded) return true;
+            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
+            try {
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                modelsLoaded = true;
+                return true;
+            } catch (error) {
+                console.error('Failed to load models:', error);
+                return false;
+            }
+        }
 
         // ============================================
         // TAB SWITCHING
@@ -1088,7 +1373,7 @@ Jabatan Imigresen Malaysia`;
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '32r<td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td>32r';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
                 return;
             }
 
@@ -1120,12 +1405,17 @@ Jabatan Imigresen Malaysia`;
                                 '<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">ADMIN</span>'}
                         </td>
                         <td class="p-3 text-center">
-                            ${!isSuperadmin ? 
-                                `<button onclick="openDeleteModal('${admin.uid}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn">
-                                    <span class="material-symbols-rounded">delete</span>
-                                </button>` : 
-                                (isCurrentUser ? '<span class="text-xs text-gray-400">Anda</span>' : '<span class="text-xs text-gray-400">Superadmin</span>')
-                            }
+                            <div class="flex gap-2 justify-center">
+                                <button onclick="editAdmin('${admin.uid}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition-all action-btn" title="Edit Admin">
+                                    <span class="material-symbols-rounded">edit</span>
+                                </button>
+                                ${!isSuperadmin ? 
+                                    `<button onclick="openDeleteModal('${admin.uid}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn" title="Padam Admin">
+                                        <span class="material-symbols-rounded">delete</span>
+                                    </button>` : 
+                                    (isCurrentUser ? '<span class="text-xs text-gray-400">Anda</span>' : '<span class="text-xs text-gray-400">Superadmin</span>')
+                                }
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1180,10 +1470,19 @@ Jabatan Imigresen Malaysia`;
                         <td class="p-3 text-center">${user.radius || 500}m</td>
                         <td class="p-3 text-center">${faceStatus}</td>
                         <td class="p-3 text-center">
-                            <button onclick="deleteUser('${user.uid}', '${escapeHtml(user.name)}')" 
-                                    class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn" title="Padam Pengguna">
-                                <span class="material-symbols-rounded">delete</span>
-                            </button>
+                            <div class="flex gap-2 justify-center">
+                                <button onclick="editUser('${user.uid}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition-all action-btn" title="Edit Pengguna">
+                                    <span class="material-symbols-rounded">edit</span>
+                                </button>
+                                ${user.faceDescriptor ? 
+                                    `<button onclick="openResetFaceModal('${user.uid}', '${escapeHtml(user.name)}')" class="text-amber-500 hover:bg-amber-50 p-2 rounded-xl transition-all action-btn" title="Reset Wajah">
+                                        <span class="material-symbols-rounded">face_4</span>
+                                    </button>` : ''
+                                }
+                                <button onclick="deleteUser('${user.uid}', '${escapeHtml(user.name)}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn" title="Padam Pengguna">
+                                    <span class="material-symbols-rounded">delete</span>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1214,6 +1513,689 @@ Jabatan Imigresen Malaysia`;
                 const text = row.innerText.toLowerCase();
                 row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
+        };
+
+        // ============================================
+        // EDIT ADMIN FUNCTIONS
+        // ============================================
+        function editAdmin(uid) {
+            const admin = admins.find(a => a.uid === uid);
+            if (!admin) return;
+            
+            document.getElementById('editAdminUid').value = admin.uid;
+            document.getElementById('editAdminName').value = admin.name;
+            document.getElementById('editAdminEmail').value = admin.email;
+            document.getElementById('editAdminUnit').value = admin.unit || '';
+            document.getElementById('editAdminBranch').value = admin.branch;
+            document.getElementById('editAdminLocation').value = admin.location || '';
+            document.getElementById('editAdminLat').value = admin.lat || 1.5533;
+            document.getElementById('editAdminLng').value = admin.lng || 110.3592;
+            document.getElementById('editAdminPassword').value = '';
+            
+            document.getElementById('editAdminModal').style.display = 'flex';
+            
+            setTimeout(() => {
+                initEditAdminMap(parseFloat(admin.lat) || 1.5533, parseFloat(admin.lng) || 110.3592);
+            }, 300);
+        }
+
+        function closeEditAdminModal() {
+            document.getElementById('editAdminModal').style.display = 'none';
+            if (editAdminMap) {
+                editAdminMap.remove();
+                editAdminMap = null;
+            }
+        }
+
+        function initEditAdminMap(lat, lng) {
+            if (editAdminMap) editAdminMap.remove();
+            
+            editAdminMap = L.map('editAdminLocationMap').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editAdminMap);
+            
+            editAdminMarker = L.marker([lat, lng], { draggable: true }).addTo(editAdminMap);
+            
+            editAdminMarker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                document.getElementById('editAdminLat').value = pos.lat;
+                document.getElementById('editAdminLng').value = pos.lng;
+                reverseGeocode(pos.lat, pos.lng, 'editAdmin');
+            });
+            
+            editAdminMap.on('click', function(e) {
+                editAdminMarker.setLatLng(e.latlng);
+                document.getElementById('editAdminLat').value = e.latlng.lat;
+                document.getElementById('editAdminLng').value = e.latlng.lng;
+                reverseGeocode(e.latlng.lat, e.latlng.lng, 'editAdmin');
+            });
+        }
+
+        async function updateAdminData() {
+            const uid = document.getElementById('editAdminUid').value;
+            const btn = document.getElementById('updateAdminBtn');
+            
+            const data = {
+                uid: uid,
+                name: document.getElementById('editAdminName').value,
+                email: document.getElementById('editAdminEmail').value,
+                unit: document.getElementById('editAdminUnit').value,
+                branch: document.getElementById('editAdminBranch').value,
+                location: document.getElementById('editAdminLocation').value,
+                lat: document.getElementById('editAdminLat').value,
+                lng: document.getElementById('editAdminLng').value,
+                password: document.getElementById('editAdminPassword').value
+            };
+            
+            if (!data.name || !data.email) {
+                showAlert('Ralat', 'Nama dan Email wajib diisi', 'warning');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            
+            try {
+                const result = await callAPI('updateAdmin', {
+                    data: JSON.stringify(data),
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                
+                if (result.success) {
+                    showAlert('Berjaya', 'Admin berjaya dikemaskini', 'success');
+                    closeEditAdminModal();
+                    loadAdmins();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal mengemaskini admin', 'error');
+                }
+            } catch (error) {
+                showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Kemaskini';
+            }
+        }
+
+        // ============================================
+        // EDIT USER FUNCTIONS
+        // ============================================
+        function editUser(uid) {
+            const user = users.find(u => u.uid === uid);
+            if (!user) return;
+            
+            document.getElementById('editUserUid').value = user.uid;
+            document.getElementById('editUserName').value = user.name;
+            document.getElementById('editUserEmail').value = user.email;
+            document.getElementById('editUserUnit').value = user.unit || '';
+            document.getElementById('editUserBranch').value = user.branch;
+            document.getElementById('editUserRadius').value = user.radius || 500;
+            document.getElementById('editUserLocation').value = user.location || '';
+            document.getElementById('editUserLat').value = user.lat || 1.5533;
+            document.getElementById('editUserLng').value = user.lng || 110.3592;
+            document.getElementById('editUserPassword').value = '';
+            
+            document.getElementById('editUserModal').style.display = 'flex';
+            
+            setTimeout(() => {
+                initEditUserMap(parseFloat(user.lat) || 1.5533, parseFloat(user.lng) || 110.3592);
+            }, 300);
+        }
+
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+            if (editUserMap) {
+                editUserMap.remove();
+                editUserMap = null;
+            }
+        }
+
+        function initEditUserMap(lat, lng) {
+            if (editUserMap) editUserMap.remove();
+            
+            editUserMap = L.map('editUserLocationMap').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editUserMap);
+            
+            editUserMarker = L.marker([lat, lng], { draggable: true }).addTo(editUserMap);
+            
+            editUserMarker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                document.getElementById('editUserLat').value = pos.lat;
+                document.getElementById('editUserLng').value = pos.lng;
+                reverseGeocode(pos.lat, pos.lng, 'editUser');
+            });
+            
+            editUserMap.on('click', function(e) {
+                editUserMarker.setLatLng(e.latlng);
+                document.getElementById('editUserLat').value = e.latlng.lat;
+                document.getElementById('editUserLng').value = e.latlng.lng;
+                reverseGeocode(e.latlng.lat, e.latlng.lng, 'editUser');
+            });
+        }
+
+        function getEditUserLocation() {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    document.getElementById('editUserLat').value = lat;
+                    document.getElementById('editUserLng').value = lng;
+                    if (editUserMarker) editUserMarker.setLatLng([lat, lng]);
+                    if (editUserMap) editUserMap.setView([lat, lng], 16);
+                    reverseGeocode(lat, lng, 'editUser');
+                },
+                () => showAlert('Ralat', 'Gagal mengesan lokasi', 'error')
+            );
+        }
+
+        async function updateUserData() {
+            const uid = document.getElementById('editUserUid').value;
+            const btn = document.getElementById('updateUserBtn');
+            
+            const data = {
+                uid: uid,
+                name: document.getElementById('editUserName').value,
+                email: document.getElementById('editUserEmail').value,
+                unit: document.getElementById('editUserUnit').value,
+                branch: document.getElementById('editUserBranch').value,
+                radius: document.getElementById('editUserRadius').value,
+                location: document.getElementById('editUserLocation').value,
+                lat: document.getElementById('editUserLat').value,
+                lng: document.getElementById('editUserLng').value,
+                password: document.getElementById('editUserPassword').value
+            };
+            
+            if (!data.name || !data.email) {
+                showAlert('Ralat', 'Nama dan Email wajib diisi', 'warning');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            
+            try {
+                const result = await callAPI('updateUser', {
+                    data: JSON.stringify(data),
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                
+                if (result.success) {
+                    showAlert('Berjaya', 'Pengguna berjaya dikemaskini', 'success');
+                    closeEditUserModal();
+                    loadAllUsers();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal mengemaskini pengguna', 'error');
+                }
+            } catch (error) {
+                showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Kemaskini';
+            }
+        }
+
+        // ============================================
+        // RESET WAJAH USER FUNCTIONS
+        // ============================================
+        function openResetFaceModal(uid, name) {
+            currentResetFaceUid = uid;
+            document.getElementById('resetFaceUid').value = uid;
+            document.getElementById('resetFaceUserName').innerHTML = `Reset wajah untuk: <strong>${escapeHtml(name)}</strong>`;
+            document.getElementById('resetFaceModal').style.display = 'flex';
+            
+            setTimeout(() => {
+                initResetCamera();
+                loadFaceModels();
+            }, 300);
+        }
+
+        function closeResetFaceModal() {
+            document.getElementById('resetFaceModal').style.display = 'none';
+            stopResetCamera();
+            currentResetFaceUid = null;
+        }
+
+        async function initResetCamera() {
+            const statusMsg = document.getElementById('faceStatusMsg');
+            const retryBtn = document.getElementById('retryCamBtn');
+            const captureBtn = document.getElementById('captureBtn');
+            retryBtn.classList.add('hidden');
+            captureBtn.classList.remove('hidden');
+            statusMsg.innerHTML = "Menyambung ke kamera peranti...";
+            try {
+                if (videoStream) stopResetCamera();
+                videoStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
+                });
+                const video = document.getElementById('faceVideo');
+                video.srcObject = videoStream;
+                statusMsg.innerHTML = "<span class='text-green-600 font-black'>✅ Kamera Aktif. Sila posisikan wajah di tengah.</span>";
+                faceOverlay = document.getElementById('faceOverlay');
+                startRealTimeDetection();
+            } catch (err) {
+                captureBtn.classList.add('hidden');
+                retryBtn.classList.remove('hidden');
+                statusMsg.innerHTML = `<span class='text-red-500 font-bold'>❌ Akses Kamera Disekat</span><br><small>Sila benarkan akses kamera pada pelayar.</small>`;
+                showAlert("Ralat Kamera", "Sila benarkan akses kamera pada pelayar.", 'error');
+            }
+        }
+
+        function stopResetCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            if (faceOverlay) faceOverlay.innerHTML = '';
+            stopRealTimeDetection();
+        }
+
+        function getVideoDimensions(videoEl) {
+            const videoWidth = videoEl.videoWidth;
+            const videoHeight = videoEl.videoHeight;
+            const containerWidth = videoEl.clientWidth;
+            const containerHeight = videoEl.clientHeight;
+            const videoAspectRatio = videoWidth / videoHeight;
+            const containerAspectRatio = containerWidth / containerHeight;
+            let displayWidth, displayHeight;
+            if (containerAspectRatio > videoAspectRatio) {
+                displayHeight = containerHeight;
+                displayWidth = videoAspectRatio * displayHeight;
+            } else {
+                displayWidth = containerWidth;
+                displayHeight = displayWidth / videoAspectRatio;
+            }
+            const offsetX = (containerWidth - displayWidth) / 2;
+            const offsetY = (containerHeight - displayHeight) / 2;
+            return {
+                videoWidth, videoHeight, displayWidth, displayHeight,
+                offsetX, offsetY,
+                scaleX: displayWidth / videoWidth,
+                scaleY: displayHeight / videoHeight
+            };
+        }
+
+        function adjustFaceBox(box, dims) {
+            return {
+                x: box.x * dims.scaleX + dims.offsetX,
+                y: box.y * dims.scaleY + dims.offsetY,
+                width: box.width * dims.scaleX,
+                height: box.height * dims.scaleY
+            };
+        }
+
+        function drawFaceOverlay(video, detection) {
+            const overlay = document.getElementById('faceOverlay');
+            if (!overlay) return;
+            
+            if (!detection) {
+                overlay.innerHTML = '';
+                return;
+            }
+            
+            const dims = getVideoDimensions(video);
+            const box = adjustFaceBox(detection.detection.box, dims);
+            const confidence = Math.round(detection.detection.score * 100);
+            const borderColor = detection.detection.score > 0.7 ? '#10b981' : '#fbbf24';
+            
+            overlay.innerHTML = `
+                <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};">
+                    <div class="confidence-badge" style="bottom:-25px; left:0;">
+                        Keyakinan: ${confidence}%
+                    </div>
+                </div>
+            `;
+        }
+
+        function startRealTimeDetection() {
+            if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
+            const video = document.getElementById('faceVideo');
+            if (!video) return;
+            
+            realTimeDetectionInterval = setInterval(async () => {
+                if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
+                try {
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks();
+                    
+                    if (detection) {
+                        drawFaceOverlay(video, detection);
+                        const confidence = Math.round(detection.detection.score * 100);
+                        const statusMsg = document.getElementById('faceStatusMsg');
+                        if (detection.detection.score > 0.7) {
+                            statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan dengan baik (${confidence}%)</span><br><span class='text-xs'>Sedia untuk imbasan</span>`;
+                        } else {
+                            statusMsg.innerHTML = `<span class='text-amber-600 font-black'>⚠️ Wajah dikesan (${confidence}%)</span><br><span class='text-xs'>Pastikan wajah jelas dan pencahayaan mencukupi</span>`;
+                        }
+                    } else {
+                        if (faceOverlay) faceOverlay.innerHTML = '';
+                        const statusMsg = document.getElementById('faceStatusMsg');
+                        statusMsg.innerHTML = "<span class='text-amber-600 font-black'>🔍 Tiada wajah dikesan</span><br><span class='text-xs'>Pastikan wajah berada dalam bulatan panduan</span>";
+                    }
+                } catch (e) {}
+            }, 200);
+        }
+
+        function stopRealTimeDetection() {
+            if (realTimeDetectionInterval) {
+                clearInterval(realTimeDetectionInterval);
+                realTimeDetectionInterval = null;
+            }
+            if (faceOverlay) faceOverlay.innerHTML = '';
+        }
+
+        function updateProgress(percent) {
+            const progressFill = document.getElementById('progressFill');
+            if (progressFill) progressFill.style.width = percent + '%';
+        }
+
+        async function captureResetFace() {
+            if (isProcessing) return;
+            isProcessing = true;
+            const btn = document.getElementById('captureBtn');
+            const video = document.getElementById('faceVideo');
+            const statusMsg = document.getElementById('faceStatusMsg');
+            const saveBtn = document.getElementById('saveFaceBtn');
+            
+            if (!video.srcObject) {
+                showAlert("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", 'warning');
+                isProcessing = false;
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = 'Mengesan...';
+            updateProgress(20);
+            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>🔍 Mengesan wajah...</span>";
+            
+            let bestDetection = null;
+            let detectionStartTime = Date.now();
+            let attemptCount = 0;
+            
+            while (Date.now() - detectionStartTime < 5000) {
+                attemptCount++;
+                updateProgress(20 + ((Date.now() - detectionStartTime) / 5000) * 40);
+                try {
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceLandmarks().withFaceDescriptor();
+                    
+                    if (detection) {
+                        drawFaceOverlay(video, detection);
+                        if (!bestDetection || (detection.detection.score > bestDetection.detection.score)) {
+                            bestDetection = detection;
+                        }
+                        const confidence = Math.round(detection.detection.score * 100);
+                        statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan! (${confidence}%)</span><br><span class='text-xs'>Teruskan pegang stabil...</span>`;
+                        if (detection.detection.score > 0.7 && attemptCount > 3) {
+                            break;
+                        }
+                    } else {
+                        if (faceOverlay) faceOverlay.innerHTML = '';
+                        statusMsg.innerHTML = "<span class='text-amber-600 font-black'>⚠️ Tiada wajah dikesan. Pastikan wajah berada dalam bulatan...</span>";
+                    }
+                } catch (e) {}
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            if (!bestDetection) {
+                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ TIADA WAJAH DIKESAN</span>";
+                showAlert("Gagal", "Tiada wajah dikesan. Pastikan pencahayaan mencukupi dan wajah berada di hadapan kamera.", 'error');
+                btn.disabled = false;
+                btn.innerHTML = "Imbas Wajah";
+                updateProgress(0);
+                isProcessing = false;
+                if (faceOverlay) faceOverlay.innerHTML = '';
+                return;
+            }
+            
+            updateProgress(70);
+            statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 Merekod data wajah...</span>";
+            
+            try {
+                const detection = bestDetection;
+                const dims = getVideoDimensions(video);
+                const faceWidth = detection.detection.box.width;
+                const faceHeight = detection.detection.box.height;
+                let qualityIssues = [];
+                if (faceWidth < 60 || faceHeight < 60) qualityIssues.push("wajah terlalu jauh");
+                if (faceWidth > 280 || faceHeight > 280) qualityIssues.push("wajah terlalu dekat");
+                if (detection.detection.score < 0.6) qualityIssues.push("keyakinan rendah");
+                
+                if (qualityIssues.length > 0) {
+                    statusMsg.innerHTML = `<span class='text-red-600 font-black'>✗ Kualiti wajah rendah: ${qualityIssues.join(", ")}</span>`;
+                    showAlert("Gagal", `Sila laraskan jarak - ${qualityIssues.join(", ")}`, 'warning');
+                    updateProgress(0);
+                    btn.disabled = false;
+                    btn.innerHTML = "Imbas Wajah";
+                    isProcessing = false;
+                    return;
+                }
+                
+                // Store face descriptor
+                window.capturedFaceDescriptor = JSON.stringify(Array.from(detection.descriptor));
+                statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
+                btn.classList.add('hidden');
+                saveBtn.classList.remove('hidden');
+                updateProgress(100);
+                
+                if (faceOverlay) {
+                    const box = adjustFaceBox(detection.detection.box, dims);
+                    faceOverlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:#10b981; box-shadow:0 0 20px rgba(16,185,129,0.5);"><div class="confidence-badge" style="background:#10b981; top:-25px; bottom:auto;">✓ BERJAYA</div></div>`;
+                }
+                showAlert("Berjaya", "Data biometrik telah direkodkan. Sila klik Simpan.", 'success');
+            } catch (e) {
+                console.error('Face capture error:', e);
+                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
+                showAlert("Ralat", "Ralat semasa pemprosesan biometrik. Sila cuba lagi.", 'error');
+                updateProgress(0);
+                if (faceOverlay) faceOverlay.innerHTML = '';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = "Imbas Wajah";
+                isProcessing = false;
+            }
+        }
+
+        function resetFaceCapture() {
+            window.capturedFaceDescriptor = null;
+            document.getElementById('faceStatusMsg').innerHTML = "<span class='text-gray-500'>Sedia untuk imbasan semula...</span>";
+            document.getElementById('captureBtn').classList.remove('hidden');
+            document.getElementById('saveFaceBtn').classList.add('hidden');
+            document.getElementById('resetFaceBtn').classList.add('hidden');
+            updateProgress(0);
+            if (faceOverlay) faceOverlay.innerHTML = '';
+        }
+
+        async function saveResetFace() {
+            const uid = document.getElementById('resetFaceUid').value;
+            const faceDescriptor = window.capturedFaceDescriptor;
+            
+            if (!faceDescriptor) {
+                showAlert("Ralat", "Sila imbas wajah terlebih dahulu.", 'warning');
+                return;
+            }
+            
+            const saveBtn = document.getElementById('saveFaceBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            
+            try {
+                const result = await callAPI('updateUserFace', { uid, faceDescriptor });
+                if (result.success) {
+                    showAlert("Berjaya", "Wajah kakitangan telah dikemaskini.", 'success');
+                    closeResetFaceModal();
+                    loadAllUsers();
+                } else {
+                    showAlert("Ralat", result.error || "Gagal mengemaskini wajah", 'error');
+                }
+            } catch (error) {
+                showAlert("Ralat", "Gagal menghubungi server", 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = 'Simpan Wajah';
+            }
+        }
+
+        // ============================================
+        // DELETE FUNCTIONS
+        // ============================================
+        async function deleteUser(uid, name) {
+            showConfirm('Padam Pengguna', `Anda pasti mahu memadamkan ${name}? Tindakan ini tidak boleh dibatalkan.`, async function() {
+                try {
+                    const result = await callAPI('deleteUser', { 
+                        data: JSON.stringify({ uid: uid }),
+                        requestingUser: JSON.stringify(currentUser)
+                    });
+                    if (result.success) {
+                        showAlert('Berjaya', `Pengguna ${name} telah dipadamkan`, 'success');
+                        await loadAllUsers();
+                    } else {
+                        showAlert('Ralat', result.error || 'Gagal memadam pengguna', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting user:', error);
+                    showAlert('Ralat', 'Gagal memadam pengguna', 'error');
+                }
+            });
+        }
+
+        // ============================================
+        // MODAL ADMIN (Tambah)
+        // ============================================
+        window.showAddAdminModal = function() {
+            document.getElementById('adminModal').style.display = 'flex';
+            document.getElementById('adminIsSuperadmin').checked = false;
+            setTimeout(() => initAdminMap(1.532915, 110.358957), 300);
+        };
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').style.display = 'none';
+        }
+
+        function initAdminMap(lat, lng) {
+            if (adminMap) adminMap.remove();
+            
+            adminMap = L.map('adminLocationMap').setView([lat, lng], 15);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
+            
+            adminMarker = L.marker([lat, lng], { draggable: true }).addTo(adminMap);
+
+            adminMarker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                document.getElementById('adminLat').value = pos.lat;
+                document.getElementById('adminLng').value = pos.lng;
+                reverseGeocode(pos.lat, pos.lng, 'admin');
+            });
+
+            adminMap.on('click', function(e) {
+                adminMarker.setLatLng(e.latlng);
+                document.getElementById('adminLat').value = e.latlng.lat;
+                document.getElementById('adminLng').value = e.latlng.lng;
+                reverseGeocode(e.latlng.lat, e.latlng.lng, 'admin');
+            });
+            
+            document.getElementById('adminLat').value = lat;
+            document.getElementById('adminLng').value = lng;
+            reverseGeocode(lat, lng, 'admin');
+        }
+
+        window.getAdminLocation = function() {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    document.getElementById('adminLat').value = lat;
+                    document.getElementById('adminLng').value = lng;
+                    adminMarker.setLatLng([lat, lng]);
+                    adminMap.setView([lat, lng], 16);
+                    reverseGeocode(lat, lng, 'admin');
+                },
+                () => showAlert('Ralat', 'Gagal mengesan lokasi', 'error')
+            );
+        };
+
+        window.saveAdmin = async function() {
+            const isSuperadmin = document.getElementById('adminIsSuperadmin').checked;
+            const role = isSuperadmin ? 'superadmin' : 'admin';
+            
+            const data = {
+                name: document.getElementById('adminNameInput').value,
+                email: document.getElementById('adminEmailInput').value,
+                password: document.getElementById('adminPasswordInput').value,
+                branch: document.getElementById('adminBranchInput').value,
+                unit: document.getElementById('adminUnitInput').value,
+                location: document.getElementById('adminLocationInput').value,
+                lat: document.getElementById('adminLat').value,
+                lng: document.getElementById('adminLng').value,
+                role: role
+            };
+
+            if (!data.name || !data.email || !data.password || !data.branch || !data.location) {
+                showAlert('Ralat', 'Sila lengkapkan semua maklumat', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('saveAdminBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+
+            try {
+                const result = await callAPI('createAdmin', { 
+                    data: JSON.stringify(data),
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                
+                if (result.success) {
+                    showAlert('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`, 'success');
+                    closeAdminModal();
+                    await loadAdmins();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal menyimpan', 'error');
+                }
+            } catch (error) {
+                showAlert('Ralat', 'Gagal menyimpan data', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Daftar Admin';
+            }
+        };
+
+        // ============================================
+        // DELETE ADMIN
+        // ============================================
+        window.openDeleteModal = function(uid) {
+            adminToDelete = uid;
+            document.getElementById('deleteModal').style.display = 'flex';
+        };
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+            adminToDelete = null;
+        }
+
+        document.getElementById('confirmDeleteBtn').onclick = async function() {
+            if (!adminToDelete) return;
+            
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+
+            try {
+                const result = await callAPI('deleteAdmin', { 
+                    data: JSON.stringify({ uid: adminToDelete }),
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                
+                if (result.success) {
+                    showAlert('Berjaya', 'Admin telah dipadamkan', 'success');
+                    closeDeleteModal();
+                    await loadAdmins();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal memadam', 'error');
+                }
+            } catch (error) {
+                showAlert('Ralat', 'Gagal memadam admin', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Ya, Padam';
+            }
         };
 
         // ============================================
@@ -1309,189 +2291,8 @@ Jabatan Imigresen Malaysia`;
         }
 
         // ============================================
-        // DELETE FUNCTIONS
-        // ============================================
-        async function deleteUser(uid, name) {
-            showConfirm('Padam Pengguna', `Anda pasti mahu memadamkan ${name}? Tindakan ini tidak boleh dibatalkan.`, async function() {
-                try {
-                    const result = await callAPI('deleteUser', { 
-                        data: JSON.stringify({ uid: uid }),
-                        requestingUser: JSON.stringify(currentUser)
-                    });
-                    if (result.success) {
-                        showAlert('Berjaya', `Pengguna ${name} telah dipadamkan`, 'success');
-                        await loadAllUsers();
-                    } else {
-                        showAlert('Ralat', result.error || 'Gagal memadam pengguna', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error deleting user:', error);
-                    showAlert('Ralat', 'Gagal memadam pengguna', 'error');
-                }
-            });
-        }
-
-        // ============================================
-        // MODAL ADMIN
-        // ============================================
-        window.showAddAdminModal = function() {
-            document.getElementById('adminModal').style.display = 'flex';
-            document.getElementById('adminIsSuperadmin').checked = false;
-            setTimeout(() => initAdminMap(1.532915, 110.358957), 300);
-        };
-
-        function closeAdminModal() {
-            document.getElementById('adminModal').style.display = 'none';
-        }
-
-        function initAdminMap(lat, lng) {
-            if (adminMap) adminMap.remove();
-            
-            adminMap = L.map('adminLocationMap').setView([lat, lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
-            
-            adminMarker = L.marker([lat, lng], { draggable: true }).addTo(adminMap);
-
-            adminMarker.on('dragend', function(e) {
-                const pos = e.target.getLatLng();
-                document.getElementById('adminLat').value = pos.lat;
-                document.getElementById('adminLng').value = pos.lng;
-                reverseGeocode(pos.lat, pos.lng);
-            });
-
-            adminMap.on('click', function(e) {
-                adminMarker.setLatLng(e.latlng);
-                document.getElementById('adminLat').value = e.latlng.lat;
-                document.getElementById('adminLng').value = e.latlng.lng;
-                reverseGeocode(e.latlng.lat, e.latlng.lng);
-            });
-            
-            document.getElementById('adminLat').value = lat;
-            document.getElementById('adminLng').value = lng;
-            reverseGeocode(lat, lng);
-        }
-
-        async function reverseGeocode(lat, lng) {
-            const locInput = document.getElementById('adminLocationInput');
-            locInput.value = "Mencari alamat...";
-            
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                const data = await response.json();
-                locInput.value = data.display_name || `${lat}, ${lng}`;
-            } catch {
-                locInput.value = `Lokasi: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-            }
-        }
-
-        window.getAdminLocation = function() {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    document.getElementById('adminLat').value = lat;
-                    document.getElementById('adminLng').value = lng;
-                    adminMarker.setLatLng([lat, lng]);
-                    adminMap.setView([lat, lng], 16);
-                    reverseGeocode(lat, lng);
-                },
-                () => showAlert('Ralat', 'Gagal mengesan lokasi', 'error')
-            );
-        };
-
-        window.saveAdmin = async function() {
-            const isSuperadmin = document.getElementById('adminIsSuperadmin').checked;
-            const role = isSuperadmin ? 'superadmin' : 'admin';
-            
-            const data = {
-                name: document.getElementById('adminNameInput').value,
-                email: document.getElementById('adminEmailInput').value,
-                password: document.getElementById('adminPasswordInput').value,
-                branch: document.getElementById('adminBranchInput').value,
-                unit: document.getElementById('adminUnitInput').value,
-                location: document.getElementById('adminLocationInput').value,
-                lat: document.getElementById('adminLat').value,
-                lng: document.getElementById('adminLng').value,
-                role: role
-            };
-
-            if (!data.name || !data.email || !data.password || !data.branch || !data.location) {
-                showAlert('Ralat', 'Sila lengkapkan semua maklumat', 'warning');
-                return;
-            }
-
-            const btn = document.getElementById('saveAdminBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-
-            try {
-                const result = await callAPI('createAdmin', { 
-                    data: JSON.stringify(data),
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                
-                if (result.success) {
-                    showAlert('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`, 'success');
-                    closeAdminModal();
-                    await loadAdmins();
-                    
-                    showAlert('Berjaya', 'Admin berjaya didaftarkan', 'success');
-                } else {
-                    showAlert('Ralat', result.error || 'Gagal menyimpan', 'error');
-                }
-            } catch (error) {
-                showAlert('Ralat', 'Gagal menyimpan data', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Daftar Admin';
-            }
-        };
-
-        // ============================================
-        // DELETE ADMIN
-        // ============================================
-        window.openDeleteModal = function(uid) {
-            adminToDelete = uid;
-            document.getElementById('deleteModal').style.display = 'flex';
-        };
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-            adminToDelete = null;
-        }
-
-        document.getElementById('confirmDeleteBtn').onclick = async function() {
-            if (!adminToDelete) return;
-            
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-
-            try {
-                const result = await callAPI('deleteAdmin', { 
-                    data: JSON.stringify({ uid: adminToDelete }),
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                
-                if (result.success) {
-                    showAlert('Berjaya', 'Admin telah dipadamkan', 'success');
-                    closeDeleteModal();
-                    await loadAdmins();
-                } else {
-                    showAlert('Ralat', result.error || 'Gagal memadam', 'error');
-                }
-            } catch (error) {
-                showAlert('Ralat', 'Gagal memadam admin', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Ya, Padam';
-            }
-        };
-
-        // ============================================
         // RECALCULATE OVERTIME FUNCTIONS
         // ============================================
-        
         async function recalculateOvertime() {
             const startDate = document.getElementById('recalcStartDate').value;
             const endDate = document.getElementById('recalcEndDate').value;
@@ -1506,7 +2307,7 @@ Jabatan Imigresen Malaysia`;
                 return;
             }
             
-            showConfirm('Kira Semula OT', `Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)\n• Standard kerja: 9 jam sehari`, async function() {
+            showConfirm('Kira Semula OT', `Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?`, async function() {
                 const btn = document.getElementById('recalcBtn');
                 const resultDiv = document.getElementById('recalcResult');
                 const resultMsg = document.getElementById('recalcMessage');
@@ -1519,7 +2320,7 @@ Jabatan Imigresen Malaysia`;
                     const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
                     
                     if (result.success) {
-                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak (Isnin-Khamis rehat 1 jam, Jumaat rehat 2.5 jam, OT selepas 4:30 PM).`;
+                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula.`;
                         resultDiv.classList.remove('hidden');
                         resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
                         showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success');
@@ -1546,7 +2347,7 @@ Jabatan Imigresen Malaysia`;
             const startDate = '2020-01-01';
             const endDate = new Date().toISOString().split('T')[0];
             
-            showConfirm('Kira Semua OT', `Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama (bergantung kepada jumlah data) dan tidak boleh dibatalkan.\n\nFormula WBF Sarawak:\n• Waktu mula kira: 7:30 AM\n• Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)\n• Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)\n• Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)\n• Standard kerja: 9 jam sehari`, async function() {
+            showConfirm('Kira Semua OT', `Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama.`, async function() {
                 const btn = document.getElementById('recalcAllBtn');
                 const resultDiv = document.getElementById('recalcResult');
                 const resultMsg = document.getElementById('recalcMessage');
@@ -1559,11 +2360,10 @@ Jabatan Imigresen Malaysia`;
                     const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
                     
                     if (result.success) {
-                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula mengikut formula WBF Sarawak (Isnin-Khamis rehat 1 jam, Jumaat rehat 2.5 jam, OT selepas 4:30 PM).`;
+                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula.`;
                         resultDiv.classList.remove('hidden');
                         resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
                         showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success');
-                        
                         if (typeof loadAllUsers === 'function') {
                             loadAllUsers();
                         }
