@@ -1259,6 +1259,7 @@
         let detectionInterval = null;
         let lastSmileScore = 0;
         let verificationStartTime = 0;
+        let lastCheckedDate = null; // Untuk tracking pertukaran hari
         
         // ============================================
         // HELPER FUNCTIONS
@@ -1269,8 +1270,30 @@
             return malaysiaDate.toISOString().split('T')[0];
         }
         
+        function getCurrentDateTimeMalaysia() {
+            const now = new Date();
+            return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
+        }
+        
         function formatDateKey(date) {
             return date.toISOString().split('T')[0];
+        }
+        
+        function isNewDay() {
+            const today = getCurrentDateMalaysia();
+            if (lastCheckedDate !== today) {
+                lastCheckedDate = today;
+                return true;
+            }
+            return false;
+        }
+        
+        function resetDailyData() {
+            console.log('Resetting daily data - new day detected');
+            currentAttendanceRecord = null;
+            if (isCameraActive) {
+                stopCameraAndReset();
+            }
         }
         
         function togglePasswordVisibility() {
@@ -1307,12 +1330,37 @@
         }
         
         // ============================================
+        // CHECK AND RESET ON NEW DAY
+        // ============================================
+        function checkAndResetForNewDay() {
+            if (isNewDay()) {
+                resetDailyData();
+                // Refresh all data
+                if (currentUser) {
+                    loadHomeData();
+                    loadAttendanceHistory();
+                    updateCameraUI();
+                }
+                return true;
+            }
+            return false;
+        }
+        
+        // Run check every minute
+        setInterval(() => {
+            checkAndResetForNewDay();
+        }, 60000);
+        
+        // ============================================
         // NAVIGATION
         // ============================================
         function switchPage(page) {
             if (isCameraActive) {
                 stopCameraAndReset();
             }
+            
+            // Check for new day before switching
+            checkAndResetForNewDay();
            
             document.getElementById('homePage').classList.toggle('active', page === 'home');
             document.getElementById('historyPage').classList.toggle('active', page === 'history');
@@ -1426,7 +1474,13 @@
                 return;
             }
             
-            // Check action validity
+            // Check for new day first
+            checkAndResetForNewDay();
+            
+            // Refresh attendance data to get latest
+            await refreshAttendanceData();
+            
+            // Check action validity based on current record
             if (action === 'clockin') {
                 if (currentAttendanceRecord && currentAttendanceRecord.clockIn && 
                     currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null') {
@@ -1699,10 +1753,10 @@
                 
                 if (result.success && result.data && result.data.length > 0) {
                     currentAttendanceRecord = result.data[0];
-                    console.log('Attendance refreshed:', currentAttendanceRecord);
+                    console.log('Attendance refreshed for', today, ':', currentAttendanceRecord);
                 } else {
                     currentAttendanceRecord = null;
-                    console.log('No attendance record yet');
+                    console.log('No attendance record for', today);
                 }
                 
                 return currentAttendanceRecord;
@@ -1889,18 +1943,24 @@
         async function loadHomeData() {
             if (!currentUser) return;
             
+            // Check for new day first
+            checkAndResetForNewDay();
+            
             const today = getCurrentDateMalaysia();
-            const displayDate = new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+            const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
             document.getElementById('currentDateDisplay').innerText = displayDate;
             document.getElementById('recentDate').innerText = displayDate;
             
             try {
                 const result = await getAttendance(currentUser.uid, today, today, currentUser);
                 
-                console.log('LoadHomeData result:', result);
+                console.log('LoadHomeData result for', today, ':', result);
                 
                 const hasRecord = result.success && result.data && result.data.length > 0;
                 const record = hasRecord ? result.data[0] : null;
+                
+                // Update currentAttendanceRecord
+                currentAttendanceRecord = record;
                 
                 // Check if record has valid clockIn
                 const hasClockIn = record && record.clockIn && 
@@ -1997,8 +2057,6 @@
                     document.getElementById('totalOT').innerText = '0';
                 }
                 
-                // Store current attendance record for camera page
-                currentAttendanceRecord = record;
                 updateCameraUI();
                 
                 if (userLocation && userLocation.lat && userLocation.lng) {
@@ -2014,8 +2072,9 @@
         }
         
         function updateCameraUI() {
+            const today = getCurrentDateMalaysia();
             const hasValidRecord = currentAttendanceRecord && 
-                                  currentAttendanceRecord.date === getCurrentDateMalaysia();
+                                  currentAttendanceRecord.date === today;
             
             const hasClockIn = hasValidRecord && 
                               currentAttendanceRecord.clockIn &&
@@ -2033,7 +2092,7 @@
             const masukBtn = document.getElementById('cameraClockInBtn');
             const keluarBtn = document.getElementById('cameraClockOutBtn');
             
-            console.log('UpdateCameraUI - hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
+            console.log('UpdateCameraUI - Date:', today, 'hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
             
             if (hasClockIn && !hasClockOut) {
                 cameraStatus.innerText = 'DALAM BERTUGAS';
@@ -2319,17 +2378,20 @@
                     btn.style.background = '#10b981';
                     btn.innerHTML = '✓';
                     
-                    setTimeout(() => {
+                    setTimeout(async () => {
                         document.getElementById('userName').innerText = escapeHtml(currentUser.name);
                         document.getElementById('userMeta').innerText = `${escapeHtml(currentUser.branch)} • ${escapeHtml(currentUser.unit)}`;
                         document.getElementById('loginPage').classList.add('hidden');
                         document.getElementById('app').classList.remove('hidden');
                         
+                        // Initialize last checked date
+                        lastCheckedDate = getCurrentDateMalaysia();
+                        
                         // Load data in sequence
-                        loadHomeData();
-                        loadAttendanceHistory();
+                        await refreshAttendanceData();
+                        await loadHomeData();
+                        await loadAttendanceHistory();
                         startLocationTracking();
-                        refreshAttendanceData();
                         
                         showNotification('Selamat Datang', `Log masuk berjaya`, false);
                     }, 500);
@@ -2377,6 +2439,7 @@
             currentUser = null;
             faceMatcher = null;
             currentAttendanceRecord = null;
+            lastCheckedDate = null;
         };
         
         // Expose functions to global
