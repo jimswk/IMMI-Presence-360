@@ -16,7 +16,6 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
-    <!-- Face API untuk reset wajah user -->
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     
     <script src="api-config.js"></script>
@@ -289,7 +288,20 @@
             transform: scale(1.05);
         }
 
-        /* Video container untuk reset wajah */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .badge-android { background: #dcfce7; color: #166534; }
+        .badge-ios { background: #e0e7ff; color: #1e3a8a; }
+        .badge-web { background: #fef3c7; color: #92400e; }
+
         .video-container {
             position: relative;
             width: 100%;
@@ -454,6 +466,10 @@
                     <span class="material-symbols-rounded">group</span>
                     <span>Semua Pengguna</span>
                 </div>
+                <div class="nav-item" onclick="switchTab('devices')" id="navDevices">
+                    <span class="material-symbols-rounded">devices</span>
+                    <span>Peranti Pengguna</span>
+                </div>
                 <div class="nav-item" onclick="switchTab('dashboard')" id="navDashboard">
                     <span class="material-symbols-rounded">dashboard</span>
                     <span>Dashboard</span>
@@ -510,11 +526,12 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Role</th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Platform</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
                             </tr>
                         </thead>
                         <tbody id="adminsTableBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -545,11 +562,45 @@
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi</th>
                                 <th class="text-left p-3 text-xs font-bold text-gray-400">Radius</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Status Wajah</th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Platform</th>
                                 <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
                             </tr>
                         </thead>
                         <tbody id="usersTableBody">
-                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            <tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Devices Tab -->
+            <div id="devicesTab" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-black text-gray-800">Peranti Pengguna</h1>
+                    <div class="flex gap-3">
+                        <button onclick="loadUserDevices()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula data">
+                            <span class="material-symbols-rounded text-sm">refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 border overflow-x-auto">
+                    <table class="w-full min-w-[1000px]">
+                        <thead>
+                            <tr>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">IP Terkini</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi Anggaran</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Platform</th>
+                                <th class="text-left p-3 text-xs font-bold text-gray-400">Terakhir Aktif</th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Trust</th>
+                                <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="devicesTableBody">
+                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -563,9 +614,30 @@
                         <span class="material-symbols-rounded text-sm">refresh</span>
                     </button>
                 </div>
-                <div class="bg-white rounded-3xl p-6 border">
+                
+                <div class="grid grid-cols-3 gap-6 mb-6">
+                    <div class="bg-white p-6 rounded-2xl border">
+                        <p class="text-xs font-bold text-gray-400">Jumlah Admin</p>
+                        <p class="text-3xl font-black text-purple-600" id="dashboardTotalAdmins">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border">
+                        <p class="text-xs font-bold text-gray-400">Jumlah Pengguna</p>
+                        <p class="text-3xl font-black text-blue-600" id="dashboardTotalUsers">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl border">
+                        <p class="text-xs font-bold text-gray-400">Cawangan Aktif</p>
+                        <p class="text-3xl font-black text-green-600" id="dashboardTotalBranches">0</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-3xl p-6 border mb-6">
                     <h2 class="font-bold text-sm mb-4">Taburan Pengguna Mengikut Cawangan</h2>
                     <canvas id="branchChart" height="100"></canvas>
+                </div>
+                
+                <div class="bg-white rounded-3xl p-6 border">
+                    <h2 class="font-bold text-sm mb-4">Taburan Platform Pengguna</h2>
+                    <canvas id="platformChart" height="100"></canvas>
                 </div>
             </div>
 
@@ -948,9 +1020,7 @@
             const iconEl = document.getElementById('alertIcon');
             const confirmBtn = document.getElementById('alertConfirmBtn');
             
-            let iconHtml = '';
-            let iconBg = '';
-            let iconColor = '';
+            let iconHtml = '', iconBg = '', iconColor = '';
             switch(icon) {
                 case 'success':
                     iconHtml = 'check_circle';
@@ -975,12 +1045,9 @@
             
             iconEl.className = `w-16 h-16 ${iconBg} ${iconColor} rounded-full flex items-center justify-center mx-auto mb-4`;
             iconEl.innerHTML = `<span class="material-symbols-rounded text-4xl">${iconHtml}</span>`;
-            
             titleEl.innerText = title;
             messageEl.innerText = message;
-            
             alertCallback = callback;
-            
             modal.style.display = 'flex';
             
             const newBtn = confirmBtn.cloneNode(true);
@@ -1003,7 +1070,6 @@
             
             titleEl.innerText = title;
             messageEl.innerText = message;
-            
             modal.style.display = 'flex';
             
             const newOkBtn = okBtn.cloneNode(true);
@@ -1015,7 +1081,6 @@
                 modal.style.display = 'none';
                 if (onConfirm) onConfirm();
             });
-            
             newCancelBtn.addEventListener('click', function() {
                 modal.style.display = 'none';
                 if (onCancel) onCancel();
@@ -1035,6 +1100,7 @@
         let editUserMap = null;
         let editUserMarker = null;
         let branchChart = null;
+        let platformChart = null;
         let adminToDelete = null;
         let changeBranchTarget = null;
         let changeBranchType = null;
@@ -1075,7 +1141,6 @@
             else if (target === 'editAdmin') locationInput = document.getElementById('editAdminLocation');
             else if (target === 'editUser') locationInput = document.getElementById('editUserLocation');
             else return;
-            
             if (!locationInput) return;
             locationInput.value = "Mencari alamat...";
             try {
@@ -1107,87 +1172,23 @@
         async function sendBranchChangeNotificationDetailed(targetName, targetType, oldBranch, newBranch, reason, adminName, targetEmail = null) {
             const subject = `[IMMI Presence 360] Perubahan Cawangan: ${targetName}`;
             const typeText = targetType === 'admin' ? 'Admin' : 'Pengguna';
-            
-            const body = `Assalamualaikum dan Salam Sejahtera,
-
-Tuan/Puan/Encik/Cik,
-
-Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
-
-MAKLUMAT PERUBAHAN CAWANGAN:
-=============================
-Nama: ${targetName}
-Jenis: ${typeText}
-**CAWANGAN LAMA: ${oldBranch}**
-**CAWANGAN BARU: ${newBranch}**
-
-SEBAB PERUBAHAN:
-================
-${reason}
-
-Dibuat oleh: ${adminName} (Superadmin)
-Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
-
-Kesan Perubahan:
-================
-• ${typeText} ini kini akan menguruskan kakitangan di cawangan ${newBranch}
-• Akses sistem akan terhad kepada cawangan ${newBranch}
-• Sila kemaskini rekod tempatan jika perlu
-
-Sekian, terima kasih.
-
---
-IMMI Presence 360 - Sistem Kehadiran Pintar
-Jabatan Imigresen Malaysia`;
+            const body = `Assalamualaikum dan Salam Sejahtera,\n\nIni adalah notifikasi automatik daripada Sistem IMMI Presence 360.\n\nMAKLUMAT PERUBAHAN CAWANGAN:\n=============================\nNama: ${targetName}\nJenis: ${typeText}\n**CAWANGAN LAMA: ${oldBranch}**\n**CAWANGAN BARU: ${newBranch}**\n\nSEBAB PERUBAHAN:\n================\n${reason}\n\nDibuat oleh: ${adminName} (Superadmin)\nTarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}\n\nKesan Perubahan:\n================\n• ${typeText} ini kini akan menguruskan kakitangan di cawangan ${newBranch}\n• Akses sistem akan terhad kepada cawangan ${newBranch}\n• Sila kemaskini rekod tempatan jika perlu\n\nSekian, terima kasih.\n\n--\nIMMI Presence 360 - Sistem Kehadiran Pintar\nJabatan Imigresen Malaysia`;
             
             let targetEmails = [];
-            if (targetEmail) {
-                targetEmails.push(targetEmail);
-            } else {
-                targetEmails = getAdminEmailsByBranch(newBranch);
-            }
+            if (targetEmail) targetEmails.push(targetEmail);
+            else targetEmails = getAdminEmailsByBranch(newBranch);
             
             const oldBranchEmails = getAdminEmailsByBranch(oldBranch);
-            
             let success = true;
-            
             for (const email of targetEmails) {
                 if (email && email !== 'superadmin@imi.gov.my') {
                     const sent = await sendEmailNotification(email, subject, body);
                     if (!sent) success = false;
                 }
             }
-            
             if (oldBranchEmails.length > 0 && oldBranch !== newBranch) {
                 const oldSubject = `[IMMI Presence 360] Makluman: ${targetName} telah bertukar dari cawangan ${oldBranch}`;
-                const oldBody = `Assalamualaikum dan Salam Sejahtera,
-
-Tuan/Puan/Encik/Cik,
-
-Ini adalah notifikasi automatik daripada Sistem IMMI Presence 360.
-
-MAKLUMAN PERTUKARAN CAWANGAN:
-==============================
-Nama: ${targetName}
-Jenis: ${typeText}
-Telah bertukar DARI cawangan: ${oldBranch}
-KE cawangan: ${newBranch}
-
-SEBAB PERTUKARAN:
-=================
-${reason}
-
-Dibuat oleh: ${adminName} (Superadmin)
-Tarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}
-
-Untuk makluman pihak tuan/puan.
-
-Sekian, terima kasih.
-
---
-IMMI Presence 360 - Sistem Kehadiran Pintar
-Jabatan Imigresen Malaysia`;
-                
+                const oldBody = `Assalamualaikum dan Salam Sejahtera,\n\nIni adalah notifikasi automatik daripada Sistem IMMI Presence 360.\n\nMAKLUMAN PERTUKARAN CAWANGAN:\n==============================\nNama: ${targetName}\nJenis: ${typeText}\nTelah bertukar DARI cawangan: ${oldBranch}\nKE cawangan: ${newBranch}\n\nSEBAB PERTUKARAN:\n=================\n${reason}\n\nDibuat oleh: ${adminName} (Superadmin)\nTarikh: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}\n\nUntuk makluman pihak tuan/puan.\n\nSekian, terima kasih.\n\n--\nIMMI Presence 360 - Sistem Kehadiran Pintar\nJabatan Imigresen Malaysia`;
                 for (const email of oldBranchEmails) {
                     if (email && email !== 'superadmin@imi.gov.my') {
                         const sent = await sendEmailNotification(email, oldSubject, oldBody);
@@ -1195,7 +1196,6 @@ Jabatan Imigresen Malaysia`;
                     }
                 }
             }
-            
             return success;
         }
 
@@ -1240,13 +1240,13 @@ Jabatan Imigresen Malaysia`;
                     setTimeout(() => {
                         document.getElementById('superadminName').innerText = currentUser.name;
                         document.getElementById('superadminEmail').innerText = currentUser.email;
-                        
                         document.getElementById('loginPage').classList.add('hidden');
                         document.getElementById('superadminDashboard').classList.remove('hidden');
                         
                         loadAdmins();
                         loadAllUsers();
                         loadFaceModels();
+                        loadUserDevices();
                         
                         showAlert('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`, 'success');
                     }, 500);
@@ -1254,7 +1254,6 @@ Jabatan Imigresen Malaysia`;
                     btn.style.backgroundColor = '#dc2626';
                     btn.innerHTML = 'Gagal';
                     showAlert('Gagal', result.error || 'Email atau kata laluan salah', 'error');
-                    
                     setTimeout(() => {
                         btn.style.backgroundColor = '';
                         btn.disabled = false;
@@ -1266,7 +1265,6 @@ Jabatan Imigresen Malaysia`;
                 showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
                 btn.style.backgroundColor = '#dc2626';
                 btn.innerHTML = 'Ralat';
-                
                 setTimeout(() => {
                     btn.style.backgroundColor = '';
                     btn.disabled = false;
@@ -1280,13 +1278,11 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('superadminDashboard').classList.add('hidden');
             stopResetCamera();
-            
             const btn = document.getElementById('loginBtn');
             btn.style.backgroundColor = '';
             btn.disabled = false;
             btn.classList.remove('loading');
             btn.innerHTML = 'Log Masuk';
-            
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
             document.getElementById('loginEmail').style.borderColor = '';
@@ -1321,12 +1317,17 @@ Jabatan Imigresen Malaysia`;
             
             document.getElementById('adminsTab').classList.add('hidden');
             document.getElementById('usersTab').classList.add('hidden');
+            document.getElementById('devicesTab').classList.add('hidden');
             document.getElementById('dashboardTab').classList.add('hidden');
             document.getElementById('toolsTab').classList.add('hidden');
             
             document.getElementById(tab + 'Tab').classList.remove('hidden');
             
-            if (tab === 'dashboard') createBranchChart();
+            if (tab === 'dashboard') {
+                createBranchChart();
+                updatePlatformChart();
+            }
+            if (tab === 'devices') loadUserDevices();
             if (tab === 'tools') {
                 const today = new Date().toISOString().split('T')[0];
                 if (document.getElementById('recalcEndDate') && !document.getElementById('recalcEndDate').value) {
@@ -1338,21 +1339,109 @@ Jabatan Imigresen Malaysia`;
         // ============================================
         // REFRESH FUNCTIONS
         // ============================================
-        window.refreshAdmins = function() {
-            loadAdmins();
-            showAlert('Berjaya', 'Senarai admin dikemaskini', 'success');
-        };
+        window.refreshAdmins = function() { loadAdmins(); showAlert('Berjaya', 'Senarai admin dikemaskini', 'success'); };
+        window.refreshUsers = function() { loadAllUsers(); showAlert('Berjaya', 'Senarai pengguna dikemaskini', 'success'); };
+        window.refreshDashboard = function() { loadAllUsers(); createBranchChart(); updatePlatformChart(); showAlert('Berjaya', 'Dashboard dikemaskini', 'success'); };
 
-        window.refreshUsers = function() {
-            loadAllUsers();
-            showAlert('Berjaya', 'Senarai pengguna dikemaskini', 'success');
-        };
+        // ============================================
+        // DEVICE MANAGEMENT FUNCTIONS
+        // ============================================
+        async function loadUserDevices() {
+            try {
+                const result = await getAllUserLocations(currentUser);
+                if (result.success && result.data) {
+                    renderDevicesTable(result.data);
+                    updatePlatformChartData(result.data);
+                } else {
+                    document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Tiada data peranti</td></tr>';
+                }
+            } catch (error) {
+                console.error('Load devices error:', error);
+                document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Gagal memuatkan data</td></tr>';
+            }
+        }
 
-        window.refreshDashboard = function() {
-            loadAllUsers();
-            createBranchChart();
-            showAlert('Berjaya', 'Dashboard dikemaskini', 'success');
-        };
+        function renderDevicesTable(devices) {
+            const tbody = document.getElementById('devicesTableBody');
+            if (!devices || devices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Tiada data peranti</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            devices.forEach(device => {
+                const lastSeen = device.lastSeen ? new Date(device.lastSeen).toLocaleString('ms-MY') : '-';
+                const trustScore = device.trustScore || (device.source === 'Android' ? 100 : (device.source === 'iOS' ? 70 : 50));
+                const trustColor = trustScore >= 90 ? 'text-green-600' : (trustScore >= 60 ? 'text-amber-600' : 'text-red-600');
+                let platformClass = '';
+                let platformIcon = '';
+                if (device.source === 'Android') { platformClass = 'badge-android'; platformIcon = '📱'; }
+                else if (device.source === 'iOS') { platformClass = 'badge-ios'; platformIcon = '🍎'; }
+                else { platformClass = 'badge-web'; platformIcon = '💻'; }
+                
+                html += `
+                    <tr>
+                        <td class="p-3 font-bold">${escapeHtml(device.name)}</td>
+                        <td class="p-3">${escapeHtml(device.branch)}</td>
+                        <td class="p-3">${escapeHtml(device.unit || '-')}</td>
+                        <td class="p-3 text-sm">${device.ip || '-'}</td>
+                        <td class="p-3 text-sm">${device.city || '-'}, ${device.region || '-'}</td>
+                        <td class="p-3"><span class="badge ${platformClass}">${platformIcon} ${device.source || 'Web'}</span></td>
+                        <td class="p-3 text-sm">${lastSeen}</td>
+                        <td class="p-3 text-center"><span class="${trustColor} font-bold">${trustScore}%</span></td>
+                        <td class="p-3 text-center">
+                            <button onclick="forceLogoutUser('${device.uid}', '${escapeHtml(device.name)}')" 
+                                    class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-all">
+                                Force Logout
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        async function forceLogoutUser(uid, name) {
+            showConfirm('Force Logout', `Anda pasti mahu logout ${name} dari SEMUA peranti?`, async function() {
+                try {
+                    const result = await forceLogoutUser(uid, currentUser);
+                    if (result.success) {
+                        showAlert('Berjaya', `${name} telah dilogout dari semua peranti`, 'success');
+                        loadUserDevices();
+                        loadAllUsers();
+                    } else {
+                        showAlert('Ralat', result.error || 'Gagal logout', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
+                }
+            });
+        }
+
+        function updatePlatformChartData(devices) {
+            if (!devices) return;
+            let androidCount = 0, iosCount = 0, webCount = 0;
+            devices.forEach(device => {
+                if (device.source === 'Android') androidCount++;
+                else if (device.source === 'iOS') iosCount++;
+                else webCount++;
+            });
+            if (platformChart) {
+                platformChart.data.datasets[0].data = [androidCount, iosCount, webCount];
+                platformChart.update();
+            }
+        }
+
+        function updatePlatformChart() {
+            const canvas = document.getElementById('platformChart');
+            if (!canvas) return;
+            if (platformChart) platformChart.destroy();
+            platformChart = new Chart(canvas, {
+                type: 'doughnut',
+                data: { labels: ['Android', 'iOS', 'Web'], datasets: [{ data: [0, 0, 0], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'], borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+            });
+        }
 
         // ============================================
         // LOAD DATA
@@ -1373,50 +1462,27 @@ Jabatan Imigresen Malaysia`;
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
                 return;
             }
-
             let html = '';
             admins.forEach(admin => {
                 const isSuperadmin = admin.role === 'superadmin';
                 const isCurrentUser = admin.uid === currentUser?.uid;
+                const platformBadge = admin.registeredPlatform ? 
+                    `<span class="badge ${admin.registeredPlatform === 'Android' ? 'badge-android' : (admin.registeredPlatform === 'iOS' ? 'badge-ios' : 'badge-web')}">
+                        ${admin.registeredPlatform === 'Android' ? '📱' : (admin.registeredPlatform === 'iOS' ? '🍎' : '💻')} ${admin.registeredPlatform}
+                    </span>` : '<span class="text-xs text-gray-400">-</span>';
                 
                 html += `
                     <tr>
-                        <td class="p-3">
-                            <div class="font-bold">${escapeHtml(admin.name)}</div>
-                            <div class="text-xs text-gray-400">${escapeHtml(admin.email)}</div>
-                        </td>
-                        <td class="p-3">
-                            <span class="inline-flex items-center gap-1">
-                                ${escapeHtml(admin.branch)}
-                                <button onclick="changeAdminBranch('${admin.uid}', '${escapeHtml(admin.name)}', '${escapeHtml(admin.branch)}')" 
-                                        class="text-blue-400 hover:text-blue-300 transition-colors" title="Tukar Cawangan">
-                                    <span class="material-symbols-rounded text-sm">swap_horiz</span>
-                                </button>
-                            </span>
-                        </td>
+                        <td class="p-3"><div class="font-bold">${escapeHtml(admin.name)}</div><div class="text-xs text-gray-400">${escapeHtml(admin.email)}</div></td>
+                        <td class="p-3"><span class="inline-flex items-center gap-1">${escapeHtml(admin.branch)}<button onclick="changeAdminBranch('${admin.uid}', '${escapeHtml(admin.name)}', '${escapeHtml(admin.branch)}')" class="text-blue-400 hover:text-blue-300 transition-colors" title="Tukar Cawangan"><span class="material-symbols-rounded text-sm">swap_horiz</span></button></span></td>
                         <td class="p-3">${escapeHtml(admin.unit)}</td>
                         <td class="p-3">${escapeHtml(admin.location || '-')}</td>
-                        <td class="p-3 text-center">
-                            ${isSuperadmin ? 
-                                '<span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">SUPERADMIN</span>' : 
-                                '<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">ADMIN</span>'}
-                        </td>
-                        <td class="p-3 text-center">
-                            <div class="flex gap-2 justify-center">
-                                <button onclick="editAdmin('${admin.uid}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition-all action-btn" title="Edit Admin">
-                                    <span class="material-symbols-rounded">edit</span>
-                                </button>
-                                ${!isSuperadmin ? 
-                                    `<button onclick="openDeleteModal('${admin.uid}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn" title="Padam Admin">
-                                        <span class="material-symbols-rounded">delete</span>
-                                    </button>` : 
-                                    (isCurrentUser ? '<span class="text-xs text-gray-400">Anda</span>' : '<span class="text-xs text-gray-400">Superadmin</span>')
-                                }
-                            </div>
-                        </td>
+                        <td class="p-3 text-center">${isSuperadmin ? '<span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-xs font-bold">SUPERADMIN</span>' : '<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">ADMIN</span>'}</td>
+                        <td class="p-3 text-center">${platformBadge}</td>
+                        <td class="p-3 text-center"><div class="flex gap-2 justify-center"><button onclick="editAdmin('${admin.uid}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition-all" title="Edit Admin"><span class="material-symbols-rounded">edit</span></button>${!isSuperadmin ? `<button onclick="openDeleteModal('${admin.uid}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all" title="Padam Admin"><span class="material-symbols-rounded">delete</span></button>` : (isCurrentUser ? '<span class="text-xs text-gray-400">Anda</span>' : '<span class="text-xs text-gray-400">Superadmin</span>')}</div></td>
                     </tr>
                 `;
             });
@@ -1440,50 +1506,27 @@ Jabatan Imigresen Malaysia`;
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada pengguna berdaftar</td></tr>';
                 return;
             }
-
             let html = '';
             users.forEach(user => {
-                const faceStatus = user.faceDescriptor && user.faceDescriptor !== '' ? 
-                    '<span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">DIDAFTAR</span>' : 
-                    '<span class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-xs font-bold">BELUM</span>';
+                const faceStatus = user.faceDescriptor && user.faceDescriptor !== '' ? '<span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs font-bold">DIDAFTAR</span>' : '<span class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-full text-xs font-bold">BELUM</span>';
+                const platformBadge = user.registeredPlatform ? 
+                    `<span class="badge ${user.registeredPlatform === 'Android' ? 'badge-android' : (user.registeredPlatform === 'iOS' ? 'badge-ios' : 'badge-web')}">
+                        ${user.registeredPlatform === 'Android' ? '📱' : (user.registeredPlatform === 'iOS' ? '🍎' : '💻')} ${user.registeredPlatform}
+                    </span>` : '<span class="text-xs text-gray-400">Belum daftar</span>';
                 
                 html += `
                     <tr>
-                        <td class="p-3">
-                            <div class="font-bold">${escapeHtml(user.name)}</div>
-                            <div class="text-xs text-gray-400">${escapeHtml(user.email)}</div>
-                        </td>
-                        <td class="p-3">
-                            <span class="inline-flex items-center gap-1">
-                                ${escapeHtml(user.branch)}
-                                <button onclick="changeUserBranch('${user.uid}', '${escapeHtml(user.name)}', '${escapeHtml(user.branch)}')" 
-                                        class="text-blue-400 hover:text-blue-300 transition-colors" title="Tukar Cawangan">
-                                    <span class="material-symbols-rounded text-sm">swap_horiz</span>
-                                </button>
-                            </span>
-                        </td>
+                        <td class="p-3"><div class="font-bold">${escapeHtml(user.name)}</div><div class="text-xs text-gray-400">${escapeHtml(user.email)}</div></td>
+                        <td class="p-3"><span class="inline-flex items-center gap-1">${escapeHtml(user.branch)}<button onclick="changeUserBranch('${user.uid}', '${escapeHtml(user.name)}', '${escapeHtml(user.branch)}')" class="text-blue-400 hover:text-blue-300 transition-colors" title="Tukar Cawangan"><span class="material-symbols-rounded text-sm">swap_horiz</span></button></span></td>
                         <td class="p-3">${escapeHtml(user.unit || '-')}</td>
                         <td class="p-3 max-w-[200px] truncate" title="${escapeHtml(user.location || '-')}">${escapeHtml(user.location || '-')}</td>
                         <td class="p-3 text-center">${user.radius || 500}m</td>
                         <td class="p-3 text-center">${faceStatus}</td>
-                        <td class="p-3 text-center">
-                            <div class="flex gap-2 justify-center">
-                                <button onclick="editUser('${user.uid}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition-all action-btn" title="Edit Pengguna">
-                                    <span class="material-symbols-rounded">edit</span>
-                                </button>
-                                ${user.faceDescriptor ? 
-                                    `<button onclick="openResetFaceModal('${user.uid}', '${escapeHtml(user.name)}')" class="text-amber-500 hover:bg-amber-50 p-2 rounded-xl transition-all action-btn" title="Reset Wajah">
-                                        <span class="material-symbols-rounded">face_4</span>
-                                    </button>` : ''
-                                }
-                                <button onclick="deleteUser('${user.uid}', '${escapeHtml(user.name)}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all action-btn" title="Padam Pengguna">
-                                    <span class="material-symbols-rounded">delete</span>
-                                </button>
-                            </div>
-                        </td>
+                        <td class="p-3 text-center">${platformBadge}</td>
+                        <td class="p-3 text-center"><div class="flex gap-2 justify-center"><button onclick="editUser('${user.uid}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition-all" title="Edit Pengguna"><span class="material-symbols-rounded">edit</span></button>${user.faceDescriptor ? `<button onclick="openResetFaceModal('${user.uid}', '${escapeHtml(user.name)}')" class="text-amber-500 hover:bg-amber-50 p-2 rounded-xl transition-all" title="Reset Wajah"><span class="material-symbols-rounded">face_4</span></button>` : ''}<button onclick="deleteUser('${user.uid}', '${escapeHtml(user.name)}')" class="text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all" title="Padam Pengguna"><span class="material-symbols-rounded">delete</span></button></div></td>
                     </tr>
                 `;
             });
@@ -1491,28 +1534,20 @@ Jabatan Imigresen Malaysia`;
         }
 
         function updateStats() {
-            let adminCount = 0;
-            let superadminCount = 0;
-            let branchSet = new Set();
-            
-            admins.forEach(admin => {
-                if (admin.role === 'admin') adminCount++;
-                if (admin.role === 'superadmin') superadminCount++;
-                branchSet.add(admin.branch);
-            });
-            
+            let adminCount = 0, superadminCount = 0, branchSet = new Set();
+            admins.forEach(admin => { if (admin.role === 'admin') adminCount++; if (admin.role === 'superadmin') superadminCount++; branchSet.add(admin.branch); });
             document.getElementById('totalAdmins').innerText = adminCount + superadminCount;
             document.getElementById('totalUsers').innerText = users.length;
             document.getElementById('totalBranches').innerText = branchSet.size;
+            document.getElementById('dashboardTotalAdmins').innerText = adminCount + superadminCount;
+            document.getElementById('dashboardTotalUsers').innerText = users.length;
+            document.getElementById('dashboardTotalBranches').innerText = branchSet.size;
         }
 
         window.searchUsers = function() {
             const searchTerm = document.getElementById('searchUser').value.toLowerCase();
             const rows = document.querySelectorAll('#usersTableBody tr');
-            rows.forEach(row => {
-                const text = row.innerText.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
+            rows.forEach(row => { row.style.display = row.innerText.toLowerCase().includes(searchTerm) ? '' : 'none'; });
         };
 
         // ============================================
@@ -1521,7 +1556,6 @@ Jabatan Imigresen Malaysia`;
         function editAdmin(uid) {
             const admin = admins.find(a => a.uid === uid);
             if (!admin) return;
-            
             document.getElementById('editAdminUid').value = admin.uid;
             document.getElementById('editAdminName').value = admin.name;
             document.getElementById('editAdminEmail').value = admin.email;
@@ -1531,88 +1565,32 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('editAdminLat').value = admin.lat || 1.5533;
             document.getElementById('editAdminLng').value = admin.lng || 110.3592;
             document.getElementById('editAdminPassword').value = '';
-            
             document.getElementById('editAdminModal').style.display = 'flex';
-            
-            setTimeout(() => {
-                initEditAdminMap(parseFloat(admin.lat) || 1.5533, parseFloat(admin.lng) || 110.3592);
-            }, 300);
+            setTimeout(() => initEditAdminMap(parseFloat(admin.lat) || 1.5533, parseFloat(admin.lng) || 110.3592), 300);
         }
 
-        function closeEditAdminModal() {
-            document.getElementById('editAdminModal').style.display = 'none';
-            if (editAdminMap) {
-                editAdminMap.remove();
-                editAdminMap = null;
-            }
-        }
-
+        function closeEditAdminModal() { document.getElementById('editAdminModal').style.display = 'none'; if (editAdminMap) { editAdminMap.remove(); editAdminMap = null; } }
         function initEditAdminMap(lat, lng) {
             if (editAdminMap) editAdminMap.remove();
-            
             editAdminMap = L.map('editAdminLocationMap').setView([lat, lng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editAdminMap);
-            
             editAdminMarker = L.marker([lat, lng], { draggable: true }).addTo(editAdminMap);
-            
-            editAdminMarker.on('dragend', function(e) {
-                const pos = e.target.getLatLng();
-                document.getElementById('editAdminLat').value = pos.lat;
-                document.getElementById('editAdminLng').value = pos.lng;
-                reverseGeocode(pos.lat, pos.lng, 'editAdmin');
-            });
-            
-            editAdminMap.on('click', function(e) {
-                editAdminMarker.setLatLng(e.latlng);
-                document.getElementById('editAdminLat').value = e.latlng.lat;
-                document.getElementById('editAdminLng').value = e.latlng.lng;
-                reverseGeocode(e.latlng.lat, e.latlng.lng, 'editAdmin');
-            });
+            editAdminMarker.on('dragend', e => { const pos = e.target.getLatLng(); document.getElementById('editAdminLat').value = pos.lat; document.getElementById('editAdminLng').value = pos.lng; reverseGeocode(pos.lat, pos.lng, 'editAdmin'); });
+            editAdminMap.on('click', e => { editAdminMarker.setLatLng(e.latlng); document.getElementById('editAdminLat').value = e.latlng.lat; document.getElementById('editAdminLng').value = e.latlng.lng; reverseGeocode(e.latlng.lat, e.latlng.lng, 'editAdmin'); });
         }
 
         async function updateAdminData() {
             const uid = document.getElementById('editAdminUid').value;
             const btn = document.getElementById('updateAdminBtn');
-            
-            const data = {
-                uid: uid,
-                name: document.getElementById('editAdminName').value,
-                email: document.getElementById('editAdminEmail').value,
-                unit: document.getElementById('editAdminUnit').value,
-                branch: document.getElementById('editAdminBranch').value,
-                location: document.getElementById('editAdminLocation').value,
-                lat: document.getElementById('editAdminLat').value,
-                lng: document.getElementById('editAdminLng').value,
-                password: document.getElementById('editAdminPassword').value
-            };
-            
-            if (!data.name || !data.email) {
-                showAlert('Ralat', 'Nama dan Email wajib diisi', 'warning');
-                return;
-            }
-            
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            
+            const data = { uid, name: document.getElementById('editAdminName').value, email: document.getElementById('editAdminEmail').value, unit: document.getElementById('editAdminUnit').value, branch: document.getElementById('editAdminBranch').value, location: document.getElementById('editAdminLocation').value, lat: document.getElementById('editAdminLat').value, lng: document.getElementById('editAdminLng').value, password: document.getElementById('editAdminPassword').value };
+            if (!data.name || !data.email) { showAlert('Ralat', 'Nama dan Email wajib diisi', 'warning'); return; }
+            btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             try {
-                const result = await callAPI('updateAdmin', {
-                    data: JSON.stringify(data),
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                
-                if (result.success) {
-                    showAlert('Berjaya', 'Admin berjaya dikemaskini', 'success');
-                    closeEditAdminModal();
-                    loadAdmins();
-                } else {
-                    showAlert('Ralat', result.error || 'Gagal mengemaskini admin', 'error');
-                }
-            } catch (error) {
-                showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Kemaskini';
-            }
+                const result = await callAPI('updateAdmin', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
+                if (result.success) { showAlert('Berjaya', 'Admin berjaya dikemaskini', 'success'); closeEditAdminModal(); loadAdmins(); }
+                else { showAlert('Ralat', result.error || 'Gagal mengemaskini admin', 'error'); }
+            } catch (error) { showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = 'Kemaskini'; }
         }
 
         // ============================================
@@ -1621,7 +1599,6 @@ Jabatan Imigresen Malaysia`;
         function editUser(uid) {
             const user = users.find(u => u.uid === uid);
             if (!user) return;
-            
             document.getElementById('editUserUid').value = user.uid;
             document.getElementById('editUserName').value = user.name;
             document.getElementById('editUserEmail').value = user.email;
@@ -1632,405 +1609,182 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('editUserLat').value = user.lat || 1.5533;
             document.getElementById('editUserLng').value = user.lng || 110.3592;
             document.getElementById('editUserPassword').value = '';
-            
             document.getElementById('editUserModal').style.display = 'flex';
-            
-            setTimeout(() => {
-                initEditUserMap(parseFloat(user.lat) || 1.5533, parseFloat(user.lng) || 110.3592);
-            }, 300);
+            setTimeout(() => initEditUserMap(parseFloat(user.lat) || 1.5533, parseFloat(user.lng) || 110.3592), 300);
         }
 
-        function closeEditUserModal() {
-            document.getElementById('editUserModal').style.display = 'none';
-            if (editUserMap) {
-                editUserMap.remove();
-                editUserMap = null;
-            }
-        }
-
+        function closeEditUserModal() { document.getElementById('editUserModal').style.display = 'none'; if (editUserMap) { editUserMap.remove(); editUserMap = null; } }
         function initEditUserMap(lat, lng) {
             if (editUserMap) editUserMap.remove();
-            
             editUserMap = L.map('editUserLocationMap').setView([lat, lng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(editUserMap);
-            
             editUserMarker = L.marker([lat, lng], { draggable: true }).addTo(editUserMap);
-            
-            editUserMarker.on('dragend', function(e) {
-                const pos = e.target.getLatLng();
-                document.getElementById('editUserLat').value = pos.lat;
-                document.getElementById('editUserLng').value = pos.lng;
-                reverseGeocode(pos.lat, pos.lng, 'editUser');
-            });
-            
-            editUserMap.on('click', function(e) {
-                editUserMarker.setLatLng(e.latlng);
-                document.getElementById('editUserLat').value = e.latlng.lat;
-                document.getElementById('editUserLng').value = e.latlng.lng;
-                reverseGeocode(e.latlng.lat, e.latlng.lng, 'editUser');
-            });
+            editUserMarker.on('dragend', e => { const pos = e.target.getLatLng(); document.getElementById('editUserLat').value = pos.lat; document.getElementById('editUserLng').value = pos.lng; reverseGeocode(pos.lat, pos.lng, 'editUser'); });
+            editUserMap.on('click', e => { editUserMarker.setLatLng(e.latlng); document.getElementById('editUserLat').value = e.latlng.lat; document.getElementById('editUserLng').value = e.latlng.lng; reverseGeocode(e.latlng.lat, e.latlng.lng, 'editUser'); });
         }
 
         function getEditUserLocation() {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    document.getElementById('editUserLat').value = lat;
-                    document.getElementById('editUserLng').value = lng;
-                    if (editUserMarker) editUserMarker.setLatLng([lat, lng]);
-                    if (editUserMap) editUserMap.setView([lat, lng], 16);
-                    reverseGeocode(lat, lng, 'editUser');
-                },
-                () => showAlert('Ralat', 'Gagal mengesan lokasi', 'error')
-            );
+            navigator.geolocation.getCurrentPosition(pos => { const lat = pos.coords.latitude, lng = pos.coords.longitude; document.getElementById('editUserLat').value = lat; document.getElementById('editUserLng').value = lng; if (editUserMarker) editUserMarker.setLatLng([lat, lng]); if (editUserMap) editUserMap.setView([lat, lng], 16); reverseGeocode(lat, lng, 'editUser'); }, () => showAlert('Ralat', 'Gagal mengesan lokasi', 'error'));
         }
 
         async function updateUserData() {
             const uid = document.getElementById('editUserUid').value;
             const btn = document.getElementById('updateUserBtn');
-            
-            const data = {
-                uid: uid,
-                name: document.getElementById('editUserName').value,
-                email: document.getElementById('editUserEmail').value,
-                unit: document.getElementById('editUserUnit').value,
-                branch: document.getElementById('editUserBranch').value,
-                radius: document.getElementById('editUserRadius').value,
-                location: document.getElementById('editUserLocation').value,
-                lat: document.getElementById('editUserLat').value,
-                lng: document.getElementById('editUserLng').value,
-                password: document.getElementById('editUserPassword').value
-            };
-            
-            if (!data.name || !data.email) {
-                showAlert('Ralat', 'Nama dan Email wajib diisi', 'warning');
-                return;
-            }
-            
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            
+            const data = { uid, name: document.getElementById('editUserName').value, email: document.getElementById('editUserEmail').value, unit: document.getElementById('editUserUnit').value, branch: document.getElementById('editUserBranch').value, radius: document.getElementById('editUserRadius').value, location: document.getElementById('editUserLocation').value, lat: document.getElementById('editUserLat').value, lng: document.getElementById('editUserLng').value, password: document.getElementById('editUserPassword').value };
+            if (!data.name || !data.email) { showAlert('Ralat', 'Nama dan Email wajib diisi', 'warning'); return; }
+            btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             try {
-                const result = await callAPI('updateUser', {
-                    data: JSON.stringify(data),
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                
-                if (result.success) {
-                    showAlert('Berjaya', 'Pengguna berjaya dikemaskini', 'success');
-                    closeEditUserModal();
-                    loadAllUsers();
-                } else {
-                    showAlert('Ralat', result.error || 'Gagal mengemaskini pengguna', 'error');
-                }
-            } catch (error) {
-                showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Kemaskini';
-            }
+                const result = await callAPI('updateUser', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
+                if (result.success) { showAlert('Berjaya', 'Pengguna berjaya dikemaskini', 'success'); closeEditUserModal(); loadAllUsers(); }
+                else { showAlert('Ralat', result.error || 'Gagal mengemaskini pengguna', 'error'); }
+            } catch (error) { showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = 'Kemaskini'; }
         }
 
         // ============================================
         // RESET WAJAH USER FUNCTIONS
         // ============================================
-        function openResetFaceModal(uid, name) {
-            currentResetFaceUid = uid;
-            document.getElementById('resetFaceUid').value = uid;
-            document.getElementById('resetFaceUserName').innerHTML = `Reset wajah untuk: <strong>${escapeHtml(name)}</strong>`;
-            document.getElementById('resetFaceModal').style.display = 'flex';
-            
-            setTimeout(() => {
-                initResetCamera();
-                loadFaceModels();
-            }, 300);
-        }
-
-        function closeResetFaceModal() {
-            document.getElementById('resetFaceModal').style.display = 'none';
-            stopResetCamera();
-            currentResetFaceUid = null;
-        }
-
+        function openResetFaceModal(uid, name) { currentResetFaceUid = uid; document.getElementById('resetFaceUid').value = uid; document.getElementById('resetFaceUserName').innerHTML = `Reset wajah untuk: <strong>${escapeHtml(name)}</strong>`; document.getElementById('resetFaceModal').style.display = 'flex'; setTimeout(() => { initResetCamera(); loadFaceModels(); }, 300); }
+        function closeResetFaceModal() { document.getElementById('resetFaceModal').style.display = 'none'; stopResetCamera(); currentResetFaceUid = null; }
+        
         async function initResetCamera() {
-            const statusMsg = document.getElementById('faceStatusMsg');
-            const retryBtn = document.getElementById('retryCamBtn');
-            const captureBtn = document.getElementById('captureBtn');
-            retryBtn.classList.add('hidden');
-            captureBtn.classList.remove('hidden');
+            const statusMsg = document.getElementById('faceStatusMsg'), retryBtn = document.getElementById('retryCamBtn'), captureBtn = document.getElementById('captureBtn');
+            retryBtn.classList.add('hidden'); captureBtn.classList.remove('hidden');
             statusMsg.innerHTML = "Menyambung ke kamera peranti...";
             try {
                 if (videoStream) stopResetCamera();
-                videoStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } 
-                });
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
                 const video = document.getElementById('faceVideo');
                 video.srcObject = videoStream;
                 statusMsg.innerHTML = "<span class='text-green-600 font-black'>✅ Kamera Aktif. Sila posisikan wajah di tengah.</span>";
                 faceOverlay = document.getElementById('faceOverlay');
                 startRealTimeDetection();
-            } catch (err) {
-                captureBtn.classList.add('hidden');
-                retryBtn.classList.remove('hidden');
-                statusMsg.innerHTML = `<span class='text-red-500 font-bold'>❌ Akses Kamera Disekat</span><br><small>Sila benarkan akses kamera pada pelayar.</small>`;
-                showAlert("Ralat Kamera", "Sila benarkan akses kamera pada pelayar.", 'error');
-            }
+            } catch (err) { captureBtn.classList.add('hidden'); retryBtn.classList.remove('hidden'); statusMsg.innerHTML = `<span class='text-red-500 font-bold'>❌ Akses Kamera Disekat</span><br><small>Sila benarkan akses kamera pada pelayar.</small>`; showAlert("Ralat Kamera", "Sila benarkan akses kamera pada pelayar.", 'error'); }
         }
 
-        function stopResetCamera() {
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-                videoStream = null;
-            }
-            if (faceOverlay) faceOverlay.innerHTML = '';
-            stopRealTimeDetection();
-        }
-
+        function stopResetCamera() { if (videoStream) { videoStream.getTracks().forEach(track => track.stop()); videoStream = null; } if (faceOverlay) faceOverlay.innerHTML = ''; stopRealTimeDetection(); }
+        
         function getVideoDimensions(videoEl) {
-            const videoWidth = videoEl.videoWidth;
-            const videoHeight = videoEl.videoHeight;
-            const containerWidth = videoEl.clientWidth;
-            const containerHeight = videoEl.clientHeight;
-            const videoAspectRatio = videoWidth / videoHeight;
-            const containerAspectRatio = containerWidth / containerHeight;
+            const videoWidth = videoEl.videoWidth, videoHeight = videoEl.videoHeight;
+            const containerWidth = videoEl.clientWidth, containerHeight = videoEl.clientHeight;
+            const videoAspectRatio = videoWidth / videoHeight, containerAspectRatio = containerWidth / containerHeight;
             let displayWidth, displayHeight;
-            if (containerAspectRatio > videoAspectRatio) {
-                displayHeight = containerHeight;
-                displayWidth = videoAspectRatio * displayHeight;
-            } else {
-                displayWidth = containerWidth;
-                displayHeight = displayWidth / videoAspectRatio;
-            }
-            const offsetX = (containerWidth - displayWidth) / 2;
-            const offsetY = (containerHeight - displayHeight) / 2;
-            return {
-                videoWidth, videoHeight, displayWidth, displayHeight,
-                offsetX, offsetY,
-                scaleX: displayWidth / videoWidth,
-                scaleY: displayHeight / videoHeight
-            };
+            if (containerAspectRatio > videoAspectRatio) { displayHeight = containerHeight; displayWidth = videoAspectRatio * displayHeight; }
+            else { displayWidth = containerWidth; displayHeight = displayWidth / videoAspectRatio; }
+            const offsetX = (containerWidth - displayWidth) / 2, offsetY = (containerHeight - displayHeight) / 2;
+            return { videoWidth, videoHeight, displayWidth, displayHeight, offsetX, offsetY, scaleX: displayWidth / videoWidth, scaleY: displayHeight / videoHeight };
         }
 
-        function adjustFaceBox(box, dims) {
-            return {
-                x: box.x * dims.scaleX + dims.offsetX,
-                y: box.y * dims.scaleY + dims.offsetY,
-                width: box.width * dims.scaleX,
-                height: box.height * dims.scaleY
-            };
-        }
+        function adjustFaceBox(box, dims) { return { x: box.x * dims.scaleX + dims.offsetX, y: box.y * dims.scaleY + dims.offsetY, width: box.width * dims.scaleX, height: box.height * dims.scaleY }; }
 
         function drawFaceOverlay(video, detection) {
             const overlay = document.getElementById('faceOverlay');
             if (!overlay) return;
-            
-            if (!detection) {
-                overlay.innerHTML = '';
-                return;
-            }
-            
+            if (!detection) { overlay.innerHTML = ''; return; }
             const dims = getVideoDimensions(video);
             const box = adjustFaceBox(detection.detection.box, dims);
             const confidence = Math.round(detection.detection.score * 100);
             const borderColor = detection.detection.score > 0.7 ? '#10b981' : '#fbbf24';
-            
-            overlay.innerHTML = `
-                <div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};">
-                    <div class="confidence-badge" style="bottom:-25px; left:0;">
-                        Keyakinan: ${confidence}%
-                    </div>
-                </div>
-            `;
+            overlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:${borderColor};"><div class="confidence-badge" style="bottom:-25px; left:0;">Keyakinan: ${confidence}%</div></div>`;
         }
 
         function startRealTimeDetection() {
             if (realTimeDetectionInterval) clearInterval(realTimeDetectionInterval);
             const video = document.getElementById('faceVideo');
             if (!video) return;
-            
             realTimeDetectionInterval = setInterval(async () => {
                 if (!video.srcObject || video.paused || video.ended || !modelsLoaded) return;
                 try {
-                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                        .withFaceLandmarks();
-                    
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
                     if (detection) {
                         drawFaceOverlay(video, detection);
                         const confidence = Math.round(detection.detection.score * 100);
                         const statusMsg = document.getElementById('faceStatusMsg');
-                        if (detection.detection.score > 0.7) {
-                            statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan dengan baik (${confidence}%)</span><br><span class='text-xs'>Sedia untuk imbasan</span>`;
-                        } else {
-                            statusMsg.innerHTML = `<span class='text-amber-600 font-black'>⚠️ Wajah dikesan (${confidence}%)</span><br><span class='text-xs'>Pastikan wajah jelas dan pencahayaan mencukupi</span>`;
-                        }
-                    } else {
-                        if (faceOverlay) faceOverlay.innerHTML = '';
-                        const statusMsg = document.getElementById('faceStatusMsg');
-                        statusMsg.innerHTML = "<span class='text-amber-600 font-black'>🔍 Tiada wajah dikesan</span><br><span class='text-xs'>Pastikan wajah berada dalam bulatan panduan</span>";
-                    }
+                        if (detection.detection.score > 0.7) statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan dengan baik (${confidence}%)</span><br><span class='text-xs'>Sedia untuk imbasan</span>`;
+                        else statusMsg.innerHTML = `<span class='text-amber-600 font-black'>⚠️ Wajah dikesan (${confidence}%)</span><br><span class='text-xs'>Pastikan wajah jelas dan pencahayaan mencukupi</span>`;
+                    } else { if (faceOverlay) faceOverlay.innerHTML = ''; document.getElementById('faceStatusMsg').innerHTML = "<span class='text-amber-600 font-black'>🔍 Tiada wajah dikesan</span><br><span class='text-xs'>Pastikan wajah berada dalam bulatan panduan</span>"; }
                 } catch (e) {}
             }, 200);
         }
 
-        function stopRealTimeDetection() {
-            if (realTimeDetectionInterval) {
-                clearInterval(realTimeDetectionInterval);
-                realTimeDetectionInterval = null;
-            }
-            if (faceOverlay) faceOverlay.innerHTML = '';
-        }
+        function stopRealTimeDetection() { if (realTimeDetectionInterval) { clearInterval(realTimeDetectionInterval); realTimeDetectionInterval = null; } if (faceOverlay) faceOverlay.innerHTML = ''; }
 
-        function updateProgress(percent) {
-            const progressFill = document.getElementById('progressFill');
-            if (progressFill) progressFill.style.width = percent + '%';
-        }
+        function updateProgress(percent) { const progressFill = document.getElementById('progressFill'); if (progressFill) progressFill.style.width = percent + '%'; }
 
         async function captureResetFace() {
             if (isProcessing) return;
             isProcessing = true;
-            const btn = document.getElementById('captureBtn');
-            const video = document.getElementById('faceVideo');
-            const statusMsg = document.getElementById('faceStatusMsg');
-            const saveBtn = document.getElementById('saveFaceBtn');
-            
-            if (!video.srcObject) {
-                showAlert("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", 'warning');
-                isProcessing = false;
-                return;
-            }
-            
-            btn.disabled = true;
-            btn.innerHTML = 'Mengesan...';
+            const btn = document.getElementById('captureBtn'), video = document.getElementById('faceVideo'), statusMsg = document.getElementById('faceStatusMsg'), saveBtn = document.getElementById('saveFaceBtn');
+            if (!video.srcObject) { showAlert("Kamera Tidak Aktif", "Sila aktifkan kamera terlebih dahulu.", 'warning'); isProcessing = false; return; }
+            btn.disabled = true; btn.innerHTML = 'Mengesan...';
             updateProgress(20);
             statusMsg.innerHTML = "<span class='text-blue-600 font-black'>🔍 Mengesan wajah...</span>";
-            
-            let bestDetection = null;
-            let detectionStartTime = Date.now();
-            let attemptCount = 0;
-            
+            let bestDetection = null, detectionStartTime = Date.now(), attemptCount = 0;
             while (Date.now() - detectionStartTime < 5000) {
                 attemptCount++;
                 updateProgress(20 + ((Date.now() - detectionStartTime) / 5000) * 40);
                 try {
-                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                        .withFaceLandmarks().withFaceDescriptor();
-                    
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
                     if (detection) {
                         drawFaceOverlay(video, detection);
-                        if (!bestDetection || (detection.detection.score > bestDetection.detection.score)) {
-                            bestDetection = detection;
-                        }
+                        if (!bestDetection || (detection.detection.score > bestDetection.detection.score)) bestDetection = detection;
                         const confidence = Math.round(detection.detection.score * 100);
                         statusMsg.innerHTML = `<span class='text-green-600 font-black'>✅ Wajah dikesan! (${confidence}%)</span><br><span class='text-xs'>Teruskan pegang stabil...</span>`;
-                        if (detection.detection.score > 0.7 && attemptCount > 3) {
-                            break;
-                        }
-                    } else {
-                        if (faceOverlay) faceOverlay.innerHTML = '';
-                        statusMsg.innerHTML = "<span class='text-amber-600 font-black'>⚠️ Tiada wajah dikesan. Pastikan wajah berada dalam bulatan...</span>";
-                    }
+                        if (detection.detection.score > 0.7 && attemptCount > 3) break;
+                    } else { if (faceOverlay) faceOverlay.innerHTML = ''; statusMsg.innerHTML = "<span class='text-amber-600 font-black'>⚠️ Tiada wajah dikesan. Pastikan wajah berada dalam bulatan...</span>"; }
                 } catch (e) {}
                 await new Promise(resolve => setTimeout(resolve, 200));
             }
-            
             if (!bestDetection) {
                 statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ TIADA WAJAH DIKESAN</span>";
                 showAlert("Gagal", "Tiada wajah dikesan. Pastikan pencahayaan mencukupi dan wajah berada di hadapan kamera.", 'error');
-                btn.disabled = false;
-                btn.innerHTML = "Imbas Wajah";
-                updateProgress(0);
-                isProcessing = false;
+                btn.disabled = false; btn.innerHTML = "Imbas Wajah";
+                updateProgress(0); isProcessing = false;
                 if (faceOverlay) faceOverlay.innerHTML = '';
                 return;
             }
-            
             updateProgress(70);
             statusMsg.innerHTML = "<span class='text-blue-600 font-black'>📸 Merekod data wajah...</span>";
-            
             try {
-                const detection = bestDetection;
-                const dims = getVideoDimensions(video);
-                const faceWidth = detection.detection.box.width;
-                const faceHeight = detection.detection.box.height;
+                const detection = bestDetection, dims = getVideoDimensions(video);
+                const faceWidth = detection.detection.box.width, faceHeight = detection.detection.box.height;
                 let qualityIssues = [];
                 if (faceWidth < 60 || faceHeight < 60) qualityIssues.push("wajah terlalu jauh");
                 if (faceWidth > 280 || faceHeight > 280) qualityIssues.push("wajah terlalu dekat");
                 if (detection.detection.score < 0.6) qualityIssues.push("keyakinan rendah");
-                
                 if (qualityIssues.length > 0) {
                     statusMsg.innerHTML = `<span class='text-red-600 font-black'>✗ Kualiti wajah rendah: ${qualityIssues.join(", ")}</span>`;
                     showAlert("Gagal", `Sila laraskan jarak - ${qualityIssues.join(", ")}`, 'warning');
-                    updateProgress(0);
-                    btn.disabled = false;
-                    btn.innerHTML = "Imbas Wajah";
-                    isProcessing = false;
-                    return;
+                    updateProgress(0); btn.disabled = false; btn.innerHTML = "Imbas Wajah";
+                    isProcessing = false; return;
                 }
-                
-                // Store face descriptor
                 window.capturedFaceDescriptor = JSON.stringify(Array.from(detection.descriptor));
                 statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIKENALPASTI</span>";
                 btn.classList.add('hidden');
                 saveBtn.classList.remove('hidden');
                 updateProgress(100);
-                
                 if (faceOverlay) {
                     const box = adjustFaceBox(detection.detection.box, dims);
                     faceOverlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px; border-color:#10b981; box-shadow:0 0 20px rgba(16,185,129,0.5);"><div class="confidence-badge" style="background:#10b981; top:-25px; bottom:auto;">✓ BERJAYA</div></div>`;
                 }
                 showAlert("Berjaya", "Data biometrik telah direkodkan. Sila klik Simpan.", 'success');
-            } catch (e) {
-                console.error('Face capture error:', e);
-                statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>";
-                showAlert("Ralat", "Ralat semasa pemprosesan biometrik. Sila cuba lagi.", 'error');
-                updateProgress(0);
-                if (faceOverlay) faceOverlay.innerHTML = '';
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = "Imbas Wajah";
-                isProcessing = false;
-            }
+            } catch (e) { console.error('Face capture error:', e); statusMsg.innerHTML = "<span class='text-red-600 font-black'>✗ RALAT PEMPROSESAN</span>"; showAlert("Ralat", "Ralat semasa pemprosesan biometrik. Sila cuba lagi.", 'error'); updateProgress(0); if (faceOverlay) faceOverlay.innerHTML = ''; }
+            finally { btn.disabled = false; btn.innerHTML = "Imbas Wajah"; isProcessing = false; }
         }
 
-        function resetFaceCapture() {
-            window.capturedFaceDescriptor = null;
-            document.getElementById('faceStatusMsg').innerHTML = "<span class='text-gray-500'>Sedia untuk imbasan semula...</span>";
-            document.getElementById('captureBtn').classList.remove('hidden');
-            document.getElementById('saveFaceBtn').classList.add('hidden');
-            document.getElementById('resetFaceBtn').classList.add('hidden');
-            updateProgress(0);
-            if (faceOverlay) faceOverlay.innerHTML = '';
-        }
+        function resetFaceCapture() { window.capturedFaceDescriptor = null; document.getElementById('faceStatusMsg').innerHTML = "<span class='text-gray-500'>Sedia untuk imbasan semula...</span>"; document.getElementById('captureBtn').classList.remove('hidden'); document.getElementById('saveFaceBtn').classList.add('hidden'); document.getElementById('resetFaceBtn').classList.add('hidden'); updateProgress(0); if (faceOverlay) faceOverlay.innerHTML = ''; }
 
         async function saveResetFace() {
-            const uid = document.getElementById('resetFaceUid').value;
-            const faceDescriptor = window.capturedFaceDescriptor;
-            
-            if (!faceDescriptor) {
-                showAlert("Ralat", "Sila imbas wajah terlebih dahulu.", 'warning');
-                return;
-            }
-            
+            const uid = document.getElementById('resetFaceUid').value, faceDescriptor = window.capturedFaceDescriptor;
+            if (!faceDescriptor) { showAlert("Ralat", "Sila imbas wajah terlebih dahulu.", 'warning'); return; }
             const saveBtn = document.getElementById('saveFaceBtn');
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            
+            saveBtn.disabled = true; saveBtn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             try {
                 const result = await callAPI('updateUserFace', { uid, faceDescriptor });
-                if (result.success) {
-                    showAlert("Berjaya", "Wajah kakitangan telah dikemaskini.", 'success');
-                    closeResetFaceModal();
-                    loadAllUsers();
-                } else {
-                    showAlert("Ralat", result.error || "Gagal mengemaskini wajah", 'error');
-                }
-            } catch (error) {
-                showAlert("Ralat", "Gagal menghubungi server", 'error');
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = 'Simpan Wajah';
-            }
+                if (result.success) { showAlert("Berjaya", "Wajah kakitangan telah dikemaskini.", 'success'); closeResetFaceModal(); loadAllUsers(); }
+                else { showAlert("Ralat", result.error || "Gagal mengemaskini wajah", 'error'); }
+            } catch (error) { showAlert("Ralat", "Gagal menghubungi server", 'error'); }
+            finally { saveBtn.disabled = false; saveBtn.innerHTML = 'Simpan Wajah'; }
         }
 
         // ============================================
@@ -2039,350 +1793,118 @@ Jabatan Imigresen Malaysia`;
         async function deleteUser(uid, name) {
             showConfirm('Padam Pengguna', `Anda pasti mahu memadamkan ${name}? Tindakan ini tidak boleh dibatalkan.`, async function() {
                 try {
-                    const result = await callAPI('deleteUser', { 
-                        data: JSON.stringify({ uid: uid }),
-                        requestingUser: JSON.stringify(currentUser)
-                    });
-                    if (result.success) {
-                        showAlert('Berjaya', `Pengguna ${name} telah dipadamkan`, 'success');
-                        await loadAllUsers();
-                    } else {
-                        showAlert('Ralat', result.error || 'Gagal memadam pengguna', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error deleting user:', error);
-                    showAlert('Ralat', 'Gagal memadam pengguna', 'error');
-                }
+                    const result = await callAPI('deleteUser', { data: JSON.stringify({ uid }), requestingUser: JSON.stringify(currentUser) });
+                    if (result.success) { showAlert('Berjaya', `Pengguna ${name} telah dipadamkan`, 'success'); await loadAllUsers(); loadUserDevices(); }
+                    else { showAlert('Ralat', result.error || 'Gagal memadam pengguna', 'error'); }
+                } catch (error) { showAlert('Ralat', 'Gagal memadam pengguna', 'error'); }
             });
         }
 
         // ============================================
         // MODAL ADMIN (Tambah)
         // ============================================
-        window.showAddAdminModal = function() {
-            document.getElementById('adminModal').style.display = 'flex';
-            document.getElementById('adminIsSuperadmin').checked = false;
-            setTimeout(() => initAdminMap(1.532915, 110.358957), 300);
-        };
-
-        function closeAdminModal() {
-            document.getElementById('adminModal').style.display = 'none';
-        }
-
+        window.showAddAdminModal = function() { document.getElementById('adminModal').style.display = 'flex'; document.getElementById('adminIsSuperadmin').checked = false; setTimeout(() => initAdminMap(1.532915, 110.358957), 300); };
+        function closeAdminModal() { document.getElementById('adminModal').style.display = 'none'; }
         function initAdminMap(lat, lng) {
             if (adminMap) adminMap.remove();
-            
             adminMap = L.map('adminLocationMap').setView([lat, lng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
-            
             adminMarker = L.marker([lat, lng], { draggable: true }).addTo(adminMap);
-
-            adminMarker.on('dragend', function(e) {
-                const pos = e.target.getLatLng();
-                document.getElementById('adminLat').value = pos.lat;
-                document.getElementById('adminLng').value = pos.lng;
-                reverseGeocode(pos.lat, pos.lng, 'admin');
-            });
-
-            adminMap.on('click', function(e) {
-                adminMarker.setLatLng(e.latlng);
-                document.getElementById('adminLat').value = e.latlng.lat;
-                document.getElementById('adminLng').value = e.latlng.lng;
-                reverseGeocode(e.latlng.lat, e.latlng.lng, 'admin');
-            });
-            
-            document.getElementById('adminLat').value = lat;
-            document.getElementById('adminLng').value = lng;
-            reverseGeocode(lat, lng, 'admin');
+            adminMarker.on('dragend', e => { const pos = e.target.getLatLng(); document.getElementById('adminLat').value = pos.lat; document.getElementById('adminLng').value = pos.lng; reverseGeocode(pos.lat, pos.lng, 'admin'); });
+            adminMap.on('click', e => { adminMarker.setLatLng(e.latlng); document.getElementById('adminLat').value = e.latlng.lat; document.getElementById('adminLng').value = e.latlng.lng; reverseGeocode(e.latlng.lat, e.latlng.lng, 'admin'); });
+            document.getElementById('adminLat').value = lat; document.getElementById('adminLng').value = lng; reverseGeocode(lat, lng, 'admin');
         }
-
         window.getAdminLocation = function() {
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    document.getElementById('adminLat').value = lat;
-                    document.getElementById('adminLng').value = lng;
-                    adminMarker.setLatLng([lat, lng]);
-                    adminMap.setView([lat, lng], 16);
-                    reverseGeocode(lat, lng, 'admin');
-                },
-                () => showAlert('Ralat', 'Gagal mengesan lokasi', 'error')
-            );
+            navigator.geolocation.getCurrentPosition(pos => { const lat = pos.coords.latitude, lng = pos.coords.longitude; document.getElementById('adminLat').value = lat; document.getElementById('adminLng').value = lng; adminMarker.setLatLng([lat, lng]); adminMap.setView([lat, lng], 16); reverseGeocode(lat, lng, 'admin'); }, () => showAlert('Ralat', 'Gagal mengesan lokasi', 'error'));
         };
-
         window.saveAdmin = async function() {
-            const isSuperadmin = document.getElementById('adminIsSuperadmin').checked;
-            const role = isSuperadmin ? 'superadmin' : 'admin';
-            
-            const data = {
-                name: document.getElementById('adminNameInput').value,
-                email: document.getElementById('adminEmailInput').value,
-                password: document.getElementById('adminPasswordInput').value,
-                branch: document.getElementById('adminBranchInput').value,
-                unit: document.getElementById('adminUnitInput').value,
-                location: document.getElementById('adminLocationInput').value,
-                lat: document.getElementById('adminLat').value,
-                lng: document.getElementById('adminLng').value,
-                role: role
-            };
-
-            if (!data.name || !data.email || !data.password || !data.branch || !data.location) {
-                showAlert('Ralat', 'Sila lengkapkan semua maklumat', 'warning');
-                return;
-            }
-
+            const isSuperadmin = document.getElementById('adminIsSuperadmin').checked, role = isSuperadmin ? 'superadmin' : 'admin';
+            const data = { name: document.getElementById('adminNameInput').value, email: document.getElementById('adminEmailInput').value, password: document.getElementById('adminPasswordInput').value, branch: document.getElementById('adminBranchInput').value, unit: document.getElementById('adminUnitInput').value, location: document.getElementById('adminLocationInput').value, lat: document.getElementById('adminLat').value, lng: document.getElementById('adminLng').value, role };
+            if (!data.name || !data.email || !data.password || !data.branch || !data.location) { showAlert('Ralat', 'Sila lengkapkan semua maklumat', 'warning'); return; }
             const btn = document.getElementById('saveAdminBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-
+            btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             try {
-                const result = await callAPI('createAdmin', { 
-                    data: JSON.stringify(data),
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                
-                if (result.success) {
-                    showAlert('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`, 'success');
-                    closeAdminModal();
-                    await loadAdmins();
-                } else {
-                    showAlert('Ralat', result.error || 'Gagal menyimpan', 'error');
-                }
-            } catch (error) {
-                showAlert('Ralat', 'Gagal menyimpan data', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Daftar Admin';
-            }
+                const result = await callAPI('createAdmin', { data: JSON.stringify(data), requestingUser: JSON.stringify(currentUser) });
+                if (result.success) { showAlert('Berjaya', `Admin baru (${isSuperadmin ? 'SUPERADMIN' : 'admin'}) telah didaftarkan`, 'success'); closeAdminModal(); await loadAdmins(); }
+                else { showAlert('Ralat', result.error || 'Gagal menyimpan', 'error'); }
+            } catch (error) { showAlert('Ralat', 'Gagal menyimpan data', 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = 'Daftar Admin'; }
         };
 
         // ============================================
         // DELETE ADMIN
         // ============================================
-        window.openDeleteModal = function(uid) {
-            adminToDelete = uid;
-            document.getElementById('deleteModal').style.display = 'flex';
-        };
-
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-            adminToDelete = null;
-        }
-
+        window.openDeleteModal = function(uid) { adminToDelete = uid; document.getElementById('deleteModal').style.display = 'flex'; };
+        function closeDeleteModal() { document.getElementById('deleteModal').style.display = 'none'; adminToDelete = null; }
         document.getElementById('confirmDeleteBtn').onclick = async function() {
             if (!adminToDelete) return;
-            
-            const btn = this;
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-
+            const btn = this; btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             try {
-                const result = await callAPI('deleteAdmin', { 
-                    data: JSON.stringify({ uid: adminToDelete }),
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                
-                if (result.success) {
-                    showAlert('Berjaya', 'Admin telah dipadamkan', 'success');
-                    closeDeleteModal();
-                    await loadAdmins();
-                } else {
-                    showAlert('Ralat', result.error || 'Gagal memadam', 'error');
-                }
-            } catch (error) {
-                showAlert('Ralat', 'Gagal memadam admin', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Ya, Padam';
-            }
+                const result = await callAPI('deleteAdmin', { data: JSON.stringify({ uid: adminToDelete }), requestingUser: JSON.stringify(currentUser) });
+                if (result.success) { showAlert('Berjaya', 'Admin telah dipadamkan', 'success'); closeDeleteModal(); await loadAdmins(); }
+                else { showAlert('Ralat', result.error || 'Gagal memadam', 'error'); }
+            } catch (error) { showAlert('Ralat', 'Gagal memadam admin', 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = 'Ya, Padam'; }
         };
 
         // ============================================
         // CHANGE BRANCH FUNCTIONS
         // ============================================
-        function changeAdminBranch(uid, name, currentBranch) {
-            changeBranchTarget = { uid: uid, name: name, currentBranch: currentBranch, email: admins.find(a => a.uid === uid)?.email };
-            changeBranchType = 'admin';
-            document.getElementById('changeBranchUserInfo').innerHTML = `Tukar cawangan untuk: <strong>${escapeHtml(name)}</strong><br>Cawangan semasa: <strong>${escapeHtml(currentBranch)}</strong>`;
-            document.getElementById('changeBranchReason').value = '';
-            document.getElementById('changeBranchModal').style.display = 'flex';
-        }
-
-        function changeUserBranch(uid, name, currentBranch) {
-            changeBranchTarget = { uid: uid, name: name, currentBranch: currentBranch, email: users.find(u => u.uid === uid)?.email };
-            changeBranchType = 'user';
-            document.getElementById('changeBranchUserInfo').innerHTML = `Tukar cawangan untuk: <strong>${escapeHtml(name)}</strong><br>Cawangan semasa: <strong>${escapeHtml(currentBranch)}</strong>`;
-            document.getElementById('changeBranchReason').value = '';
-            document.getElementById('changeBranchModal').style.display = 'flex';
-        }
-
-        function closeChangeBranchModal() {
-            document.getElementById('changeBranchModal').style.display = 'none';
-            changeBranchTarget = null;
-            changeBranchType = null;
-        }
-
+        function changeAdminBranch(uid, name, currentBranch) { changeBranchTarget = { uid, name, currentBranch, email: admins.find(a => a.uid === uid)?.email }; changeBranchType = 'admin'; document.getElementById('changeBranchUserInfo').innerHTML = `Tukar cawangan untuk: <strong>${escapeHtml(name)}</strong><br>Cawangan semasa: <strong>${escapeHtml(currentBranch)}</strong>`; document.getElementById('changeBranchReason').value = ''; document.getElementById('changeBranchModal').style.display = 'flex'; }
+        function changeUserBranch(uid, name, currentBranch) { changeBranchTarget = { uid, name, currentBranch, email: users.find(u => u.uid === uid)?.email }; changeBranchType = 'user'; document.getElementById('changeBranchUserInfo').innerHTML = `Tukar cawangan untuk: <strong>${escapeHtml(name)}</strong><br>Cawangan semasa: <strong>${escapeHtml(currentBranch)}</strong>`; document.getElementById('changeBranchReason').value = ''; document.getElementById('changeBranchModal').style.display = 'flex'; }
+        function closeChangeBranchModal() { document.getElementById('changeBranchModal').style.display = 'none'; changeBranchTarget = null; changeBranchType = null; }
         async function confirmChangeBranch() {
-            const newBranch = document.getElementById('newBranchSelect').value;
-            const reason = document.getElementById('changeBranchReason').value;
-            
+            const newBranch = document.getElementById('newBranchSelect').value, reason = document.getElementById('changeBranchReason').value;
             if (!newBranch) return;
-            if (!reason) {
-                showAlert('Ralat', 'Sila nyatakan sebab perubahan cawangan', 'warning');
-                return;
-            }
-            
-            const btn = document.getElementById('confirmBranchBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            
-            const oldBranch = changeBranchTarget.currentBranch;
-            const targetName = changeBranchTarget.name;
-            const targetEmail = changeBranchTarget.email;
-            
+            if (!reason) { showAlert('Ralat', 'Sila nyatakan sebab perubahan cawangan', 'warning'); return; }
+            const btn = document.getElementById('confirmBranchBtn'); btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
+            const oldBranch = changeBranchTarget.currentBranch, targetName = changeBranchTarget.name, targetEmail = changeBranchTarget.email;
             try {
                 let result;
-                if (changeBranchType === 'admin') {
-                    result = await callAPI('updateAdmin', { 
-                        data: JSON.stringify({ 
-                            uid: changeBranchTarget.uid, 
-                            branch: newBranch,
-                            name: targetName
-                        }),
-                        requestingUser: JSON.stringify(currentUser)
-                    });
-                } else {
-                    result = await callAPI('updateUser', { 
-                        data: JSON.stringify({ 
-                            uid: changeBranchTarget.uid, 
-                            branch: newBranch,
-                            name: targetName
-                        }),
-                        requestingUser: JSON.stringify(currentUser)
-                    });
-                }
-                
+                if (changeBranchType === 'admin') result = await callAPI('updateAdmin', { data: JSON.stringify({ uid: changeBranchTarget.uid, branch: newBranch, name: targetName }), requestingUser: JSON.stringify(currentUser) });
+                else result = await callAPI('updateUser', { data: JSON.stringify({ uid: changeBranchTarget.uid, branch: newBranch, name: targetName }), requestingUser: JSON.stringify(currentUser) });
                 if (result.success) {
-                    await sendBranchChangeNotificationDetailed(
-                        targetName,
-                        changeBranchType,
-                        oldBranch,
-                        newBranch,
-                        reason,
-                        currentUser.name,
-                        targetEmail
-                    );
-                    
+                    await sendBranchChangeNotificationDetailed(targetName, changeBranchType, oldBranch, newBranch, reason, currentUser.name, targetEmail);
                     showAlert('Berjaya', `Cawangan ${targetName} telah ditukar dari ${oldBranch} ke ${newBranch}`, 'success');
                     closeChangeBranchModal();
-                    await loadAdmins();
-                    await loadAllUsers();
-                } else {
-                    showAlert('Ralat', result.error || 'Gagal menukar cawangan', 'error');
-                }
-            } catch (error) {
-                console.error('Error changing branch:', error);
-                showAlert('Ralat', 'Gagal menukar cawangan', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Tukar';
-            }
+                    await loadAdmins(); await loadAllUsers(); loadUserDevices();
+                } else { showAlert('Ralat', result.error || 'Gagal menukar cawangan', 'error'); }
+            } catch (error) { showAlert('Ralat', 'Gagal menukar cawangan', 'error'); }
+            finally { btn.disabled = false; btn.innerHTML = 'Tukar'; }
         }
 
         // ============================================
         // RECALCULATE OVERTIME FUNCTIONS
         // ============================================
         async function recalculateOvertime() {
-            const startDate = document.getElementById('recalcStartDate').value;
-            const endDate = document.getElementById('recalcEndDate').value;
-            
-            if (!startDate || !endDate) {
-                showAlert('Ralat', 'Sila pilih tarikh mula dan tamat', 'warning');
-                return;
-            }
-            
-            if (startDate > endDate) {
-                showAlert('Ralat', 'Tarikh mula tidak boleh lepas tarikh tamat', 'error');
-                return;
-            }
-            
+            const startDate = document.getElementById('recalcStartDate').value, endDate = document.getElementById('recalcEndDate').value;
+            if (!startDate || !endDate) { showAlert('Ralat', 'Sila pilih tarikh mula dan tamat', 'warning'); return; }
+            if (startDate > endDate) { showAlert('Ralat', 'Tarikh mula tidak boleh lepas tarikh tamat', 'error'); return; }
             showConfirm('Kira Semula OT', `Anda pasti mahu mengira semula OT untuk rekod dari ${startDate} hingga ${endDate}?`, async function() {
-                const btn = document.getElementById('recalcBtn');
-                const resultDiv = document.getElementById('recalcResult');
-                const resultMsg = document.getElementById('recalcMessage');
-                
-                btn.disabled = true;
-                btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula...';
+                const btn = document.getElementById('recalcBtn'), resultDiv = document.getElementById('recalcResult'), resultMsg = document.getElementById('recalcMessage');
+                btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula...';
                 resultDiv.classList.add('hidden');
-                
                 try {
-                    const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
-                    
-                    if (result.success) {
-                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula.`;
-                        resultDiv.classList.remove('hidden');
-                        resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
-                        showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success');
-                    } else {
-                        resultMsg.innerHTML = result.error || 'Gagal mengira semula';
-                        resultDiv.classList.remove('hidden');
-                        resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
-                        showAlert('Ralat', result.error || 'Gagal mengira semula', 'error');
-                    }
-                } catch (error) {
-                    console.error('Recalculate error:', error);
-                    resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
-                    resultDiv.classList.remove('hidden');
-                    resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
-                    showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="material-symbols-rounded">refresh</span> Kira Semula OT';
-                }
+                    const result = await callAPI('recalculateOvertime', { startDate, endDate });
+                    if (result.success) { resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula.`; resultDiv.classList.remove('hidden'); resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2'; showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success'); }
+                    else { resultMsg.innerHTML = result.error || 'Gagal mengira semula'; resultDiv.classList.remove('hidden'); resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2'; showAlert('Ralat', result.error || 'Gagal mengira semula', 'error'); }
+                } catch (error) { console.error('Recalculate error:', error); resultMsg.innerHTML = 'Gagal berkomunikasi dengan server'; resultDiv.classList.remove('hidden'); resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2'; showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error'); }
+                finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">refresh</span> Kira Semula OT'; }
             });
         }
 
         async function recalculateAllOvertime() {
-            const startDate = '2020-01-01';
-            const endDate = new Date().toISOString().split('T')[0];
-            
+            const startDate = '2020-01-01', endDate = new Date().toISOString().split('T')[0];
             showConfirm('Kira Semua OT', `Kira semula SEMUA data kehadiran dari ${startDate} hingga ${endDate}?\n\n⚠️ Proses ini mungkin mengambil masa yang lama.`, async function() {
-                const btn = document.getElementById('recalcAllBtn');
-                const resultDiv = document.getElementById('recalcResult');
-                const resultMsg = document.getElementById('recalcMessage');
-                
-                btn.disabled = true;
-                btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula semua data...';
+                const btn = document.getElementById('recalcAllBtn'), resultDiv = document.getElementById('recalcResult'), resultMsg = document.getElementById('recalcMessage');
+                btn.disabled = true; btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Mengira semula semua data...';
                 resultDiv.classList.add('hidden');
-                
                 try {
-                    const result = await callAPI('recalculateOvertime', { startDate: startDate, endDate: endDate });
-                    
-                    if (result.success) {
-                        resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula.`;
-                        resultDiv.classList.remove('hidden');
-                        resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2';
-                        showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success');
-                        if (typeof loadAllUsers === 'function') {
-                            loadAllUsers();
-                        }
-                    } else {
-                        resultMsg.innerHTML = result.error || 'Gagal mengira semula';
-                        resultDiv.classList.remove('hidden');
-                        resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
-                        showAlert('Ralat', result.error || 'Gagal mengira semula', 'error');
-                    }
-                } catch (error) {
-                    console.error('Recalculate error:', error);
-                    resultMsg.innerHTML = 'Gagal berkomunikasi dengan server';
-                    resultDiv.classList.remove('hidden');
-                    resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2';
-                    showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span class="material-symbols-rounded">warning</span> Kira Semua Data';
-                }
+                    const result = await callAPI('recalculateOvertime', { startDate, endDate });
+                    if (result.success) { resultMsg.innerHTML = `${result.recalculated} rekod telah dikira semula.`; resultDiv.classList.remove('hidden'); resultDiv.className = 'mt-4 p-3 rounded-xl bg-green-50 text-green-700 flex items-center gap-2'; showAlert('Berjaya', `${result.recalculated} rekod telah dikira semula`, 'success'); }
+                    else { resultMsg.innerHTML = result.error || 'Gagal mengira semula'; resultDiv.classList.remove('hidden'); resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2'; showAlert('Ralat', result.error || 'Gagal mengira semula', 'error'); }
+                } catch (error) { console.error('Recalculate error:', error); resultMsg.innerHTML = 'Gagal berkomunikasi dengan server'; resultDiv.classList.remove('hidden'); resultDiv.className = 'mt-4 p-3 rounded-xl bg-red-50 text-red-700 flex items-center gap-2'; showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error'); }
+                finally { btn.disabled = false; btn.innerHTML = '<span class="material-symbols-rounded">warning</span> Kira Semua Data'; }
             });
         }
 
@@ -2392,47 +1914,17 @@ Jabatan Imigresen Malaysia`;
         function createBranchChart() {
             const canvas = document.getElementById('branchChart');
             if (!canvas) return;
-            
             if (branchChart) branchChart.destroy();
-            
             const counts = {};
-            users.forEach(user => {
-                counts[user.branch] = (counts[user.branch] || 0) + 1;
-            });
-
-            branchChart = new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(counts),
-                    datasets: [{
-                        label: 'Jumlah Pengguna',
-                        data: Object.values(counts),
-                        backgroundColor: '#7c3aed',
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                }
-            });
+            users.forEach(user => { counts[user.branch] = (counts[user.branch] || 0) + 1; });
+            branchChart = new Chart(canvas, { type: 'bar', data: { labels: Object.keys(counts), datasets: [{ label: 'Jumlah Pengguna', data: Object.values(counts), backgroundColor: '#7c3aed', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
         }
 
         // ============================================
         // EVENT LISTENERS
         // ============================================
-        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
-        
-        setTimeout(() => {
-            const today = new Date().toISOString().split('T')[0];
-            if (document.getElementById('recalcEndDate')) {
-                document.getElementById('recalcEndDate').value = today;
-            }
-        }, 100);
+        document.getElementById('loginPassword').addEventListener('keypress', e => { if (e.key === 'Enter') handleLogin(); });
+        setTimeout(() => { const today = new Date().toISOString().split('T')[0]; if (document.getElementById('recalcEndDate')) document.getElementById('recalcEndDate').value = today; }, 100);
     </script>
 </body>
 </html>
