@@ -1861,128 +1861,201 @@ async function loadFaceModels() {
         // ============================================
         // LOAD HOME DATA
         // ============================================
-        async function loadHomeData() {
-            if (!currentUser) return;
-            
-            const today = getCurrentDateMalaysia();
-            const displayDate = new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
-            document.getElementById('currentDateDisplay').innerText = displayDate;
-            document.getElementById('recentDate').innerText = displayDate;
-            
-            try {
-                const result = await getAttendance(currentUser.uid, today, today, currentUser);
-                
-                const hasRecord = result.success && result.data && result.data.length > 0;
-                const record = hasRecord ? result.data[0] : null;
-                const hasClockIn = record && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
-                const hasClockOut = record && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                
-                const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
-                
-                if (hasClockIn) {
-                    const clockInDate = new Date(record.clockIn);
-                    const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kuching' });
-                    const timeParts = clockInTime.split(' ');
-                    document.getElementById('clockInTime').innerText = timeParts[0];
-                    document.getElementById('clockInAmPm').innerText = timeParts[1] || '';
-                    document.getElementById('clockInStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
-                    document.getElementById('clockInStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
-                    
-                    const clockInBtn = document.getElementById('clockInBtn');
-                    clockInBtn.disabled = hasClockOut;
-                    clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
-                    
-                    document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
-                    document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
-                    document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
-                } else {
-                    document.getElementById('clockInTime').innerText = '--:--';
-                    document.getElementById('clockInAmPm').innerText = '';
-                    document.getElementById('clockInStatus').innerHTML = 'Belum Masuk';
-                    document.getElementById('clockInStatus').style.color = '#94a3b8';
-                }
-                
-                if (hasClockOut) {
-                    const clockOutDate = new Date(record.clockOut);
-                    const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kuching' });
-                    const timeParts = clockOutTime.split(' ');
-                    document.getElementById('clockOutTime').innerText = timeParts[0];
-                    document.getElementById('clockOutStatus').innerHTML = 'Tamat bertugas';
-                    document.getElementById('clockOutStatus').style.color = '#10b981';
-                } else {
-                    document.getElementById('clockOutTime').innerText = '— • —';
-                    document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
-                    document.getElementById('clockOutStatus').style.color = '#94a3b8';
-                }
-                
-                if (record && record.totalHours) {
-                    document.getElementById('totalHours').innerText = record.totalHours.toFixed(1);
-                    document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
-                } else {
-                    document.getElementById('totalHours').innerText = '0';
-                }
-                
-                if (record && record.totalOT) {
-                    document.getElementById('totalOT').innerText = record.totalOT.toFixed(1);
-                    document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
-                } else {
-                    document.getElementById('totalOT').innerText = '0';
-                }
-                
-                currentAttendanceRecord = record;
-                updateCameraUI();
-                
-                if (userLocation && userLocation.lat && userLocation.lng) {
-                    initLocationMap(userLocation.lat, userLocation.lng);
-                } else if (currentUser.lat && currentUser.lng) {
-                    initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
-                }
-                
-            } catch (error) {
-                console.error('Load home data error:', error);
+async function loadHomeData() {
+    if (!currentUser) return;
+    
+    const today = getCurrentDateMalaysia();
+    const displayDate = new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+    document.getElementById('currentDateDisplay').innerText = displayDate;
+    document.getElementById('recentDate').innerText = displayDate;
+    
+    try {
+        const result = await getAttendance(currentUser.uid, today, today, currentUser);
+        
+        console.log('LoadHomeData result:', result); // Debug
+        
+        const hasRecord = result.success && result.data && result.data.length > 0;
+        const record = hasRecord ? result.data[0] : null;
+        
+        // Check if record has valid clockIn (bukan string kosong, bukan 'null')
+        const hasClockIn = record && record.clockIn && 
+                          record.clockIn !== '' && 
+                          record.clockIn !== 'null' &&
+                          record.clockIn !== '--:--';
+        
+        const hasClockOut = record && record.clockOut && 
+                           record.clockOut !== '' && 
+                           record.clockOut !== 'null' &&
+                           record.clockOut !== '--:--';
+        
+        const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+        
+        if (hasClockIn) {
+            // Parse clockIn time with proper timezone handling
+            let clockInDate;
+            if (typeof record.clockIn === 'string' && record.clockIn.includes(' ')) {
+                clockInDate = new Date(record.clockIn);
+            } else {
+                clockInDate = new Date(today + 'T' + record.clockIn);
             }
+            
+            const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                hour12: true, 
+                timeZone: 'Asia/Kuching' 
+            });
+            const timeParts = clockInTime.split(' ');
+            document.getElementById('clockInTime').innerText = timeParts[0];
+            document.getElementById('clockInAmPm').innerText = timeParts[1] || '';
+            document.getElementById('clockInStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
+            document.getElementById('clockInStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
+            
+            const clockInBtn = document.getElementById('clockInBtn');
+            // Enable button ONLY if NOT clocked out yet
+            clockInBtn.disabled = hasClockOut;
+            clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
+            clockInBtn.style.cursor = hasClockOut ? 'not-allowed' : 'pointer';
+            
+            document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
+            document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
+            document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
+        } else {
+            // No clock in yet - button should be ENABLED
+            document.getElementById('clockInTime').innerText = '--:--';
+            document.getElementById('clockInAmPm').innerText = '';
+            document.getElementById('clockInStatus').innerHTML = 'Belum Masuk';
+            document.getElementById('clockInStatus').style.color = '#94a3b8';
+            
+            // Enable clock in button
+            const clockInBtn = document.getElementById('clockInBtn');
+            clockInBtn.disabled = false;
+            clockInBtn.style.background = '#10b981';
+            clockInBtn.style.cursor = 'pointer';
+            
+            document.getElementById('recentStatus').innerHTML = 'BELUM MASUK';
+            document.getElementById('recentStatus').style.background = '#fef3c7';
+            document.getElementById('recentStatus').style.color = '#92400e';
         }
         
-        function updateCameraUI() {
-            const hasClockIn = currentAttendanceRecord && currentAttendanceRecord.clockIn &&
-                              currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null';
-            const hasClockOut = currentAttendanceRecord && currentAttendanceRecord.clockOut &&
-                               currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null';
-            
-            const cameraStatus = document.getElementById('cameraStatus');
-            const masukBtn = document.getElementById('cameraClockInBtn');
-            const keluarBtn = document.getElementById('cameraClockOutBtn');
-            
-            if (hasClockIn && !hasClockOut) {
-                cameraStatus.innerText = 'DALAM BERTUGAS';
-                cameraStatus.style.background = '#dbeafe';
-                cameraStatus.style.color = '#1e3a8a';
-                masukBtn.disabled = true;
-                masukBtn.style.background = '#cbd5e1';
-                keluarBtn.disabled = false;
-                keluarBtn.classList.add('active');
-            } else if (hasClockIn && hasClockOut) {
-                cameraStatus.innerText = 'SELESAI';
-                cameraStatus.style.background = '#dcfce7';
-                cameraStatus.style.color = '#166534';
-                masukBtn.disabled = true;
-                masukBtn.style.background = '#cbd5e1';
-                keluarBtn.disabled = true;
-                keluarBtn.classList.remove('active');
-                keluarBtn.style.background = '#cbd5e1';
+        if (hasClockOut) {
+            let clockOutDate;
+            if (typeof record.clockOut === 'string' && record.clockOut.includes(' ')) {
+                clockOutDate = new Date(record.clockOut);
             } else {
-                cameraStatus.innerText = 'BELUM MASUK';
-                cameraStatus.style.background = '#fef3c7';
-                cameraStatus.style.color = '#92400e';
-                masukBtn.disabled = false;
-                masukBtn.style.background = '#10b981';
-                keluarBtn.disabled = true;
-                keluarBtn.classList.remove('active');
-                keluarBtn.style.background = '#f1f5f9';
+                clockOutDate = new Date(today + 'T' + record.clockOut);
             }
             
-            updateCameraLocationDisplay();
+            const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                hour12: true, 
+                timeZone: 'Asia/Kuching' 
+            });
+            const timeParts = clockOutTime.split(' ');
+            document.getElementById('clockOutTime').innerText = timeParts[0];
+            document.getElementById('clockOutStatus').innerHTML = 'Tamat bertugas';
+            document.getElementById('clockOutStatus').style.color = '#10b981';
+        } else {
+            document.getElementById('clockOutTime').innerText = '— • —';
+            document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
+            document.getElementById('clockOutStatus').style.color = '#94a3b8';
         }
+        
+        if (record && record.totalHours && record.totalHours > 0) {
+            document.getElementById('totalHours').innerText = record.totalHours.toFixed(1);
+            document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
+        } else {
+            document.getElementById('totalHours').innerText = '0';
+        }
+        
+        if (record && record.totalOT && record.totalOT > 0) {
+            document.getElementById('totalOT').innerText = record.totalOT.toFixed(1);
+            document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
+        } else {
+            document.getElementById('totalOT').innerText = '0';
+        }
+        
+        // Store current attendance record for camera page
+        currentAttendanceRecord = record;
+        updateCameraUI();
+        
+        if (userLocation && userLocation.lat && userLocation.lng) {
+            initLocationMap(userLocation.lat, userLocation.lng);
+        } else if (currentUser.lat && currentUser.lng) {
+            initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
+        }
+        
+    } catch (error) {
+        console.error('Load home data error:', error);
+        showNotification('Ralat', 'Gagal memuat data kehadiran', true);
+    }
+}
+        
+function updateCameraUI() {
+    // Check if we have a valid attendance record
+    const hasValidRecord = currentAttendanceRecord && 
+                          currentAttendanceRecord.date === getCurrentDateMalaysia();
+    
+    // Check clock in status - make sure to check for valid values
+    const hasClockIn = hasValidRecord && 
+                      currentAttendanceRecord.clockIn &&
+                      currentAttendanceRecord.clockIn !== '' && 
+                      currentAttendanceRecord.clockIn !== 'null' &&
+                      currentAttendanceRecord.clockIn !== '--:--';
+    
+    const hasClockOut = hasValidRecord && 
+                       currentAttendanceRecord.clockOut &&
+                       currentAttendanceRecord.clockOut !== '' && 
+                       currentAttendanceRecord.clockOut !== 'null' &&
+                       currentAttendanceRecord.clockOut !== '--:--';
+    
+    const cameraStatus = document.getElementById('cameraStatus');
+    const masukBtn = document.getElementById('cameraClockInBtn');
+    const keluarBtn = document.getElementById('cameraClockOutBtn');
+    
+    console.log('UpdateCameraUI - hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut); // Debug
+    
+    if (hasClockIn && !hasClockOut) {
+        // Sudah clock in, belum clock out
+        cameraStatus.innerText = 'DALAM BERTUGAS';
+        cameraStatus.style.background = '#dbeafe';
+        cameraStatus.style.color = '#1e3a8a';
+        masukBtn.disabled = true;
+        masukBtn.style.background = '#cbd5e1';
+        masukBtn.style.cursor = 'not-allowed';
+        keluarBtn.disabled = false;
+        keluarBtn.classList.add('active');
+        keluarBtn.style.background = '#ef4444';
+        keluarBtn.style.cursor = 'pointer';
+    } else if (hasClockIn && hasClockOut) {
+        // Sudah clock in dan clock out - selesai
+        cameraStatus.innerText = 'SELESAI';
+        cameraStatus.style.background = '#dcfce7';
+        cameraStatus.style.color = '#166534';
+        masukBtn.disabled = true;
+        masukBtn.style.background = '#cbd5e1';
+        masukBtn.style.cursor = 'not-allowed';
+        keluarBtn.disabled = true;
+        keluarBtn.classList.remove('active');
+        keluarBtn.style.background = '#cbd5e1';
+        keluarBtn.style.cursor = 'not-allowed';
+    } else {
+        // Belum clock in - button MASUK perlu ENABLED
+        cameraStatus.innerText = 'BELUM MASUK';
+        cameraStatus.style.background = '#fef3c7';
+        cameraStatus.style.color = '#92400e';
+        masukBtn.disabled = false;
+        masukBtn.style.background = '#10b981';
+        masukBtn.style.cursor = 'pointer';
+        keluarBtn.disabled = true;
+        keluarBtn.classList.remove('active');
+        keluarBtn.style.background = '#f1f5f9';
+        keluarBtn.style.cursor = 'not-allowed';
+    }
+    
+    updateCameraLocationDisplay();
+}
         
         function updateCameraClock() {
             const now = new Date();
@@ -2240,6 +2313,7 @@ async function loadFaceModels() {
                         document.getElementById('loginPage').classList.add('hidden');
                         document.getElementById('app').classList.remove('hidden');
                         
+                        // Load data in sequence
                         loadHomeData();
                         loadAttendanceHistory();
                         startLocationTracking();
