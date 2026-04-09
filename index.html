@@ -1269,44 +1269,42 @@
         // ============================================
         function getCurrentDateMalaysia() {
             const now = new Date();
-            // Dapatkan UTC timestamp
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            // Tambah 8 jam untuk Malaysia (UTC+8)
-            const malaysiaTime = new Date(utc + (8 * 3600000));
-            
-            const year = malaysiaTime.getUTCFullYear();
-            const month = String(malaysiaTime.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(malaysiaTime.getUTCDate()).padStart(2, '0');
-            
+            // Gunakan terus date tanpa manipulasi UTC
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
         
         function getCurrentDateTimeMalaysia() {
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            return new Date(utc + (8 * 3600000));
+            // Kembalikan Date object asal kerana browser sudah dalam timezone Malaysia
+            return new Date();
         }
         
         function getCurrentTimeMalaysia() {
-            const now = getCurrentDateTimeMalaysia();
-            const hours = String(now.getUTCHours()).padStart(2, '0');
-            const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-            const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
             return `${hours}:${minutes}:${seconds}`;
         }
         
         function formatDateKey(date) {
             if (!date) return '';
-            // Pastikan date dianggap sebagai UTC+8
-            const year = date.getUTCFullYear();
-            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-            const day = String(date.getUTCDate()).padStart(2, '0');
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         }
         
         function isNewDay() {
             const today = getCurrentDateMalaysia();
             console.log('isNewDay check - Today:', today, 'LastChecked:', lastCheckedDate);
+            
+            if (lastCheckedDate === null) {
+                lastCheckedDate = today;
+                return false;
+            }
             
             if (lastCheckedDate !== today) {
                 console.log('NEW DAY DETECTED!', lastCheckedDate, '->', today);
@@ -1317,8 +1315,18 @@
         }
         
         function resetDailyData() {
-            console.log('Resetting daily data - new day detected');
-            currentAttendanceRecord = null;
+            const today = getCurrentDateMalaysia();
+            console.log('resetDailyData - Today is:', today);
+            console.log('Current attendance record date:', currentAttendanceRecord?.date);
+            
+            // Hanya reset jika rekod yang ada adalah untuk hari yang BERLAINAN
+            if (currentAttendanceRecord && currentAttendanceRecord.date !== today) {
+                console.log('Resetting daily data - old record from', currentAttendanceRecord.date, '!= today', today);
+                currentAttendanceRecord = null;
+            } else {
+                console.log('No reset needed - record date matches today or no record');
+            }
+            
             if (isCameraActive) {
                 stopCameraAndReset();
             }
@@ -1358,30 +1366,29 @@
         }
 
         function debugDateTime() {
-        console.log('=== DATE/TIME DEBUG ===');
-        
-        const now = new Date();
-        console.log('Browser local time:', now.toString());
-        console.log('Browser UTC:', now.toUTCString());
-        console.log('Browser timezone offset:', now.getTimezoneOffset(), 'minutes');
-        
-        const malaysiaDate1 = getCurrentDateMalaysia();
-        console.log('Malaysia date (getCurrentDateMalaysia):', malaysiaDate1);
-        
-        const malaysiaDateTime = getCurrentDateTimeMalaysia();
-        console.log('Malaysia datetime:', malaysiaDateTime.toISOString());
-        
-        console.log('=======================');
-        
-        return {
-            browserDate: now.toISOString().split('T')[0],
-            malaysiaDate: malaysiaDate1,
-            isCorrectDate: malaysiaDate1 === '2026-04-10'
-        };
-    }
-    
-    // Panggil debug
-    debugDateTime();
+            console.log('=== DATE/TIME DEBUG (FIXED) ===');
+            
+            const now = new Date();
+            console.log('Browser local time:', now.toString());
+            console.log('Browser getFullYear():', now.getFullYear());
+            console.log('Browser getMonth():', now.getMonth() + 1);
+            console.log('Browser getDate():', now.getDate());
+            
+            const malaysiaDate = getCurrentDateMalaysia();
+            console.log('Malaysia date (NEW):', malaysiaDate);
+            
+            const expectedDate = '2026-04-10';
+            console.log('Expected date:', expectedDate);
+            console.log('Match:', malaysiaDate === expectedDate);
+            
+            console.log('=======================');
+            
+            return {
+                browserDate: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`,
+                malaysiaDate: malaysiaDate,
+                isCorrect: malaysiaDate === expectedDate
+            };
+        }
         
         // ============================================
         // CHECK AND RESET ON NEW DAY
@@ -1816,27 +1823,30 @@
             if (!currentUser) return null;
             
             const today = getCurrentDateMalaysia();
+            console.log('refreshAttendanceData - Today:', today);
             
             try {
                 const result = await getAttendance(currentUser.uid, today, today);
                 
-                console.log('Refresh attendance for date:', today);
                 console.log('API Response:', result);
                 
                 if (result.success && result.data && result.data.length > 0) {
-                    // KRITIKAL: Pastikan rekod adalah untuk hari ini
                     const record = result.data[0];
+                    console.log('Record date from API:', record.date);
+                    console.log('Today date:', today);
+                    console.log('Dates match?', record.date === today);
+                    
+                    // KRITIKAL: Hanya set jika tarikh SAMA dengan hari ini
                     if (record.date === today) {
                         currentAttendanceRecord = record;
-                        console.log('Attendance record found for TODAY:', currentAttendanceRecord);
+                        console.log('✅ Attendance record set for TODAY');
                     } else {
-                        // Rekod adalah untuk tarikh lain - abaikan
                         currentAttendanceRecord = null;
-                        console.log('Record date mismatch - ignoring. Record date:', record.date, 'Today:', today);
+                        console.log('❌ Record date mismatch - ignoring. Record:', record.date, 'Today:', today);
                     }
                 } else {
                     currentAttendanceRecord = null;
-                    console.log('No attendance record for TODAY:', today);
+                    console.log('No attendance record for TODAY');
                 }
                 
                 return currentAttendanceRecord;
