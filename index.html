@@ -1480,7 +1480,7 @@
             // Check for new day first
             checkAndResetForNewDay();
             
-            // Refresh attendance data to get latest
+            // Refresh attendance data to get latest (PASTIKAN UNTUK HARI INI)
             await refreshAttendanceData();
             
             // Log untuk debug
@@ -1488,11 +1488,17 @@
             console.log('Current attendance record:', currentAttendanceRecord);
             console.log('Today date:', getCurrentDateMalaysia());
             
-            // Check action validity based on current record
+            // Check action validity based on current record for TODAY
+            const today = getCurrentDateMalaysia();
+            const isValidRecord = currentAttendanceRecord && currentAttendanceRecord.date === today;
+            
             if (action === 'clockin') {
-                if (currentAttendanceRecord && currentAttendanceRecord.clockIn && 
-                    currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null') {
-                    if (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '' || currentAttendanceRecord.clockOut === 'null') {
+                if (isValidRecord && currentAttendanceRecord.clockIn && 
+                    currentAttendanceRecord.clockIn !== '' && 
+                    currentAttendanceRecord.clockIn !== 'null') {
+                    if (!currentAttendanceRecord.clockOut || 
+                        currentAttendanceRecord.clockOut === '' || 
+                        currentAttendanceRecord.clockOut === 'null') {
                         showNotification('Makluman', 'Anda sudah clock in untuk hari ini', false);
                         return;
                     } else {
@@ -1500,13 +1506,17 @@
                         return;
                     }
                 }
-            } else if (action === 'clockout') {
-                if (!currentAttendanceRecord || !currentAttendanceRecord.clockIn || 
-                    currentAttendanceRecord.clockIn === '' || currentAttendanceRecord.clockIn === 'null') {
+            } 
+            else if (action === 'clockout') {
+                if (!isValidRecord || !currentAttendanceRecord.clockIn || 
+                    currentAttendanceRecord.clockIn === '' || 
+                    currentAttendanceRecord.clockIn === 'null') {
                     showNotification('Makluman', 'Sila clock in terlebih dahulu', true);
                     return;
                 }
-                if (currentAttendanceRecord.clockOut && currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null') {
+                if (currentAttendanceRecord.clockOut && 
+                    currentAttendanceRecord.clockOut !== '' && 
+                    currentAttendanceRecord.clockOut !== 'null') {
                     showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false);
                     return;
                 }
@@ -1757,18 +1767,25 @@
             const today = getCurrentDateMalaysia();
             
             try {
-                // Jangan hantar requestingUser - gunakan 3 parameter sahaja
                 const result = await getAttendance(currentUser.uid, today, today);
                 
                 console.log('Refresh attendance for date:', today);
                 console.log('API Response:', result);
                 
                 if (result.success && result.data && result.data.length > 0) {
-                    currentAttendanceRecord = result.data[0];
-                    console.log('Attendance record found:', currentAttendanceRecord);
+                    // KRITIKAL: Pastikan rekod adalah untuk hari ini
+                    const record = result.data[0];
+                    if (record.date === today) {
+                        currentAttendanceRecord = record;
+                        console.log('Attendance record found for TODAY:', currentAttendanceRecord);
+                    } else {
+                        // Rekod adalah untuk tarikh lain - abaikan
+                        currentAttendanceRecord = null;
+                        console.log('Record date mismatch - ignoring. Record date:', record.date, 'Today:', today);
+                    }
                 } else {
                     currentAttendanceRecord = null;
-                    console.log('No attendance record for', today);
+                    console.log('No attendance record for TODAY:', today);
                 }
                 
                 return currentAttendanceRecord;
@@ -1976,21 +1993,17 @@
                 // Update currentAttendanceRecord
                 currentAttendanceRecord = record;
                 
-                // Log untuk debug - tunjuk tarikh record
-                if (record) {
-                    console.log('Record date from API:', record.date);
-                    console.log('Today date:', today);
-                    console.log('Dates match:', record.date === today);
-                }
+                // KRITIKAL: Pastikan record adalah untuk hari ini
+                const recordForToday = record && record.date === today;
                 
                 // Check if record has valid clockIn untuk HARI INI
-                const hasClockIn = record && record.date === today && 
+                const hasClockIn = recordForToday && 
                                   record.clockIn && 
                                   record.clockIn !== '' && 
                                   record.clockIn !== 'null' &&
                                   record.clockIn !== '--:--';
                 
-                const hasClockOut = record && record.date === today && 
+                const hasClockOut = recordForToday && 
                                    record.clockOut && 
                                    record.clockOut !== '' && 
                                    record.clockOut !== 'null' &&
@@ -2099,7 +2112,7 @@
         function updateCameraUI() {
             const today = getCurrentDateMalaysia();
             
-            // Pastikan record adalah untuk hari ini
+            // KRITIKAL: Pastikan record adalah untuk hari ini
             const hasValidRecord = currentAttendanceRecord && 
                                   currentAttendanceRecord.date === today;
             
@@ -2135,7 +2148,8 @@
                 keluarBtn.classList.add('active');
                 keluarBtn.style.background = '#ef4444';
                 keluarBtn.style.cursor = 'pointer';
-            } else if (hasClockIn && hasClockOut) {
+            } 
+            else if (hasClockIn && hasClockOut) {
                 cameraStatus.innerText = 'SELESAI';
                 cameraStatus.style.background = '#dcfce7';
                 cameraStatus.style.color = '#166534';
@@ -2146,7 +2160,9 @@
                 keluarBtn.classList.remove('active');
                 keluarBtn.style.background = '#cbd5e1';
                 keluarBtn.style.cursor = 'not-allowed';
-            } else {
+            } 
+            else {
+                // TIADA rekod untuk hari ini ATAU rekod adalah untuk tarikh lain
                 cameraStatus.innerText = 'BELUM MASUK';
                 cameraStatus.style.background = '#fef3c7';
                 cameraStatus.style.color = '#92400e';
