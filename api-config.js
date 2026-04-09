@@ -1,12 +1,17 @@
+// ============================================
+// API CONFIGURATION - IMMI PRESENCE 360
+// VERSION: 3.0 (Enhanced Device Fingerprinting)
+// LAST UPDATED: 10 April 2026
+// ============================================
+
 const CONFIG = {
     API_BASE_URL: 'https://script.google.com/macros/s/AKfycbwXKIM8LMK9c93r4wFHEA2grIaF7T87FSexUALcH8KgfOD5GRgzxPwt-bTXwYm4vWhvNw/exec'
 };
 
 // ============================================
-// UTILITY FUNCTIONS
+// CORE API FUNCTIONS
 // ============================================
 
-// Fungsi global untuk panggil API (enhanced)
 async function callAPI(method, params = {}) {
     let url = CONFIG.API_BASE_URL + '?method=' + encodeURIComponent(method);
     
@@ -45,11 +50,279 @@ async function callAPI(method, params = {}) {
 }
 
 // ============================================
-// DEVICE FINGERPRINTING (Untuk Device Binding)
+// ENHANCED DEVICE FINGERPRINTING
 // ============================================
 
-// Get unique device fingerprint
-function getDeviceFingerprint() {
+// Get canvas fingerprint (unique per device/browser)
+function getCanvasFingerprint() {
+    try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 200;
+        canvas.height = 50;
+        
+        // Draw complex pattern for uniqueness
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#f60';
+        ctx.fillRect(0, 0, 100, 50);
+        ctx.fillStyle = '#069';
+        ctx.fillText('IMMI Presence 360', 2, 15);
+        ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+        ctx.fillRect(100, 0, 100, 50);
+        ctx.fillStyle = '#f0f';
+        ctx.fillText('✓', 150, 25);
+        
+        // Draw circle
+        ctx.beginPath();
+        ctx.arc(50, 35, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ff0';
+        ctx.fill();
+        
+        return canvas.toDataURL();
+    } catch(e) {
+        return 'canvas_not_supported';
+    }
+}
+
+// Get WebGL fingerprint (unique per GPU)
+function getWebGLFingerprint() {
+    try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        if (!gl) return 'webgl_not_supported';
+        
+        const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+        if (debugInfo) {
+            const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+            return `${vendor}|${renderer}`;
+        }
+        return 'webgl_no_debug_info';
+    } catch(e) {
+        return 'webgl_error';
+    }
+}
+
+// Detect device model from userAgent
+function detectDeviceModel(userAgent) {
+    let deviceModel = 'Unknown';
+    let brand = 'Unknown';
+    
+    // iOS model detection
+    if (/iPhone/i.test(userAgent)) {
+        brand = 'Apple';
+        // iPhone model mapping based on identifier
+        if (userAgent.includes('iPhone14,2')) deviceModel = 'iPhone 12 Pro';
+        else if (userAgent.includes('iPhone14,3')) deviceModel = 'iPhone 12 Pro Max';
+        else if (userAgent.includes('iPhone14,4')) deviceModel = 'iPhone 12 mini';
+        else if (userAgent.includes('iPhone14,5')) deviceModel = 'iPhone 13';
+        else if (userAgent.includes('iPhone14,6')) deviceModel = 'iPhone SE (3rd gen)';
+        else if (userAgent.includes('iPhone14,7')) deviceModel = 'iPhone 13 Pro';
+        else if (userAgent.includes('iPhone14,8')) deviceModel = 'iPhone 13 Pro Max';
+        else if (userAgent.includes('iPhone15,2')) deviceModel = 'iPhone 14 Pro';
+        else if (userAgent.includes('iPhone15,3')) deviceModel = 'iPhone 14 Pro Max';
+        else if (userAgent.includes('iPhone15,4')) deviceModel = 'iPhone 14';
+        else if (userAgent.includes('iPhone15,5')) deviceModel = 'iPhone 14 Plus';
+        else if (userAgent.includes('iPhone16,1')) deviceModel = 'iPhone 15 Pro';
+        else if (userAgent.includes('iPhone16,2')) deviceModel = 'iPhone 15 Pro Max';
+        else if (userAgent.includes('iPhone16,3')) deviceModel = 'iPhone 15';
+        else if (userAgent.includes('iPhone16,4')) deviceModel = 'iPhone 15 Plus';
+        else if (userAgent.includes('iPhone17,1')) deviceModel = 'iPhone 16 Pro';
+        else if (userAgent.includes('iPhone17,2')) deviceModel = 'iPhone 16 Pro Max';
+        else if (userAgent.includes('iPhone17,3')) deviceModel = 'iPhone 16';
+        else if (userAgent.includes('iPhone17,4')) deviceModel = 'iPhone 16 Plus';
+        else deviceModel = 'iPhone';
+    } 
+    // Android model detection
+    else if (/Android/i.test(userAgent)) {
+        // Extract device model from userAgent
+        const modelMatch = userAgent.match(/; ([\w\s]+?) Build/);
+        if (modelMatch && modelMatch[1]) {
+            deviceModel = modelMatch[1].trim();
+        }
+        
+        // Detect brand
+        if (userAgent.includes('SM-')) {
+            brand = 'Samsung';
+            const smMatch = userAgent.match(/SM-[A-Z0-9]+/);
+            if (smMatch) deviceModel = smMatch[0];
+        }
+        else if (userAgent.includes('Redmi')) brand = 'Xiaomi';
+        else if (userAgent.includes('RMX')) brand = 'Realme';
+        else if (userAgent.includes('VOG')) brand = 'Huawei';
+        else if (userAgent.includes('Pixel')) brand = 'Google';
+        else if (userAgent.includes('OPPO')) brand = 'OPPO';
+        else if (userAgent.includes('vivo')) brand = 'vivo';
+        else if (userAgent.includes('Mi ')) brand = 'Xiaomi';
+        else brand = 'Android';
+    }
+    
+    return { deviceModel, brand };
+}
+
+// Get detailed device info (async - includes battery)
+async function getDetailedDeviceInfo() {
+    const userAgent = navigator.userAgent;
+    const { deviceModel, brand } = detectDeviceModel(userAgent);
+    
+    // Get screen details
+    const screenDetails = {
+        width: screen.width,
+        height: screen.height,
+        colorDepth: screen.colorDepth,
+        pixelRatio: window.devicePixelRatio || 1,
+        orientation: screen.orientation ? screen.orientation.type : 'unknown'
+    };
+    
+    // Get battery info (if available)
+    let batteryInfo = null;
+    if (navigator.getBattery) {
+        try {
+            const battery = await navigator.getBattery();
+            batteryInfo = {
+                level: battery.level,
+                charging: battery.charging
+            };
+        } catch(e) {}
+    }
+    
+    // Get installed fonts (simple check)
+    const fonts = [];
+    const testFonts = ['Arial', 'Helvetica', 'Times New Roman', 'Courier New', 'Verdana', 'Georgia', 'Impact'];
+    for (const font of testFonts) {
+        if (document.fonts && document.fonts.check(`12px "${font}"`)) {
+            fonts.push(font);
+        }
+    }
+    
+    // Get plugins list
+    const plugins = [];
+    for (let i = 0; i < navigator.plugins.length; i++) {
+        plugins.push(navigator.plugins[i].name);
+    }
+    
+    // Get canvas fingerprint
+    const canvasFingerprint = getCanvasFingerprint();
+    
+    // Get WebGL fingerprint
+    const webglFingerprint = getWebGLFingerprint();
+    
+    return {
+        userAgent: userAgent,
+        platform: navigator.platform,
+        language: navigator.language,
+        languages: navigator.languages ? navigator.languages.join(',') : '',
+        hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+        deviceMemory: navigator.deviceMemory || 'unknown',
+        maxTouchPoints: navigator.maxTouchPoints || 0,
+        screenResolution: `${screen.width}x${screen.height}`,
+        colorDepth: screen.colorDepth,
+        pixelRatio: window.devicePixelRatio,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        deviceModel: deviceModel,
+        brand: brand,
+        screenDetails: screenDetails,
+        batteryInfo: batteryInfo,
+        fonts: fonts,
+        plugins: plugins,
+        canvasFingerprint: canvasFingerprint,
+        webglFingerprint: webglFingerprint
+    };
+}
+
+// Generate STRONG device ID (combines multiple factors)
+async function generateStrongDeviceId() {
+    const deviceInfo = await getDetailedDeviceInfo();
+    
+    // Combine multiple unique factors
+    const fingerprintParts = [
+        deviceInfo.userAgent,
+        deviceInfo.screenResolution,
+        deviceInfo.colorDepth,
+        deviceInfo.pixelRatio,
+        deviceInfo.timezone,
+        deviceInfo.language,
+        deviceInfo.hardwareConcurrency,
+        deviceInfo.deviceMemory,
+        deviceInfo.maxTouchPoints,
+        deviceInfo.deviceModel,
+        deviceInfo.brand,
+        deviceInfo.canvasFingerprint,
+        deviceInfo.webglFingerprint
+    ].join('|');
+    
+    // Generate hash using SHA-256 style (simplified)
+    let hash = 0;
+    for (let i = 0; i < fingerprintParts.length; i++) {
+        const char = fingerprintParts.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    
+    // Create primary device ID (hex)
+    const primaryId = Math.abs(hash).toString(16);
+    
+    // Add device model as suffix for easy identification
+    const modelSuffix = deviceInfo.deviceModel.replace(/[^a-zA-Z0-9]/g, '').substring(0, 15);
+    const brandPrefix = deviceInfo.brand.substring(0, 5);
+    
+    // Final device ID format: [hash]_[brand]_[model]
+    let deviceId = primaryId;
+    if (brandPrefix !== 'Unknown') {
+        deviceId = `${primaryId}_${brandPrefix}`;
+    }
+    if (modelSuffix) {
+        deviceId = `${deviceId}_${modelSuffix}`;
+    }
+    
+    return {
+        deviceId: deviceId,
+        deviceModel: deviceInfo.deviceModel,
+        brand: deviceInfo.brand,
+        platform: deviceInfo.platform,
+        screenResolution: deviceInfo.screenResolution,
+        fingerprintDetails: deviceInfo
+    };
+}
+
+// Get device info for registration (MAIN FUNCTION)
+async function getDeviceInfo() {
+    const strongId = await generateStrongDeviceId();
+    const userAgent = navigator.userAgent;
+    
+    // Detect platform
+    let platform = 'Web';
+    let deviceName = strongId.deviceModel || 'Desktop Browser';
+    
+    if (/android/i.test(userAgent)) {
+        platform = 'Android';
+        deviceName = strongId.deviceModel || 'Android Device';
+    } else if (/iphone|ipad|ipod/i.test(userAgent)) {
+        platform = 'iOS';
+        deviceName = strongId.deviceModel || 'iPhone/iPad';
+    } else if (/windows|mac|linux/i.test(userAgent) && !/mobile/i.test(userAgent)) {
+        platform = 'Desktop';
+        deviceName = strongId.deviceModel || (navigator.platform.includes('Mac') ? 'Mac' : 'Windows PC');
+    }
+    
+    return {
+        deviceId: strongId.deviceId,
+        deviceName: deviceName,
+        deviceModel: strongId.deviceModel,
+        brand: strongId.brand,
+        platform: platform,
+        userAgent: userAgent,
+        screenResolution: strongId.screenResolution,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+        deviceMemory: navigator.deviceMemory || 'unknown'
+    };
+}
+
+// Get simple device fingerprint (synchronous, for quick checks)
+function getSimpleDeviceFingerprint() {
     const components = {
         userAgent: navigator.userAgent,
         platform: navigator.platform,
@@ -57,21 +330,15 @@ function getDeviceFingerprint() {
         colorDepth: screen.colorDepth,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         language: navigator.language,
-        languages: navigator.languages ? navigator.languages.join(',') : '',
         hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
-        deviceMemory: navigator.deviceMemory || 'unknown',
-        touchPoints: navigator.maxTouchPoints || 0,
-        localStorage: !!window.localStorage,
-        sessionStorage: !!window.sessionStorage
+        deviceMemory: navigator.deviceMemory || 'unknown'
     };
     
-    // Generate hash from components
     let fingerprintString = '';
     for (let key in components) {
         fingerprintString += components[key] + '|';
     }
     
-    // Simple hash function
     let hash = 0;
     for (let i = 0; i < fingerprintString.length; i++) {
         const char = fingerprintString.charCodeAt(i);
@@ -85,46 +352,65 @@ function getDeviceFingerprint() {
     };
 }
 
-// Get device info for registration
-function getDeviceInfo() {
-    const fingerprint = getDeviceFingerprint();
-    
-    // Detect platform
-    const userAgent = navigator.userAgent;
-    const isAndroid = /android/i.test(userAgent);
-    const isIOS = /iphone|ipad|ipod/i.test(userAgent);
-    let platform = 'Web';
-    let deviceName = 'Desktop Browser';
-    
-    if (isAndroid) {
-        platform = 'Android';
-        deviceName = 'Android Device';
-    } else if (isIOS) {
-        platform = 'iOS';
-        deviceName = 'iPhone/iPad';
+// ============================================
+// PLATFORM DETECTION
+// ============================================
+
+function isAndroidDevice() {
+    return /android/i.test(navigator.userAgent);
+}
+
+function isIOSDevice() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isDesktopDevice() {
+    const ua = navigator.userAgent;
+    const isMobile = /mobile|android|iphone|ipad|ipod/i.test(ua);
+    return !isMobile;
+}
+
+function isFromNativeApp() {
+    return navigator.userAgent.includes('IMMI-Android-App');
+}
+
+// Block Android from web access
+function blockAndroidIfNeeded() {
+    if (isAndroidDevice() && !isFromNativeApp()) {
+        document.body.innerHTML = `
+            <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px; font-family: 'Inter', sans-serif;">
+                <div style="background: white; border-radius: 32px; padding: 40px; max-width: 400px; text-align: center;">
+                    <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                        <span style="font-size: 48px;">📱</span>
+                    </div>
+                    <h2 style="margin: 20px 0 10px; font-size: 24px; font-weight: 800;">Akses Tidak Dibenarkan</h2>
+                    <p style="color: #64748b; margin-bottom: 24px; line-height: 1.5;">
+                        Sila gunakan <strong>Aplikasi Android IMMI Presence 360</strong> untuk akses sistem.
+                    </p>
+                    <div style="background: #f0fdf4; padding: 16px; border-radius: 20px; margin: 20px 0;">
+                        <p style="color: #166534; font-size: 14px; font-weight: 600;">📱 Muat Turun Aplikasi</p>
+                        <p style="color: #166534; font-size: 12px; margin-top: 4px;">Google Play Store / GitHub</p>
+                    </div>
+                    <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
+                        Versi web hanya untuk pengguna iOS dan Desktop.
+                    </p>
+                    <button onclick="location.reload()" style="margin-top: 24px; background: #1e3a8a; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; cursor: pointer;">
+                        Cuba Lagi
+                    </button>
+                </div>
+            </div>
+        `;
+        return true;
     }
-    
-    return {
-        deviceId: fingerprint.hash,
-        deviceName: deviceName,
-        platform: platform,
-        userAgent: userAgent,
-        screenResolution: fingerprint.components.screenResolution,
-        timezone: fingerprint.components.timezone,
-        language: fingerprint.components.language,
-        hardwareConcurrency: fingerprint.components.hardwareConcurrency,
-        deviceMemory: fingerprint.components.deviceMemory
-    };
+    return false;
 }
 
 // ============================================
-// IP LOCATION FUNCTIONS (Untuk Map & Tracking)
+// IP LOCATION FUNCTIONS
 // ============================================
 
-// Get client IP and location from ipapi.co
 async function getIPLocation() {
     try {
-        // Use ipapi.co for IP geolocation (free, no API key needed)
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
         
@@ -149,7 +435,6 @@ async function getIPLocation() {
     }
 }
 
-// Save current location to server (for admin monitoring)
 async function saveMyLocation() {
     try {
         const ipLocation = await getIPLocation();
@@ -158,7 +443,7 @@ async function saveMyLocation() {
             return { success: false, error: ipLocation.error };
         }
         
-        const deviceInfo = getDeviceInfo();
+        const deviceInfo = await getDeviceInfo();
         
         const ipData = {
             ip: ipLocation.ip,
@@ -174,7 +459,6 @@ async function saveMyLocation() {
             postal: ipLocation.postal
         };
         
-        // Get current user from localStorage
         const currentUserStr = localStorage.getItem('currentUser');
         if (!currentUserStr) return { success: false, error: 'No user logged in' };
         
@@ -184,7 +468,7 @@ async function saveMyLocation() {
             uid: currentUser.uid,
             ipData: JSON.stringify(ipData),
             locationData: JSON.stringify(locationData),
-            source: deviceInfo.platform === 'Android' ? 'android_web' : (deviceInfo.platform === 'iOS' ? 'ios_web' : 'web')
+            source: deviceInfo.platform
         });
     } catch (error) {
         console.error('Save location error:', error);
@@ -192,26 +476,22 @@ async function saveMyLocation() {
     }
 }
 
-// Start periodic location tracking (every 5 minutes)
 let locationTrackingInterval = null;
 
 function startPeriodicLocationTracking() {
-    // Stop existing interval if any
     if (locationTrackingInterval) {
         clearInterval(locationTrackingInterval);
     }
     
-    // Save location immediately
     saveMyLocation();
     
-    // Then save every 5 minutes
     locationTrackingInterval = setInterval(async () => {
         const currentUserStr = localStorage.getItem('currentUser');
         if (currentUserStr) {
             await saveMyLocation();
             console.log('Periodic location saved at', new Date().toLocaleTimeString());
         }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
 }
 
 function stopPeriodicLocationTracking() {
@@ -222,55 +502,33 @@ function stopPeriodicLocationTracking() {
 }
 
 // ============================================
-// BLOCK ANDROID FROM WEB
+// AUTHENTICATION FUNCTIONS
 // ============================================
 
-function isAndroidDevice() {
-    return /android/i.test(navigator.userAgent);
+async function login(email, password) {
+    return await callAPI('login', { email: email, password: password });
 }
 
-function isIOSDevice() {
-    return /iphone|ipad|ipod/i.test(navigator.userAgent);
-}
-
-function blockAndroidIfNeeded() {
-    if (isAndroidDevice()) {
-        // Check if this is a webview or native app
-        const isNativeApp = navigator.userAgent.includes('IMMI-Android-App');
-        
-        if (!isNativeApp) {
-            // Show blocking message
-            document.body.innerHTML = `
-                <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px; font-family: 'Inter', sans-serif;">
-                    <div style="background: white; border-radius: 32px; padding: 40px; max-width: 400px; text-align: center;">
-                        <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                            <span style="font-size: 48px;">📱</span>
-                        </div>
-                        <h2 style="margin: 20px 0 10px; font-size: 24px; font-weight: 800;">Akses Tidak Dibenarkan</h2>
-                        <p style="color: #64748b; margin-bottom: 24px; line-height: 1.5;">
-                            Sila gunakan <strong>Aplikasi Android IMMI Presence 360</strong> untuk akses sistem.
-                        </p>
-                        <div style="background: #f0fdf4; padding: 16px; border-radius: 20px; margin: 20px 0;">
-                            <p style="color: #166534; font-size: 14px; font-weight: 600;">📱 Muat Turun Aplikasi</p>
-                            <p style="color: #166534; font-size: 12px; margin-top: 4px;">Google Play Store</p>
-                        </div>
-                        <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
-                            Versi web hanya untuk pengguna iOS.
-                        </p>
-                        <button onclick="location.reload()" style="margin-top: 24px; background: #1e3a8a; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; cursor: pointer;">
-                            Cuba Lagi
-                        </button>
-                    </div>
-                </div>
-            `;
-            return true; // Blocked
-        }
-    }
-    return false; // Allowed
+async function userLogin(email, password) {
+    const deviceInfo = await getDeviceInfo();
+    
+    return await callAPI('userLogin', { 
+        email: email, 
+        password: password,
+        userAgent: deviceInfo.userAgent,
+        platform: deviceInfo.platform,
+        screenResolution: deviceInfo.screenResolution,
+        timezone: deviceInfo.timezone,
+        language: deviceInfo.language,
+        hardwareConcurrency: deviceInfo.hardwareConcurrency,
+        deviceMemory: deviceInfo.deviceMemory,
+        deviceModel: deviceInfo.deviceModel,
+        brand: deviceInfo.brand
+    });
 }
 
 // ============================================
-// FUNGSI UNTUK ADMIN DAN SUPERADMIN
+// ADMIN MANAGEMENT
 // ============================================
 
 async function getAdmins(requestingUser) {
@@ -299,7 +557,7 @@ async function deleteAdmin(data, requestingUser) {
 }
 
 // ============================================
-// FUNGSI UNTUK PENGURUSAN PENGGUNA
+// USER MANAGEMENT
 // ============================================
 
 async function getAllUsers(requestingUser) {
@@ -340,18 +598,16 @@ async function updateUserFace(uid, faceDescriptor) {
 }
 
 // ============================================
-// FUNGSI UNTUK KEHADIRAN (FIXED)
+// ATTENDANCE FUNCTIONS
 // ============================================
 
 async function getAttendance(uid, startDate, endDate, requestingUser = null) {
-    // Untuk user biasa (bukan admin), jangan hantar requestingUser
     const params = { 
         uid: uid, 
         startDate: startDate, 
         endDate: endDate
     };
     
-    // Hanya tambah requestingUser jika user adalah admin/superadmin
     if (requestingUser && (requestingUser.role === 'admin' || requestingUser.role === 'superadmin')) {
         params.requestingUser = JSON.stringify(requestingUser);
     }
@@ -359,31 +615,34 @@ async function getAttendance(uid, startDate, endDate, requestingUser = null) {
     return await callAPI('getAttendance', params);
 }
 
-// FIXED: Gunakan callAPI untuk clockIn
 async function clockIn(uid, location, user) {
     return await callAPI('clockIn', {
         uid: uid,
         location: JSON.stringify(location),
-        clientIP: getClientIP()
+        clientIP: await getClientIP()
     });
 }
 
-// FIXED: Gunakan callAPI untuk clockOut
 async function clockOut(uid, location, user) {
     return await callAPI('clockOut', {
         uid: uid,
         location: JSON.stringify(location),
-        clientIP: getClientIP()
+        clientIP: await getClientIP()
     });
 }
 
-function getClientIP() {
-    // This will be handled by Google Apps Script
-    return 'web-client';
+async function getClientIP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        return 'unknown';
+    }
 }
 
 // ============================================
-// FUNGSI UNTUK ADMIN MONITORING (IP Location)
+// MONITORING FUNCTIONS
 // ============================================
 
 async function getAllUserLocations(requestingUser) {
@@ -400,7 +659,7 @@ async function forceLogoutUser(uid, requestingUser) {
 }
 
 // ============================================
-// FUNGSI UNTUK EMAIL
+// EMAIL FUNCTIONS
 // ============================================
 
 async function sendEmail(to, subject, body) {
@@ -408,34 +667,9 @@ async function sendEmail(to, subject, body) {
 }
 
 // ============================================
-// FUNGSI UNTUK LOGIN (Enhanced with Device Info)
+// APK MANAGEMENT FUNCTIONS
 // ============================================
 
-async function login(email, password) {
-    return await callAPI('login', { email: email, password: password });
-}
-
-async function userLogin(email, password) {
-    const deviceInfo = getDeviceInfo();
-    
-    return await callAPI('userLogin', { 
-        email: email, 
-        password: password,
-        userAgent: deviceInfo.userAgent,
-        platform: deviceInfo.platform,
-        screenResolution: deviceInfo.screenResolution,
-        timezone: deviceInfo.timezone,
-        language: deviceInfo.language,
-        hardwareConcurrency: deviceInfo.hardwareConcurrency,
-        deviceMemory: deviceInfo.deviceMemory
-    });
-}
-
-// ============================================
-// FUNGSI APK MANAGEMENT
-// ============================================
-
-// Save new APK version
 async function saveApkVersion(version, fileId, downloadUrl, fileSize, releaseNotes, uploadedBy) {
     return await callAPI('saveApkVersion', {
         version: version,
@@ -447,17 +681,14 @@ async function saveApkVersion(version, fileId, downloadUrl, fileSize, releaseNot
     });
 }
 
-// Get latest APK version
 async function getLatestApkVersion() {
     return await callAPI('getLatestApkVersion');
 }
 
-// Get all APK versions history
 async function getAllApkVersions() {
     return await callAPI('getAllApkVersions');
 }
 
-// Notify all Android users about new APK
 async function notifyUsersAboutNewApk(version, releaseNotes, downloadUrl) {
     return await callAPI('notifyUsersAboutNewApk', {
         version: version,
@@ -466,12 +697,10 @@ async function notifyUsersAboutNewApk(version, releaseNotes, downloadUrl) {
     });
 }
 
-// Get all Android users
 async function getAllAndroidUsers() {
     return await callAPI('getAllAndroidUsers');
 }
 
-// Send notification to new user
 async function sendNewUserNotification(userEmail, userName, branch, unit, password, userPlatform) {
     return await callAPI('sendNewUserNotification', {
         userEmail: userEmail,
@@ -484,15 +713,13 @@ async function sendNewUserNotification(userEmail, userName, branch, unit, passwo
 }
 
 // ============================================
-// FUNGSI BLOCKED USERS MANAGEMENT (BARU)
+// BLOCKED USERS MANAGEMENT
 // ============================================
 
-// Get all blocked users (for superadmin)
 async function getBlockedUsers(requestingUser) {
     return await callAPI('getBlockedUsers', { requestingUser: JSON.stringify(requestingUser) });
 }
 
-// Reactivate a blocked user (for superadmin)
 async function reactivateUser(uid, requestingUser) {
     return await callAPI('reactivateUser', { 
         uid: uid, 
@@ -500,16 +727,14 @@ async function reactivateUser(uid, requestingUser) {
     });
 }
 
-// Auto block inactive users (midnight script - can be called manually)
 async function autoBlockInactiveUsers() {
     return await callAPI('autoBlockInactiveUsers');
 }
 
 // ============================================
-// FUNGSI STEP COUNTER VALIDATION (Android Only)
+// STEP COUNTER FUNCTIONS (Android Only)
 // ============================================
 
-// Save step count after clock out
 async function saveStepCount(uid, stepCount) {
     return await callAPI('saveStepCount', { 
         uid: uid, 
@@ -517,12 +742,10 @@ async function saveStepCount(uid, stepCount) {
     });
 }
 
-// Get last step count for validation
 async function getLastStepCount(uid) {
     return await callAPI('getLastStepCount', { uid: uid });
 }
 
-// Validate step count during clock in
 async function validateStepCount(uid, currentStepCount) {
     return await callAPI('validateStepCount', { 
         uid: uid, 
@@ -530,7 +753,6 @@ async function validateStepCount(uid, currentStepCount) {
     });
 }
 
-// Confirm overtime (Android only)
 async function confirmOvertime(uid, status) {
     return await callAPI('confirmOvertime', { 
         uid: uid, 
@@ -539,7 +761,7 @@ async function confirmOvertime(uid, status) {
 }
 
 // ============================================
-// FUNGSI UTILITY
+// UTILITY FUNCTIONS
 // ============================================
 
 async function setupSheets() {
@@ -568,69 +790,111 @@ async function resetTodayAttendance(data) {
     });
 }
 
-// ============================================
-// GET IP LOCATION FOR MAP (User Dashboard)
-// ============================================
-
 async function getCurrentIPLocation() {
     return await getIPLocation();
 }
 
 // ============================================
-// EXPORT UNTUK KEGUNAAN GLOBAL
+// DEBUG FUNCTION
+// ============================================
+
+async function debugDeviceInfo() {
+    console.log('=== DEVICE FINGERPRINT DEBUG ===');
+    
+    const simpleFingerprint = getSimpleDeviceFingerprint();
+    console.log('Simple Fingerprint:', simpleFingerprint);
+    
+    const deviceInfo = await getDeviceInfo();
+    console.log('Device Info:', deviceInfo);
+    
+    const detailedInfo = await getDetailedDeviceInfo();
+    console.log('Detailed Device Info:', detailedInfo);
+    
+    console.log('================================');
+    
+    return {
+        simple: simpleFingerprint,
+        device: deviceInfo,
+        detailed: detailedInfo
+    };
+}
+
+// ============================================
+// EXPORTS (for module usage)
 // ============================================
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+        CONFIG,
         callAPI,
+        // Device functions
+        getDeviceInfo,
+        getSimpleDeviceFingerprint,
+        getDetailedDeviceInfo,
+        generateStrongDeviceId,
+        isAndroidDevice,
+        isIOSDevice,
+        isDesktopDevice,
+        isFromNativeApp,
+        blockAndroidIfNeeded,
+        // Location functions
+        getIPLocation,
+        saveMyLocation,
+        startPeriodicLocationTracking,
+        stopPeriodicLocationTracking,
+        getCurrentIPLocation,
+        // Auth functions
+        login,
+        userLogin,
+        // Admin functions
         getAdmins,
         createAdmin,
         updateAdmin,
         deleteAdmin,
+        // User functions
         getAllUsers,
         getUsers,
         createUser,
         updateUser,
         deleteUser,
         updateUserFace,
+        // Attendance functions
         getAttendance,
         clockIn,
         clockOut,
-        recalculateOvertime,
-        resetTodayAttendance,
-        sendEmail,
-        login,
-        userLogin,
-        setupSheets,
-        runMigration,
-        fixInconsistentData,
-        // Device functions
-        getDeviceInfo,
-        getIPLocation,
-        getCurrentIPLocation,
-        saveMyLocation,
-        startPeriodicLocationTracking,
-        stopPeriodicLocationTracking,
+        // Monitoring functions
         getAllUserLocations,
         forceLogoutUser,
-        isAndroidDevice,
-        isIOSDevice,
-        blockAndroidIfNeeded,
-        // APK Management functions
+        // Email functions
+        sendEmail,
+        // APK functions
         saveApkVersion,
         getLatestApkVersion,
         getAllApkVersions,
         notifyUsersAboutNewApk,
         getAllAndroidUsers,
         sendNewUserNotification,
-        // Blocked Users Management functions (BARU)
+        // Blocked users functions
         getBlockedUsers,
         reactivateUser,
         autoBlockInactiveUsers,
-        // Step Counter functions (BARU)
+        // Step counter functions
         saveStepCount,
         getLastStepCount,
         validateStepCount,
-        confirmOvertime
+        confirmOvertime,
+        // Utility functions
+        setupSheets,
+        runMigration,
+        fixInconsistentData,
+        recalculateOvertime,
+        resetTodayAttendance,
+        // Debug
+        debugDeviceInfo
     };
 }
+
+// ============================================
+// INITIALIZATION
+// ============================================
+console.log('✅ api-config.js v3.0 loaded with enhanced device fingerprinting');
 
