@@ -1480,7 +1480,7 @@
             // Check for new day first
             checkAndResetForNewDay();
             
-            // Refresh attendance data to get latest - guna null untuk requestingUser
+            // Refresh attendance data to get latest
             await refreshAttendanceData();
             
             // Log untuk debug
@@ -1757,8 +1757,8 @@
             const today = getCurrentDateMalaysia();
             
             try {
-                // Jangan hantar requestingUser untuk mengelakkan confusion
-                const result = await getAttendance(currentUser.uid, today, today, null);
+                // Jangan hantar requestingUser - gunakan 3 parameter sahaja
+                const result = await getAttendance(currentUser.uid, today, today);
                 
                 console.log('Refresh attendance for date:', today);
                 console.log('API Response:', result);
@@ -1964,8 +1964,8 @@
             document.getElementById('recentDate').innerText = displayDate;
             
             try {
-                // Jangan hantar requestingUser untuk mengelakkan confusion
-                const result = await getAttendance(currentUser.uid, today, today, null);
+                // Jangan hantar requestingUser - gunakan 3 parameter sahaja
+                const result = await getAttendance(currentUser.uid, today, today);
                 
                 console.log('LoadHomeData for date:', today);
                 console.log('API Response:', result);
@@ -2186,7 +2186,8 @@
             const endDate = malaysiaToday.toISOString().split('T')[0];
             
             try {
-                const result = await getAttendance(currentUser.uid, startDate, endDate, currentUser);
+                // Jangan hantar requestingUser - gunakan 3 parameter sahaja
+                const result = await getAttendance(currentUser.uid, startDate, endDate);
                 
                 const historyEl = document.getElementById('attendanceHistoryList');
                 
@@ -2339,7 +2340,8 @@
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
             
             try {
-                const result = await getAttendance(currentUser.uid, startDate, today, currentUser);
+                // Jangan hantar requestingUser - gunakan 3 parameter sahaja
+                const result = await getAttendance(currentUser.uid, startDate, today);
                 
                 const container = document.getElementById('locationHistoryList');
                 
