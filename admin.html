@@ -1291,6 +1291,76 @@
             }
         }
 
+        // ============================================
+        // SEND CREDENTIALS EMAIL TO NEW USER
+        // ============================================
+        async function sendUserCredentialsEmail(email, name, password, branch, unit) {
+            try {
+                const webAppUrl = 'https://jimswk.github.io/IMMI-Presence-360';
+                const apkDownloadLink = 'https://github.com/jimswk/IMMI-Presence-360/releases/download/v1.0/app-release.apk';
+                
+                const subject = `Selamat Datang ke IMMI Presence 360 - Akaun Anda Telah Dicipta`;
+                
+                const body = `Assalamualaikum dan Selamat Sejahtera ${name},
+
+Akaun IMMI Presence 360 anda telah berjaya didaftarkan oleh Pentadbir.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 **MAKLUMAT LOG MASUK**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Email: ${email}
+Kata Laluan: ${password}
+Cawangan: ${branch}
+Unit: ${unit}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 **MUAT TURUN APLIKASI**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Untuk Pengguna ANDROID:**
+${apkDownloadLink}
+
+**Untuk Pengguna iOS / Desktop:**
+${webAppUrl}
+(Gunakan Safari untuk iOS)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ **PERINGATAN PENTING**
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✓ Sila log masuk menggunakan peranti yang didaftarkan
+✓ Pastikan GPS dihidupkan untuk fungsi Clock In/Out
+✓ Gunakan aplikasi Android untuk pengalaman terbaik
+✓ Jangan kongsikan kata laluan dengan sesiapa
+✓ Kali pertama log masuk, anda akan diminta daftar wajah
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Sekian, terima kasih.
+
+**IMMI Presence 360 Team**
+Jabatan Imigresen Malaysia`;
+
+                const emailResult = await callAPI('sendEmail', {
+                    to: email,
+                    subject: subject,
+                    body: body
+                });
+                
+                if (emailResult.success) {
+                    console.log('Credentials email sent to:', email);
+                    showNotif("Email Dihantar", `Maklumat log masuk telah dihantar ke ${email}`, false);
+                } else {
+                    console.warn('Failed to send email:', emailResult.error);
+                    showNotif("Amaran", "Gagal menghantar email. Pengguna perlu diberitahu secara manual.", true);
+                }
+            } catch (error) {
+                console.error('Send email error:', error);
+                showNotif("Ralat", "Gagal menghantar email ke pengguna baru", true);
+            }
+        }
+
         async function notifySuperadminUserChangeDetailed(userName, changes, reason, adminName, adminBranch) {
             let changesDetails = '';
             for (const change of changes) {
@@ -2383,7 +2453,7 @@
         }
 
         // ============================================
-        // SAVE USER
+        // SAVE USER - WITH EMAIL NOTIFICATION
         // ============================================
         window.saveUser = async function() {
             const btn = document.getElementById('saveBtn');
@@ -2413,6 +2483,11 @@
                     if (result.success) { 
                         showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success');
                         await notifySuperadminNewUserDetailed(data.name, data.email, data.branch, data.unit, data.location, data.radius, currentUser.name, currentUser.branch, reason);
+                        
+                        // ========== SEND EMAIL TO NEW USER ==========
+                        await sendUserCredentialsEmail(data.email, data.name, data.password, data.branch, data.unit);
+                        // ===========================================
+                        
                         resetFormAfterSave(); switchTab('users'); loadUsers(); 
                     } else { showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); }
                 } catch (error) { showAlert("Ralat", "Gagal menyimpan data", 'error'); }
