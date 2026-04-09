@@ -1477,8 +1477,13 @@
             // Check for new day first
             checkAndResetForNewDay();
             
-            // Refresh attendance data to get latest
+            // Refresh attendance data to get latest - guna null untuk requestingUser
             await refreshAttendanceData();
+            
+            // Log untuk debug
+            console.log('Start verification - Action:', action);
+            console.log('Current attendance record:', currentAttendanceRecord);
+            console.log('Today date:', getCurrentDateMalaysia());
             
             // Check action validity based on current record
             if (action === 'clockin') {
@@ -1749,11 +1754,15 @@
             const today = getCurrentDateMalaysia();
             
             try {
-                const result = await getAttendance(currentUser.uid, today, today, currentUser);
+                // Jangan hantar requestingUser untuk mengelakkan confusion
+                const result = await getAttendance(currentUser.uid, today, today, null);
+                
+                console.log('Refresh attendance for date:', today);
+                console.log('API Response:', result);
                 
                 if (result.success && result.data && result.data.length > 0) {
                     currentAttendanceRecord = result.data[0];
-                    console.log('Attendance refreshed for', today, ':', currentAttendanceRecord);
+                    console.log('Attendance record found:', currentAttendanceRecord);
                 } else {
                     currentAttendanceRecord = null;
                     console.log('No attendance record for', today);
@@ -1952,9 +1961,11 @@
             document.getElementById('recentDate').innerText = displayDate;
             
             try {
-                const result = await getAttendance(currentUser.uid, today, today, currentUser);
+                // Jangan hantar requestingUser untuk mengelakkan confusion
+                const result = await getAttendance(currentUser.uid, today, today, null);
                 
-                console.log('LoadHomeData result for', today, ':', result);
+                console.log('LoadHomeData for date:', today);
+                console.log('API Response:', result);
                 
                 const hasRecord = result.success && result.data && result.data.length > 0;
                 const record = hasRecord ? result.data[0] : null;
@@ -1962,16 +1973,27 @@
                 // Update currentAttendanceRecord
                 currentAttendanceRecord = record;
                 
-                // Check if record has valid clockIn
-                const hasClockIn = record && record.clockIn && 
+                // Log untuk debug - tunjuk tarikh record
+                if (record) {
+                    console.log('Record date from API:', record.date);
+                    console.log('Today date:', today);
+                    console.log('Dates match:', record.date === today);
+                }
+                
+                // Check if record has valid clockIn untuk HARI INI
+                const hasClockIn = record && record.date === today && 
+                                  record.clockIn && 
                                   record.clockIn !== '' && 
                                   record.clockIn !== 'null' &&
                                   record.clockIn !== '--:--';
                 
-                const hasClockOut = record && record.clockOut && 
+                const hasClockOut = record && record.date === today && 
+                                   record.clockOut && 
                                    record.clockOut !== '' && 
                                    record.clockOut !== 'null' &&
                                    record.clockOut !== '--:--';
+                
+                console.log('hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
                 
                 const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
                 
@@ -2073,6 +2095,8 @@
         
         function updateCameraUI() {
             const today = getCurrentDateMalaysia();
+            
+            // Pastikan record adalah untuk hari ini
             const hasValidRecord = currentAttendanceRecord && 
                                   currentAttendanceRecord.date === today;
             
@@ -2092,7 +2116,10 @@
             const masukBtn = document.getElementById('cameraClockInBtn');
             const keluarBtn = document.getElementById('cameraClockOutBtn');
             
-            console.log('UpdateCameraUI - Date:', today, 'hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
+            console.log('UpdateCameraUI - Today:', today);
+            console.log('Record date:', currentAttendanceRecord?.date);
+            console.log('hasValidRecord:', hasValidRecord);
+            console.log('hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
             
             if (hasClockIn && !hasClockOut) {
                 cameraStatus.innerText = 'DALAM BERTUGAS';
