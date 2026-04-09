@@ -432,6 +432,58 @@ async function userLogin(email, password) {
 }
 
 // ============================================
+// FUNGSI APK MANAGEMENT (BARU)
+// ============================================
+
+// Save new APK version
+async function saveApkVersion(version, fileId, downloadUrl, fileSize, releaseNotes, uploadedBy) {
+    return await callAPI('saveApkVersion', {
+        version: version,
+        fileId: fileId,
+        downloadUrl: downloadUrl,
+        fileSize: fileSize,
+        releaseNotes: releaseNotes,
+        uploadedBy: uploadedBy
+    });
+}
+
+// Get latest APK version
+async function getLatestApkVersion() {
+    return await callAPI('getLatestApkVersion');
+}
+
+// Get all APK versions history
+async function getAllApkVersions() {
+    return await callAPI('getAllApkVersions');
+}
+
+// Notify all Android users about new APK
+async function notifyUsersAboutNewApk(version, releaseNotes, downloadUrl) {
+    return await callAPI('notifyUsersAboutNewApk', {
+        version: version,
+        releaseNotes: releaseNotes,
+        downloadUrl: downloadUrl
+    });
+}
+
+// Get all Android users
+async function getAllAndroidUsers() {
+    return await callAPI('getAllAndroidUsers');
+}
+
+// Send notification to new user
+async function sendNewUserNotification(userEmail, userName, branch, unit, password, userPlatform) {
+    return await callAPI('sendNewUserNotification', {
+        userEmail: userEmail,
+        userName: userName,
+        branch: branch,
+        unit: unit,
+        password: password,
+        userPlatform: userPlatform
+    });
+}
+
+// ============================================
 // FUNGSI UTILITY
 // ============================================
 
@@ -496,7 +548,7 @@ if (typeof module !== 'undefined' && module.exports) {
         setupSheets,
         runMigration,
         fixInconsistentData,
-        // New functions
+        // Device functions
         getDeviceInfo,
         getIPLocation,
         getCurrentIPLocation,
@@ -507,7 +559,14 @@ if (typeof module !== 'undefined' && module.exports) {
         forceLogoutUser,
         isAndroidDevice,
         isIOSDevice,
-        blockAndroidIfNeeded
+        blockAndroidIfNeeded,
+        // APK Management functions (BARU)
+        saveApkVersion,
+        getLatestApkVersion,
+        getAllApkVersions,
+        notifyUsersAboutNewApk,
+        getAllAndroidUsers,
+        sendNewUserNotification
     };
 }
 
