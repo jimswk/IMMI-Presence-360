@@ -432,7 +432,7 @@ async function userLogin(email, password) {
 }
 
 // ============================================
-// FUNGSI APK MANAGEMENT (BARU)
+// FUNGSI APK MANAGEMENT
 // ============================================
 
 // Save new APK version
@@ -480,6 +480,61 @@ async function sendNewUserNotification(userEmail, userName, branch, unit, passwo
         unit: unit,
         password: password,
         userPlatform: userPlatform
+    });
+}
+
+// ============================================
+// FUNGSI BLOCKED USERS MANAGEMENT (BARU)
+// ============================================
+
+// Get all blocked users (for superadmin)
+async function getBlockedUsers(requestingUser) {
+    return await callAPI('getBlockedUsers', { requestingUser: JSON.stringify(requestingUser) });
+}
+
+// Reactivate a blocked user (for superadmin)
+async function reactivateUser(uid, requestingUser) {
+    return await callAPI('reactivateUser', { 
+        uid: uid, 
+        requestingUser: JSON.stringify(requestingUser) 
+    });
+}
+
+// Auto block inactive users (midnight script - can be called manually)
+async function autoBlockInactiveUsers() {
+    return await callAPI('autoBlockInactiveUsers');
+}
+
+// ============================================
+// FUNGSI STEP COUNTER VALIDATION (Android Only)
+// ============================================
+
+// Save step count after clock out
+async function saveStepCount(uid, stepCount) {
+    return await callAPI('saveStepCount', { 
+        uid: uid, 
+        stepCount: stepCount 
+    });
+}
+
+// Get last step count for validation
+async function getLastStepCount(uid) {
+    return await callAPI('getLastStepCount', { uid: uid });
+}
+
+// Validate step count during clock in
+async function validateStepCount(uid, currentStepCount) {
+    return await callAPI('validateStepCount', { 
+        uid: uid, 
+        currentStepCount: currentStepCount 
+    });
+}
+
+// Confirm overtime (Android only)
+async function confirmOvertime(uid, status) {
+    return await callAPI('confirmOvertime', { 
+        uid: uid, 
+        status: status 
     });
 }
 
@@ -560,13 +615,22 @@ if (typeof module !== 'undefined' && module.exports) {
         isAndroidDevice,
         isIOSDevice,
         blockAndroidIfNeeded,
-        // APK Management functions (BARU)
+        // APK Management functions
         saveApkVersion,
         getLatestApkVersion,
         getAllApkVersions,
         notifyUsersAboutNewApk,
         getAllAndroidUsers,
-        sendNewUserNotification
+        sendNewUserNotification,
+        // Blocked Users Management functions (BARU)
+        getBlockedUsers,
+        reactivateUser,
+        autoBlockInactiveUsers,
+        // Step Counter functions (BARU)
+        saveStepCount,
+        getLastStepCount,
+        validateStepCount,
+        confirmOvertime
     };
 }
 
