@@ -645,8 +645,127 @@
             <div id="toolsTab" class="hidden">
                 <h1 class="text-2xl font-black text-gray-800 mb-6">Alat Sistem</h1>
                 
+                <!-- APK MANAGEMENT SECTION - GitHub Integration -->
+                <div class="bg-white rounded-3xl p-6 border mb-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="material-symbols-rounded text-3xl text-green-600">android</span>
+                        <h2 class="text-xl font-black text-gray-800">Pengurusan APK IMMI Presence 360</h2>
+                    </div>
+                    
+                    <!-- GitHub Info -->
+                    <div class="bg-gray-100 rounded-2xl p-4 mb-6">
+                        <div class="flex items-center gap-2 text-sm text-gray-600">
+                            <span class="material-symbols-rounded text-lg">info</span>
+                            <span>APK akan dihosting di GitHub Releases: <strong>jimswk/IMMI-Presence-360</strong></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Version Display -->
+                    <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl p-5 mb-6">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-xs font-bold text-purple-600 uppercase tracking-wider">Versi Semasa</p>
+                                <p class="text-3xl font-black text-purple-800" id="currentApkVersion">Loading...</p>
+                                <p class="text-xs text-gray-500 mt-1" id="currentApkDate"></p>
+                                <p class="text-xs text-gray-500 mt-1" id="currentApkNotes"></p>
+                                <p class="text-xs text-purple-600 mt-2 break-all" id="currentApkLink"></p>
+                            </div>
+                            <button onclick="checkApkUpdates()" class="bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-purple-700 transition-all">
+                                <span class="material-symbols-rounded text-sm">refresh</span>
+                                Semak
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Upload New APK -->
+                    <div class="border-2 border-dashed border-purple-300 rounded-2xl p-6 mb-6 bg-purple-50/30">
+                        <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <span class="material-symbols-rounded text-amber-600">cloud_upload</span> 
+                            Daftar Versi Baharu
+                        </h3>
+                        
+                        <div class="bg-amber-50 rounded-xl p-4 mb-5 text-sm text-amber-800">
+                            <span class="material-symbols-rounded text-sm align-middle mr-1">info</span>
+                            <strong>Cara Daftar Versi Baharu:</strong>
+                            <ol class="mt-2 ml-5 text-xs space-y-1">
+                                <li>1. Sediakan fail APK yang telah dibina</li>
+                                <li>2. Masukkan versi di bawah (contoh: 1.0.0, 1.1.0, 2.0.0)</li>
+                                <li>3. Sistem akan rekod metadata dan generate link GitHub</li>
+                                <li>4. <strong>Selepas ini, upload APK ke GitHub secara manual:</strong></li>
+                                <li class="ml-4">• Buka <strong>https://github.com/jimswk/IMMI-Presence-360/releases/new</strong></li>
+                                <li class="ml-4">• Tag: <strong>v{version}</strong> (contoh: v1.0.0)</li>
+                                <li class="ml-4">• Title: <strong>IMMI Presence 360 v{version}</strong></li>
+                                <li class="ml-4">• Upload fail APK dan Publish release</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Versi (contoh: 1.0.0, 1.1.0)</label>
+                                <input type="text" id="apkVersion" class="input-field" placeholder="1.0.0">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Saiz Fail (contoh: 25.5 MB)</label>
+                                <input type="text" id="apkFileSize" class="input-field" placeholder="25.5 MB">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Nota Keluaran (Release Notes)</label>
+                            <textarea id="apkReleaseNotes" class="input-field" rows="3" placeholder="✓ Penambahbaikan prestasi&#10;✓ Pembetulan isu Clock In/Out&#10;✓ Ciri keselamatan baru"></textarea>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="text-xs font-bold text-gray-500 uppercase mb-2 block">Link GitHub Release (selepas upload)</label>
+                            <input type="text" id="apkDownloadUrl" class="input-field" placeholder="https://github.com/jimswk/IMMI-Presence-360/releases/download/v1.0.0/app-release.apk">
+                            <p class="text-xs text-gray-400 mt-1">Link akan diisi automatik selepas daftar versi</p>
+                        </div>
+                        
+                        <button onclick="registerNewApkVersion()" id="registerApkBtn" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-green-700 transition-all">
+                            <span class="material-symbols-rounded">save</span> Daftar Versi & Hantar Notifikasi
+                        </button>
+                    </div>
+                    
+                    <!-- Send Notification Manually -->
+                    <div class="bg-gray-50 rounded-2xl p-5 mb-6">
+                        <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            <span class="material-symbols-rounded text-blue-600">notifications_active</span>
+                            Hantar Notifikasi Manual
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-4">Hantar notifikasi tentang versi terbaru kepada semua pengguna Android</p>
+                        <button onclick="sendManualApkNotification()" class="bg-amber-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-amber-700 transition-all">
+                            <span class="material-symbols-rounded">send</span> Hantar Notifikasi Sekarang
+                        </button>
+                    </div>
+                    
+                    <!-- Version History -->
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                            <span class="material-symbols-rounded text-gray-600">history</span>
+                            Sejarah Versi APK
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="p-3 text-left">Versi</th>
+                                        <th class="p-3 text-left">Tarikh Keluaran</th>
+                                        <th class="p-3 text-left">Saiz</th>
+                                        <th class="p-3 text-left">Nota</th>
+                                        <th class="p-3 text-left">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="apkVersionHistoryBody">
+                                    <tr><td colspan="5" class="text-center py-6 text-gray-400">Loading...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recalculate Overtime Section -->
                 <div class="bg-white rounded-3xl p-6 border">
-                    <div class="flex items-center gap-3 mb-4">
+                    <div class="flex items-center gap-3 mb-6">
                         <span class="material-symbols-rounded text-3xl text-amber-600">recalculate</span>
                         <h2 class="text-xl font-black text-gray-800">Kira Semula Overtime (WBF Sarawak)</h2>
                     </div>
@@ -1113,6 +1232,13 @@
         let faceOverlay = null;
         let currentResetFaceUid = null;
 
+        // GitHub Configuration
+        const GITHUB_REPO = 'jimswk/IMMI-Presence-360';
+        
+        function getGitHubDownloadLink(version) {
+            return `https://github.com/${GITHUB_REPO}/releases/download/v${version}/app-release.apk`;
+        }
+
         // ============================================
         // UTILITY FUNCTIONS
         // ============================================
@@ -1247,6 +1373,7 @@
                         loadAllUsers();
                         loadFaceModels();
                         loadUserDevices();
+                        loadApkVersions();
                         
                         showAlert('Selamat Datang', `Log masuk berjaya sebagai ${currentUser.name}`, 'success');
                     }, 500);
@@ -1333,6 +1460,7 @@
                 if (document.getElementById('recalcEndDate') && !document.getElementById('recalcEndDate').value) {
                     document.getElementById('recalcEndDate').value = today;
                 }
+                loadApkVersions();
             }
         };
 
@@ -1462,7 +1590,7 @@
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             if (admins.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
+                tbody.innerHTML = '<td><td colspan="7" class="text-center py-8 text-gray-400">Tiada admin berdaftar</td></tr>';
                 return;
             }
             let html = '';
@@ -1872,6 +2000,174 @@
             } catch (error) { showAlert('Ralat', 'Gagal menukar cawangan', 'error'); }
             finally { btn.disabled = false; btn.innerHTML = 'Tukar'; }
         }
+
+        // ============================================
+        // APK MANAGEMENT FUNCTIONS
+        // ============================================
+        
+        async function loadApkVersions() {
+            try {
+                // Load latest version from Google Sheets
+                const latestResult = await getLatestApkVersion();
+                if (latestResult.success) {
+                    document.getElementById('currentApkVersion').innerText = latestResult.version;
+                    document.getElementById('currentApkDate').innerHTML = `📅 Dikeluarkan: ${latestResult.releaseDate || '-'}`;
+                    document.getElementById('currentApkNotes').innerHTML = `📝 ${latestResult.releaseNotes ? latestResult.releaseNotes.substring(0, 100) : 'Tiada nota'}`;
+                    const downloadLink = latestResult.downloadUrl || getGitHubDownloadLink(latestResult.version);
+                    document.getElementById('currentApkLink').innerHTML = `🔗 <a href="${downloadLink}" target="_blank" class="text-purple-600 underline">${downloadLink}</a>`;
+                    document.getElementById('apkDownloadUrl').value = downloadLink;
+                } else {
+                    document.getElementById('currentApkVersion').innerText = 'Tiada versi';
+                    document.getElementById('currentApkDate').innerHTML = '';
+                    document.getElementById('currentApkNotes').innerHTML = '';
+                    document.getElementById('currentApkLink').innerHTML = '';
+                }
+                
+                // Load version history from Google Sheets
+                const historyResult = await getAllApkVersions();
+                const tbody = document.getElementById('apkVersionHistoryBody');
+                
+                if (historyResult.success && historyResult.data && historyResult.data.length > 0) {
+                    let html = '';
+                    historyResult.data.forEach(ver => {
+                        const statusBadge = ver.isActive ? 
+                            '<span class="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs font-bold">AKTIF</span>' : 
+                            '<span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-full text-xs font-bold">LAMA</span>';
+                        
+                        html += `
+                            <tr>
+                                <td class="p-3 font-bold">${escapeHtml(ver.version)}</td>
+                                <td class="p-3">${escapeHtml(ver.releaseDate || '-')}</td>
+                                <td class="p-3">${escapeHtml(ver.fileSize || '-')}</td>
+                                <td class="p-3 max-w-[300px]">${escapeHtml(ver.releaseNotes ? ver.releaseNotes.substring(0, 80) : '-')}</td>
+                                <td class="p-3">${statusBadge}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400">Tiada rekod versi APK</td></tr>';
+                }
+            } catch (error) {
+                console.error('Load APK versions error:', error);
+                document.getElementById('apkVersionHistoryBody').innerHTML = '<tr><td colspan="5" class="text-center py-6 text-gray-400">Gagal memuatkan data</td></tr>';
+            }
+        }
+        
+        window.checkApkUpdates = function() {
+            loadApkVersions();
+            showAlert('Makluman', 'Data versi APK dikemaskini', 'success');
+        };
+        
+        window.registerNewApkVersion = async function() {
+            const version = document.getElementById('apkVersion').value.trim();
+            const fileSize = document.getElementById('apkFileSize').value.trim();
+            const releaseNotes = document.getElementById('apkReleaseNotes').value.trim();
+            const downloadUrl = getGitHubDownloadLink(version);
+            
+            if (!version) {
+                showAlert('Ralat', 'Sila isi versi APK', 'warning');
+                return;
+            }
+            
+            // Confirm before proceeding
+            showConfirm('Daftar Versi Baharu', 
+                `⚠️ PERHATIAN!\n\nVersi: ${version}\nSaiz: ${fileSize || 'Tidak dinyatakan'}\n\nAnda akan daftarkan versi ${version} dan maklumkan kepada SEMUA pengguna Android.\n\nLink yang akan digunakan:\n${downloadUrl}\n\nPastikan anda telah upload APK ke GitHub Releases selepas ini.\n\nTeruskan?`, 
+                async function() {
+                    const btn = document.getElementById('registerApkBtn');
+                    const originalText = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Memproses...';
+                    
+                    try {
+                        // Get total Android users first
+                        const androidUsersResult = await getAllAndroidUsers();
+                        const androidCount = androidUsersResult.success ? androidUsersResult.users.length : 0;
+                        
+                        // Save version to database with GitHub link
+                        const saveResult = await saveApkVersion(version, '', downloadUrl, fileSize || 'Unknown', releaseNotes, currentUser.uid);
+                        
+                        if (saveResult.success) {
+                            // Send notifications to all Android users
+                            const notifyResult = await notifyUsersAboutNewApk(version, releaseNotes, downloadUrl);
+                            
+                            if (notifyResult.success) {
+                                showAlert('Berjaya', 
+                                    `Versi ${version} direkodkan. ${notifyResult.sentCount}/${notifyResult.totalUsers} pengguna Android telah diberitahu.\n\n⚠️ PENTING: Jangan lupa upload APK ke GitHub Releases:\nhttps://github.com/${GITHUB_REPO}/releases/new?tag=v${version}`, 
+                                    'success');
+                                
+                                // Clear form
+                                document.getElementById('apkVersion').value = '';
+                                document.getElementById('apkFileSize').value = '';
+                                document.getElementById('apkReleaseNotes').value = '';
+                                document.getElementById('apkDownloadUrl').value = '';
+                                
+                                // Reload data
+                                loadApkVersions();
+                            } else {
+                                showAlert('Ralat', 'Gagal hantar notifikasi: ' + notifyResult.error, 'error');
+                            }
+                        } else {
+                            showAlert('Ralat', saveResult.error || 'Gagal menyimpan versi APK', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Register error:', error);
+                        showAlert('Ralat', 'Gagal daftar versi APK: ' + error.message, 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }
+                }
+            );
+        };
+        
+        window.sendManualApkNotification = async function() {
+            const version = document.getElementById('currentApkVersion').innerText;
+            
+            if (version === 'Loading...' || version === 'Tiada versi') {
+                showAlert('Ralat', 'Tiada versi aktif untuk diumumkan. Sila daftar versi terlebih dahulu.', 'warning');
+                return;
+            }
+            
+            // Get latest version data
+            const latestResult = await getLatestApkVersion();
+            if (!latestResult.success) {
+                showAlert('Ralat', 'Gagal mendapatkan maklumat versi semasa', 'error');
+                return;
+            }
+            
+            showConfirm('Hantar Notifikasi', 
+                `Hantar notifikasi versi ${latestResult.version} kepada semua pengguna Android?\n\nNota: ${latestResult.releaseNotes || 'Tiada nota'}\n\nLink: ${latestResult.downloadUrl}`, 
+                async function() {
+                    const btn = event.target;
+                    const originalText = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<div class="loading-spinner mx-auto"></div> Menghantar...';
+                    
+                    try {
+                        const notifyResult = await notifyUsersAboutNewApk(
+                            latestResult.version,
+                            latestResult.releaseNotes,
+                            latestResult.downloadUrl
+                        );
+                        
+                        if (notifyResult.success) {
+                            showAlert('Berjaya', 
+                                `Notifikasi dihantar kepada ${notifyResult.sentCount}/${notifyResult.totalUsers} pengguna Android`,
+                                'success');
+                        } else {
+                            showAlert('Ralat', notifyResult.error || 'Gagal menghantar notifikasi', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Notification error:', error);
+                        showAlert('Ralat', 'Gagal menghantar notifikasi', 'error');
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    }
+                }
+            );
+        };
 
         // ============================================
         // RECALCULATE OVERTIME FUNCTIONS
