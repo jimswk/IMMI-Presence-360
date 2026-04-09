@@ -340,19 +340,19 @@ async function updateUserFace(uid, faceDescriptor) {
 }
 
 // ============================================
-// FUNGSI UNTUK KEHADIRAN (FIXED - menggunakan callAPI)
+// FUNGSI UNTUK KEHADIRAN (FIXED)
 // ============================================
 
-async function getAttendance(uid, startDate, endDate, requestingUser) {
-    // Jangan hantar requestingUser jika undefined atau null
+async function getAttendance(uid, startDate, endDate, requestingUser = null) {
+    // Untuk user biasa (bukan admin), jangan hantar requestingUser
     const params = { 
         uid: uid, 
         startDate: startDate, 
         endDate: endDate
     };
     
-    // Hanya tambah requestingUser jika ada dan diperlukan
-    if (requestingUser && requestingUser.uid) {
+    // Hanya tambah requestingUser jika user adalah admin/superadmin
+    if (requestingUser && (requestingUser.role === 'admin' || requestingUser.role === 'superadmin')) {
         params.requestingUser = JSON.stringify(requestingUser);
     }
     
