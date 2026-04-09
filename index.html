@@ -1269,22 +1269,47 @@
         // ============================================
         function getCurrentDateMalaysia() {
             const now = new Date();
-            const malaysiaDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
-            return malaysiaDate.toISOString().split('T')[0];
+            // Dapatkan UTC timestamp
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            // Tambah 8 jam untuk Malaysia (UTC+8)
+            const malaysiaTime = new Date(utc + (8 * 3600000));
+            
+            const year = malaysiaTime.getUTCFullYear();
+            const month = String(malaysiaTime.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(malaysiaTime.getUTCDate()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
         }
         
         function getCurrentDateTimeMalaysia() {
             const now = new Date();
-            return new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            return new Date(utc + (8 * 3600000));
+        }
+        
+        function getCurrentTimeMalaysia() {
+            const now = getCurrentDateTimeMalaysia();
+            const hours = String(now.getUTCHours()).padStart(2, '0');
+            const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(now.getUTCSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
         }
         
         function formatDateKey(date) {
-            return date.toISOString().split('T')[0];
+            if (!date) return '';
+            // Pastikan date dianggap sebagai UTC+8
+            const year = date.getUTCFullYear();
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
         
         function isNewDay() {
             const today = getCurrentDateMalaysia();
+            console.log('isNewDay check - Today:', today, 'LastChecked:', lastCheckedDate);
+            
             if (lastCheckedDate !== today) {
+                console.log('NEW DAY DETECTED!', lastCheckedDate, '->', today);
                 lastCheckedDate = today;
                 return true;
             }
@@ -1331,6 +1356,32 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        function debugDateTime() {
+        console.log('=== DATE/TIME DEBUG ===');
+        
+        const now = new Date();
+        console.log('Browser local time:', now.toString());
+        console.log('Browser UTC:', now.toUTCString());
+        console.log('Browser timezone offset:', now.getTimezoneOffset(), 'minutes');
+        
+        const malaysiaDate1 = getCurrentDateMalaysia();
+        console.log('Malaysia date (getCurrentDateMalaysia):', malaysiaDate1);
+        
+        const malaysiaDateTime = getCurrentDateTimeMalaysia();
+        console.log('Malaysia datetime:', malaysiaDateTime.toISOString());
+        
+        console.log('=======================');
+        
+        return {
+            browserDate: now.toISOString().split('T')[0],
+            malaysiaDate: malaysiaDate1,
+            isCorrectDate: malaysiaDate1 === '2026-04-10'
+        };
+    }
+    
+    // Panggil debug
+    debugDateTime();
         
         // ============================================
         // CHECK AND RESET ON NEW DAY
