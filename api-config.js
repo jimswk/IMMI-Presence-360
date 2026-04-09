@@ -344,12 +344,19 @@ async function updateUserFace(uid, faceDescriptor) {
 // ============================================
 
 async function getAttendance(uid, startDate, endDate, requestingUser) {
-    return await callAPI('getAttendance', { 
+    // Jangan hantar requestingUser jika undefined atau null
+    const params = { 
         uid: uid, 
         startDate: startDate, 
-        endDate: endDate,
-        requestingUser: requestingUser ? JSON.stringify(requestingUser) : undefined
-    });
+        endDate: endDate
+    };
+    
+    // Hanya tambah requestingUser jika ada dan diperlukan
+    if (requestingUser && requestingUser.uid) {
+        params.requestingUser = JSON.stringify(requestingUser);
+    }
+    
+    return await callAPI('getAttendance', params);
 }
 
 // FIXED: Gunakan callAPI untuk clockIn
