@@ -1,6 +1,6 @@
 // ============================================
 // API CONFIGURATION - IMMI PRESENCE 360
-// VERSION: 3.1 (Enhanced Device Fingerprinting + Full Model Names)
+// VERSION: 3.2 (Fixed iPhone Model Detection - Prioritizes Model Identifier)
 // LAST UPDATED: 10 April 2026
 // ============================================
 
@@ -50,21 +50,21 @@ async function callAPI(method, params = {}) {
 }
 
 // ============================================
-// ENHANCED DEVICE MODEL DETECTION (FULL NAMES)
+// ENHANCED DEVICE MODEL DETECTION (PRIORITIZES MODEL IDENTIFIER)
 // ============================================
 
-// Detect device model from userAgent (with full model names)
 function detectDeviceModel(userAgent) {
     let deviceModel = 'Unknown';
     let brand = 'Unknown';
+    let modelFound = false;
     
     // ============================================
-    // iOS / iPhone MODEL DETECTION (Full names)
+    // iOS / iPhone MODEL DETECTION (Prioritize Model Identifier)
     // ============================================
     if (/iPhone/i.test(userAgent)) {
         brand = 'Apple';
         
-        // iPhone model mapping based on identifier
+        // Complete iPhone model mapping by identifier (MOST ACCURATE)
         const modelMatches = {
             // iPhone 16 Series (2024)
             'iPhone17,1': 'iPhone 16 Pro',
@@ -151,37 +151,63 @@ function detectDeviceModel(userAgent) {
             'iPhone1,2': 'iPhone 3G'
         };
         
-        // Try to find model by identifier
+        // PRIORITY 1: Check for exact model identifier in userAgent
         for (var identifier in modelMatches) {
             if (userAgent.includes(identifier)) {
                 deviceModel = modelMatches[identifier];
+                modelFound = true;
+                console.log('[iPhone Detection] Found by identifier:', identifier, '→', deviceModel);
                 break;
             }
         }
         
-        // If still unknown, try to get from OS version
-        if (deviceModel === 'Unknown') {
+        // PRIORITY 2: Extract model code using regex if not found
+        if (!modelFound) {
+            const deviceMatch = userAgent.match(/iPhone([0-9]+,[0-9]+)/);
+            if (deviceMatch && deviceMatch[1]) {
+                const deviceCode = 'iPhone' + deviceMatch[1];
+                if (modelMatches[deviceCode]) {
+                    deviceModel = modelMatches[deviceCode];
+                    modelFound = true;
+                    console.log('[iPhone Detection] Found by regex:', deviceCode, '→', deviceModel);
+                }
+            }
+        }
+        
+        // PRIORITY 3: Fallback to device name from userAgent
+        if (!modelFound) {
+            const deviceNameMatch = userAgent.match(/Device: iPhone([^,)]+)/i);
+            if (deviceNameMatch && deviceNameMatch[1]) {
+                deviceModel = 'iPhone ' + deviceNameMatch[1].trim();
+                modelFound = true;
+                console.log('[iPhone Detection] Found by device name:', deviceModel);
+            }
+        }
+        
+        // PRIORITY 4: Last resort - infer from OS version (ONLY when no identifier found)
+        if (!modelFound) {
             const osMatch = userAgent.match(/OS (\d+)_/);
             if (osMatch) {
                 const osVersion = parseInt(osMatch[1]);
-                if (osVersion >= 18) deviceModel = 'iPhone 16 Series';
-                else if (osVersion >= 17) deviceModel = 'iPhone 15 Series';
-                else if (osVersion >= 16) deviceModel = 'iPhone 14 Series';
-                else if (osVersion >= 15) deviceModel = 'iPhone 13 Series';
-                else if (osVersion >= 14) deviceModel = 'iPhone 12 Series';
-                else if (osVersion >= 13) deviceModel = 'iPhone 11 Series';
+                if (osVersion >= 18) deviceModel = 'iPhone (iOS 18)';
+                else if (osVersion >= 17) deviceModel = 'iPhone (iOS 17)';
+                else if (osVersion >= 16) deviceModel = 'iPhone (iOS 16)';
+                else if (osVersion >= 15) deviceModel = 'iPhone (iOS 15)';
                 else deviceModel = 'iPhone';
+                console.log('[iPhone Detection] Fallback from OS version:', deviceModel);
             } else {
                 deviceModel = 'iPhone';
+                console.log('[iPhone Detection] Fallback to generic iPhone');
             }
         }
     } 
     
     // ============================================
-    // IPAD MODEL DETECTION (Full names)
+    // IPAD MODEL DETECTION
     // ============================================
     else if (/iPad/i.test(userAgent)) {
         brand = 'Apple';
+        let iPadFound = false;
         
         const iPadMatches = {
             'iPad14,1': 'iPad Pro 11" (4th gen)',
@@ -211,29 +237,38 @@ function detectDeviceModel(userAgent) {
         for (var identifier in iPadMatches) {
             if (userAgent.includes(identifier)) {
                 deviceModel = iPadMatches[identifier];
+                iPadFound = true;
                 break;
             }
         }
         
-        if (deviceModel === 'Unknown') {
+        if (!iPadFound) {
+            const deviceMatch = userAgent.match(/iPad([0-9]+,[0-9]+)/);
+            if (deviceMatch && deviceMatch[1]) {
+                const deviceCode = 'iPad' + deviceMatch[1];
+                if (iPadMatches[deviceCode]) {
+                    deviceModel = iPadMatches[deviceCode];
+                    iPadFound = true;
+                }
+            }
+        }
+        
+        if (!iPadFound) {
             deviceModel = 'iPad';
         }
     }
     
     // ============================================
-    // ANDROID MODEL DETECTION (Full names)
+    // ANDROID MODEL DETECTION
     // ============================================
     else if (/Android/i.test(userAgent)) {
         // Extract device model from userAgent
         const modelMatch = userAgent.match(/; ([\w\s]+?) Build/);
         if (modelMatch && modelMatch[1]) {
             let rawModel = modelMatch[1].trim();
-            
-            // Clean up model name
             rawModel = rawModel.replace(/ \w+-\w+$/, '');
             rawModel = rawModel.replace(/\(.*?\)/g, '');
             rawModel = rawModel.trim();
-            
             deviceModel = rawModel;
         }
         
@@ -256,11 +291,14 @@ function detectDeviceModel(userAgent) {
                     'SM-N981': 'Galaxy Note 20',
                     'SM-F936': 'Galaxy Z Fold 4',
                     'SM-F946': 'Galaxy Z Fold 5',
+                    'SM-F956': 'Galaxy Z Fold 6',
                     'SM-F721': 'Galaxy Z Flip 4',
                     'SM-F731': 'Galaxy Z Flip 5',
+                    'SM-F741': 'Galaxy Z Flip 6',
                     'SM-A736': 'Galaxy A73',
                     'SM-A536': 'Galaxy A53',
                     'SM-A546': 'Galaxy A54',
+                    'SM-A556': 'Galaxy A55',
                     'SM-A336': 'Galaxy A33',
                     'SM-A236': 'Galaxy A23',
                     'SM-A146': 'Galaxy A14',
@@ -281,7 +319,8 @@ function detectDeviceModel(userAgent) {
             const pixelMatch = userAgent.match(/Pixel (\d+)/);
             if (pixelMatch) {
                 const pixelNum = parseInt(pixelMatch[1]);
-                if (pixelNum === 8) deviceModel = 'Pixel 8 Pro';
+                if (pixelNum === 9) deviceModel = 'Pixel 9 Pro';
+                else if (pixelNum === 8) deviceModel = 'Pixel 8 Pro';
                 else if (pixelNum === 7) deviceModel = 'Pixel 7 Pro';
                 else if (pixelNum === 6) deviceModel = 'Pixel 6 Pro';
                 else deviceModel = `Pixel ${pixelMatch[1]}`;
@@ -418,6 +457,7 @@ function detectDeviceModel(userAgent) {
         deviceModel = 'Chromebook';
     }
     
+    console.log('[Device Detection] Final result:', { deviceModel, brand });
     return { deviceModel, brand };
 }
 
@@ -477,11 +517,13 @@ function getWebGLFingerprint() {
 }
 
 // ============================================
-// DETAILED DEVICE INFO (Async)
+// DETAILED DEVICE INFO
 // ============================================
 
 async function getDetailedDeviceInfo() {
     const userAgent = navigator.userAgent;
+    console.log('[Device Detection] Raw UserAgent:', userAgent);
+    
     const { deviceModel, brand } = detectDeviceModel(userAgent);
     
     const screenDetails = {
@@ -518,8 +560,6 @@ async function getDetailedDeviceInfo() {
     
     const canvasFingerprint = getCanvasFingerprint();
     const webglFingerprint = getWebGLFingerprint();
-    
-    console.log('Detected Device:', { deviceModel, brand });
     
     return {
         userAgent: userAgent,
@@ -582,7 +622,7 @@ async function generateStrongDeviceId() {
     if (brandPrefix !== 'Unknown' && brandPrefix !== '') {
         deviceId = `${primaryId}_${brandPrefix}`;
     }
-    if (modelSuffix && modelSuffix !== 'Unknown') {
+    if (modelSuffix && modelSuffix !== 'Unknown' && modelSuffix !== '') {
         deviceId = `${deviceId}_${modelSuffix}`;
     }
     
@@ -635,7 +675,7 @@ async function getDeviceInfo() {
 }
 
 // ============================================
-// SIMPLE DEVICE FINGERPRINT (Sync)
+// SIMPLE DEVICE FINGERPRINT
 // ============================================
 
 function getSimpleDeviceFingerprint() {
@@ -1134,8 +1174,64 @@ async function debugDeviceInfo() {
     };
 }
 
+async function debugIPhoneDetection() {
+    const userAgent = navigator.userAgent;
+    console.log('=== IPHONE DETECTION DEBUG ===');
+    console.log('Full UserAgent:', userAgent);
+    
+    // Check for iPhone model identifier
+    const modelMatch = userAgent.match(/iPhone([0-9]+,[0-9]+)/);
+    if (modelMatch) {
+        console.log('✅ Found iPhone model identifier:', modelMatch[0]);
+        console.log('   Model code:', modelMatch[1]);
+        
+        // Map to friendly name
+        const modelMap = {
+            '13,4': 'iPhone 12 Pro Max',
+            '13,3': 'iPhone 12 Pro',
+            '13,2': 'iPhone 12',
+            '13,1': 'iPhone 12 mini',
+            '14,3': 'iPhone 13 Pro Max',
+            '14,2': 'iPhone 13 Pro',
+            '14,5': 'iPhone 13',
+            '14,4': 'iPhone 13 mini',
+            '15,3': 'iPhone 14 Pro Max',
+            '15,2': 'iPhone 14 Pro',
+            '15,4': 'iPhone 14',
+            '15,5': 'iPhone 14 Plus',
+            '16,2': 'iPhone 15 Pro Max',
+            '16,1': 'iPhone 15 Pro',
+            '16,3': 'iPhone 15',
+            '16,4': 'iPhone 15 Plus',
+            '17,2': 'iPhone 16 Pro Max',
+            '17,1': 'iPhone 16 Pro',
+            '17,3': 'iPhone 16',
+            '17,4': 'iPhone 16 Plus'
+        };
+        
+        if (modelMap[modelMatch[1]]) {
+            console.log('   Maps to:', modelMap[modelMatch[1]]);
+        }
+    } else {
+        console.log('❌ No iPhone model identifier found in UserAgent');
+    }
+    
+    // Check for OS version
+    const osMatch = userAgent.match(/OS (\d+)_/);
+    if (osMatch) {
+        console.log('iOS Version:', osMatch[1]);
+    }
+    
+    // Run detection
+    const result = detectDeviceModel(userAgent);
+    console.log('Detection result:', result);
+    console.log('================================');
+    
+    return { userAgent, modelIdentifier: modelMatch ? modelMatch[0] : null, result };
+}
+
 // ============================================
 // INITIALIZATION
 // ============================================
-console.log('✅ api-config.js v3.1 loaded with enhanced device fingerprinting and full model names');
+console.log('✅ api-config.js v3.2 loaded - iPhone model detection prioritizes model identifier over OS version');
 
