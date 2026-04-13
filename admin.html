@@ -412,6 +412,11 @@
         td { padding: 20px 16px; border-bottom: 1px solid #e2e8f0; font-size: 0.95rem; }
         tr:hover td { background: #f8fafc; }
 
+        /* Attendance Color Coding */
+        .status-green { background: #dcfce7; color: #166534; font-weight: bold; }
+        .status-yellow { background: #fef3c7; color: #92400e; font-weight: bold; }
+        .status-red { background: #fee2e2; color: #991b1b; font-weight: bold; }
+
         .progress-bar {
             height: 4px;
             background: #e2e8f0;
@@ -524,6 +529,41 @@
         .badge-ios { background: #e0e7ff; color: #1e3a8a; }
         .badge-web { background: #fef3c7; color: #92400e; }
 
+        /* Filter bar styles */
+        .filter-bar {
+            background: white;
+            border-radius: 24px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        .filter-group input, .filter-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            font-size: 13px;
+            background: #f8fafc;
+        }
+
         @media (max-width: 640px) {
             .floating-input {
                 padding: 16px 14px 6px 14px;
@@ -542,6 +582,12 @@
             .main-content {
                 margin-left: 240px;
                 padding: 20px;
+            }
+            .filter-bar {
+                flex-direction: column;
+            }
+            .filter-group {
+                width: 100%;
             }
         }
     </style>
@@ -605,6 +651,32 @@
                 <button id="reasonCancelBtn" class="bg-gray-100 text-gray-500 py-3 rounded-2xl font-bold">Batal</button>
                 <button id="reasonOkBtn" class="bg-amber-600 text-white py-3 rounded-2xl font-bold">Teruskan</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Device Request Modal -->
+    <div id="deviceRequestModal" class="confirm-modal" style="display: none;">
+        <div class="confirm-content" style="max-width: 500px;">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-rounded text-4xl">swap_horiz</span>
+            </div>
+            <h3 class="font-black text-xl text-gray-800" id="deviceRequestTitle">Permohonan Gantian Peranti</h3>
+            <div id="deviceRequestDetails" class="text-left text-sm text-gray-600 my-4">
+                <p><strong>Nama:</strong> <span id="reqUserName"></span></p>
+                <p><strong>Email:</strong> <span id="reqUserEmail"></span></p>
+                <p><strong>Peranti Lama:</strong> <span id="reqOldDeviceId"></span></p>
+                <p><strong>Peranti Baru:</strong> <span id="reqNewDeviceId"></span></p>
+                <p><strong>Sebab:</strong> <span id="reqReason"></span></p>
+            </div>
+            <div class="mb-4">
+                <label class="input-label text-left block">Sebab Tindakan (jika ditolak)</label>
+                <textarea id="rejectReasonInput" class="input-field" rows="2" placeholder="Sila nyatakan sebab permohonan ditolak..."></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button id="rejectDeviceBtn" class="bg-red-600 text-white py-3 rounded-2xl font-bold">Tolak</button>
+                <button id="approveDeviceBtn" class="bg-green-600 text-white py-3 rounded-2xl font-bold">Luluskan</button>
+            </div>
+            <button id="closeDeviceModalBtn" class="mt-4 text-gray-400 text-sm w-full">Tutup</button>
         </div>
     </div>
 
@@ -679,6 +751,18 @@
                         <span class="material-symbols-rounded">dashboard</span> 
                         <span class="font-bold">Statistik Keseluruhan</span>
                     </div>
+                    <div class="nav-item" onclick="switchTab('audit')" id="navAudit">
+                        <span class="material-symbols-rounded">history</span> 
+                        <span class="font-bold">Log Aktiviti</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('devicerequests')" id="navDeviceRequests">
+                        <span class="material-symbols-rounded">swap_horiz</span> 
+                        <span class="font-bold">Permohonan Peranti</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('locationoff')" id="navLocationOff">
+                        <span class="material-symbols-rounded">location_off</span> 
+                        <span class="font-bold">Lokasi OFF</span>
+                    </div>
                     <div class="nav-item" onclick="switchTab('tools')" id="navTools">
                         <span class="material-symbols-rounded">build</span> 
                         <span class="font-bold">Alat Sistem</span>
@@ -724,6 +808,7 @@
                                     <th>Status Biometrik</th>
                                     <th>Geofencing</th>
                                     <th>Platform</th>
+                                    <th>Status Kehadiran</th>
                                     <th class="text-center">Tindakan</th>
                                 </tr>
                             </thead>
@@ -1036,7 +1121,7 @@
                                         <th>Status</th>
                                     </thead>
                                 <tbody id="userAttendanceBody">
-                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
+                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1096,7 +1181,7 @@
                             </tr>
                         </thead>
                         <tbody id="devicesTableBody">
-                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</tr>
                         </tbody>
                     </table>
                 </div>
@@ -1149,6 +1234,125 @@
                 <div class="bg-white rounded-[40px] p-6 border mt-8">
                     <h2 class="font-bold text-sm mb-4">Taburan Platform Pengguna</h2>
                     <canvas id="platformChart" height="80"></canvas>
+                </div>
+            </div>
+
+            <!-- Audit Log Tab -->
+            <div id="auditTab" class="hidden">
+                <h1 class="text-4xl font-black text-gray-800 mb-8">Log Aktiviti Sistem</h1>
+                
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Tarikh Mula</label>
+                        <input type="date" id="auditStartDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>Tarikh Tamat</label>
+                        <input type="date" id="auditEndDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>Tindakan</label>
+                        <select id="auditAction">
+                            <option value="">SEMUA</option>
+                            <option value="LOGIN">Login</option>
+                            <option value="LOGOUT">Logout</option>
+                            <option value="CLOCK_IN">Clock In</option>
+                            <option value="CLOCK_OUT">Clock Out</option>
+                            <option value="USER_CREATED">Pengguna Dicipta</option>
+                            <option value="USER_UPDATED">Pengguna Dikemaskini</option>
+                            <option value="USER_DELETED">Pengguna Dipadam</option>
+                            <option value="FORCE_LOGOUT">Force Logout</option>
+                            <option value="DEVICE_REPLACEMENT_REQUEST">Permohonan Peranti</option>
+                            <option value="DEVICE_REPLACEMENT_APPROVED">Peranti Diluluskan</option>
+                            <option value="CRASH_REPORT">Laporan Kemalangan</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Carian</label>
+                        <input type="text" id="auditSearch" placeholder="Nama pengguna...">
+                    </div>
+                    <div class="filter-group">
+                        <button onclick="loadAuditLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
+                    <table class="w-full min-w-[1000px]">
+                        <thead>
+                            <tr>
+                                <th class="p-3 text-xs font-bold text-gray-400">Tarikh & Masa</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Pengguna</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Tindakan</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Butiran</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">IP Address</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditLogsBody">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Device Requests Tab -->
+            <div id="devicerequestsTab" class="hidden">
+                <h1 class="text-4xl font-black text-gray-800 mb-8">Permohonan Gantian Peranti</h1>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead>
+                            <tr>
+                                <th class="p-3 text-xs font-bold text-gray-400">Tarikh</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Nama</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Email</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Peranti Lama</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Peranti Baru</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Sebab</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Tindakan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="deviceRequestsBody">
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Location Off Logs Tab -->
+            <div id="locationoffTab" class="hidden">
+                <h1 class="text-4xl font-black text-gray-800 mb-8">Lokasi Dimatikan</h1>
+                
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Tarikh Mula</label>
+                        <input type="date" id="locOffStartDate">
+                    </div>
+                    <div class="filter-group">
+                        <label>Tarikh Tamat</label>
+                        <input type="date" id="locOffEndDate">
+                    </div>
+                    <div class="filter-group">
+                        <button onclick="loadLocationOffLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead>
+                            <tr>
+                                <th class="p-3 text-xs font-bold text-gray-400">Tarikh & Masa</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Nama</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Cawangan</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Unit</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Tempoh OFF</th>
+                                <th class="p-3 text-xs font-bold text-gray-400">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="locationOffBody">
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -1245,6 +1449,7 @@
         let realTimeDetectionInterval = null;
         let pendingReasonCallback = null;
         let platformChart = null;
+        let currentDeviceRequest = null;
 
         // ============================================
         // WBF SARAWAK CONFIGURATION (FRONTEND)
@@ -1721,6 +1926,21 @@ Jabatan Imigresen Malaysia`;
         function cancelAndReset() { resetFormAfterSave(); switchTab('users'); }
 
         // ============================================
+        // GET ATTENDANCE COLOR
+        // ============================================
+        async function getUserAttendanceColor(uid) {
+            try {
+                const result = await callAPI('getTodayAttendanceWithColor', { uid: uid });
+                if (result.success) {
+                    return result;
+                }
+                return { color: 'red', status: 'TIADA CLOCK IN', totalHours: 0 };
+            } catch (error) {
+                return { color: 'red', status: 'ERROR', totalHours: 0 };
+            }
+        }
+
+        // ============================================
         // LOGIN
         // ============================================
         window.handleLogin = async function() {
@@ -1810,9 +2030,18 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('userHistoryStartDate').value = thirtyDaysAgo.toISOString().split('T')[0];
             document.getElementById('userHistoryEndDate').value = today.toISOString().split('T')[0];
             
+            // Set default dates for audit logs
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            document.getElementById('auditStartDate').value = sevenDaysAgo.toISOString().split('T')[0];
+            document.getElementById('auditEndDate').value = today.toISOString().split('T')[0];
+            
             loadUsers();
             loadFaceModels();
             loadUserDevices();
+            loadDeviceRequests();
+            loadAuditLogs();
+            loadLocationOffLogs();
         }
 
         // ============================================
@@ -1829,7 +2058,7 @@ Jabatan Imigresen Malaysia`;
                 }
             } catch (error) {
                 console.error('Load devices error:', error);
-                document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Gagal memuatkan data</td></tr>';
+                document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Gagal memuatkan数据</td></tr>';
             }
         }
 
@@ -1913,7 +2142,7 @@ Jabatan Imigresen Malaysia`;
         async function forceLogoutUser(uid, name) {
             showConfirm('Force Logout', `Anda pasti mahu logout ${name} dari SEMUA peranti?`, async function() {
                 try {
-                    const result = await forceLogoutUser(uid, currentUser);
+                    const result = await callAPI('forceLogoutUser', { uid: uid, requestingUser: JSON.stringify(currentUser) });
                     if (result.success) {
                         showAlert('Berjaya', `${name} telah dilogout dari semua peranti`, 'success');
                         loadUserDevices();
@@ -1924,6 +2153,225 @@ Jabatan Imigresen Malaysia`;
                     showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
                 }
             });
+        }
+
+        // ============================================
+        // DEVICE REQUESTS FUNCTIONS
+        // ============================================
+        async function loadDeviceRequests() {
+            try {
+                const result = await callAPI('getPendingDeviceRequests', { requestingUser: JSON.stringify(currentUser) });
+                if (result.success && result.data) {
+                    renderDeviceRequests(result.data);
+                } else {
+                    document.getElementById('deviceRequestsBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada permohonan peranti</td></tr>';
+                }
+            } catch (error) {
+                console.error('Load device requests error:', error);
+                document.getElementById('deviceRequestsBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Gagal memuatkan data</td></tr>';
+            }
+        }
+
+        function renderDeviceRequests(requests) {
+            const tbody = document.getElementById('deviceRequestsBody');
+            if (!requests || requests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada permohonan peranti</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            requests.forEach(req => {
+                const requestDate = new Date(req.requestedAt).toLocaleString('ms-MY');
+                html += `
+                    <tr>
+                        <td class="p-3 text-sm">${requestDate}</td>
+                        <td class="p-3 font-bold">${escapeHtml(req.userName)}</td>
+                        <td class="p-3">${escapeHtml(req.userEmail)}</td>
+                        <td class="p-3 text-xs font-mono">${req.oldDeviceId || '-'}</td>
+                        <td class="p-3 text-xs font-mono">${req.newDeviceId}</td>
+                        <td class="p-3 text-sm">${escapeHtml(req.reason)}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="openDeviceRequestModal('${req.requestId}', '${escapeHtml(req.userName)}', '${escapeHtml(req.userEmail)}', '${escapeHtml(req.oldDeviceId || '')}', '${escapeHtml(req.newDeviceId)}', '${escapeHtml(req.reason)}')" 
+                                    class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">
+                                Proses
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function openDeviceRequestModal(requestId, userName, userEmail, oldDeviceId, newDeviceId, reason) {
+            currentDeviceRequest = { requestId, userName, userEmail, oldDeviceId, newDeviceId, reason };
+            document.getElementById('reqUserName').innerText = userName;
+            document.getElementById('reqUserEmail').innerText = userEmail;
+            document.getElementById('reqOldDeviceId').innerText = oldDeviceId || 'Tiada rekod';
+            document.getElementById('reqNewDeviceId').innerText = newDeviceId;
+            document.getElementById('reqReason').innerText = reason;
+            document.getElementById('rejectReasonInput').value = '';
+            document.getElementById('deviceRequestModal').style.display = 'flex';
+        }
+
+        async function approveDeviceRequest() {
+            if (!currentDeviceRequest) return;
+            
+            showConfirm('Luluskan Permohonan', `Anda pasti mahu meluluskan permohonan gantian peranti untuk ${currentDeviceRequest.userName}?`, async function() {
+                try {
+                    const result = await callAPI('approveDeviceReplacement', { 
+                        requestId: currentDeviceRequest.requestId,
+                        requestingUser: JSON.stringify(currentUser)
+                    });
+                    if (result.success) {
+                        showAlert('Berjaya', 'Permohonan gantian peranti telah diluluskan', 'success');
+                        document.getElementById('deviceRequestModal').style.display = 'none';
+                        loadDeviceRequests();
+                        loadUserDevices();
+                    } else {
+                        showAlert('Ralat', result.error || 'Gagal meluluskan permohonan', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
+                }
+            });
+        }
+
+        async function rejectDeviceRequest() {
+            if (!currentDeviceRequest) return;
+            const rejectReason = document.getElementById('rejectReasonInput').value.trim();
+            if (!rejectReason) {
+                showAlert('Ralat', 'Sila nyatakan sebab permohonan ditolak', 'warning');
+                return;
+            }
+            
+            showConfirm('Tolak Permohonan', `Anda pasti mahu menolak permohonan gantian peranti untuk ${currentDeviceRequest.userName}?`, async function() {
+                try {
+                    const result = await callAPI('rejectDeviceReplacement', { 
+                        requestId: currentDeviceRequest.requestId,
+                        reason: rejectReason,
+                        requestingUser: JSON.stringify(currentUser)
+                    });
+                    if (result.success) {
+                        showAlert('Berjaya', 'Permohonan gantian peranti telah ditolak', 'success');
+                        document.getElementById('deviceRequestModal').style.display = 'none';
+                        loadDeviceRequests();
+                    } else {
+                        showAlert('Ralat', result.error || 'Gagal menolak permohonan', 'error');
+                    }
+                } catch (error) {
+                    showAlert('Ralat', 'Gagal berkomunikasi dengan server', 'error');
+                }
+            });
+        }
+
+        // ============================================
+        // AUDIT LOG FUNCTIONS
+        // ============================================
+        async function loadAuditLogs() {
+            const startDate = document.getElementById('auditStartDate').value;
+            const endDate = document.getElementById('auditEndDate').value;
+            const action = document.getElementById('auditAction').value;
+            const search = document.getElementById('auditSearch').value;
+            
+            const filters = {};
+            if (startDate) filters.startDate = startDate;
+            if (endDate) filters.endDate = endDate;
+            if (action) filters.action = action;
+            if (search) filters.userName = search;
+            
+            try {
+                const result = await callAPI('getAuditLogs', { 
+                    filters: JSON.stringify(filters),
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                if (result.success && result.data) {
+                    renderAuditLogs(result.data);
+                } else {
+                    document.getElementById('auditLogsBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</td></tr>';
+                }
+            } catch (error) {
+                console.error('Load audit logs error:', error);
+                document.getElementById('auditLogsBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Gagal memuatkan log</td></tr>';
+            }
+        }
+
+        function renderAuditLogs(logs) {
+            const tbody = document.getElementById('auditLogsBody');
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            logs.forEach(log => {
+                const timestamp = new Date(log.timestamp).toLocaleString('ms-MY');
+                let statusClass = log.status === 'success' ? 'text-green-600' : (log.status === 'warning' ? 'text-amber-600' : 'text-red-600');
+                let statusIcon = log.status === 'success' ? '✓' : (log.status === 'warning' ? '⚠️' : '✗');
+                
+                html += `
+                    <tr>
+                        <td class="p-3 text-sm">${timestamp}</td>
+                        <td class="p-3"><div class="font-bold">${escapeHtml(log.userName || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(log.userEmail || '-')}</div></td>
+                        <td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold">${log.action}</span></td>
+                        <td class="p-3 text-sm max-w-[300px] truncate" title="${escapeHtml(log.details)}">${escapeHtml(log.details || '-')}</td>
+                        <td class="p-3 text-xs">${log.ipAddress || '-'}</td>
+                        <td class="p-3"><span class="${statusClass}">${statusIcon} ${log.status}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // ============================================
+        // LOCATION OFF LOGS FUNCTIONS
+        // ============================================
+        async function loadLocationOffLogs() {
+            const startDate = document.getElementById('locOffStartDate').value;
+            const endDate = document.getElementById('locOffEndDate').value;
+            
+            try {
+                // This requires a new API endpoint in code.gs
+                const result = await callAPI('getLocationOffLogs', { 
+                    startDate: startDate,
+                    endDate: endDate,
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                if (result.success && result.data) {
+                    renderLocationOffLogs(result.data);
+                } else {
+                    document.getElementById('locationOffBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod lokasi OFF</td></tr>';
+                }
+            } catch (error) {
+                console.error('Load location off logs error:', error);
+                document.getElementById('locationOffBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Gagal memuatkan data</td></tr>';
+            }
+        }
+
+        function renderLocationOffLogs(logs) {
+            const tbody = document.getElementById('locationOffBody');
+            if (!logs || logs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod lokasi OFF</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            logs.forEach(log => {
+                const timestamp = new Date(log.timestamp).toLocaleString('ms-MY');
+                let statusClass = log.status === 'resolved' ? 'text-green-600' : 'text-amber-600';
+                let statusText = log.status === 'resolved' ? 'Selesai' : 'Dalam Perhatian';
+                
+                html += `
+                    <tr>
+                        <td class="p-3 text-sm">${timestamp}</td>
+                        <td class="p-3 font-bold">${escapeHtml(log.userName)}</td>
+                        <td class="p-3">${escapeHtml(log.branch)}</td>
+                        <td class="p-3">${escapeHtml(log.unit)}</td>
+                        <td class="p-3">${log.duration} minit</td>
+                        <td class="p-3"><span class="${statusClass}">${statusText}</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
         }
 
         // ============================================
@@ -1957,7 +2405,7 @@ Jabatan Imigresen Malaysia`;
                 });
                 if (result.success) {
                     users = result.data || [];
-                    renderUsersTable();
+                    await renderUsersTable();
                     updateDashboardStats();
                     updateReportDropdown();
                 } else {
@@ -1969,27 +2417,48 @@ Jabatan Imigresen Malaysia`;
             }
         }
 
-        function renderUsersTable() {
+        async function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</td></tr>';
                 return;
             }
-            tbody.innerHTML = users.map(u => `
-                <tr>
-                    <td><div class="font-black text-gray-800">${escapeHtml(u.name)}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.email)}</div></td>
-                    <td><div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.branch)}</div></td>
-                    <td>${u.faceDescriptor ? '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full">TIADA REKOD</span>'}</td>
-                    <td><div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${escapeHtml(u.location || 'Pejabat Am')}</div><div class="text-[10px] text-blue-500">${u.radius || 500}m Radius</div></td>
-                    <td>${u.registeredPlatform ? `<span class="badge ${u.registeredPlatform === 'Android' ? 'badge-android' : (u.registeredPlatform === 'iOS' ? 'badge-ios' : 'badge-web')}">${u.registeredPlatform === 'Android' ? '📱' : (u.registeredPlatform === 'iOS' ? '🍎' : '💻')} ${u.registeredPlatform || 'Web'}</span>` : '<span class="text-xs text-gray-400">Belum daftar</span>'}</td>
-                    <td><div class="flex gap-2 justify-center">
-                        <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100"><span class="material-symbols-rounded text-xl">visibility</span></button>
-                        <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100"><span class="material-symbols-rounded text-xl">edit</span></button>
-                        ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100"><span class="material-symbols-rounded text-xl">face_4</span></button>` : ''}
-                        <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100"><span class="material-symbols-rounded text-xl">delete</span></button>
-                    </div></td>
-                </tr>
-            `).join('');
+            
+            // Load attendance colors for each user
+            let html = '';
+            for (const u of users) {
+                const attendance = await getUserAttendanceColor(u.uid);
+                let statusClass = '';
+                let statusText = '';
+                if (attendance.color === 'green') {
+                    statusClass = 'status-green';
+                    statusText = `✅ ${attendance.totalHours.toFixed(1)}j (CUKUP)`;
+                } else if (attendance.color === 'yellow') {
+                    statusClass = 'status-yellow';
+                    statusText = attendance.totalHours > 0 ? `⚠️ ${attendance.totalHours.toFixed(1)}j (KURANG)` : '🟡 DALAM BERTUGAS';
+                } else {
+                    statusClass = 'status-red';
+                    statusText = '❌ TIADA CLOCK IN';
+                }
+                
+                html += `
+                    <tr>
+                        <td><div class="font-black text-gray-800">${escapeHtml(u.name)}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.email)}</div></td>
+                        <td><div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.branch)}</div></td>
+                        <td>${u.faceDescriptor ? '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full">TIADA REKOD</span>'}</td>
+                        <td><div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${escapeHtml(u.location || 'Pejabat Am')}</div><div class="text-[10px] text-blue-500">${u.radius || 500}m Radius</div></td>
+                        <td>${u.registeredPlatform ? `<span class="badge ${u.registeredPlatform === 'Android' ? 'badge-android' : (u.registeredPlatform === 'iOS' ? 'badge-ios' : 'badge-web')}">${u.registeredPlatform === 'Android' ? '📱' : (u.registeredPlatform === 'iOS' ? '🍎' : '💻')} ${u.registeredPlatform || 'Web'}</span>` : '<span class="text-xs text-gray-400">Belum daftar</span>'}</td>
+                        <td class="p-3"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td>
+                        <td><div class="flex gap-2 justify-center">
+                            <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100"><span class="material-symbols-rounded text-xl">visibility</span></button>
+                            <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100"><span class="material-symbols-rounded text-xl">edit</span></button>
+                            ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100"><span class="material-symbols-rounded text-xl">face_4</span></button>` : ''}
+                            <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100"><span class="material-symbols-rounded text-xl">delete</span></button>
+                        </div></td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
         }
 
         // ============================================
@@ -2426,6 +2895,9 @@ Jabatan Imigresen Malaysia`;
             if (tab === 'register' && document.getElementById('userId').value === "") resetRegisterForm();
             if (tab === 'editUser') setTimeout(() => { if (editUserMap) editUserMap.invalidateSize(); updateEditStepUI(); }, 300);
             if (tab === 'devices') loadUserDevices();
+            if (tab === 'devicerequests') loadDeviceRequests();
+            if (tab === 'audit') loadAuditLogs();
+            if (tab === 'locationoff') loadLocationOffLogs();
         };
         window.nextStep = function() {
             if (currentStep === 1) {
@@ -2680,7 +3152,6 @@ Jabatan Imigresen Malaysia`;
                     });
                 }
                 
-                // 🔥 PASTIKAN jsPDF dimuat dengan betul
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ format: 'a4', unit: 'mm' });
                 
@@ -2803,6 +3274,12 @@ Jabatan Imigresen Malaysia`;
         document.getElementById('confirmResetBtn').addEventListener('click', function() { if (userToReset) resetUserFace(userToReset.uid); });
         document.getElementById('userHistoryStartDate').addEventListener('change', loadUserAttendance);
         document.getElementById('userHistoryEndDate').addEventListener('change', loadUserAttendance);
+        document.getElementById('approveDeviceBtn').addEventListener('click', approveDeviceRequest);
+        document.getElementById('rejectDeviceBtn').addEventListener('click', rejectDeviceRequest);
+        document.getElementById('closeDeviceModalBtn').addEventListener('click', function() {
+            document.getElementById('deviceRequestModal').style.display = 'none';
+        });
+        
         document.addEventListener('DOMContentLoaded', function() {
             if (!document.getElementById('faceOverlay')) {
                 const overlay = document.createElement('div');
