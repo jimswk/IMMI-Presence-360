@@ -595,6 +595,19 @@
         .badge-rejected { background: #fee2e2; color: #991b1b; }
         .badge-reviewed { background: #dbeafe; color: #1e3a8a; }
 
+        /* Remark badge styles */
+        .remark-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+        .remark-badge.leave { background: #fef3c7; color: #92400e; }
+        .remark-badge.diary { background: #dcfce7; color: #166534; }
+        .remark-badge.exception { background: #fee2e2; color: #991b1b; }
+
         @media (max-width: 640px) {
             .floating-input {
                 padding: 16px 14px 6px 14px;
@@ -707,6 +720,32 @@
                 <button id="approveRequestBtn" class="bg-green-600 text-white py-3 rounded-2xl font-bold">Luluskan</button>
             </div>
             <button id="closeRequestModalBtn" class="mt-4 text-gray-400 text-sm w-full">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Device Request Modal -->
+    <div id="deviceRequestModal" class="confirm-modal" style="display: none;">
+        <div class="confirm-content" style="max-width: 500px;">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-rounded text-4xl">swap_horiz</span>
+            </div>
+            <h3 class="font-black text-xl text-gray-800">Gantian Peranti</h3>
+            <div class="text-left text-sm text-gray-600 my-4">
+                <p><strong>Nama:</strong> <span id="reqUserName"></span></p>
+                <p><strong>Email:</strong> <span id="reqUserEmail"></span></p>
+                <p><strong>Peranti Lama:</strong> <span id="reqOldDeviceId" class="text-xs font-mono"></span></p>
+                <p><strong>Peranti Baru:</strong> <span id="reqNewDeviceId" class="text-xs font-mono"></span></p>
+                <p><strong>Sebab:</strong> <span id="reqReason"></span></p>
+            </div>
+            <div class="mb-4">
+                <label class="input-label text-left block">Sebab Penolakan (jika ditolak)</label>
+                <textarea id="rejectReasonInput" class="input-field" rows="2" placeholder="Nyatakan sebab permohonan ditolak..."></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button id="rejectDeviceBtn" class="bg-red-600 text-white py-3 rounded-2xl font-bold">Tolak</button>
+                <button id="approveDeviceBtn" class="bg-green-600 text-white py-3 rounded-2xl font-bold">Luluskan</button>
+            </div>
+            <button id="closeDeviceModalBtn" class="mt-4 text-gray-400 text-sm w-full">Tutup</button>
         </div>
     </div>
 
@@ -1153,9 +1192,10 @@
                                         <th>Jumlah Jam</th>
                                         <th>OT</th>
                                         <th>Status</th>
+                                        <th>Remark</th>
                                     </thead>
                                 <tbody id="userAttendanceBody">
-                                    <tr><td colspan="7" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr>
+                                    <tr><td colspan="8" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</div></td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1215,7 +1255,7 @@
                             </tr>
                         </thead>
                         <tbody id="devicesTableBody">
-                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</div></td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1300,7 +1340,7 @@
                             <option value="DEVICE_REPLACEMENT_APPROVED">Peranti Diluluskan</option>
                             <option value="CRASH_REPORT">Laporan Kemalangan</option>
                             <option value="EXCEPTION_REPORT">Exception Report</option>
-                            <option value="LEAVE_REQUEST">Permohonan Cuti/Kursus</option>
+                            <option value="LEAVE_REQUEST">Permohonan Cuti</option>
                             <option value="COURSE_DIARY">Diari Kursus</option>
                         </select>
                     </div>
@@ -1326,7 +1366,7 @@
                             </tr>
                         </thead>
                         <tbody id="auditLogsBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</td></tr>
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</div></div></td>
                         </tbody>
                     </table>
                 </div>
@@ -1338,8 +1378,8 @@
                 
                 <div class="request-tabs">
                     <div class="request-tab-btn active" onclick="switchRequestTab('exceptions')">Exception Reports</div>
-                    <div class="request-tab-btn" onclick="switchRequestTab('leave')">Permohonan Cuti/Kursus</div>
-                    <div class="request-tab-btn" onclick="switchRequestTab('diaries')">Diari Kursus/Tugasan</div>
+                    <div class="request-tab-btn" onclick="switchRequestTab('leave')">Permohonan (Cuti/Kebenaran)</div>
+                    <div class="request-tab-btn" onclick="switchRequestTab('diaries')">Diari (Kursus/Tugasan)</div>
                 </div>
 
                 <!-- Exception Reports Panel -->
@@ -1364,17 +1404,17 @@
                                 </tr>
                             </thead>
                             <tbody id="exceptionsTableBody">
-                                <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                                <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Leave Requests Panel -->
+                <!-- Leave Requests Panel (Cuti Rehat, Cuti Sakit, Kebenaran Keluar Pejabat) -->
                 <div id="leavePanel" class="request-panel">
                     <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold">Senarai Permohonan Cuti/Kursus</h2>
+                            <h2 class="text-xl font-bold">Senarai Permohonan</h2>
                             <button onclick="loadAllLeaveRequests()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all">
                                 <span class="material-symbols-rounded text-sm">refresh</span>
                             </button>
@@ -1393,17 +1433,17 @@
                                 </tr>
                             </thead>
                             <tbody id="leaveRequestsTableBody">
-                                <tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                                <tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Course Diaries Panel -->
+                <!-- Course Diaries Panel (Kursus & Tugasan Luar) -->
                 <div id="diariesPanel" class="request-panel">
                     <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold">Senarai Diari Kursus/Tugasan</h2>
+                            <h2 class="text-xl font-bold">Senarai Diari (Kursus/Tugasan)</h2>
                             <button onclick="loadAllDiaries()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all">
                                 <span class="material-symbols-rounded text-sm">refresh</span>
                             </button>
@@ -1422,7 +1462,7 @@
                                 </tr>
                             </thead>
                             <tbody id="diariesTableBody">
-                                <tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                                <tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
                             </tbody>
                         </table>
                     </div>
@@ -1446,7 +1486,7 @@
                             </tr>
                         </thead>
                         <tbody id="deviceRequestsBody">
-                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
                         </tbody>
                     </table>
                 </div>
@@ -1483,7 +1523,7 @@
                             </tr>
                         </thead>
                         <tbody id="locationOffBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr>
+                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
                         </tbody>
                     </table>
                 </div>
@@ -1496,15 +1536,12 @@
                 <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
                     <div class="flex items-center gap-3 mb-6">
                         <span class="material-symbols-rounded text-3xl text-amber-600">recalculate</span>
-                        <h2 class="text-2xl font-black text-gray-800">Kira Semula Overtime (WBF Sarawak)</h2>
+                        <h2 class="text-2xl font-black text-gray-800">Kira Semula Overtime</h2>
                     </div>
                     
-                    <p class="text-gray-600 mb-6">Gunakan alat ini untuk mengira semula Overtime bagi rekod kehadiran lama mengikut formula WBF Sarawak:<br>
-                    <span class="text-sm text-gray-500">• Waktu mula kira: 7:30 AM<br>
-                    • Waktu rehat: Isnin-Khamis 1:00 PM - 2:00 PM (1 jam)<br>
-                    • Waktu rehat Jumaat: 11:45 AM - 2:15 PM (2.5 jam)<br>
-                    • Waktu tamat standard: 4:30 PM (OT dikira selepas 4:30 PM)<br>
-                    • Standard kerja: 9 jam sehari</span></p>
+                    <p class="text-gray-600 mb-6">Gunakan alat ini untuk mengira semula Overtime bagi rekod kehadiran lama.<br>
+                    <span class="text-sm text-gray-500">• Standard kerja: 9 jam sehari<br>
+                    • OT dikira selepas 9 jam bekerja</span></p>
                     
                     <div class="grid grid-cols-2 gap-6 mb-8">
                         <div>
@@ -1536,7 +1573,7 @@
                     <div class="mt-8 pt-6 border-t border-gray-100">
                         <p class="text-xs text-gray-400 flex items-center gap-1">
                             <span class="material-symbols-rounded text-sm">info</span>
-                            Nota: Proses ini mungkin mengambil masa beberapa minit bergantung kepada jumlah data. Rekod yang dikira semula akan mengemaskini kolom 'totalHours' dan 'totalOT'.
+                            Nota: Proses ini mungkin mengambil masa beberapa minit bergantung kepada jumlah data.
                         </p>
                     </div>
                 </div>
@@ -1585,25 +1622,10 @@
         let currentDeviceRequest = null;
         let currentRequestItem = null;
         let currentRequestType = null;
-
-        // ============================================
-        // WBF SARAWAK CONFIGURATION (FRONTEND)
-        // ============================================
-        const WBF_CONFIG = {
-            STANDARD_WORK_HOURS: 9,
-            WORK_START: 7.5,
-            WORK_END: 16.5,
-            OVERTIME_THRESHOLD: 16.5,
-            BREAK_CONFIG: {
-                'Sunday': { duration: 0, startHour: 0 },
-                'Monday': { duration: 1.0, startHour: 13.0 },
-                'Tuesday': { duration: 1.0, startHour: 13.0 },
-                'Wednesday': { duration: 1.0, startHour: 13.0 },
-                'Thursday': { duration: 1.0, startHour: 13.0 },
-                'Friday': { duration: 2.5, startHour: 11.75 },
-                'Saturday': { duration: 0, startHour: 0 }
-            }
-        };
+        let currentExceptionIndex = null;
+        let currentLeaveRequestId = null;
+        let currentDiaryId = null;
+        let currentRequestUserName = '';
 
         // ============================================
         // PASSWORD VISIBILITY TOGGLE
@@ -1633,13 +1655,9 @@
             }
         }
 
-        // ============================================
-        // SEND CREDENTIALS EMAIL TO NEW USER
-        // ============================================
         async function sendUserCredentialsEmail(email, name, password, branch, unit) {
             try {
                 const webAppUrl = 'https://jimswk.github.io/IMMI-Presence-360';
-                const apkDownloadLink = 'https://github.com/jimswk/IMMI-Presence-360/releases/latest/download/app-release.apk';
                 
                 const subject = `Selamat Datang ke IMMI Presence 360 - Akaun Anda Telah Dicipta`;
                 
@@ -1657,13 +1675,9 @@ Cawangan: ${branch}
 Unit: ${unit}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📱 **MUAT TURUN APLIKASI**
+🌐 **WEB ACCESS**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**Untuk Pengguna ANDROID:**
-${apkDownloadLink}
-
-**Untuk Pengguna iOS / Desktop:**
 ${webAppUrl}
 (Gunakan Safari untuk iOS)
 
@@ -1671,9 +1685,7 @@ ${webAppUrl}
 ⚠️ **PERINGATAN PENTING**
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✓ Sila log masuk menggunakan peranti yang didaftarkan
 ✓ Pastikan GPS dihidupkan untuk fungsi Clock In/Out
-✓ Gunakan aplikasi Android untuk pengalaman terbaik
 ✓ Jangan kongsikan kata laluan dengan sesiapa
 ✓ Kali pertama log masuk, anda akan diminta daftar wajah
 
@@ -2106,18 +2118,18 @@ Jabatan Imigresen Malaysia`;
                 if (result.success && result.data) {
                     renderExceptionsTable(result.data);
                 } else {
-                    document.getElementById('exceptionsTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada exception report</td></tr>';
+                    document.getElementById('exceptionsTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada exception report</div></div></td>';
                 }
             } catch (error) {
                 console.error('Load exceptions error:', error);
-                document.getElementById('exceptionsTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Gagal memuatkan data</td></tr>';
+                document.getElementById('exceptionsTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
             }
         }
 
         function renderExceptionsTable(exceptions) {
             const tbody = document.getElementById('exceptionsTableBody');
             if (!exceptions || exceptions.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada exception report</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada exception report</div></div></td>';
                 return;
             }
             
@@ -2126,20 +2138,20 @@ Jabatan Imigresen Malaysia`;
                 const submitDate = new Date(ex.submittedAt).toLocaleString('ms-MY');
                 html += `
                     <tr>
-                        <td class="p-3 text-sm">${submitDate}</td>
-                        <td class="p-3 font-bold">${escapeHtml(ex.userName)}</td>
-                        <td class="p-3">${ex.date}</td>
-                        <td class="p-3 text-sm">${escapeHtml(ex.reason)}</td>
+                        <td class="p-3 text-sm">${submitDate}</div></td>
+                        <td class="p-3 font-bold">${escapeHtml(ex.userName)}</div></td>
+                        <td class="p-3">${ex.date}</div></td>
+                        <td class="p-3 text-sm">${escapeHtml(ex.reason)}</div></td>
                         <td class="p-3">
                             ${ex.fileUrl ? `<a href="${ex.fileUrl}" target="_blank" class="text-blue-600 underline text-sm">Lihat</a>` : '-'}
-                        </td>
-                        <td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></td>
+                        </div></td>
+                        <td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></div></td>
                         <td class="p-3">
                             <button onclick="openRequestApprovalModal('exception', ${index}, '${ex.uid}', '${escapeHtml(ex.userName)}', '${ex.date}', '${escapeHtml(ex.reason)}')" 
                                     class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">
                                 Proses
                             </button>
-                        </td>
+                        </div></td>
                     </tr>
                 `;
             });
@@ -2147,7 +2159,7 @@ Jabatan Imigresen Malaysia`;
         }
 
         // ============================================
-        // LEAVE REQUESTS FUNCTIONS
+        // LEAVE REQUESTS FUNCTIONS (Cuti Rehat, Cuti Sakit, Kebenaran Keluar Pejabat)
         // ============================================
         async function loadAllLeaveRequests() {
             try {
@@ -2155,43 +2167,54 @@ Jabatan Imigresen Malaysia`;
                 if (result.success && result.data) {
                     renderLeaveRequestsTable(result.data);
                 } else {
-                    document.getElementById('leaveRequestsTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada permohonan</td></tr>';
+                    document.getElementById('leaveRequestsTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada permohonan</div></div></td>';
                 }
             } catch (error) {
                 console.error('Load leave requests error:', error);
-                document.getElementById('leaveRequestsTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Gagal memuatkan数据</td></tr>';
+                document.getElementById('leaveRequestsTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
             }
         }
 
         function renderLeaveRequestsTable(requests) {
             const tbody = document.getElementById('leaveRequestsTableBody');
             if (!requests || requests.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada permohonan</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada permohonan</div></div></td>';
                 return;
             }
             
-            const typeMap = { 'out_of_office': 'Keluar Pejabat', 'sick_leave': 'Cuti Sakit', 'course': 'Kursus', 'field_assignment': 'Tugasan Luar' };
+            const typeMap = { 
+                'annual_leave': '📅 Cuti Rehat', 
+                'sick_leave': '🤒 Cuti Sakit', 
+                'out_of_office': '🚪 Kebenaran Keluar Pejabat' 
+            };
             
             let html = '';
             requests.forEach((req, index) => {
                 const submitDate = new Date(req.timestamp).toLocaleString('ms-MY');
+                let durationInfo = '';
+                if (req.type === 'out_of_office') {
+                    const start = new Date(req.startDate);
+                    const end = new Date(req.endDate);
+                    const hours = (end - start) / (1000 * 60 * 60);
+                    durationInfo = `<span class="text-xs text-amber-600"> (${hours.toFixed(1)} jam)</span>`;
+                }
                 html += `
                     <tr>
-                        <td class="p-3 text-sm">${submitDate}</td>
-                        <td class="p-3 font-bold">${escapeHtml(req.userName)}</td>
-                        <td class="p-3">${typeMap[req.type] || req.type}</td>
-                        <td class="p-3 text-sm">${req.startDate} hingga ${req.endDate}</td>
-                        <td class="p-3 text-sm">${escapeHtml(req.reason)}</td>
+                        <td class="p-3 text-sm">${submitDate}</div></td>
+                        <td class="p-3 font-bold">${escapeHtml(req.userName)}</div></td>
+                        <td class="p-3">${typeMap[req.type] || req.type}${durationInfo}</div></td>
+                        <td class="p-3 text-sm">${req.startDate} hingga ${req.endDate}</div></td>
+                        <td class="p-3 text-sm">${escapeHtml(req.reason)}</div></td>
                         <td class="p-3">
                             ${req.fileUrl ? `<a href="${req.fileUrl}" target="_blank" class="text-blue-600 underline text-sm">Lihat</a>` : '-'}
-                        </td>
-                        <td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></td>
+                        </div></td>
+                        <td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></div></td>
                         <td class="p-3">
                             <button onclick="openLeaveRequestModal('${req.requestId}', '${escapeHtml(req.userName)}', '${typeMap[req.type] || req.type}', '${req.startDate}', '${req.endDate}', '${escapeHtml(req.reason)}', '${req.fileUrl || ''}')" 
                                     class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">
                                 Proses
                             </button>
-                        </td>
+                        </div></td>
                     </tr>
                 `;
             });
@@ -2199,7 +2222,7 @@ Jabatan Imigresen Malaysia`;
         }
 
         // ============================================
-        // COURSE DIARIES FUNCTIONS
+        // COURSE DIARIES FUNCTIONS (Kursus & Tugasan Luar)
         // ============================================
         async function loadAllDiaries() {
             try {
@@ -2207,22 +2230,22 @@ Jabatan Imigresen Malaysia`;
                 if (result.success && result.data) {
                     renderDiariesTable(result.data);
                 } else {
-                    document.getElementById('diariesTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada diari\n</div></td></tr>';
+                    document.getElementById('diariesTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada diari</div></div></td>';
                 }
             } catch (error) {
                 console.error('Load diaries error:', error);
-                document.getElementById('diariesTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></td></tr>';
+                document.getElementById('diariesTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
             }
         }
 
         function renderDiariesTable(diaries) {
             const tbody = document.getElementById('diariesTableBody');
             if (!diaries || diaries.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada diari</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada diari</div></div></td>';
                 return;
             }
             
-            const typeMap = { 'course': 'Kursus', 'assignment': 'Tugasan Luar' };
+            const typeMap = { 'course': '📘 Kursus', 'assignment': '📋 Tugasan Luar' };
             
             let html = '';
             diaries.forEach((diary, index) => {
@@ -2253,11 +2276,6 @@ Jabatan Imigresen Malaysia`;
         // ============================================
         // REQUEST APPROVAL MODAL
         // ============================================
-        let currentExceptionIndex = null;
-        let currentLeaveRequestId = null;
-        let currentDiaryId = null;
-        let currentRequestUserName = '';
-
         function openRequestApprovalModal(type, index, uid, userName, date, reason) {
             currentRequestType = type;
             currentExceptionIndex = index;
@@ -2311,6 +2329,7 @@ Jabatan Imigresen Malaysia`;
                 <p><strong>Tajuk:</strong> ${escapeHtml(title)}</p>
                 <p><strong>Keterangan:</strong> ${escapeHtml(description)}</p>
                 ${fileUrl ? `<p><strong>Dokumen:</strong> <a href="${fileUrl}" target="_blank" class="text-blue-600">Lihat</a></p>` : ''}
+                <p class="mt-3 text-amber-600 text-xs"><strong>Nota:</strong> Jika diluluskan, pengguna akan dikecualikan dari clock in/out pada tarikh ini.</p>
             `;
             document.getElementById('requestDetails').innerHTML = detailsHtml;
             document.getElementById('adminResponseInput').value = '';
@@ -2539,7 +2558,7 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('adminDashboard').classList.remove('hidden');
             document.getElementById('adminName').innerText = currentUser.name;
-            document.getElementById('adminBranchDisplay').innerText = `JIM Cawangan ${currentUser.branch}`;
+            document.getElementById('adminBranchDisplay').innerText = `Cawangan ${currentUser.branch}`;
             document.getElementById('adminUnitDisplay').innerText = `Unit ${currentUser.unit}`;
             document.getElementById('currentBranchName').innerText = currentUser.branch;
             document.getElementById('currentUnitName').innerText = currentUser.unit;
@@ -2585,18 +2604,18 @@ Jabatan Imigresen Malaysia`;
                     renderDevicesTable(result.data);
                     updatePlatformChart(result.data);
                 } else {
-                    document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Tiada data peranti</div></td></tr>';
+                    document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Tiada data peranti</div></div></td>';
                 }
             } catch (error) {
                 console.error('Load devices error:', error);
-                document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></td></tr>';
+                document.getElementById('devicesTableBody').innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
             }
         }
 
         function renderDevicesTable(devices) {
             const tbody = document.getElementById('devicesTableBody');
             if (!devices || devices.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Tiada data peranti</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center py-8 text-gray-400">Tiada data peranti</div></div></td>';
                 return;
             }
             
@@ -2695,18 +2714,18 @@ Jabatan Imigresen Malaysia`;
                 if (result.success && result.data) {
                     renderDeviceRequests(result.data);
                 } else {
-                    document.getElementById('deviceRequestsBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada permohonan peranti</div></td></tr>';
+                    document.getElementById('deviceRequestsBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada permohonan peranti</div></div></td>';
                 }
             } catch (error) {
                 console.error('Load device requests error:', error);
-                document.getElementById('deviceRequestsBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></td></tr>';
+                document.getElementById('deviceRequestsBody').innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
             }
         }
 
         function renderDeviceRequests(requests) {
             const tbody = document.getElementById('deviceRequestsBody');
             if (!requests || requests.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada permohonan peranti</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-400">Tiada permohonan peranti</div></div></td>';
                 return;
             }
             
@@ -2818,18 +2837,18 @@ Jabatan Imigresen Malaysia`;
                 if (result.success && result.data) {
                     renderAuditLogs(result.data);
                 } else {
-                    document.getElementById('auditLogsBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</div></td></tr>';
+                    document.getElementById('auditLogsBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</div></div></td>';
                 }
             } catch (error) {
                 console.error('Load audit logs error:', error);
-                document.getElementById('auditLogsBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Gagal memuatkan log</div></td></tr>';
+                document.getElementById('auditLogsBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Gagal memuatkan log</div></div></td>';
             }
         }
 
         function renderAuditLogs(logs) {
             const tbody = document.getElementById('auditLogsBody');
             if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</div></div></td>';
                 return;
             }
             
@@ -2869,18 +2888,18 @@ Jabatan Imigresen Malaysia`;
                 if (result.success && result.data) {
                     renderLocationOffLogs(result.data);
                 } else {
-                    document.getElementById('locationOffBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod lokasi OFF</div></td></tr>';
+                    document.getElementById('locationOffBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod lokasi OFF</div></div></td>';
                 }
             } catch (error) {
                 console.error('Load location off logs error:', error);
-                document.getElementById('locationOffBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></td></tr>';
+                document.getElementById('locationOffBody').innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
             }
         }
 
         function renderLocationOffLogs(logs) {
             const tbody = document.getElementById('locationOffBody');
             if (!logs || logs.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod lokasi OFF</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod lokasi OFF</div></div></td>';
                 return;
             }
             
@@ -2909,7 +2928,7 @@ Jabatan Imigresen Malaysia`;
         // ============================================
         async function loadFaceModels() {
             if (modelsLoaded) return true;
-            const MODEL_URL = 'https://cdn.jsdelivr.net/gh/jimswk/IMMI-Presence-360@main/models';
+            const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model';
             try {
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
@@ -2950,7 +2969,7 @@ Jabatan Imigresen Malaysia`;
         async function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
             if (users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kakitangan ditemui</div></div></tr>';
                 return;
             }
             
@@ -3027,7 +3046,7 @@ Jabatan Imigresen Malaysia`;
         };
 
         // ============================================
-        // LOAD USER ATTENDANCE
+        // LOAD USER ATTENDANCE (WITH REMARKS)
         // ============================================
         async function loadUserAttendance() {
             if (!selectedUser) return;
@@ -3040,21 +3059,18 @@ Jabatan Imigresen Malaysia`;
                 return; 
             }
             
-            console.log("Loading attendance for:", selectedUser.uid, startDate, endDate);
-            
             try {
-                const result = await callAPI('getAttendance', { 
+                const result = await callAPI('getAttendanceWithRemarks', { 
                     uid: selectedUser.uid, 
                     startDate: startDate, 
-                    endDate: endDate 
+                    endDate: endDate,
+                    requestingUser: JSON.stringify(currentUser)
                 });
-                
-                console.log("API Response:", result);
                 
                 const tbody = document.getElementById('userAttendanceBody');
                 
                 if (!result.success || !result.data || result.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</div></td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</div></div></td>';
                     return;
                 }
                 
@@ -3091,6 +3107,16 @@ Jabatan Imigresen Malaysia`;
                         statusClass = 'bg-gray-100 text-gray-600';
                     }
                     
+                    // Display remark if any
+                    let remarkHtml = '';
+                    if (record.remark) {
+                        let remarkClass = '';
+                        if (record.remarkType === 'leave') remarkClass = 'remark-badge leave';
+                        else if (record.remarkType === 'diary') remarkClass = 'remark-badge diary';
+                        else if (record.remarkType === 'exception') remarkClass = 'remark-badge exception';
+                        remarkHtml = `<div class="${remarkClass} mt-1">${escapeHtml(record.remark)} ${record.remarkStatus === 'approved' ? '(Lulus)' : (record.remarkStatus === 'pending' ? '(Menunggu)' : '')}</div>`;
+                    }
+                    
                     html += `<tr>
                         <td class="p-3">${tarikh}</div></td>
                         <td class="p-3">${hari}</div></td>
@@ -3099,6 +3125,7 @@ Jabatan Imigresen Malaysia`;
                         <td class="p-3 text-center">${jumlahJam}</div></td>
                         <td class="p-3 text-center">${jumlahOT}</div></td>
                         <td class="p-3 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></div></td>
+                        <td class="p-3">${remarkHtml}</div></td>
                     </tr>`;
                 });
                 tbody.innerHTML = html;
@@ -3521,11 +3548,7 @@ Jabatan Imigresen Malaysia`;
                     if (result.success) { 
                         showAlert("Berjaya", "Maklumat kakitangan telah berjaya direkodkan.", 'success');
                         await notifySuperadminNewUserDetailed(data.name, data.email, data.branch, data.unit, data.location, data.radius, currentUser.name, currentUser.branch, reason);
-                        
-                        // ========== SEND EMAIL TO NEW USER ==========
                         await sendUserCredentialsEmail(data.email, data.name, data.password, data.branch, data.unit);
-                        // ===========================================
-                        
                         resetFormAfterSave(); switchTab('users'); loadUsers(); 
                     } else { showAlert("Ralat Simpan", result.error || "Gagal menyimpan data", 'error'); }
                 } catch (error) { showAlert("Ralat", "Gagal menyimpan data", 'error'); }
