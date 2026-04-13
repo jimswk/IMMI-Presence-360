@@ -34,7 +34,7 @@
        
         body {
             font-family: 'Inter', sans-serif;
-            background: #f5f7fb;
+            background: #f0f5fa;
             color: #1e293b;
             min-height: 100vh;
         }
@@ -70,11 +70,6 @@
             align-items: center;
             justify-content: center;
             margin: 0 auto 16px;
-        }
-       
-        .login-logo-icon span {
-            font-size: 32px;
-            color: #1e3a8a;
         }
        
         .login-logo h1 {
@@ -259,17 +254,20 @@
             padding: 8px 12px;
             border-radius: 24px;
             cursor: pointer;
+            transition: all 0.2s;
         }
        
         .nav-item .material-symbols-rounded {
             font-size: 24px;
             color: #94a3b8;
+            transition: all 0.2s;
         }
        
         .nav-item span:not(.material-symbols-rounded) {
             font-size: 10px;
             font-weight: 500;
             color: #94a3b8;
+            transition: all 0.2s;
         }
        
         .nav-item.active .material-symbols-rounded {
@@ -278,6 +276,10 @@
        
         .nav-item.active span:not(.material-symbols-rounded) {
             color: #1e3a8a;
+        }
+       
+        .nav-item:hover {
+            background: #f1f5f9;
         }
        
         /* Pages */
@@ -352,17 +354,6 @@
             justify-content: center;
         }
        
-        .card-icon img {
-            width: 16px;
-            height: 16px;
-        }
-       
-        .card-title span {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-        }
-       
         .card-value {
             font-size: 28px;
             font-weight: 800;
@@ -386,6 +377,11 @@
             margin-top: 8px;
             width: 100%;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+       
+        .clockin-btn:active {
+            transform: scale(0.97);
         }
        
         .clockin-btn:disabled {
@@ -418,7 +414,6 @@
             gap: 6px;
             font-size: 12px;
             color: #f97316;
-            text-decoration: none;
             background: none;
             border: none;
             cursor: pointer;
@@ -481,7 +476,7 @@
             font-weight: 700;
         }
        
-        /* Camera Section (Clock In/Out Page) */
+        /* Camera Section */
         .camera-section {
             padding: 0;
         }
@@ -537,7 +532,6 @@
             margin-top: 8px;
         }
        
-        /* Location Status in Camera Page */
         .camera-location {
             padding: 16px 20px;
             background: white;
@@ -683,10 +677,6 @@
             padding: 16px 20px 20px;
         }
        
-        .progress-container.hidden-progress {
-            display: none;
-        }
-       
         .progress-bar {
             height: 4px;
             background: #e2e8f0;
@@ -757,6 +747,7 @@
             font-weight: 500;
             border-radius: 12px;
             cursor: pointer;
+            transition: all 0.2s;
         }
        
         .calendar-date.selected {
@@ -908,7 +899,6 @@
             z-index: 1;
         }
        
-        /* Liveness indicator */
         .liveness-indicator {
             position: absolute;
             bottom: 60px;
@@ -938,31 +928,277 @@
             50% { opacity: 0.3; }
         }
 
-        /* New Form Styles */
+        /* Form Styles */
         .form-group { margin-bottom: 16px; }
         .form-label { display: block; font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 6px; }
         .form-input, .form-select, .form-textarea { width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 14px; background: #f8fafc; outline: none; transition: all 0.2s; }
-        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #1e3a8a; background: white; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #1e3a8a; background: white; box-shadow: 0 0 0 3px rgba(30,58,138,0.1); }
         .form-btn { width: 100%; padding: 14px; border-radius: 20px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; }
         .form-btn-primary { background: #1e3a8a; color: white; }
-        .form-btn-secondary { background: #e2e8f0; color: #1e293b; }
-        .form-btn-danger { background: #dc2626; color: white; }
-        .form-btn-success { background: #10b981; color: white; }
+        .form-btn-primary:active { transform: scale(0.98); }
 
         /* Inbox Styles */
-        .inbox-item { background: white; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; border-left: 4px solid #10b981; }
-        .inbox-item.unread { background: #eff6ff; border-left-color: #1e3a8a; }
-        .inbox-item:hover { transform: scale(0.98); }
-        .inbox-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .inbox-message { font-size: 13px; color: #64748b; margin-bottom: 8px; }
-        .inbox-time { font-size: 10px; color: #94a3b8; }
-        .unread-dot { width: 10px; height: 10px; background: #1e3a8a; border-radius: 50%; display: inline-block; }
+        .inbox-stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .inbox-stat-card {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+        }
+        .inbox-stat-number {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1e3a8a;
+        }
+        .inbox-stat-label {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .inbox-item {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid #10b981;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .inbox-item.unread {
+            background: #eff6ff;
+            border-left-color: #1e3a8a;
+        }
+        .inbox-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .inbox-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .inbox-message {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .inbox-time {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .unread-dot {
+            width: 10px;
+            height: 10px;
+            background: #1e3a8a;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
 
-        /* Request Card Styles */
-        .request-card { background: white; border-radius: 20px; padding: 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
+        /* Request Styles */
+        .request-stats {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .request-stat-card {
+            flex: 1;
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+        }
+        .request-card {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .request-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+        .request-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+        }
         .request-status-pending { background: #fef3c7; color: #92400e; }
         .request-status-approved { background: #dcfce7; color: #166534; }
         .request-status-rejected { background: #fee2e2; color: #991b1b; }
+
+        /* Calendar Styles */
+        .calendar-wrapper {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+        .calendar-header h2 {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        .calendar-nav-btn {
+            background: #f1f5f9;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .calendar-nav-btn:hover {
+            background: #e2e8f0;
+        }
+        .calendar-weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            margin-bottom: 12px;
+            padding: 0 5px;
+        }
+        .calendar-weekday {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            padding: 8px 0;
+        }
+        .calendar-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            padding: 8px 4px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 16px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .calendar-day:hover {
+            background: #f1f5f9;
+        }
+        .calendar-day.today {
+            background: #1e3a8a;
+            color: white;
+            font-weight: bold;
+        }
+        .calendar-day.selected {
+            background: #dbeafe;
+            color: #1e3a8a;
+            font-weight: bold;
+            border: 2px solid #1e3a8a;
+        }
+        .calendar-day.other-month {
+            color: #cbd5e1;
+        }
+        .calendar-day.has-diary::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+        .calendar-day-number {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .diary-list {
+            margin-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 16px;
+        }
+        .diary-list-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        .diary-item {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid #10b981;
+            transition: all 0.2s;
+        }
+        .diary-item.course {
+            border-left-color: #3b82f6;
+        }
+        .diary-item.assignment {
+            border-left-color: #f59e0b;
+        }
+        .diary-item-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .diary-item-desc {
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+        .diary-item-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .diary-item-status {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        .diary-item-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .diary-item-status.reviewed {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .diary-item-file {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
     </style>
 </head>
 <body>
@@ -982,7 +1218,7 @@
         <div class="login-card">
             <div class="login-logo">
                 <div class="login-logo-icon">
-                    <img src="https://ik.imagekit.io/pyreotmgq/IMMI-ezgif.com-crop.gif" alt="Logo" class="login-logo-icon">
+                    <img src="https://ik.imagekit.io/pyreotmgq/IMMI-ezgif.com-crop.gif" alt="Logo" style="width: 100%; height: auto;">
                 </div>
                 <h1>IMMI Presence</h1>
                 <p>Sistem Kehadiran Pintar 360</p>
@@ -1025,8 +1261,8 @@
                 <div>
                     <span class="status-pill" id="statusPill">AKTIF</span>
                 </div>
-                <h1 class="user-name" id="userName">Mohammad Azzer bin Taip</h1>
-                <p class="user-meta" id="userMeta">Kuching • UPSKK</p>
+                <h1 class="user-name" id="userName">-</h1>
+                <p class="user-meta" id="userMeta">-</p>
             </header>
             
             <!-- Page 1: Home / Dashboard -->
@@ -1035,7 +1271,7 @@
                     <h2>Overview</h2>
                     <div class="date-pill">
                         <span class="material-symbols-rounded" style="font-size: 14px;">calendar_today</span>
-                        <span id="currentDateDisplay">Isnin, 6 April 2026</span>
+                        <span id="currentDateDisplay"></span>
                     </div>
                 </div>
                
@@ -1043,16 +1279,11 @@
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">
-                                    <img alt="Arrow Right" src="https://api.iconify.design/lucide-arrow-up-right.svg?color=%231c64f2" />
-                                </div>
+                                <div class="card-icon"><span class="material-symbols-rounded">login</span></div>
                                 <span>Clock In</span>
                             </div>
                         </div>
-                        <div>
-                            <span class="card-value" id="clockInTime">--:--</span>
-                            <span id="clockInAmPm" style="font-size: 12px; color: #94a3b8;">AM</span>
-                        </div>
+                        <div><span class="card-value" id="clockInTime">--:--</span><span id="clockInAmPm" style="font-size: 12px; color: #94a3b8;"></span></div>
                         <button class="clockin-btn" id="clockInBtn" onclick="switchPage('camera')">MASUK</button>
                         <div class="card-sub" id="clockInStatus">Belum Masuk</div>
                     </div>
@@ -1060,47 +1291,33 @@
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">
-                                    <img alt="Arrow Down" src="https://api.iconify.design/lucide-arrow-down-left.svg?color=%231c64f2" />
-                                </div>
+                                <div class="card-icon"><span class="material-symbols-rounded">logout</span></div>
                                 <span>Clock Out</span>
                             </div>
                         </div>
-                        <div>
-                            <span class="card-value" id="clockOutTime">— • —</span>
-                        </div>
+                        <div><span class="card-value" id="clockOutTime">— • —</span></div>
                         <div class="card-sub" id="clockOutStatus">Belum tamat waktu bertugas</div>
                     </div>
                    
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">
-                                    <img alt="Timer" src="https://api.iconify.design/lucide-timer.svg?color=%231c64f2" />
-                                </div>
+                                <div class="card-icon"><span class="material-symbols-rounded">schedule</span></div>
                                 <span>Jumlah Jam</span>
                             </div>
                         </div>
-                        <div>
-                            <span class="card-value" id="totalHours">0</span>
-                            <span style="font-size: 12px;">Jam</span>
-                        </div>
+                        <div><span class="card-value" id="totalHours">0</span><span style="font-size: 12px;"> Jam</span></div>
                         <div class="card-sub" id="totalHoursDate">Kemaskini, -</div>
                     </div>
                    
                     <div class="card">
                         <div class="card-header">
                             <div class="card-title">
-                                <div class="card-icon">
-                                    <img alt="Timer" src="https://api.iconify.design/lucide-timer.svg?color=%231c64f2" />
-                                </div>
+                                <div class="card-icon"><span class="material-symbols-rounded">timer</span></div>
                                 <span>Jumlah OT</span>
                             </div>
                         </div>
-                        <div>
-                            <span class="card-value" id="totalOT">0</span>
-                            <span style="font-size: 12px;">Jam</span>
-                        </div>
+                        <div><span class="card-value" id="totalOT">0</span><span style="font-size: 12px;"> Jam</span></div>
                         <div class="card-sub" id="totalOTDate">Kemaskini, -</div>
                     </div>
                 </div>
@@ -1108,27 +1325,15 @@
                 <div class="recent-card">
                     <div class="recent-header">
                         <h3>Aktiviti Terkini</h3>
-                        <button class="recent-link" onclick="showLocationHistory()">
-                            Lihat semua
-                            <span class="material-symbols-rounded" style="font-size: 14px;">arrow_forward</span>
-                        </button>
                     </div>
                     <div id="recentActivityList">
                         <div class="recent-item">
                             <div class="recent-item-left">
-                                <div class="recent-icon">
-                                    <span class="material-symbols-rounded" style="font-size: 18px; color: #1e3a8a;">login</span>
-                                </div>
-                                <div>
-                                    <div class="recent-label">Clock In</div>
-                                    <div class="recent-date" id="recentDate">Isnin, 6 April 2026</div>
-                                </div>
+                                <div class="recent-icon"><span class="material-symbols-rounded" style="font-size: 18px;">login</span></div>
+                                <div><div class="recent-label">Clock In</div><div class="recent-date" id="recentDate">-</div></div>
                             </div>
-                            <div class="recent-status" id="recentStatus">MASUK</div>
+                            <div class="recent-status" id="recentStatus">-</div>
                         </div>
-                    </div>
-                    <div class="map-container">
-                        <div id="recentLocationMap" class="location-map"></div>
                     </div>
                 </div>
             </div>
@@ -1137,157 +1342,88 @@
             <div id="historyPage" class="page">
                 <div class="history-header">
                     <h3 style="margin-bottom: 16px;">Sejarah Kehadiran</h3>
-                    <div class="text-sm text-gray-500 mb-3">Pilih Tarikh</div>
-                    <div class="text-base font-bold text-gray-800 mb-3" id="selectedDateTitle">Isnin, 6 April 2026</div>
-                   
-                    <div class="calendar-weekdays">
-                        <span>Isnin</span><span>Selasa</span><span>Rabu</span><span>Khamis</span><span>Jumaat</span><span>Sabtu</span><span>Ahad</span>
-                    </div>
+                    <div class="calendar-weekdays"><span>Isnin</span><span>Selasa</span><span>Rabu</span><span>Khamis</span><span>Jumaat</span><span>Sabtu</span><span>Ahad</span></div>
                     <div id="calendarDates" class="calendar-dates"></div>
                 </div>
                 <div class="detail-card">
-                    <div class="detail-row">
-                        <div>
-                            <div class="detail-label">Clock In</div>
-                            <div class="detail-value" id="detailClockIn">--:--</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="detail-label">Status</div>
-                            <div class="detail-value" id="detailStatus" style="font-size:13px;">-</div>
-                        </div>
-                    </div>
-                    <div class="detail-row">
-                        <div>
-                            <div class="detail-label">Clock Out</div>
-                            <div class="detail-value" id="detailClockOut">--:--</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-4 pt-3 border-t border-gray-100">
-                        <div class="flex-1">
-                            <div class="detail-label">Jumlah Jam</div>
-                            <div class="detail-value" id="detailTotalHours">0 Jam</div>
-                            <div class="text-[10px] text-gray-400" id="detailTotalHoursDate">Kemaskini, -</div>
-                        </div>
-                        <div class="flex-1">
-                            <div class="detail-label">Jumlah OT</div>
-                            <div class="detail-value" id="detailTotalOT">0 Jam</div>
-                            <div class="text-[10px] text-gray-400" id="detailTotalOTDate">Kemaskini, -</div>
-                        </div>
-                    </div>
+                    <div class="detail-row"><div><div class="detail-label">Clock In</div><div class="detail-value" id="detailClockIn">--:--</div></div><div><div class="detail-label">Status</div><div class="detail-value" id="detailStatus" style="font-size:13px;">-</div></div></div>
+                    <div class="detail-row"><div><div class="detail-label">Clock Out</div><div class="detail-value" id="detailClockOut">--:--</div></div></div>
+                    <div class="flex gap-4 pt-3 border-t border-gray-100"><div class="flex-1"><div class="detail-label">Jumlah Jam</div><div class="detail-value" id="detailTotalHours">0 Jam</div></div><div class="flex-1"><div class="detail-label">Jumlah OT</div><div class="detail-value" id="detailTotalOT">0 Jam</div></div></div>
                 </div>
-                <div class="history-list">
-                    <h3 style="margin-bottom: 16px;">REKOD KEHADIRAN (30 HARI LEPAS)</h3>
-                    <div id="attendanceHistoryList"></div>
-                </div>
+                <div class="history-list"><h3 style="margin-bottom: 16px;">REKOD KEHADIRAN (30 HARI LEPAS)</h3><div id="attendanceHistoryList"></div></div>
             </div>
             
             <!-- Page 3: Clock In/Out (Camera) -->
             <div id="cameraPage" class="page">
                 <section class="camera-section">
                     <div class="camera-card">
-                        <div class="camera-header">
-                            <div class="camera-title">
-                                <span class="material-symbols-rounded">calendar_today</span>
-                                <span>Kehadiran Hari Ini</span>
-                            </div>
-                            <span class="camera-status" id="cameraStatus">BELUM MASUK</span>
-                        </div>
-                       
-                        <div class="digital-clock">
-                            <div class="clock-time" id="cameraClockTime">--:--:--</div>
-                            <div class="clock-date" id="cameraClockDate">--</div>
-                        </div>
-                       
-                        <div class="camera-location">
-                            <div class="location-badge" id="cameraLocationBadge">
-                                <span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span>
-                                <span id="cameraLocationText">Mengesan lokasi...</span>
-                            </div>
-                            <div class="location-distance" id="cameraLocationDistance">-</div>
-                        </div>
-                       
-                        <div class="camera-actions">
-                            <button class="action-btn action-btn--masuk" id="cameraClockInBtn" onclick="startFaceVerification('clockin')">MASUK</button>
-                            <button class="action-btn action-btn--keluar" id="cameraClockOutBtn" onclick="startFaceVerification('clockout')" disabled>KELUAR</button>
-                        </div>
-                       
-                        <div id="cameraViewport" class="camera-viewport hidden-camera">
-                            <video id="scanVideo" autoplay muted playsinline></video>
-                            <div class="face-target"></div>
-                            <div id="faceOverlay" class="face-overlay"></div>
-                            <div class="liveness-indicator" id="livenessIndicator">
-                                <div class="liveness-dot"></div>
-                                <span>Mengesan wajah...</span>
-                            </div>
-                            <span class="camera-hint" id="cameraHint">Pastikan wajah berada dalam bulatan</span>
-                        </div>
-                       
-                        <div id="verificationUI" class="verification-ui">
-                            <div class="progress-container">
-                                <div class="progress-bar">
-                                    <div id="progressFill" class="progress-fill"></div>
-                                </div>
-                                <div class="smile-text" id="smileText">😊 SILA SENYUM RINGAN</div>
-                                <div class="smile-percent" id="smilePercent">Mengesan senyuman: 0%</div>
-                            </div>
-                        </div>
+                        <div class="camera-header"><div class="camera-title"><span class="material-symbols-rounded">calendar_today</span><span>Kehadiran Hari Ini</span></div><span class="camera-status" id="cameraStatus">BELUM MASUK</span></div>
+                        <div class="digital-clock"><div class="clock-time" id="cameraClockTime">--:--:--</div><div class="clock-date" id="cameraClockDate">--</div></div>
+                        <div class="camera-location"><div class="location-badge" id="cameraLocationBadge"><span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span><span id="cameraLocationText">Mengesan lokasi...</span></div><div class="location-distance" id="cameraLocationDistance">-</div></div>
+                        <div class="camera-actions"><button class="action-btn action-btn--masuk" id="cameraClockInBtn" onclick="startFaceVerification('clockin')">MASUK</button><button class="action-btn action-btn--keluar" id="cameraClockOutBtn" onclick="startFaceVerification('clockout')" disabled>KELUAR</button></div>
+                        <div id="cameraViewport" class="camera-viewport hidden-camera"><video id="scanVideo" autoplay muted playsinline></video><div class="face-target"></div><div id="faceOverlay" class="face-overlay"></div><span class="camera-hint" id="cameraHint">Pastikan wajah berada dalam bulatan</span></div>
+                        <div id="verificationUI" class="verification-ui"><div class="progress-container"><div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div><div class="smile-text" id="smileText">😊 SILA SENYUM RINGAN</div><div class="smile-percent" id="smilePercent">Mengesan senyuman: 0%</div></div></div>
                     </div>
                 </section>
             </div>
 
             <!-- Page 4: Inbox -->
             <div id="inboxPage" class="page">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-black text-gray-800">Inbox</h2>
-                    <button onclick="loadInbox()" class="refresh-btn p-2"><span class="material-symbols-rounded">refresh</span></button>
+                <div class="inbox-stats">
+                    <div class="inbox-stat-card"><div class="inbox-stat-number" id="totalMessages">0</div><div class="inbox-stat-label">Jumlah Mesej</div></div>
+                    <div class="inbox-stat-card"><div class="inbox-stat-number" id="unreadMessages">0</div><div class="inbox-stat-label">Belum Dibaca</div></div>
                 </div>
                 <div id="inboxList"></div>
             </div>
 
             <!-- Page 5: Permohonan -->
             <div id="requestPage" class="page">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-2xl font-black text-gray-800">Permohonan</h2>
-                    <button onclick="openRequestModal()" class="bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-bold">+ Baru</button>
+                <div class="request-stats">
+                    <div class="request-stat-card"><div class="inbox-stat-number" id="totalRequests">0</div><div class="inbox-stat-label">Jumlah Permohonan</div></div>
+                    <div class="request-stat-card"><div class="inbox-stat-number" id="pendingRequests">0</div><div class="inbox-stat-label">Dalam Proses</div></div>
+                </div>
+                <div class="flex justify-end mb-4">
+                    <button onclick="openRequestModal()" class="bg-blue-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 shadow-md hover:bg-blue-700 transition-all">
+                        <span class="material-symbols-rounded text-lg">add</span> Permohonan Baru
+                    </button>
                 </div>
                 <div id="requestList"></div>
             </div>
 
             <!-- Page 6: Diari Kursus -->
             <div id="diaryPage" class="page">
-                <h2 class="text-2xl font-black text-gray-800 mb-4">Diari Kursus & Tugasan</h2>
-                <div id="calendarView" style="background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px;"></div>
-                <div id="selectedDateInfo" class="text-sm text-gray-500 mb-3"></div>
-                <button onclick="openDiaryModal()" id="addDiaryBtn" class="bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-bold w-full">+ Tambah Entri untuk Hari Ini</button>
-                <div id="diaryEntries" class="mt-4"></div>
+                <div class="calendar-wrapper">
+                    <div class="calendar-header">
+                        <button class="calendar-nav-btn" onclick="calendarPrevMonth()">
+                            <span class="material-symbols-rounded">chevron_left</span>
+                        </button>
+                        <h2 id="calendarMonthYear"></h2>
+                        <button class="calendar-nav-btn" onclick="calendarNextMonth()">
+                            <span class="material-symbols-rounded">chevron_right</span>
+                        </button>
+                    </div>
+                    
+                    <div class="calendar-weekdays" id="calendarWeekdays"></div>
+                    <div class="calendar-days" id="calendarDays"></div>
+                    
+                    <div class="diary-list">
+                        <div class="diary-list-title">📝 Entri Diari untuk <span id="selectedDiaryDateDisplay"></span></div>
+                        <div id="diaryEntriesList"></div>
+                        <button onclick="openDiaryModal()" class="w-full bg-blue-800 text-white px-4 py-3 rounded-xl text-sm font-bold mt-3 hover:bg-blue-700 transition-all">
+                            + Tambah Entri untuk Tarikh Ini
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <!-- Bottom Navigation -->
             <div class="bottom-nav">
-                <button class="nav-item active" onclick="switchPage('home')" id="navHome">
-                    <span class="material-symbols-rounded">home</span>
-                    <span>Utama</span>
-                </button>
-                <button class="nav-item" onclick="switchPage('history')" id="navHistory">
-                    <span class="material-symbols-rounded">history</span>
-                    <span>Sejarah</span>
-                </button>
-                <button class="nav-item" onclick="switchPage('camera')" id="navCamera">
-                    <span class="material-symbols-rounded">fingerprint</span>
-                    <span>Clock</span>
-                </button>
-                <button class="nav-item" onclick="switchPage('inbox')" id="navInbox">
-                    <span class="material-symbols-rounded">inbox</span>
-                    <span>Inbox</span>
-                </button>
-                <button class="nav-item" onclick="switchPage('request')" id="navRequest">
-                    <span class="material-symbols-rounded">assignment</span>
-                    <span>Permohonan</span>
-                </button>
-                <button class="nav-item" onclick="switchPage('diary')" id="navDiary">
-                    <span class="material-symbols-rounded">book</span>
-                    <span>Diari</span>
-                </button>
+                <button class="nav-item active" onclick="switchPage('home')" id="navHome"><span class="material-symbols-rounded">home</span><span>Utama</span></button>
+                <button class="nav-item" onclick="switchPage('history')" id="navHistory"><span class="material-symbols-rounded">history</span><span>Sejarah</span></button>
+                <button class="nav-item" onclick="switchPage('camera')" id="navCamera"><span class="material-symbols-rounded">fingerprint</span><span>Clock</span></button>
+                <button class="nav-item" onclick="switchPage('inbox')" id="navInbox"><span class="material-symbols-rounded">inbox</span><span>Inbox</span></button>
+                <button class="nav-item" onclick="switchPage('request')" id="navRequest"><span class="material-symbols-rounded">assignment</span><span>Permohonan</span></button>
+                <button class="nav-item" onclick="switchPage('diary')" id="navDiary"><span class="material-symbols-rounded">book</span><span>Diari</span></button>
             </div>
         </div>
     </div>
@@ -1295,17 +1431,12 @@
     <!-- Location History Modal -->
     <div id="locationModal" class="modal-overlay">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Sejarah Lokasi Clock In/Out</h3>
-                <button class="close-modal" onclick="closeLocationModal()">&times;</button>
-            </div>
-            <div class="modal-body" id="locationHistoryList">
-                <div class="text-center py-6 text-gray-400">Loading...</div>
-            </div>
+            <div class="modal-header"><h3>Sejarah Lokasi Clock In/Out</h3><button class="close-modal" onclick="closeLocationModal()">&times;</button></div>
+            <div class="modal-body" id="locationHistoryList"><div class="text-center py-6 text-gray-400">Loading...</div></div>
         </div>
     </div>
 
-    <!-- Exception Modal (Reason & Bukti untuk tidak clock out) -->
+    <!-- Exception Modal -->
     <div id="exceptionModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header"><h3>❗ Sebab Tidak Clock Out</h3><button class="close-modal" onclick="closeExceptionModal()">&times;</button></div>
@@ -1318,7 +1449,7 @@
         </div>
     </div>
 
-    <!-- Modal Permohonan Baru -->
+    <!-- Request Modal -->
     <div id="requestModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header"><h3>📋 Permohonan Baru</h3><button class="close-modal" onclick="closeRequestModal()">&times;</button></div>
@@ -1333,7 +1464,7 @@
         </div>
     </div>
 
-    <!-- Modal Diari -->
+    <!-- Diary Modal -->
     <div id="diaryModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header"><h3>📝 Entri Diari</h3><button class="close-modal" onclick="closeDiaryModal()">&times;</button></div>
@@ -1368,10 +1499,11 @@
         let selectedDate = new Date();
         let isCameraActive = false;
         let detectionInterval = null;
-        let lastSmileScore = 0;
         let verificationStartTime = 0;
         let lastCheckedDate = null;
         let selectedDiaryDate = null;
+        let calendarCurrentDate = new Date();
+        let calendarDiaries = [];
         
         // ============================================
         // HELPER FUNCTIONS
@@ -1384,9 +1516,7 @@
             return `${year}-${month}-${day}`;
         }
         
-        function getCurrentDateTimeMalaysia() {
-            return new Date();
-        }
+        function getCurrentDateTimeMalaysia() { return new Date(); }
         
         function formatDateKey(date) {
             if (!date) return '';
@@ -1398,37 +1528,49 @@
         
         function isNewDay() {
             const today = getCurrentDateMalaysia();
-            if (lastCheckedDate === null) {
-                lastCheckedDate = today;
-                return false;
-            }
-            if (lastCheckedDate !== today) {
-                lastCheckedDate = today;
-                return true;
-            }
+            if (lastCheckedDate === null) { lastCheckedDate = today; return false; }
+            if (lastCheckedDate !== today) { lastCheckedDate = today; return true; }
             return false;
         }
         
         function resetDailyData() {
             const today = getCurrentDateMalaysia();
-            if (currentAttendanceRecord && currentAttendanceRecord.date !== today) {
-                currentAttendanceRecord = null;
+            if (currentAttendanceRecord && currentAttendanceRecord.date !== today) { currentAttendanceRecord = null; }
+            if (isCameraActive) { stopCameraAndReset(); }
+        }
+        
+        function checkAndResetForNewDay() {
+            if (isNewDay()) {
+                resetDailyData();
+                if (currentUser) { loadHomeData(); loadAttendanceHistory(); updateCameraUI(); checkForMissingClockOut(); }
+                return true;
             }
-            if (isCameraActive) {
-                stopCameraAndReset();
-            }
+            return false;
+        }
+        
+        async function checkForMissingClockOut() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = formatDateKey(yesterday);
+            try {
+                const result = await getAttendance(currentUser.uid, yesterdayStr, yesterdayStr);
+                if (result.success && result.data && result.data.length > 0) {
+                    const record = result.data[0];
+                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
+                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+                    if (hasClockIn && !hasClockOut) {
+                        document.getElementById('exceptionDate').innerText = new Date(yesterday).toLocaleDateString('ms-MY');
+                        document.getElementById('exceptionModal').classList.add('active');
+                    }
+                }
+            } catch (error) { console.error('Check missing clock out error:', error); }
         }
         
         function togglePasswordVisibility() {
             const passwordInput = document.getElementById('loginPassword');
             const eyeIcon = document.querySelector('.password-toggle .material-symbols-rounded');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.innerText = 'visibility';
-            } else {
-                passwordInput.type = 'password';
-                eyeIcon.innerText = 'visibility_off';
-            }
+            if (passwordInput.type === 'password') { passwordInput.type = 'text'; eyeIcon.innerText = 'visibility'; }
+            else { passwordInput.type = 'password'; eyeIcon.innerText = 'visibility_off'; }
         }
         
         function showNotification(title, message, isError = false) {
@@ -1450,46 +1592,6 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
-        }
-        
-        // ============================================
-        // CHECK AND RESET ON NEW DAY
-        // ============================================
-        function checkAndResetForNewDay() {
-            if (isNewDay()) {
-                resetDailyData();
-                if (currentUser) {
-                    loadHomeData();
-                    loadAttendanceHistory();
-                    updateCameraUI();
-                    checkForMissingClockOut();
-                }
-                return true;
-            }
-            return false;
-        }
-        
-        // Check if user forgot to clock out yesterday
-        async function checkForMissingClockOut() {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = formatDateKey(yesterday);
-            
-            try {
-                const result = await getAttendance(currentUser.uid, yesterdayStr, yesterdayStr);
-                if (result.success && result.data && result.data.length > 0) {
-                    const record = result.data[0];
-                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
-                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                    
-                    if (hasClockIn && !hasClockOut) {
-                        document.getElementById('exceptionDate').innerText = new Date(yesterday).toLocaleDateString('ms-MY');
-                        document.getElementById('exceptionModal').classList.add('active');
-                    }
-                }
-            } catch (error) {
-                console.error('Check missing clock out error:', error);
-            }
         }
         
         // ============================================
@@ -1521,37 +1623,15 @@
             const reason = document.getElementById('exceptionReason').value.trim();
             const fileInput = document.getElementById('exceptionFile');
             const date = document.getElementById('exceptionDate').innerText;
-            
-            if (!reason) {
-                showNotification('Ralat', 'Sila nyatakan sebab tidak clock out', true);
-                return;
-            }
-            
+            if (!reason) { showNotification('Ralat', 'Sila nyatakan sebab tidak clock out', true); return; }
             showNotification('Memproses', 'Menghantar laporan...', false);
-            
             try {
                 let fileUrl = '';
-                if (fileInput.files.length > 0) {
-                    fileUrl = await uploadFileToDrive(fileInput.files[0]);
-                }
-                
-                const result = await callAPI('submitException', {
-                    uid: currentUser.uid,
-                    userName: currentUser.name,
-                    date: date,
-                    reason: reason,
-                    fileUrl: fileUrl
-                });
-                
-                if (result.success) {
-                    showNotification('Berjaya', 'Laporan telah dihantar ke admin', false);
-                    closeExceptionModal();
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal menghantar', true);
-                }
-            } catch (error) {
-                showNotification('Ralat', 'Gagal menghantar laporan', true);
-            }
+                if (fileInput.files.length > 0) { fileUrl = await uploadFileToDrive(fileInput.files[0]); }
+                const result = await callAPI('submitException', { uid: currentUser.uid, userName: currentUser.name, date: date, reason: reason, fileUrl: fileUrl });
+                if (result.success) { showNotification('Berjaya', 'Laporan telah dihantar ke admin', false); closeExceptionModal(); }
+                else { showNotification('Ralat', result.error || 'Gagal menghantar', true); }
+            } catch (error) { showNotification('Ralat', 'Gagal menghantar laporan', true); }
         }
         
         function closeExceptionModal() {
@@ -1569,40 +1649,15 @@
             const endDate = document.getElementById('requestEndDate').value;
             const reason = document.getElementById('requestReason').value.trim();
             const fileInput = document.getElementById('requestFile');
-            
-            if (!startDate || !endDate || !reason) {
-                showNotification('Ralat', 'Sila lengkapkan semua maklumat', true);
-                return;
-            }
-            
+            if (!startDate || !endDate || !reason) { showNotification('Ralat', 'Sila lengkapkan semua maklumat', true); return; }
             showNotification('Memproses', 'Menghantar permohonan...', false);
-            
             try {
                 let fileUrl = '';
-                if (fileInput.files.length > 0) {
-                    fileUrl = await uploadFileToDrive(fileInput.files[0]);
-                }
-                
-                const result = await callAPI('submitLeaveRequest', {
-                    uid: currentUser.uid,
-                    userName: currentUser.name,
-                    type: type,
-                    startDate: startDate,
-                    endDate: endDate,
-                    reason: reason,
-                    fileUrl: fileUrl
-                });
-                
-                if (result.success) {
-                    showNotification('Berjaya', 'Permohonan telah dihantar ke admin', false);
-                    closeRequestModal();
-                    loadRequests();
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal menghantar', true);
-                }
-            } catch (error) {
-                showNotification('Ralat', 'Gagal menghantar permohonan', true);
-            }
+                if (fileInput.files.length > 0) { fileUrl = await uploadFileToDrive(fileInput.files[0]); }
+                const result = await callAPI('submitLeaveRequest', { uid: currentUser.uid, userName: currentUser.name, type: type, startDate: startDate, endDate: endDate, reason: reason, fileUrl: fileUrl });
+                if (result.success) { showNotification('Berjaya', 'Permohonan telah dihantar ke admin', false); closeRequestModal(); loadRequests(); }
+                else { showNotification('Ralat', result.error || 'Gagal menghantar', true); }
+            } catch (error) { showNotification('Ralat', 'Gagal menghantar permohonan', true); }
         }
         
         function openRequestModal() {
@@ -1613,9 +1668,7 @@
             document.getElementById('requestModal').classList.add('active');
         }
         
-        function closeRequestModal() {
-            document.getElementById('requestModal').classList.remove('active');
-        }
+        function closeRequestModal() { document.getElementById('requestModal').classList.remove('active'); }
         
         async function loadRequests() {
             try {
@@ -1623,57 +1676,113 @@
                 const container = document.getElementById('requestList');
                 if (!result.success || !result.data || result.data.length === 0) {
                     container.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada permohonan</div>';
+                    document.getElementById('totalRequests').innerText = '0';
+                    document.getElementById('pendingRequests').innerText = '0';
                     return;
                 }
-                
+                let pending = 0;
                 let html = '';
                 result.data.forEach(req => {
+                    if (req.status === 'pending') pending++;
                     const jenisMap = { 'out_of_office': 'Keluar Pejabat', 'sick_leave': 'Cuti Sakit', 'course': 'Kursus', 'field_assignment': 'Tugasan Luar' };
                     let statusClass = '', statusText = '';
-                    if (req.status === 'approved') {
-                        statusClass = 'request-status-approved';
-                        statusText = '✅ DILULUSKAN';
-                    } else if (req.status === 'rejected') {
-                        statusClass = 'request-status-rejected';
-                        statusText = '❌ DITOLAK';
-                    } else {
-                        statusClass = 'request-status-pending';
-                        statusText = '⏳ DALAM PROSES';
-                    }
-                    
-                    html += `<div class="request-card">
-                        <div class="flex justify-between items-start">
-                            <div><div class="font-bold">${jenisMap[req.type] || req.type}</div><div class="text-xs text-gray-400">${new Date(req.timestamp).toLocaleDateString('ms-MY')}</div></div>
-                            <div class="text-xs font-bold px-3 py-1 rounded-full ${statusClass}">${statusText}</div>
-                        </div>
-                        <div class="text-sm text-gray-600 mt-2">📅 ${new Date(req.startDate).toLocaleDateString('ms-MY')} - ${new Date(req.endDate).toLocaleDateString('ms-MY')}</div>
-                        <div class="text-sm text-gray-600 mt-1">📝 ${escapeHtml(req.reason)}</div>
-                        ${req.adminResponse ? `<div class="mt-2 p-2 bg-gray-50 rounded-xl text-sm"><span class="font-bold">Respon Admin:</span> ${escapeHtml(req.adminResponse)}</div>` : ''}
-                        ${req.fileUrl ? `<div class="mt-2"><a href="${req.fileUrl}" target="_blank" class="text-blue-600 text-sm flex items-center gap-1"><span class="material-symbols-rounded text-sm">attach_file</span> Lihat Dokumen</a></div>` : ''}
-                    </div>`;
+                    if (req.status === 'approved') { statusClass = 'request-status-approved'; statusText = '✅ DILULUSKAN'; }
+                    else if (req.status === 'rejected') { statusClass = 'request-status-rejected'; statusText = '❌ DITOLAK'; }
+                    else { statusClass = 'request-status-pending'; statusText = '⏳ DALAM PROSES'; }
+                    html += `<div class="request-card"><div class="flex justify-between items-start"><div><div class="font-bold">${jenisMap[req.type] || req.type}</div><div class="text-xs text-gray-400 mt-1">${new Date(req.timestamp).toLocaleDateString('ms-MY')}</div></div><span class="request-status ${statusClass}">${statusText}</span></div><div class="text-sm text-gray-600 mt-2">📅 ${new Date(req.startDate).toLocaleDateString('ms-MY')} - ${new Date(req.endDate).toLocaleDateString('ms-MY')}</div><div class="text-sm text-gray-600 mt-1">📝 ${escapeHtml(req.reason)}</div>${req.adminResponse ? `<div class="mt-2 p-2 bg-gray-50 rounded-xl text-sm"><span class="font-bold">Respon Admin:</span> ${escapeHtml(req.adminResponse)}</div>` : ''}${req.fileUrl ? `<div class="mt-2"><a href="${req.fileUrl}" target="_blank" class="text-blue-600 text-sm flex items-center gap-1"><span class="material-symbols-rounded text-sm">attach_file</span> Lihat Dokumen</a></div>` : ''}</div>`;
                 });
                 container.innerHTML = html;
-            } catch (error) {
-                console.error('Load requests error:', error);
-            }
+                document.getElementById('totalRequests').innerText = result.data.length;
+                document.getElementById('pendingRequests').innerText = pending;
+            } catch (error) { console.error('Load requests error:', error); }
         }
         
         // ============================================
         // DIARY FUNCTIONS
         // ============================================
+        async function loadCalendarData() {
+            try {
+                const result = await callAPI('getUserDiaries', { uid: currentUser.uid });
+                if (result.success && result.data) { calendarDiaries = result.data; }
+                else { calendarDiaries = []; }
+                renderCalendar();
+                loadDiariesForDate(selectedDiaryDate || getCurrentDateMalaysia());
+            } catch (error) { console.error('Load calendar data error:', error); calendarDiaries = []; renderCalendar(); }
+        }
+        
+        function renderCalendar() {
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const monthNames = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+            document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year}`;
+            const weekdays = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'];
+            let weekdaysHtml = '';
+            weekdays.forEach(day => { weekdaysHtml += `<div class="calendar-weekday">${day}</div>`; });
+            document.getElementById('calendarWeekdays').innerHTML = weekdaysHtml;
+            let days = [];
+            for (let i = 0; i < startDayOfWeek; i++) { days.push(null); }
+            for (let i = 1; i <= lastDay.getDate(); i++) { days.push(new Date(year, month, i)); }
+            const todayStr = getCurrentDateMalaysia();
+            const selectedDateStr = selectedDiaryDate || todayStr;
+            let daysHtml = '';
+            days.forEach(date => {
+                if (!date) { daysHtml += `<div class="calendar-day"></div>`; }
+                else {
+                    const dateStr = formatDateKey(date);
+                    const isToday = dateStr === todayStr;
+                    const isSelected = dateStr === selectedDateStr;
+                    const isOtherMonth = date.getMonth() !== month;
+                    const hasDiary = calendarDiaries.some(d => d.date === dateStr);
+                    let classes = 'calendar-day';
+                    if (isToday) classes += ' today';
+                    if (isSelected) classes += ' selected';
+                    if (isOtherMonth) classes += ' other-month';
+                    if (hasDiary) classes += ' has-diary';
+                    daysHtml += `<div class="${classes}" onclick="selectCalendarDate('${dateStr}')"><div class="calendar-day-number">${date.getDate()}</div></div>`;
+                }
+            });
+            document.getElementById('calendarDays').innerHTML = daysHtml;
+        }
+        
+        function selectCalendarDate(dateStr) {
+            selectedDiaryDate = dateStr;
+            renderCalendar();
+            loadDiariesForDate(dateStr);
+        }
+        
+        function calendarPrevMonth() { calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() - 1); renderCalendar(); }
+        function calendarNextMonth() { calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + 1); renderCalendar(); }
+        
+        async function loadDiariesForDate(dateStr) {
+            const displayDate = new Date(dateStr).toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('selectedDiaryDateDisplay').innerText = displayDate;
+            const diariesForDate = calendarDiaries.filter(d => d.date === dateStr);
+            const container = document.getElementById('diaryEntriesList');
+            if (diariesForDate.length === 0) { container.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada entri diari untuk tarikh ini</div>'; return; }
+            let html = '';
+            diariesForDate.forEach(diary => {
+                const typeText = diary.type === 'course' ? '📘 Kursus' : '📋 Tugasan Luar';
+                const typeClass = diary.type === 'course' ? 'course' : 'assignment';
+                const statusClass = diary.status === 'reviewed' ? 'reviewed' : 'pending';
+                const statusText = diary.status === 'reviewed' ? '✓ DISEMAK' : '⏳ DALAM PROSES';
+                html += `<div class="diary-item ${typeClass}"><div class="diary-item-title">${escapeHtml(diary.title)}</div><div class="diary-item-desc">${escapeHtml(diary.description)}</div><div class="diary-item-meta"><span>${typeText}</span><span class="diary-item-status ${statusClass}">${statusText}</span></div>${diary.adminNotes ? `<div class="mt-2 text-xs text-gray-500 bg-gray-50 p-2 rounded-lg">📝 Catatan Admin: ${escapeHtml(diary.adminNotes)}</div>` : ''}${diary.fileUrl ? `<div class="mt-2"><a href="${diary.fileUrl}" target="_blank" class="diary-item-file"><span class="material-symbols-rounded text-sm">attach_file</span> Lihat Dokumen</a></div>` : ''}</div>`;
+            });
+            container.innerHTML = html;
+        }
+        
         function openDiaryModal(date = null) {
-            if (date) selectedDiaryDate = date;
-            else selectedDiaryDate = getCurrentDateMalaysia();
-            document.getElementById('diaryDate').value = selectedDiaryDate;
+            const targetDate = date || selectedDiaryDate || getCurrentDateMalaysia();
+            document.getElementById('diaryDate').value = targetDate;
             document.getElementById('diaryTitle').value = '';
             document.getElementById('diaryDesc').value = '';
             document.getElementById('diaryFile').value = '';
             document.getElementById('diaryModal').classList.add('active');
         }
         
-        function closeDiaryModal() {
-            document.getElementById('diaryModal').classList.remove('active');
-        }
+        function closeDiaryModal() { document.getElementById('diaryModal').classList.remove('active'); }
         
         async function submitDiary() {
             const date = document.getElementById('diaryDate').value;
@@ -1681,101 +1790,15 @@
             const title = document.getElementById('diaryTitle').value.trim();
             const description = document.getElementById('diaryDesc').value.trim();
             const fileInput = document.getElementById('diaryFile');
-            
-            if (!title || !description) {
-                showNotification('Ralat', 'Sila isi tajuk dan keterangan', true);
-                return;
-            }
-            
+            if (!title || !description) { showNotification('Ralat', 'Sila isi tajuk dan keterangan', true); return; }
             showNotification('Memproses', 'Menyimpan diari...', false);
-            
             try {
                 let fileUrl = '';
-                if (fileInput.files.length > 0) {
-                    fileUrl = await uploadFileToDrive(fileInput.files[0]);
-                }
-                
-                const result = await callAPI('submitCourseDiary', {
-                    uid: currentUser.uid,
-                    userName: currentUser.name,
-                    date: date,
-                    type: type,
-                    title: title,
-                    description: description,
-                    fileUrl: fileUrl
-                });
-                
-                if (result.success) {
-                    showNotification('Berjaya', 'Diari telah disimpan', false);
-                    closeDiaryModal();
-                    loadDiaryEntries();
-                    renderSimpleCalendar();
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal menyimpan', true);
-                }
-            } catch (error) {
-                showNotification('Ralat', 'Gagal menyimpan diari', true);
-            }
-        }
-        
-        async function loadDiaryEntries() {
-            try {
-                const result = await callAPI('getUserDiaries', { uid: currentUser.uid });
-                const container = document.getElementById('diaryEntries');
-                if (!result.success || !result.data || result.data.length === 0) {
-                    container.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada entri diari</div>';
-                    return;
-                }
-                
-                let html = '';
-                result.data.forEach(diary => {
-                    const typeText = diary.type === 'course' ? '📘 Kursus' : '📋 Tugasan Luar';
-                    const statusClass = diary.status === 'reviewed' ? 'text-green-600' : 'text-amber-600';
-                    const statusText = diary.status === 'reviewed' ? '✓ DISEMAK' : '⏳ DALAM PROSES';
-                    
-                    html += `<div class="request-card">
-                        <div class="flex justify-between items-start">
-                            <div><div class="font-bold">${typeText}</div><div class="text-xs text-gray-400">${new Date(diary.date).toLocaleDateString('ms-MY')}</div></div>
-                            <div class="text-xs font-bold ${statusClass}">${statusText}</div>
-                        </div>
-                        <div class="font-semibold text-gray-800 mt-2">${escapeHtml(diary.title)}</div>
-                        <div class="text-sm text-gray-600 mt-1">${escapeHtml(diary.description)}</div>
-                        ${diary.adminNotes ? `<div class="mt-2 p-2 bg-gray-50 rounded-xl text-sm"><span class="font-bold">Catatan Admin:</span> ${escapeHtml(diary.adminNotes)}</div>` : ''}
-                        ${diary.fileUrl ? `<div class="mt-2"><a href="${diary.fileUrl}" target="_blank" class="text-blue-600 text-sm flex items-center gap-1"><span class="material-symbols-rounded text-sm">attach_file</span> Lihat Dokumen</a></div>` : ''}
-                    </div>`;
-                });
-                container.innerHTML = html;
-            } catch (error) {
-                console.error('Load diaries error:', error);
-            }
-        }
-        
-        function renderSimpleCalendar() {
-            const container = document.getElementById('calendarView');
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            let startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-            
-            let html = `<div class="text-center font-bold mb-3">${today.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric' })}</div>`;
-            html += `<div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 mb-2"><span>Is</span><span>Se</span><span>Ra</span><span>Kh</span><span>Ju</span><span>Sa</span><span>Ah</span></div><div class="grid grid-cols-7 gap-1">`;
-            
-            for (let i = 0; i < startOffset; i++) html += `<div class="p-2"></div>`;
-            for (let d = 1; d <= lastDay.getDate(); d++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const isToday = dateStr === getCurrentDateMalaysia();
-                html += `<div class="p-2 text-center text-sm cursor-pointer hover:bg-blue-50 rounded-xl ${isToday ? 'bg-blue-100 font-bold' : ''}" onclick="selectDiaryDate('${dateStr}')">${d}</div>`;
-            }
-            html += `</div>`;
-            container.innerHTML = html;
-        }
-        
-        function selectDiaryDate(dateStr) {
-            selectedDiaryDate = dateStr;
-            document.getElementById('selectedDateInfo').innerHTML = `📅 Tarikh dipilih: ${new Date(dateStr).toLocaleDateString('ms-MY')}`;
-            openDiaryModal(dateStr);
+                if (fileInput.files.length > 0) { fileUrl = await uploadFileToDrive(fileInput.files[0]); }
+                const result = await callAPI('submitCourseDiary', { uid: currentUser.uid, userName: currentUser.name, date: date, type: type, title: title, description: description, fileUrl: fileUrl });
+                if (result.success) { showNotification('Berjaya', 'Diari telah disimpan', false); closeDiaryModal(); await loadCalendarData(); }
+                else { showNotification('Ralat', result.error || 'Gagal menyimpan', true); }
+            } catch (error) { showNotification('Ralat', 'Gagal menyimpan diari', true); }
         }
         
         // ============================================
@@ -1787,23 +1810,22 @@
                 const container = document.getElementById('inboxList');
                 if (!result.success || !result.data || result.data.length === 0) {
                     container.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada mesej dalam inbox</div>';
+                    document.getElementById('totalMessages').innerText = '0';
+                    document.getElementById('unreadMessages').innerText = '0';
                     return;
                 }
-                
+                let unread = 0;
                 let html = '';
                 result.data.forEach(msg => {
+                    if (!msg.isRead) unread++;
                     const unreadClass = msg.isRead ? '' : 'unread';
                     const time = new Date(msg.timestamp).toLocaleString('ms-MY');
-                    html += `<div class="inbox-item ${unreadClass}" onclick="markInboxRead('${msg.inboxId}', this)">
-                        <div class="inbox-title"><span>${escapeHtml(msg.title)}</span>${!msg.isRead ? '<span class="unread-dot"></span>' : ''}</div>
-                        <div class="inbox-message">${escapeHtml(msg.message)}</div>
-                        <div class="inbox-time">${time}</div>
-                    </div>`;
+                    html += `<div class="inbox-item ${unreadClass}" onclick="markInboxRead('${msg.inboxId}', this)"><div class="inbox-title"><span>${escapeHtml(msg.title)}</span>${!msg.isRead ? '<span class="unread-dot"></span>' : ''}</div><div class="inbox-message">${escapeHtml(msg.message)}</div><div class="inbox-time">${time}</div></div>`;
                 });
                 container.innerHTML = html;
-            } catch (error) {
-                console.error('Load inbox error:', error);
-            }
+                document.getElementById('totalMessages').innerText = result.data.length;
+                document.getElementById('unreadMessages').innerText = unread;
+            } catch (error) { console.error('Load inbox error:', error); }
         }
         
         async function markInboxRead(inboxId, element) {
@@ -1812,9 +1834,9 @@
                 element.classList.remove('unread');
                 const dot = element.querySelector('.unread-dot');
                 if (dot) dot.remove();
-            } catch (error) {
-                console.error('Mark read error:', error);
-            }
+                let unreadCount = parseInt(document.getElementById('unreadMessages').innerText);
+                document.getElementById('unreadMessages').innerText = Math.max(0, unreadCount - 1);
+            } catch (error) { console.error('Mark read error:', error); }
         }
         
         // ============================================
@@ -1823,39 +1845,21 @@
         function switchPage(page) {
             if (isCameraActive) stopCameraAndReset();
             checkAndResetForNewDay();
-            
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(`${page}Page`).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(`nav${page.charAt(0).toUpperCase() + page.slice(1)}`).classList.add('active');
-            
-            if (page === 'history') {
-                renderCalendar();
-                loadAttendanceHistory();
-            } else if (page === 'camera') {
-                updateCameraClock();
-                refreshAttendanceData().then(() => updateCameraUI());
-            } else if (page === 'home') {
-                loadHomeData();
-            } else if (page === 'inbox') {
-                loadInbox();
-            } else if (page === 'request') {
-                loadRequests();
-            } else if (page === 'diary') {
-                renderSimpleCalendar();
-                loadDiaryEntries();
-            }
+            if (page === 'history') { renderCalendar(); loadAttendanceHistory(); }
+            else if (page === 'camera') { updateCameraClock(); refreshAttendanceData().then(() => updateCameraUI()); }
+            else if (page === 'home') { loadHomeData(); }
+            else if (page === 'inbox') { loadInbox(); }
+            else if (page === 'request') { loadRequests(); }
+            else if (page === 'diary') { loadCalendarData(); }
         }
         
         function stopCameraAndReset() {
-            if (detectionInterval) {
-                clearInterval(detectionInterval);
-                detectionInterval = null;
-            }
-            if (videoStream) {
-                videoStream.getTracks().forEach(t => t.stop());
-                videoStream = null;
-            }
+            if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
+            if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
             isCameraActive = false;
             const cameraViewport = document.getElementById('cameraViewport');
             const verificationUI = document.getElementById('verificationUI');
@@ -1867,7 +1871,7 @@
         }
         
         // ============================================
-        // FACE VERIFICATION (Sama seperti kod asal)
+        // FACE VERIFICATION (Ringkasan - sama seperti asal)
         // ============================================
         async function loadFaceModels() {
             if (modelsLoaded) return true;
@@ -1881,20 +1885,15 @@
                 ]);
                 modelsLoaded = true;
                 return true;
-            } catch (error) {
-                console.error('Failed to load models:', error);
-                return false;
-            }
+            } catch (error) { console.error('Failed to load models:', error); return false; }
         }
         
         async function startFaceVerification(action) {
             if (!currentUser) { showNotification('Ralat', 'Sila log masuk terlebih dahulu', true); return; }
             checkAndResetForNewDay();
             await refreshAttendanceData();
-            
             const today = getCurrentDateMalaysia();
             const isValidRecord = currentAttendanceRecord && currentAttendanceRecord.date === today;
-            
             if (action === 'clockin') {
                 if (isValidRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null') {
                     if (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '' || currentAttendanceRecord.clockOut === 'null') {
@@ -1909,24 +1908,19 @@
                     showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false); return;
                 }
             }
-            
             if (!userLocation) { showNotification('Ralat', 'Lokasi tidak dapat dikesan', true); return; }
             const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
             const radius = parseInt(currentUser.radius) || 500;
-            if (distance > radius) { showNotification('Geofencing', `Anda berada di luar kawasan yang dibenarkan`, true); return; }
-            
+            if (distance > radius) { showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan', true); return; }
             pendingAction = action;
             if (!currentUser.faceDescriptor || currentUser.faceDescriptor === '') { showNotification('Ralat', 'Wajah belum didaftarkan', true); return; }
-            
             const modelsLoadedSuccess = await loadFaceModels();
             if (!modelsLoadedSuccess) return;
-            
             try {
                 const descriptorArray = JSON.parse(currentUser.faceDescriptor);
                 const labeledDescriptor = new faceapi.LabeledFaceDescriptors(currentUser.uid, [new Float32Array(descriptorArray)]);
                 faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
             } catch (e) { showNotification('Ralat', 'Data wajah tidak sah', true); return; }
-            
             await showCameraAndVerify();
         }
         
@@ -1961,18 +1955,15 @@
             let smileConfirmed = false;
             let smileStartTime = null;
             let faceMatchConfirmed = false;
-            
             detectionInterval = setInterval(async () => {
                 if (!video.srcObject || video.paused || video.ended || !modelsLoaded || verificationCompleted) return;
                 try {
                     const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions().withFaceDescriptor();
                     const overlay = document.getElementById('faceOverlay');
-                    
                     if (detection && detection.detection) {
                         const dims = getVideoDimensions(video);
                         const box = adjustFaceBox(detection.detection.box, dims);
                         overlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px;"></div>`;
-                        
                         if (detection.expressions) {
                             const happyScore = Math.round(detection.expressions.happy * 100);
                             document.getElementById('smilePercent').innerHTML = `Mengesan senyuman: ${happyScore}%`;
@@ -1982,7 +1973,6 @@
                                 updateProgress(30 + Math.min(happyScore, 70));
                             } else if (happyScore < 30) { smileStartTime = null; document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN'; document.getElementById('smileText').style.color = '#1e3a8a'; updateProgress(20); }
                         }
-                        
                         if (smileConfirmed && !faceMatchConfirmed && detection.descriptor) {
                             updateProgress(80);
                             document.getElementById('smileText').innerHTML = '👤 MENGESAHKAN WAJAH...';
@@ -2015,7 +2005,6 @@
                         document.getElementById('smilePercent').innerHTML = 'Mengesan senyuman: 0%';
                         updateProgress(10);
                     }
-                    
                     if (Date.now() - verificationStartTime > 30000 && !verificationCompleted) {
                         clearInterval(detectionInterval);
                         detectionInterval = null;
@@ -2165,7 +2154,6 @@
             const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             document.getElementById('currentDateDisplay').innerText = displayDate;
             document.getElementById('recentDate').innerText = displayDate;
-            
             try {
                 const result = await getAttendance(currentUser.uid, today, today);
                 const hasRecord = result.success && result.data && result.data.length > 0;
@@ -2175,7 +2163,6 @@
                 const hasClockIn = recordForToday && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '--:--';
                 const hasClockOut = recordForToday && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '--:--';
                 const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
-                
                 if (hasClockIn) {
                     let clockInDate = typeof record.clockIn === 'string' && record.clockIn.includes(' ') ? new Date(record.clockIn) : new Date(today + 'T' + record.clockIn);
                     const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -2202,7 +2189,6 @@
                     document.getElementById('recentStatus').style.background = '#fef3c7';
                     document.getElementById('recentStatus').style.color = '#92400e';
                 }
-                
                 if (hasClockOut) {
                     let clockOutDate = typeof record.clockOut === 'string' && record.clockOut.includes(' ') ? new Date(record.clockOut) : new Date(today + 'T' + record.clockOut);
                     const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -2215,18 +2201,13 @@
                     document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
                     document.getElementById('clockOutStatus').style.color = '#94a3b8';
                 }
-                
                 document.getElementById('totalHours').innerText = record && record.totalHours && record.totalHours > 0 ? record.totalHours.toFixed(1) : '0';
                 document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
                 document.getElementById('totalOT').innerText = record && record.totalOT && record.totalOT > 0 ? record.totalOT.toFixed(1) : '0';
                 document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
                 updateCameraUI();
-                
-                if (userLocation && userLocation.lat && userLocation.lng) {
-                    initLocationMap(userLocation.lat, userLocation.lng);
-                } else if (currentUser.lat && currentUser.lng) {
-                    initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
-                }
+                if (userLocation && userLocation.lat && userLocation.lng) { initLocationMap(userLocation.lat, userLocation.lng); }
+                else if (currentUser.lat && currentUser.lng) { initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng)); }
             } catch (error) { console.error('Load home data error:', error); showNotification('Ralat', 'Gagal memuat data kehadiran', true); }
         }
         
@@ -2238,7 +2219,6 @@
             const cameraStatus = document.getElementById('cameraStatus');
             const masukBtn = document.getElementById('cameraClockInBtn');
             const keluarBtn = document.getElementById('cameraClockOutBtn');
-            
             if (hasClockIn && !hasClockOut) {
                 cameraStatus.innerText = 'DALAM BERTUGAS';
                 cameraStatus.style.background = '#dbeafe';
@@ -2302,7 +2282,7 @@
                     html += `<div class="history-record"><div><div class="history-date">${weekday}, ${formattedDate}</div><div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div></div>${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}</div>`;
                 });
                 historyEl.innerHTML = html;
-                renderCalendar();
+                renderCalendarHistory();
                 updateSelectedDateDetails();
             } catch (error) { console.error('Load attendance error:', error); }
         }
@@ -2344,7 +2324,7 @@
             loadAttendanceForDate(selectedDate);
         }
         
-        function renderCalendar() {
+        function renderCalendarHistory() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             const firstDay = new Date(year, month, 1);
@@ -2372,7 +2352,7 @@
             container.innerHTML = html;
         }
         
-        function selectDate(year, month, day) { selectedDate = new Date(year, month, day); updateSelectedDateDetails(); renderCalendar(); }
+        function selectDate(year, month, day) { selectedDate = new Date(year, month, day); updateSelectedDateDetails(); renderCalendarHistory(); }
         
         function showLocationHistory() {
             const modal = document.getElementById('locationModal');
@@ -2380,16 +2360,12 @@
             loadLocationHistory();
         }
         
-        function closeLocationModal() {
-            const modal = document.getElementById('locationModal');
-            modal.classList.remove('active');
-        }
+        function closeLocationModal() { document.getElementById('locationModal').classList.remove('active'); }
         
         async function loadLocationHistory() {
             if (!currentUser) return;
             const today = getCurrentDateMalaysia();
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
             try {
                 const result = await getAttendance(currentUser.uid, startDate, today);
@@ -2414,19 +2390,12 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
-            
             if (!email || !password) { showNotification('Ralat', 'Sila isi email dan kata laluan', true); return; }
-            
-            btn.disabled = true;
-            btn.classList.add('loading');
-            btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
-            
+            btn.disabled = true; btn.classList.add('loading'); btn.innerHTML = '<div class="loading-spinner mx-auto"></div>';
             try {
                 const result = await userLogin(email, password);
-                
                 if (result.success) {
                     currentUser = result.user;
-                    
                     if (currentUser.faceDescriptor && currentUser.faceDescriptor !== '') {
                         try {
                             const descriptor = JSON.parse(currentUser.faceDescriptor);
@@ -2434,16 +2403,15 @@
                             faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
                         } catch (e) { console.warn('Face descriptor parse error:', e); }
                     }
-                    
-                    btn.style.background = '#10b981';
-                    btn.innerHTML = '✓';
-                    
+                    btn.style.background = '#10b981'; btn.innerHTML = '✓';
                     setTimeout(async () => {
                         document.getElementById('userName').innerText = escapeHtml(currentUser.name);
                         document.getElementById('userMeta').innerText = `${escapeHtml(currentUser.branch)} • ${escapeHtml(currentUser.unit)}`;
                         document.getElementById('loginPage').classList.add('hidden');
                         document.getElementById('app').classList.remove('hidden');
                         lastCheckedDate = getCurrentDateMalaysia();
+                        selectedDiaryDate = getCurrentDateMalaysia();
+                        calendarCurrentDate = new Date();
                         await refreshAttendanceData();
                         await loadHomeData();
                         await loadAttendanceHistory();
@@ -2470,17 +2438,11 @@
             document.getElementById('loginPage').classList.remove('hidden');
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
-            isCameraActive = false;
-            currentUser = null;
-            faceMatcher = null;
-            currentAttendanceRecord = null;
-            lastCheckedDate = null;
+            isCameraActive = false; currentUser = null; faceMatcher = null; currentAttendanceRecord = null; lastCheckedDate = null;
         };
         
-        // Expose functions to global
+        // Expose global functions
         window.switchPage = switchPage;
-        window.showLocationHistory = showLocationHistory;
-        window.closeLocationModal = closeLocationModal;
         window.startFaceVerification = startFaceVerification;
         window.selectDate = selectDate;
         window.togglePasswordVisibility = togglePasswordVisibility;
@@ -2494,9 +2456,10 @@
         window.submitDiary = submitDiary;
         window.loadInbox = loadInbox;
         window.markInboxRead = markInboxRead;
-        window.selectDiaryDate = selectDiaryDate;
+        window.selectCalendarDate = selectCalendarDate;
+        window.calendarPrevMonth = calendarPrevMonth;
+        window.calendarNextMonth = calendarNextMonth;
         
-        // Initialize
         document.addEventListener('DOMContentLoaded', () => { loadFaceModels(); });
         document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
         window.addEventListener('beforeunload', () => {
