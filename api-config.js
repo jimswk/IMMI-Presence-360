@@ -16,7 +16,7 @@ const MAX_OUT_OF_OFFICE_HOURS = 4;
 
 // APK Configuration (untuk force update)
 const APK_DOWNLOAD_URL = 'https://github.com/jimswk/IMMI-Presence-360/releases/latest/download/app-release.apk';
-const MIN_REQUIRED_ANDROID_VERSION = '1.0.6';
+const MIN_REQUIRED_ANDROID_VERSION = '1.0.8';
 
 // ============================================
 // CORE API FUNCTIONS
