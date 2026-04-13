@@ -16,6 +16,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     
     <script src="api-config.js"></script>
     
@@ -2643,64 +2645,157 @@ Jabatan Imigresen Malaysia`;
             const uid = document.getElementById('reportUser').value;
             const startDateStr = document.getElementById('startDate').value;
             const endDateStr = document.getElementById('endDate').value;
-            if (!uid || !startDateStr || !endDateStr) { showAlert("Input Diperlukan", "Sila lengkapkan pilihan laporan.", 'warning'); return; }
+            
+            if (!uid || !startDateStr || !endDateStr) { 
+                showAlert("Input Diperlukan", "Sila lengkapkan pilihan laporan.", 'warning'); 
+                return; 
+            }
+            
             const start = new Date(startDateStr), end = new Date(endDateStr);
-            if (start > end) { showAlert("Ralat Tarikh", "Tarikh mula tidak boleh lepas tarikh tamat.", 'error'); return; }
+            if (start > end) { 
+                showAlert("Ralat Tarikh", "Tarikh mula tidak boleh lepas tarikh tamat.", 'error'); 
+                return; 
+            }
+            
             const user = users.find(u => u.uid === uid);
-            if (!user) { showAlert("Ralat", "Pengguna tidak ditemui", 'error'); return; }
+            if (!user) { 
+                showAlert("Ralat", "Pengguna tidak ditemui", 'error'); 
+                return; 
+            }
+            
             showNotif("Menjana PDF", "Sila tunggu seketika...");
+            
             try {
                 const result = await callAPI('getAttendance', { uid, startDate: startDateStr, endDate: endDateStr });
                 const dataMap = {};
-                if (result.success && result.data) result.data.forEach(record => { dataMap[record.date] = { clockIn: record.clockIn, clockOut: record.clockOut, totalHours: record.totalHours, totalOT: record.totalOT }; });
+                
+                if (result.success && result.data) {
+                    result.data.forEach(record => { 
+                        dataMap[record.date] = { 
+                            clockIn: record.clockIn, 
+                            clockOut: record.clockOut, 
+                            totalHours: record.totalHours, 
+                            totalOT: record.totalOT 
+                        }; 
+                    });
+                }
+                
+                // 🔥 PASTIKAN jsPDF dimuat dengan betul
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF({ format: 'a4', unit: 'mm' });
+                
                 doc.setFont('times', 'normal');
                 const pageWidth = doc.internal.pageSize.getWidth();
                 const tableWidth = 180, tableMarginX = (pageWidth - tableWidth) / 2, rowHeight = 6;
                 const headers = ["Date", "Weekday", "Clock In", "Clock Out", "Total Hours", "Total OT"];
                 const colWidths = [30, 30, 30, 30, 30, 30];
                 let y = 20;
-                doc.setFontSize(14); doc.setFont('times', 'bold');
+                
+                doc.setFontSize(14);
+                doc.setFont('times', 'bold');
                 const title = 'Total Time Card';
                 doc.text(title, (pageWidth - doc.getTextWidth(title)) / 2, y);
-                y += 10; doc.setFontSize(10); doc.setFont('times', 'normal');
+                y += 10;
+                
+                doc.setFontSize(10);
+                doc.setFont('times', 'normal');
                 doc.text(`Start Date: ${startDateStr} End Date: ${endDateStr}`, tableMarginX, y);
-                y += 5; doc.text(`First Name: ${user.name}, Department: ${user.unit || 'Tiada'}`, tableMarginX, y);
-                y += 10; doc.setFont('times', 'bold'); doc.setDrawColor(0); doc.setLineWidth(0.2);
+                y += 5;
+                doc.text(`First Name: ${user.name}, Department: ${user.unit || 'Tiada'}`, tableMarginX, y);
+                y += 10;
+                
+                doc.setFont('times', 'bold');
+                doc.setDrawColor(0);
+                doc.setLineWidth(0.2);
+                
                 let x = tableMarginX;
-                headers.forEach((header, i) => { doc.rect(x, y, colWidths[i], rowHeight); doc.text(header, x + 2, y + 4); x += colWidths[i]; });
-                y += rowHeight; doc.setFont('times', 'normal');
+                headers.forEach((header, i) => { 
+                    doc.rect(x, y, colWidths[i], rowHeight); 
+                    doc.text(header, x + 2, y + 4); 
+                    x += colWidths[i]; 
+                });
+                y += rowHeight;
+                doc.setFont('times', 'normal');
+                
                 let totalHoursDecimal = 0, totalOTDecimal = 0;
                 const currentDate = new Date(start);
+                
                 while (currentDate <= end) {
                     const dateString = currentDate.toISOString().slice(0, 10);
                     const weekday = currentDate.toLocaleDateString('en-US', { weekday: 'long' });
                     const record = dataMap[dateString] || null;
+                    
                     let clockInText = '', clockOutText = '', hoursText = '', otText = '';
+                    
                     if (record) {
-                        if (record.clockIn) try { clockInText = new Date(record.clockIn).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }); } catch(e) {}
-                        if (record.clockOut) try { clockOutText = new Date(record.clockOut).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }); } catch(e) {}
-                        if (record.totalHours) { hoursText = formatDecimalToTime(record.totalHours); totalHoursDecimal += parseFloat(record.totalHours); }
-                        if (record.totalOT) { otText = formatDecimalToTime(record.totalOT); totalOTDecimal += parseFloat(record.totalOT); }
+                        if (record.clockIn) {
+                            try { 
+                                clockInText = new Date(record.clockIn).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }); 
+                            } catch(e) {}
+                        }
+                        if (record.clockOut) {
+                            try { 
+                                clockOutText = new Date(record.clockOut).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }); 
+                            } catch(e) {}
+                        }
+                        if (record.totalHours) { 
+                            hoursText = formatDecimalToTime(record.totalHours); 
+                            totalHoursDecimal += parseFloat(record.totalHours); 
+                        }
+                        if (record.totalOT) { 
+                            otText = formatDecimalToTime(record.totalOT); 
+                            totalOTDecimal += parseFloat(record.totalOT); 
+                        }
                     }
+                    
                     x = tableMarginX;
                     const rowData = [dateString, weekday, clockInText, clockOutText, hoursText, otText];
-                    rowData.forEach((text, i) => { doc.rect(x, y, colWidths[i], rowHeight); doc.text(text, x + 2, y + 4); x += colWidths[i]; });
+                    rowData.forEach((text, i) => { 
+                        doc.rect(x, y, colWidths[i], rowHeight); 
+                        doc.text(text, x + 2, y + 4); 
+                        x += colWidths[i]; 
+                    });
                     y += rowHeight;
                     currentDate.setDate(currentDate.getDate() + 1);
-                    if (y > 270) { doc.addPage(); y = 20; x = tableMarginX; doc.setFont('times', 'bold'); headers.forEach((header, i) => { doc.rect(x, y, colWidths[i], rowHeight); doc.text(header, x + 2, y + 4); x += colWidths[i]; }); y += rowHeight; doc.setFont('times', 'normal'); }
+                    
+                    if (y > 270) { 
+                        doc.addPage(); 
+                        y = 20; 
+                        x = tableMarginX; 
+                        doc.setFont('times', 'bold'); 
+                        headers.forEach((header, i) => { 
+                            doc.rect(x, y, colWidths[i], rowHeight); 
+                            doc.text(header, x + 2, y + 4); 
+                            x += colWidths[i]; 
+                        }); 
+                        y += rowHeight; 
+                        doc.setFont('times', 'normal'); 
+                    }
                 }
+                
+                // Summary row
                 doc.setFont('times', 'bold');
                 doc.rect(tableMarginX, y, tableWidth, rowHeight);
                 doc.text('Statistic', tableMarginX + 2, y + 4);
                 doc.text(formatDecimalToTime(totalHoursDecimal), tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + 2, y + 4);
                 doc.text(formatDecimalToTime(totalOTDecimal), tableMarginX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] + 2, y + 4);
+                
+                // Page numbers
                 const pageCount = doc.internal.getNumberOfPages();
-                for (let i = 1; i <= pageCount; i++) { doc.setPage(i); doc.setFontSize(8); doc.setTextColor(150, 150, 150); doc.text(`Page ${i} of ${pageCount}`, pageWidth - 30, doc.internal.pageSize.height - 10); }
+                for (let i = 1; i <= pageCount; i++) { 
+                    doc.setPage(i); 
+                    doc.setFontSize(8); 
+                    doc.setTextColor(150, 150, 150); 
+                    doc.text(`Page ${i} of ${pageCount}`, pageWidth - 30, doc.internal.pageSize.height - 10); 
+                }
+                
                 doc.save(`Laporan_Kehadiran_${user.name.replace(/\s+/g, '_')}_${startDateStr}_to_${endDateStr}.pdf`);
                 showAlert("Berjaya", "PDF telah dijana dan dimuat turun.", 'success');
-            } catch (error) { showAlert("Ralat", "Gagal menjana PDF: " + error.message, 'error'); }
+                
+            } catch (error) { 
+                console.error('PDF Error:', error);
+                showAlert("Ralat", "Gagal menjana PDF: " + error.message, 'error'); 
+            }
         };
 
         // Event listeners
