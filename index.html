@@ -180,7 +180,7 @@
             background: #f5f7fb;
             min-height: 100vh;
             position: relative;
-            padding-bottom: 70px;
+            padding-bottom: 80px;
         }
        
         /* Header */
@@ -242,7 +242,7 @@
             background: white;
             display: flex;
             justify-content: space-around;
-            padding: 12px 20px 20px;
+            padding: 8px 10px 16px;
             border-top: 1px solid #e2e8f0;
             max-width: 500px;
             margin: 0 auto;
@@ -256,7 +256,7 @@
             gap: 4px;
             background: none;
             border: none;
-            padding: 8px 20px;
+            padding: 8px 12px;
             border-radius: 24px;
             cursor: pointer;
         }
@@ -267,7 +267,7 @@
         }
        
         .nav-item span:not(.material-symbols-rounded) {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 500;
             color: #94a3b8;
         }
@@ -937,6 +937,32 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
         }
+
+        /* New Form Styles */
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 6px; }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: 12px 14px; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 14px; background: #f8fafc; outline: none; transition: all 0.2s; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: #1e3a8a; background: white; }
+        .form-btn { width: 100%; padding: 14px; border-radius: 20px; font-weight: 700; border: none; cursor: pointer; transition: all 0.2s; }
+        .form-btn-primary { background: #1e3a8a; color: white; }
+        .form-btn-secondary { background: #e2e8f0; color: #1e293b; }
+        .form-btn-danger { background: #dc2626; color: white; }
+        .form-btn-success { background: #10b981; color: white; }
+
+        /* Inbox Styles */
+        .inbox-item { background: white; border-radius: 20px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s; border-left: 4px solid #10b981; }
+        .inbox-item.unread { background: #eff6ff; border-left-color: #1e3a8a; }
+        .inbox-item:hover { transform: scale(0.98); }
+        .inbox-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center; }
+        .inbox-message { font-size: 13px; color: #64748b; margin-bottom: 8px; }
+        .inbox-time { font-size: 10px; color: #94a3b8; }
+        .unread-dot { width: 10px; height: 10px; background: #1e3a8a; border-radius: 50%; display: inline-block; }
+
+        /* Request Card Styles */
+        .request-card { background: white; border-radius: 20px; padding: 16px; margin-bottom: 12px; border: 1px solid #e2e8f0; }
+        .request-status-pending { background: #fef3c7; color: #92400e; }
+        .request-status-approved { background: #dcfce7; color: #166534; }
+        .request-status-rejected { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
@@ -1208,6 +1234,33 @@
                     </div>
                 </section>
             </div>
+
+            <!-- Page 4: Inbox -->
+            <div id="inboxPage" class="page">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-black text-gray-800">Inbox</h2>
+                    <button onclick="loadInbox()" class="refresh-btn p-2"><span class="material-symbols-rounded">refresh</span></button>
+                </div>
+                <div id="inboxList"></div>
+            </div>
+
+            <!-- Page 5: Permohonan -->
+            <div id="requestPage" class="page">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-black text-gray-800">Permohonan</h2>
+                    <button onclick="openRequestModal()" class="bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-bold">+ Baru</button>
+                </div>
+                <div id="requestList"></div>
+            </div>
+
+            <!-- Page 6: Diari Kursus -->
+            <div id="diaryPage" class="page">
+                <h2 class="text-2xl font-black text-gray-800 mb-4">Diari Kursus & Tugasan</h2>
+                <div id="calendarView" style="background: white; border-radius: 24px; padding: 16px; margin-bottom: 16px;"></div>
+                <div id="selectedDateInfo" class="text-sm text-gray-500 mb-3"></div>
+                <button onclick="openDiaryModal()" id="addDiaryBtn" class="bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-bold w-full">+ Tambah Entri untuk Hari Ini</button>
+                <div id="diaryEntries" class="mt-4"></div>
+            </div>
             
             <!-- Bottom Navigation -->
             <div class="bottom-nav">
@@ -1221,7 +1274,19 @@
                 </button>
                 <button class="nav-item" onclick="switchPage('camera')" id="navCamera">
                     <span class="material-symbols-rounded">fingerprint</span>
-                    <span>Clock In/Out</span>
+                    <span>Clock</span>
+                </button>
+                <button class="nav-item" onclick="switchPage('inbox')" id="navInbox">
+                    <span class="material-symbols-rounded">inbox</span>
+                    <span>Inbox</span>
+                </button>
+                <button class="nav-item" onclick="switchPage('request')" id="navRequest">
+                    <span class="material-symbols-rounded">assignment</span>
+                    <span>Permohonan</span>
+                </button>
+                <button class="nav-item" onclick="switchPage('diary')" id="navDiary">
+                    <span class="material-symbols-rounded">book</span>
+                    <span>Diari</span>
                 </button>
             </div>
         </div>
@@ -1236,6 +1301,49 @@
             </div>
             <div class="modal-body" id="locationHistoryList">
                 <div class="text-center py-6 text-gray-400">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exception Modal (Reason & Bukti untuk tidak clock out) -->
+    <div id="exceptionModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3>❗ Sebab Tidak Clock Out</h3><button class="close-modal" onclick="closeExceptionModal()">&times;</button></div>
+            <div class="modal-body">
+                <p class="text-sm text-gray-600 mb-4">Anda tidak clock out pada <span id="exceptionDate"></span>. Sila beri sebab dan bukti.</p>
+                <div class="form-group"><label class="form-label">Sebab / Alasan</label><textarea id="exceptionReason" class="form-textarea" rows="3" placeholder="Contoh: Saya perlu keluar awal kerana..."></textarea></div>
+                <div class="form-group"><label class="form-label">Bukti (PDF/Gambar)</label><input type="file" id="exceptionFile" accept=".pdf,.jpg,.jpeg,.png" class="form-input"><p class="text-xs text-gray-400 mt-1">Muat naik dokumen sokongan</p></div>
+                <button onclick="submitException()" class="form-btn form-btn-primary mt-2">Hantar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Permohonan Baru -->
+    <div id="requestModal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header"><h3>📋 Permohonan Baru</h3><button class="close-modal" onclick="closeRequestModal()">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">Jenis Permohonan</label><select id="requestType" class="form-select"><option value="out_of_office">Keluar Pejabat</option><option value="sick_leave">Cuti Sakit</option><option value="course">Kursus</option><option value="field_assignment">Tugasan Luar</option></select></div>
+                <div class="form-group"><label class="form-label">Tarikh Mula</label><input type="date" id="requestStartDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Tarikh Tamat</label><input type="date" id="requestEndDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Sebab / Keterangan</label><textarea id="requestReason" class="form-textarea" rows="3" placeholder="Nyatakan sebab permohonan..."></textarea></div>
+                <div class="form-group"><label class="form-label">Dokumen Sokongan</label><input type="file" id="requestFile" accept=".pdf,.jpg,.jpeg,.png" class="form-input"></div>
+                <button onclick="submitRequest()" class="form-btn form-btn-primary mt-2">Hantar Permohonan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Diari -->
+    <div id="diaryModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header"><h3>📝 Entri Diari</h3><button class="close-modal" onclick="closeDiaryModal()">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label class="form-label">Tarikh</label><input type="date" id="diaryDate" class="form-input"></div>
+                <div class="form-group"><label class="form-label">Jenis</label><select id="diaryType" class="form-select"><option value="course">Kursus</option><option value="assignment">Tugasan Luar</option></select></div>
+                <div class="form-group"><label class="form-label">Tajuk</label><input type="text" id="diaryTitle" class="form-input" placeholder="Contoh: Kursus Kepimpinan"></div>
+                <div class="form-group"><label class="form-label">Keterangan</label><textarea id="diaryDesc" class="form-textarea" rows="3" placeholder="Butiran aktiviti..."></textarea></div>
+                <div class="form-group"><label class="form-label">Dokumen</label><input type="file" id="diaryFile" accept=".pdf,.jpg,.jpeg,.png" class="form-input"></div>
+                <button onclick="submitDiary()" class="form-btn form-btn-primary mt-2">Simpan Diari</button>
             </div>
         </div>
     </div>
@@ -1262,14 +1370,14 @@
         let detectionInterval = null;
         let lastSmileScore = 0;
         let verificationStartTime = 0;
-        let lastCheckedDate = null; // Untuk tracking pertukaran hari
+        let lastCheckedDate = null;
+        let selectedDiaryDate = null;
         
         // ============================================
         // HELPER FUNCTIONS
         // ============================================
         function getCurrentDateMalaysia() {
             const now = new Date();
-            // Gunakan terus date tanpa manipulasi UTC
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
@@ -1277,16 +1385,7 @@
         }
         
         function getCurrentDateTimeMalaysia() {
-            // Kembalikan Date object asal kerana browser sudah dalam timezone Malaysia
             return new Date();
-        }
-        
-        function getCurrentTimeMalaysia() {
-            const now = new Date();
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            return `${hours}:${minutes}:${seconds}`;
         }
         
         function formatDateKey(date) {
@@ -1299,15 +1398,11 @@
         
         function isNewDay() {
             const today = getCurrentDateMalaysia();
-            console.log('isNewDay check - Today:', today, 'LastChecked:', lastCheckedDate);
-            
             if (lastCheckedDate === null) {
                 lastCheckedDate = today;
                 return false;
             }
-            
             if (lastCheckedDate !== today) {
-                console.log('NEW DAY DETECTED!', lastCheckedDate, '->', today);
                 lastCheckedDate = today;
                 return true;
             }
@@ -1316,17 +1411,9 @@
         
         function resetDailyData() {
             const today = getCurrentDateMalaysia();
-            console.log('resetDailyData - Today is:', today);
-            console.log('Current attendance record date:', currentAttendanceRecord?.date);
-            
-            // Hanya reset jika rekod yang ada adalah untuk hari yang BERLAINAN
             if (currentAttendanceRecord && currentAttendanceRecord.date !== today) {
-                console.log('Resetting daily data - old record from', currentAttendanceRecord.date, '!= today', today);
                 currentAttendanceRecord = null;
-            } else {
-                console.log('No reset needed - record date matches today or no record');
             }
-            
             if (isCameraActive) {
                 stopCameraAndReset();
             }
@@ -1364,31 +1451,6 @@
             div.textContent = text;
             return div.innerHTML;
         }
-
-        function debugDateTime() {
-            console.log('=== DATE/TIME DEBUG (FIXED) ===');
-            
-            const now = new Date();
-            console.log('Browser local time:', now.toString());
-            console.log('Browser getFullYear():', now.getFullYear());
-            console.log('Browser getMonth():', now.getMonth() + 1);
-            console.log('Browser getDate():', now.getDate());
-            
-            const malaysiaDate = getCurrentDateMalaysia();
-            console.log('Malaysia date (NEW):', malaysiaDate);
-            
-            const expectedDate = '2026-04-10';
-            console.log('Expected date:', expectedDate);
-            console.log('Match:', malaysiaDate === expectedDate);
-            
-            console.log('=======================');
-            
-            return {
-                browserDate: `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`,
-                malaysiaDate: malaysiaDate,
-                isCorrect: malaysiaDate === expectedDate
-            };
-        }
         
         // ============================================
         // CHECK AND RESET ON NEW DAY
@@ -1396,51 +1458,392 @@
         function checkAndResetForNewDay() {
             if (isNewDay()) {
                 resetDailyData();
-                // Refresh all data
                 if (currentUser) {
                     loadHomeData();
                     loadAttendanceHistory();
                     updateCameraUI();
+                    checkForMissingClockOut();
                 }
                 return true;
             }
             return false;
         }
         
-        // Run check every minute
-        setInterval(() => {
-            checkAndResetForNewDay();
-        }, 60000);
+        // Check if user forgot to clock out yesterday
+        async function checkForMissingClockOut() {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = formatDateKey(yesterday);
+            
+            try {
+                const result = await getAttendance(currentUser.uid, yesterdayStr, yesterdayStr);
+                if (result.success && result.data && result.data.length > 0) {
+                    const record = result.data[0];
+                    const hasClockIn = record.clockIn && record.clockIn !== '' && record.clockIn !== 'null';
+                    const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+                    
+                    if (hasClockIn && !hasClockOut) {
+                        document.getElementById('exceptionDate').innerText = new Date(yesterday).toLocaleDateString('ms-MY');
+                        document.getElementById('exceptionModal').classList.add('active');
+                    }
+                }
+            } catch (error) {
+                console.error('Check missing clock out error:', error);
+            }
+        }
+        
+        // ============================================
+        // UPLOAD FILE TO GOOGLE DRIVE
+        // ============================================
+        async function uploadFileToDrive(file, folderId) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const base64 = e.target.result.split(',')[1];
+                    const result = await callAPI('uploadFileToDrive', {
+                        fileName: file.name,
+                        fileBase64: base64,
+                        folderId: folderId || '1MIGgknZhgw594XgeSetALOpdiMW5VVak',
+                        mimeType: file.type
+                    });
+                    if (result.success) resolve(result.fileUrl);
+                    else reject(result.error);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // ============================================
+        // EXCEPTION FUNCTIONS
+        // ============================================
+        async function submitException() {
+            const reason = document.getElementById('exceptionReason').value.trim();
+            const fileInput = document.getElementById('exceptionFile');
+            const date = document.getElementById('exceptionDate').innerText;
+            
+            if (!reason) {
+                showNotification('Ralat', 'Sila nyatakan sebab tidak clock out', true);
+                return;
+            }
+            
+            showNotification('Memproses', 'Menghantar laporan...', false);
+            
+            try {
+                let fileUrl = '';
+                if (fileInput.files.length > 0) {
+                    fileUrl = await uploadFileToDrive(fileInput.files[0]);
+                }
+                
+                const result = await callAPI('submitException', {
+                    uid: currentUser.uid,
+                    userName: currentUser.name,
+                    date: date,
+                    reason: reason,
+                    fileUrl: fileUrl
+                });
+                
+                if (result.success) {
+                    showNotification('Berjaya', 'Laporan telah dihantar ke admin', false);
+                    closeExceptionModal();
+                } else {
+                    showNotification('Ralat', result.error || 'Gagal menghantar', true);
+                }
+            } catch (error) {
+                showNotification('Ralat', 'Gagal menghantar laporan', true);
+            }
+        }
+        
+        function closeExceptionModal() {
+            document.getElementById('exceptionModal').classList.remove('active');
+            document.getElementById('exceptionReason').value = '';
+            document.getElementById('exceptionFile').value = '';
+        }
+        
+        // ============================================
+        // LEAVE REQUEST FUNCTIONS
+        // ============================================
+        async function submitRequest() {
+            const type = document.getElementById('requestType').value;
+            const startDate = document.getElementById('requestStartDate').value;
+            const endDate = document.getElementById('requestEndDate').value;
+            const reason = document.getElementById('requestReason').value.trim();
+            const fileInput = document.getElementById('requestFile');
+            
+            if (!startDate || !endDate || !reason) {
+                showNotification('Ralat', 'Sila lengkapkan semua maklumat', true);
+                return;
+            }
+            
+            showNotification('Memproses', 'Menghantar permohonan...', false);
+            
+            try {
+                let fileUrl = '';
+                if (fileInput.files.length > 0) {
+                    fileUrl = await uploadFileToDrive(fileInput.files[0]);
+                }
+                
+                const result = await callAPI('submitLeaveRequest', {
+                    uid: currentUser.uid,
+                    userName: currentUser.name,
+                    type: type,
+                    startDate: startDate,
+                    endDate: endDate,
+                    reason: reason,
+                    fileUrl: fileUrl
+                });
+                
+                if (result.success) {
+                    showNotification('Berjaya', 'Permohonan telah dihantar ke admin', false);
+                    closeRequestModal();
+                    loadRequests();
+                } else {
+                    showNotification('Ralat', result.error || 'Gagal menghantar', true);
+                }
+            } catch (error) {
+                showNotification('Ralat', 'Gagal menghantar permohonan', true);
+            }
+        }
+        
+        function openRequestModal() {
+            document.getElementById('requestStartDate').value = getCurrentDateMalaysia();
+            document.getElementById('requestEndDate').value = getCurrentDateMalaysia();
+            document.getElementById('requestReason').value = '';
+            document.getElementById('requestFile').value = '';
+            document.getElementById('requestModal').classList.add('active');
+        }
+        
+        function closeRequestModal() {
+            document.getElementById('requestModal').classList.remove('active');
+        }
+        
+        async function loadRequests() {
+            try {
+                const result = await callAPI('getUserLeaveRequests', { uid: currentUser.uid });
+                const container = document.getElementById('requestList');
+                if (!result.success || !result.data || result.data.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada permohonan</div>';
+                    return;
+                }
+                
+                let html = '';
+                result.data.forEach(req => {
+                    const jenisMap = { 'out_of_office': 'Keluar Pejabat', 'sick_leave': 'Cuti Sakit', 'course': 'Kursus', 'field_assignment': 'Tugasan Luar' };
+                    let statusClass = '', statusText = '';
+                    if (req.status === 'approved') {
+                        statusClass = 'request-status-approved';
+                        statusText = '✅ DILULUSKAN';
+                    } else if (req.status === 'rejected') {
+                        statusClass = 'request-status-rejected';
+                        statusText = '❌ DITOLAK';
+                    } else {
+                        statusClass = 'request-status-pending';
+                        statusText = '⏳ DALAM PROSES';
+                    }
+                    
+                    html += `<div class="request-card">
+                        <div class="flex justify-between items-start">
+                            <div><div class="font-bold">${jenisMap[req.type] || req.type}</div><div class="text-xs text-gray-400">${new Date(req.timestamp).toLocaleDateString('ms-MY')}</div></div>
+                            <div class="text-xs font-bold px-3 py-1 rounded-full ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="text-sm text-gray-600 mt-2">📅 ${new Date(req.startDate).toLocaleDateString('ms-MY')} - ${new Date(req.endDate).toLocaleDateString('ms-MY')}</div>
+                        <div class="text-sm text-gray-600 mt-1">📝 ${escapeHtml(req.reason)}</div>
+                        ${req.adminResponse ? `<div class="mt-2 p-2 bg-gray-50 rounded-xl text-sm"><span class="font-bold">Respon Admin:</span> ${escapeHtml(req.adminResponse)}</div>` : ''}
+                        ${req.fileUrl ? `<div class="mt-2"><a href="${req.fileUrl}" target="_blank" class="text-blue-600 text-sm flex items-center gap-1"><span class="material-symbols-rounded text-sm">attach_file</span> Lihat Dokumen</a></div>` : ''}
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Load requests error:', error);
+            }
+        }
+        
+        // ============================================
+        // DIARY FUNCTIONS
+        // ============================================
+        function openDiaryModal(date = null) {
+            if (date) selectedDiaryDate = date;
+            else selectedDiaryDate = getCurrentDateMalaysia();
+            document.getElementById('diaryDate').value = selectedDiaryDate;
+            document.getElementById('diaryTitle').value = '';
+            document.getElementById('diaryDesc').value = '';
+            document.getElementById('diaryFile').value = '';
+            document.getElementById('diaryModal').classList.add('active');
+        }
+        
+        function closeDiaryModal() {
+            document.getElementById('diaryModal').classList.remove('active');
+        }
+        
+        async function submitDiary() {
+            const date = document.getElementById('diaryDate').value;
+            const type = document.getElementById('diaryType').value;
+            const title = document.getElementById('diaryTitle').value.trim();
+            const description = document.getElementById('diaryDesc').value.trim();
+            const fileInput = document.getElementById('diaryFile');
+            
+            if (!title || !description) {
+                showNotification('Ralat', 'Sila isi tajuk dan keterangan', true);
+                return;
+            }
+            
+            showNotification('Memproses', 'Menyimpan diari...', false);
+            
+            try {
+                let fileUrl = '';
+                if (fileInput.files.length > 0) {
+                    fileUrl = await uploadFileToDrive(fileInput.files[0]);
+                }
+                
+                const result = await callAPI('submitCourseDiary', {
+                    uid: currentUser.uid,
+                    userName: currentUser.name,
+                    date: date,
+                    type: type,
+                    title: title,
+                    description: description,
+                    fileUrl: fileUrl
+                });
+                
+                if (result.success) {
+                    showNotification('Berjaya', 'Diari telah disimpan', false);
+                    closeDiaryModal();
+                    loadDiaryEntries();
+                    renderSimpleCalendar();
+                } else {
+                    showNotification('Ralat', result.error || 'Gagal menyimpan', true);
+                }
+            } catch (error) {
+                showNotification('Ralat', 'Gagal menyimpan diari', true);
+            }
+        }
+        
+        async function loadDiaryEntries() {
+            try {
+                const result = await callAPI('getUserDiaries', { uid: currentUser.uid });
+                const container = document.getElementById('diaryEntries');
+                if (!result.success || !result.data || result.data.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada entri diari</div>';
+                    return;
+                }
+                
+                let html = '';
+                result.data.forEach(diary => {
+                    const typeText = diary.type === 'course' ? '📘 Kursus' : '📋 Tugasan Luar';
+                    const statusClass = diary.status === 'reviewed' ? 'text-green-600' : 'text-amber-600';
+                    const statusText = diary.status === 'reviewed' ? '✓ DISEMAK' : '⏳ DALAM PROSES';
+                    
+                    html += `<div class="request-card">
+                        <div class="flex justify-between items-start">
+                            <div><div class="font-bold">${typeText}</div><div class="text-xs text-gray-400">${new Date(diary.date).toLocaleDateString('ms-MY')}</div></div>
+                            <div class="text-xs font-bold ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="font-semibold text-gray-800 mt-2">${escapeHtml(diary.title)}</div>
+                        <div class="text-sm text-gray-600 mt-1">${escapeHtml(diary.description)}</div>
+                        ${diary.adminNotes ? `<div class="mt-2 p-2 bg-gray-50 rounded-xl text-sm"><span class="font-bold">Catatan Admin:</span> ${escapeHtml(diary.adminNotes)}</div>` : ''}
+                        ${diary.fileUrl ? `<div class="mt-2"><a href="${diary.fileUrl}" target="_blank" class="text-blue-600 text-sm flex items-center gap-1"><span class="material-symbols-rounded text-sm">attach_file</span> Lihat Dokumen</a></div>` : ''}
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Load diaries error:', error);
+            }
+        }
+        
+        function renderSimpleCalendar() {
+            const container = document.getElementById('calendarView');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = today.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            let startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            
+            let html = `<div class="text-center font-bold mb-3">${today.toLocaleDateString('ms-MY', { month: 'long', year: 'numeric' })}</div>`;
+            html += `<div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-gray-400 mb-2"><span>Is</span><span>Se</span><span>Ra</span><span>Kh</span><span>Ju</span><span>Sa</span><span>Ah</span></div><div class="grid grid-cols-7 gap-1">`;
+            
+            for (let i = 0; i < startOffset; i++) html += `<div class="p-2"></div>`;
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const isToday = dateStr === getCurrentDateMalaysia();
+                html += `<div class="p-2 text-center text-sm cursor-pointer hover:bg-blue-50 rounded-xl ${isToday ? 'bg-blue-100 font-bold' : ''}" onclick="selectDiaryDate('${dateStr}')">${d}</div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+        
+        function selectDiaryDate(dateStr) {
+            selectedDiaryDate = dateStr;
+            document.getElementById('selectedDateInfo').innerHTML = `📅 Tarikh dipilih: ${new Date(dateStr).toLocaleDateString('ms-MY')}`;
+            openDiaryModal(dateStr);
+        }
+        
+        // ============================================
+        // INBOX FUNCTIONS
+        // ============================================
+        async function loadInbox() {
+            try {
+                const result = await callAPI('getUserInbox', { uid: currentUser.uid });
+                const container = document.getElementById('inboxList');
+                if (!result.success || !result.data || result.data.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-gray-400">Tiada mesej dalam inbox</div>';
+                    return;
+                }
+                
+                let html = '';
+                result.data.forEach(msg => {
+                    const unreadClass = msg.isRead ? '' : 'unread';
+                    const time = new Date(msg.timestamp).toLocaleString('ms-MY');
+                    html += `<div class="inbox-item ${unreadClass}" onclick="markInboxRead('${msg.inboxId}', this)">
+                        <div class="inbox-title"><span>${escapeHtml(msg.title)}</span>${!msg.isRead ? '<span class="unread-dot"></span>' : ''}</div>
+                        <div class="inbox-message">${escapeHtml(msg.message)}</div>
+                        <div class="inbox-time">${time}</div>
+                    </div>`;
+                });
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Load inbox error:', error);
+            }
+        }
+        
+        async function markInboxRead(inboxId, element) {
+            try {
+                await callAPI('markInboxAsRead', { inboxId: inboxId, uid: currentUser.uid });
+                element.classList.remove('unread');
+                const dot = element.querySelector('.unread-dot');
+                if (dot) dot.remove();
+            } catch (error) {
+                console.error('Mark read error:', error);
+            }
+        }
         
         // ============================================
         // NAVIGATION
         // ============================================
         function switchPage(page) {
-            if (isCameraActive) {
-                stopCameraAndReset();
-            }
-            
-            // Check for new day before switching
+            if (isCameraActive) stopCameraAndReset();
             checkAndResetForNewDay();
-           
-            document.getElementById('homePage').classList.toggle('active', page === 'home');
-            document.getElementById('historyPage').classList.toggle('active', page === 'history');
-            document.getElementById('cameraPage').classList.toggle('active', page === 'camera');
-           
-            document.getElementById('navHome').classList.toggle('active', page === 'home');
-            document.getElementById('navHistory').classList.toggle('active', page === 'history');
-            document.getElementById('navCamera').classList.toggle('active', page === 'camera');
-           
+            
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`${page}Page`).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`nav${page.charAt(0).toUpperCase() + page.slice(1)}`).classList.add('active');
+            
             if (page === 'history') {
                 renderCalendar();
                 loadAttendanceHistory();
             } else if (page === 'camera') {
                 updateCameraClock();
-                refreshAttendanceData().then(() => {
-                    updateCameraUI();
-                });
+                refreshAttendanceData().then(() => updateCameraUI());
             } else if (page === 'home') {
                 loadHomeData();
+            } else if (page === 'inbox') {
+                loadInbox();
+            } else if (page === 'request') {
+                loadRequests();
+            } else if (page === 'diary') {
+                renderSimpleCalendar();
+                loadDiaryEntries();
             }
         }
         
@@ -1449,214 +1852,102 @@
                 clearInterval(detectionInterval);
                 detectionInterval = null;
             }
-            
             if (videoStream) {
                 videoStream.getTracks().forEach(t => t.stop());
                 videoStream = null;
             }
-            
             isCameraActive = false;
-            
             const cameraViewport = document.getElementById('cameraViewport');
             const verificationUI = document.getElementById('verificationUI');
             if (cameraViewport) cameraViewport.classList.add('hidden-camera');
             if (verificationUI) verificationUI.classList.remove('active');
-            
             updateProgress(0);
-            document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
-            document.getElementById('smilePercent').innerHTML = 'Mengesan senyuman: 0%';
-            document.getElementById('smileText').style.color = '#1e3a8a';
-            
             const overlay = document.getElementById('faceOverlay');
             if (overlay) overlay.innerHTML = '';
-            
-            const livenessIndicator = document.getElementById('livenessIndicator');
-            if (livenessIndicator) {
-                livenessIndicator.style.display = 'none';
-            }
         }
         
         // ============================================
-        // FACE VERIFICATION WITH LIVENESS
+        // FACE VERIFICATION (Sama seperti kod asal)
         // ============================================
-        
         async function loadFaceModels() {
             if (modelsLoaded) return true;
-            
             const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model';
-            
             try {
-                console.log('Loading models from:', MODEL_URL);
-                
-                const loadTimeout = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('Model loading timeout')), 30000);
-                });
-                
-                const loadModels = Promise.all([
+                await Promise.all([
                     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
                     faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
                     faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
                 ]);
-                
-                await Promise.race([loadModels, loadTimeout]);
-                
                 modelsLoaded = true;
-                console.log('All models loaded successfully');
                 return true;
-                
             } catch (error) {
                 console.error('Failed to load models:', error);
-                
-                try {
-                    console.log('Trying stable CDN...');
-                    const STABLE_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights';
-                    
-                    await Promise.all([
-                        faceapi.nets.tinyFaceDetector.loadFromUri(STABLE_URL),
-                        faceapi.nets.faceLandmark68Net.loadFromUri(STABLE_URL),
-                        faceapi.nets.faceRecognitionNet.loadFromUri(STABLE_URL),
-                        faceapi.nets.faceExpressionNet.loadFromUri(STABLE_URL)
-                    ]);
-                    
-                    modelsLoaded = true;
-                    return true;
-                } catch (err) {
-                    console.error('All model loading attempts failed:', err);
-                    showNotification('Ralat', 'Gagal memuatkan model muka. Sila semak sambungan internet dan cuba lagi.', true);
-                    return false;
-                }
+                return false;
             }
         }
         
         async function startFaceVerification(action) {
-            if (!currentUser) {
-                showNotification('Ralat', 'Sila log masuk terlebih dahulu', true);
-                return;
-            }
-            
-            // Check for new day first
+            if (!currentUser) { showNotification('Ralat', 'Sila log masuk terlebih dahulu', true); return; }
             checkAndResetForNewDay();
-            
-            // Refresh attendance data to get latest (PASTIKAN UNTUK HARI INI)
             await refreshAttendanceData();
             
-            // Log untuk debug
-            console.log('Start verification - Action:', action);
-            console.log('Current attendance record:', currentAttendanceRecord);
-            console.log('Today date:', getCurrentDateMalaysia());
-            
-            // Check action validity based on current record for TODAY
             const today = getCurrentDateMalaysia();
             const isValidRecord = currentAttendanceRecord && currentAttendanceRecord.date === today;
             
             if (action === 'clockin') {
-                if (isValidRecord && currentAttendanceRecord.clockIn && 
-                    currentAttendanceRecord.clockIn !== '' && 
-                    currentAttendanceRecord.clockIn !== 'null') {
-                    if (!currentAttendanceRecord.clockOut || 
-                        currentAttendanceRecord.clockOut === '' || 
-                        currentAttendanceRecord.clockOut === 'null') {
-                        showNotification('Makluman', 'Anda sudah clock in untuk hari ini', false);
-                        return;
-                    } else {
-                        showNotification('Makluman', 'Kehadiran hari ini sudah lengkap', false);
-                        return;
-                    }
+                if (isValidRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null') {
+                    if (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '' || currentAttendanceRecord.clockOut === 'null') {
+                        showNotification('Makluman', 'Anda sudah clock in untuk hari ini', false); return;
+                    } else { showNotification('Makluman', 'Kehadiran hari ini sudah lengkap', false); return; }
                 }
-            } 
-            else if (action === 'clockout') {
-                if (!isValidRecord || !currentAttendanceRecord.clockIn || 
-                    currentAttendanceRecord.clockIn === '' || 
-                    currentAttendanceRecord.clockIn === 'null') {
-                    showNotification('Makluman', 'Sila clock in terlebih dahulu', true);
-                    return;
+            } else if (action === 'clockout') {
+                if (!isValidRecord || !currentAttendanceRecord.clockIn || currentAttendanceRecord.clockIn === '' || currentAttendanceRecord.clockIn === 'null') {
+                    showNotification('Makluman', 'Sila clock in terlebih dahulu', true); return;
                 }
-                if (currentAttendanceRecord.clockOut && 
-                    currentAttendanceRecord.clockOut !== '' && 
-                    currentAttendanceRecord.clockOut !== 'null') {
-                    showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false);
-                    return;
+                if (currentAttendanceRecord.clockOut && currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null') {
+                    showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false); return;
                 }
             }
             
-            // Check location first
-            if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan. Sila hidupkan GPS.', true);
-                return;
-            }
-            
-            const distance = calculateDistance(
-                userLocation.lat, userLocation.lng,
-                parseFloat(currentUser.lat), parseFloat(currentUser.lng)
-            );
+            if (!userLocation) { showNotification('Ralat', 'Lokasi tidak dapat dikesan', true); return; }
+            const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
             const radius = parseInt(currentUser.radius) || 500;
-            
-            if (distance > radius) {
-                showNotification('Geofencing', `Anda berada di luar kawasan yang dibenarkan (${Math.round(distance)}m > ${radius}m)`, true);
-                return;
-            }
+            if (distance > radius) { showNotification('Geofencing', `Anda berada di luar kawasan yang dibenarkan`, true); return; }
             
             pendingAction = action;
+            if (!currentUser.faceDescriptor || currentUser.faceDescriptor === '') { showNotification('Ralat', 'Wajah belum didaftarkan', true); return; }
             
-            // Check if face descriptor exists
-            if (!currentUser.faceDescriptor || currentUser.faceDescriptor === '') {
-                showNotification('Ralat', 'Wajah anda belum didaftarkan. Sila hubungi admin.', true);
-                return;
-            }
-            
-            // Load models if not loaded
             const modelsLoadedSuccess = await loadFaceModels();
             if (!modelsLoadedSuccess) return;
             
-            // Setup face matcher
             try {
                 const descriptorArray = JSON.parse(currentUser.faceDescriptor);
                 const labeledDescriptor = new faceapi.LabeledFaceDescriptors(currentUser.uid, [new Float32Array(descriptorArray)]);
                 faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
-            } catch (e) {
-                console.error('Failed to setup face matcher:', e);
-                showNotification('Ralat', 'Data wajah tidak sah. Sila hubungi admin.', true);
-                return;
-            }
+            } catch (e) { showNotification('Ralat', 'Data wajah tidak sah', true); return; }
             
-            // Show camera and start verification
             await showCameraAndVerify();
         }
         
         async function showCameraAndVerify() {
             const cameraViewport = document.getElementById('cameraViewport');
             const verificationUI = document.getElementById('verificationUI');
-            
             cameraViewport.classList.remove('hidden-camera');
             verificationUI.classList.add('active');
-            
             await initCamera();
             isCameraActive = true;
             verificationStartTime = Date.now();
-            
-            // Start face detection
             startFaceDetection();
         }
         
         async function initCamera() {
             const video = document.getElementById('scanVideo');
-            
             try {
-                if (videoStream) {
-                    videoStream.getTracks().forEach(t => t.stop());
-                }
-                videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
-                });
+                if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } });
                 video.srcObject = videoStream;
-                
-                const livenessIndicator = document.getElementById('livenessIndicator');
-                if (livenessIndicator) {
-                    livenessIndicator.style.display = 'flex';
-                }
             } catch (err) {
-                console.error('Camera error:', err);
                 document.getElementById('cameraHint').innerText = '❌ Sila benarkan akses kamera';
                 showNotification('Ralat', 'Sila benarkan akses kamera', true);
                 stopCameraAndReset();
@@ -1665,7 +1956,6 @@
         
         function startFaceDetection() {
             if (detectionInterval) clearInterval(detectionInterval);
-            
             const video = document.getElementById('scanVideo');
             let verificationCompleted = false;
             let smileConfirmed = false;
@@ -1674,83 +1964,46 @@
             
             detectionInterval = setInterval(async () => {
                 if (!video.srcObject || video.paused || video.ended || !modelsLoaded || verificationCompleted) return;
-                
                 try {
-                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                        .withFaceLandmarks()
-                        .withFaceExpressions()
-                        .withFaceDescriptor();
-                    
+                    const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions().withFaceDescriptor();
                     const overlay = document.getElementById('faceOverlay');
                     
                     if (detection && detection.detection) {
-                        // Draw face box
                         const dims = getVideoDimensions(video);
                         const box = adjustFaceBox(detection.detection.box, dims);
                         overlay.innerHTML = `<div class="face-box" style="left:${box.x}px; top:${box.y}px; width:${box.width}px; height:${box.height}px;"></div>`;
                         
-                        // Update liveness indicator
-                        const livenessIndicator = document.getElementById('livenessIndicator');
-                        if (livenessIndicator) {
-                            livenessIndicator.innerHTML = '<div class="liveness-dot"></div><span>Wajah dikesan ✓</span>';
-                        }
-                        
-                        // Update smile detection
                         if (detection.expressions) {
                             const happyScore = Math.round(detection.expressions.happy * 100);
                             document.getElementById('smilePercent').innerHTML = `Mengesan senyuman: ${happyScore}%`;
-                            
                             if (happyScore >= 30 && !smileConfirmed) {
-                                if (!smileStartTime) {
-                                    smileStartTime = Date.now();
-                                    document.getElementById('smileText').innerHTML = '😊 Teruskan senyum...';
-                                } else if (Date.now() - smileStartTime >= 2000) {
-                                    smileConfirmed = true;
-                                    document.getElementById('smileText').innerHTML = '✅ SENYUMAN DISAHKAN!';
-                                    document.getElementById('smileText').style.color = '#10b981';
-                                }
+                                if (!smileStartTime) { smileStartTime = Date.now(); document.getElementById('smileText').innerHTML = '😊 Teruskan senyum...'; }
+                                else if (Date.now() - smileStartTime >= 2000) { smileConfirmed = true; document.getElementById('smileText').innerHTML = '✅ SENYUMAN DISAHKAN!'; document.getElementById('smileText').style.color = '#10b981'; }
                                 updateProgress(30 + Math.min(happyScore, 70));
-                            } else if (happyScore < 30) {
-                                smileStartTime = null;
-                                document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN';
-                                document.getElementById('smileText').style.color = '#1e3a8a';
-                                updateProgress(20);
-                            }
+                            } else if (happyScore < 30) { smileStartTime = null; document.getElementById('smileText').innerHTML = '😊 SILA SENYUM RINGAN'; document.getElementById('smileText').style.color = '#1e3a8a'; updateProgress(20); }
                         }
                         
-                        // After smile is confirmed, verify face match
                         if (smileConfirmed && !faceMatchConfirmed && detection.descriptor) {
                             updateProgress(80);
                             document.getElementById('smileText').innerHTML = '👤 MENGESAHKAN WAJAH...';
-                            
                             const match = faceMatcher.findBestMatch(detection.descriptor);
                             if (match.label === currentUser.uid && match.distance < 0.6) {
                                 faceMatchConfirmed = true;
                                 updateProgress(100);
                                 document.getElementById('smileText').innerHTML = '✅ PENGESAHAN BERJAYA!';
-                                
-                                // Verification successful, execute action
                                 verificationCompleted = true;
                                 clearInterval(detectionInterval);
                                 detectionInterval = null;
-                                
                                 setTimeout(async () => {
-                                    if (pendingAction === 'clockin') {
-                                        await executeClockIn();
-                                    } else if (pendingAction === 'clockout') {
-                                        await executeClockOut();
-                                    }
+                                    if (pendingAction === 'clockin') await executeClockIn();
+                                    else if (pendingAction === 'clockout') await executeClockOut();
                                     stopCameraAndReset();
                                 }, 1000);
                             } else {
                                 document.getElementById('smileText').innerHTML = '❌ WAJAH TIDAK SEPADAN';
                                 document.getElementById('smileText').style.color = '#ef4444';
-                                showNotification('Pengesahan Gagal', 'Wajah tidak sepadan dengan rekod sistem', true);
-                                setTimeout(() => {
-                                    if (!verificationCompleted) {
-                                        stopCameraAndReset();
-                                    }
-                                }, 2000);
+                                showNotification('Pengesahan Gagal', 'Wajah tidak sepadan', true);
+                                setTimeout(() => { if (!verificationCompleted) stopCameraAndReset(); }, 2000);
                                 verificationCompleted = true;
                                 clearInterval(detectionInterval);
                                 detectionInterval = null;
@@ -1758,26 +2011,18 @@
                         }
                     } else {
                         overlay.innerHTML = '';
-                        const livenessIndicator = document.getElementById('livenessIndicator');
-                        if (livenessIndicator) {
-                            livenessIndicator.innerHTML = '<div class="liveness-dot"></div><span>Tiada wajah dikesan</span>';
-                        }
                         smileStartTime = null;
                         document.getElementById('smilePercent').innerHTML = 'Mengesan senyuman: 0%';
                         updateProgress(10);
                     }
                     
-                    // Timeout after 30 seconds
                     if (Date.now() - verificationStartTime > 30000 && !verificationCompleted) {
                         clearInterval(detectionInterval);
                         detectionInterval = null;
                         showNotification('Pengesahan Gagal', 'Masa tamat. Sila cuba lagi.', true);
                         stopCameraAndReset();
                     }
-                    
-                } catch (error) {
-                    console.error('Face detection error:', error);
-                }
+                } catch (error) { console.error('Face detection error:', error); }
             }, 100);
         }
         
@@ -1789,163 +2034,68 @@
             const videoAspectRatio = videoWidth / videoHeight;
             const containerAspectRatio = containerWidth / containerHeight;
             let displayWidth, displayHeight;
-            if (containerAspectRatio > videoAspectRatio) {
-                displayHeight = containerHeight;
-                displayWidth = videoAspectRatio * displayHeight;
-            } else {
-                displayWidth = containerWidth;
-                displayHeight = displayWidth / videoAspectRatio;
-            }
+            if (containerAspectRatio > videoAspectRatio) { displayHeight = containerHeight; displayWidth = videoAspectRatio * displayHeight; }
+            else { displayWidth = containerWidth; displayHeight = displayWidth / videoAspectRatio; }
             const offsetX = (containerWidth - displayWidth) / 2;
             const offsetY = (containerHeight - displayHeight) / 2;
-            return {
-                videoWidth, videoHeight, displayWidth, displayHeight,
-                offsetX, offsetY,
-                scaleX: displayWidth / videoWidth,
-                scaleY: displayHeight / videoHeight
-            };
+            return { videoWidth, videoHeight, displayWidth, displayHeight, offsetX, offsetY, scaleX: displayWidth / videoWidth, scaleY: displayHeight / videoHeight };
         }
         
         function adjustFaceBox(box, dims) {
-            return {
-                x: box.x * dims.scaleX + dims.offsetX,
-                y: box.y * dims.scaleY + dims.offsetY,
-                width: box.width * dims.scaleX,
-                height: box.height * dims.scaleY
-            };
+            return { x: box.x * dims.scaleX + dims.offsetX, y: box.y * dims.scaleY + dims.offsetY, width: box.width * dims.scaleX, height: box.height * dims.scaleY };
         }
         
         // ============================================
-        // CLOCK ACTIONS - FIXED
+        // CLOCK ACTIONS
         // ============================================
-        
         async function refreshAttendanceData() {
             if (!currentUser) return null;
-            
             const today = getCurrentDateMalaysia();
-            console.log('refreshAttendanceData - Today:', today);
-            
             try {
                 const result = await getAttendance(currentUser.uid, today, today);
-                
-                console.log('API Response:', result);
-                
                 if (result.success && result.data && result.data.length > 0) {
                     const record = result.data[0];
-                    console.log('Record date from API:', record.date);
-                    console.log('Today date:', today);
-                    console.log('Dates match?', record.date === today);
-                    
-                    // KRITIKAL: Hanya set jika tarikh SAMA dengan hari ini
-                    if (record.date === today) {
-                        currentAttendanceRecord = record;
-                        console.log('✅ Attendance record set for TODAY');
-                    } else {
-                        currentAttendanceRecord = null;
-                        console.log('❌ Record date mismatch - ignoring. Record:', record.date, 'Today:', today);
-                    }
-                } else {
-                    currentAttendanceRecord = null;
-                    console.log('No attendance record for TODAY');
-                }
-                
+                    if (record.date === today) { currentAttendanceRecord = record; }
+                    else { currentAttendanceRecord = null; }
+                } else { currentAttendanceRecord = null; }
                 return currentAttendanceRecord;
-            } catch (error) {
-                console.error('Refresh attendance error:', error);
-                return null;
-            }
+            } catch (error) { console.error('Refresh error:', error); return null; }
         }
         
         async function executeClockIn() {
-            if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
-                return;
-            }
-            
+            if (!userLocation) { showNotification('Ralat', 'Lokasi tidak dapat dikesan', true); return; }
             const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
-            if (distance > (parseInt(currentUser.radius) || 500)) {
-                showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan', true);
-                return;
-            }
-            
-            // Disable buttons while processing
+            if (distance > (parseInt(currentUser.radius) || 500)) { showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan', true); return; }
             const masukBtn = document.getElementById('cameraClockInBtn');
-            masukBtn.disabled = true;
-            masukBtn.innerHTML = 'PROSES...';
-            
+            masukBtn.disabled = true; masukBtn.innerHTML = 'PROSES...';
             try {
                 const result = await clockIn(currentUser.uid, userLocation, currentUser);
-                
                 if (result.success) {
                     showNotification('Berjaya', 'Clock In direkodkan', false);
-                    
-                    // CRITICAL: Refresh attendance data immediately
                     await refreshAttendanceData();
-                    
-                    // Update UI
                     await loadHomeData();
                     await loadAttendanceHistory();
                     updateCameraUI();
-                    
-                    // Reset camera if active
-                    if (isCameraActive) {
-                        stopCameraAndReset();
-                        switchPage('home');
-                    }
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal clock in', true);
-                    masukBtn.disabled = false;
-                    masukBtn.innerHTML = 'MASUK';
-                }
-            } catch (error) {
-                console.error('Clock in error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
-                masukBtn.disabled = false;
-                masukBtn.innerHTML = 'MASUK';
-            }
+                    if (isCameraActive) { stopCameraAndReset(); switchPage('home'); }
+                } else { showNotification('Ralat', result.error || 'Gagal clock in', true); masukBtn.disabled = false; masukBtn.innerHTML = 'MASUK'; }
+            } catch (error) { showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true); masukBtn.disabled = false; masukBtn.innerHTML = 'MASUK'; }
         }
         
         async function executeClockOut() {
-            if (!userLocation) {
-                showNotification('Ralat', 'Lokasi tidak dapat dikesan', true);
-                return;
-            }
-            
-            // Disable buttons while processing
+            if (!userLocation) { showNotification('Ralat', 'Lokasi tidak dapat dikesan', true); return; }
             const keluarBtn = document.getElementById('cameraClockOutBtn');
-            keluarBtn.disabled = true;
-            keluarBtn.innerHTML = 'PROSES...';
-            
+            keluarBtn.disabled = true; keluarBtn.innerHTML = 'PROSES...';
             try {
                 const result = await clockOut(currentUser.uid, userLocation, currentUser);
-                
                 if (result.success) {
                     showNotification('Berjaya', 'Clock Out direkodkan', false);
-                    
-                    // CRITICAL: Refresh attendance data immediately
                     await refreshAttendanceData();
-                    
-                    // Update UI
                     await loadHomeData();
                     await loadAttendanceHistory();
                     updateCameraUI();
-                    
-                    // Reset camera if active
-                    if (isCameraActive) {
-                        stopCameraAndReset();
-                        switchPage('home');
-                    }
-                } else {
-                    showNotification('Ralat', result.error || 'Gagal clock out', true);
-                    keluarBtn.disabled = false;
-                    keluarBtn.innerHTML = 'KELUAR';
-                }
-            } catch (error) {
-                console.error('Clock out error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
-                keluarBtn.disabled = false;
-                keluarBtn.innerHTML = 'KELUAR';
-            }
+                    if (isCameraActive) { stopCameraAndReset(); switchPage('home'); }
+                } else { showNotification('Ralat', result.error || 'Gagal clock out', true); keluarBtn.disabled = false; keluarBtn.innerHTML = 'KELUAR'; }
+            } catch (error) { showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true); keluarBtn.disabled = false; keluarBtn.innerHTML = 'KELUAR'; }
         }
         
         // ============================================
@@ -1957,17 +2107,12 @@
             const φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180;
             const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-                    Math.cos(φ1) * Math.cos(φ2) *
-                    Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
         
         function initLocationMap(lat, lng) {
-            if (userMap) {
-                userMap.remove();
-            }
+            if (userMap) userMap.remove();
             userMap = L.map('recentLocationMap').setView([lat, lng], 15);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
             userMarker = L.marker([lat, lng]).addTo(userMap);
@@ -1976,24 +2121,13 @@
         
         function startLocationTracking() {
             if (!navigator.geolocation) return;
-            
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    if (currentUser && currentUser.lat && currentUser.lng) {
-                        initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
-                    }
-                    updateCameraLocationDisplay();
-                },
+                (position) => { userLocation = { lat: position.coords.latitude, lng: position.coords.longitude }; updateCameraLocationDisplay(); },
                 (error) => console.error('GPS error:', error),
                 { enableHighAccuracy: true, timeout: 10000 }
             );
-            
             locationWatchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    userLocation = { lat: position.coords.latitude, lng: position.coords.longitude };
-                    updateCameraLocationDisplay();
-                },
+                (position) => { userLocation = { lat: position.coords.latitude, lng: position.coords.longitude }; updateCameraLocationDisplay(); },
                 (error) => console.error('GPS watch error:', error),
                 { enableHighAccuracy: true, maximumAge: 30000 }
             );
@@ -2005,17 +2139,11 @@
                 document.getElementById('cameraLocationDistance').innerText = '-';
                 return;
             }
-            
-            const distance = calculateDistance(
-                userLocation.lat, userLocation.lng,
-                parseFloat(currentUser.lat), parseFloat(currentUser.lng)
-            );
+            const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
             const radius = parseInt(currentUser.radius) || 500;
             const within = distance <= radius;
-            
             const locationBadge = document.getElementById('cameraLocationBadge');
             const locationDistance = document.getElementById('cameraLocationDistance');
-            
             if (within) {
                 locationBadge.className = 'location-badge safe';
                 locationBadge.innerHTML = '<span class="material-symbols-rounded" style="font-size: 18px;">check_circle</span><span>DALAM KAWASAN BERTUGAS</span>';
@@ -2028,77 +2156,37 @@
         }
         
         // ============================================
-        // LOAD HOME DATA - FIXED
+        // LOAD HOME DATA
         // ============================================
         async function loadHomeData() {
             if (!currentUser) return;
-            
-            // Check for new day first
             checkAndResetForNewDay();
-            
             const today = getCurrentDateMalaysia();
-            const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+            const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             document.getElementById('currentDateDisplay').innerText = displayDate;
             document.getElementById('recentDate').innerText = displayDate;
             
             try {
-                // Jangan hantar requestingUser - gunakan 3 parameter sahaja
                 const result = await getAttendance(currentUser.uid, today, today);
-                
-                console.log('LoadHomeData for date:', today);
-                console.log('API Response:', result);
-                
                 const hasRecord = result.success && result.data && result.data.length > 0;
                 const record = hasRecord ? result.data[0] : null;
-                
-                // Update currentAttendanceRecord
                 currentAttendanceRecord = record;
-                
-                // KRITIKAL: Pastikan record adalah untuk hari ini
                 const recordForToday = record && record.date === today;
-                
-                // Check if record has valid clockIn untuk HARI INI
-                const hasClockIn = recordForToday && 
-                                  record.clockIn && 
-                                  record.clockIn !== '' && 
-                                  record.clockIn !== 'null' &&
-                                  record.clockIn !== '--:--';
-                
-                const hasClockOut = recordForToday && 
-                                   record.clockOut && 
-                                   record.clockOut !== '' && 
-                                   record.clockOut !== 'null' &&
-                                   record.clockOut !== '--:--';
-                
-                console.log('hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
-                
-                const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+                const hasClockIn = recordForToday && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '--:--';
+                const hasClockOut = recordForToday && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '--:--';
+                const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
                 
                 if (hasClockIn) {
-                    let clockInDate;
-                    if (typeof record.clockIn === 'string' && record.clockIn.includes(' ')) {
-                        clockInDate = new Date(record.clockIn);
-                    } else {
-                        clockInDate = new Date(today + 'T' + record.clockIn);
-                    }
-                    
-                    const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        hour12: true, 
-                        timeZone: 'Asia/Kuching' 
-                    });
+                    let clockInDate = typeof record.clockIn === 'string' && record.clockIn.includes(' ') ? new Date(record.clockIn) : new Date(today + 'T' + record.clockIn);
+                    const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
                     const timeParts = clockInTime.split(' ');
                     document.getElementById('clockInTime').innerText = timeParts[0];
                     document.getElementById('clockInAmPm').innerText = timeParts[1] || '';
                     document.getElementById('clockInStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
                     document.getElementById('clockInStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
-                    
                     const clockInBtn = document.getElementById('clockInBtn');
                     clockInBtn.disabled = hasClockOut;
                     clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
-                    clockInBtn.style.cursor = hasClockOut ? 'not-allowed' : 'pointer';
-                    
                     document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
                     document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
                     document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
@@ -2107,31 +2195,17 @@
                     document.getElementById('clockInAmPm').innerText = '';
                     document.getElementById('clockInStatus').innerHTML = 'Belum Masuk';
                     document.getElementById('clockInStatus').style.color = '#94a3b8';
-                    
                     const clockInBtn = document.getElementById('clockInBtn');
                     clockInBtn.disabled = false;
                     clockInBtn.style.background = '#10b981';
-                    clockInBtn.style.cursor = 'pointer';
-                    
                     document.getElementById('recentStatus').innerHTML = 'BELUM MASUK';
                     document.getElementById('recentStatus').style.background = '#fef3c7';
                     document.getElementById('recentStatus').style.color = '#92400e';
                 }
                 
                 if (hasClockOut) {
-                    let clockOutDate;
-                    if (typeof record.clockOut === 'string' && record.clockOut.includes(' ')) {
-                        clockOutDate = new Date(record.clockOut);
-                    } else {
-                        clockOutDate = new Date(today + 'T' + record.clockOut);
-                    }
-                    
-                    const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { 
-                        hour: '2-digit', 
-                        minute: '2-digit', 
-                        hour12: true, 
-                        timeZone: 'Asia/Kuching' 
-                    });
+                    let clockOutDate = typeof record.clockOut === 'string' && record.clockOut.includes(' ') ? new Date(record.clockOut) : new Date(today + 'T' + record.clockOut);
+                    const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
                     const timeParts = clockOutTime.split(' ');
                     document.getElementById('clockOutTime').innerText = timeParts[0];
                     document.getElementById('clockOutStatus').innerHTML = 'Tamat bertugas';
@@ -2142,20 +2216,10 @@
                     document.getElementById('clockOutStatus').style.color = '#94a3b8';
                 }
                 
-                if (record && record.totalHours && record.totalHours > 0) {
-                    document.getElementById('totalHours').innerText = record.totalHours.toFixed(1);
-                    document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
-                } else {
-                    document.getElementById('totalHours').innerText = '0';
-                }
-                
-                if (record && record.totalOT && record.totalOT > 0) {
-                    document.getElementById('totalOT').innerText = record.totalOT.toFixed(1);
-                    document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
-                } else {
-                    document.getElementById('totalOT').innerText = '0';
-                }
-                
+                document.getElementById('totalHours').innerText = record && record.totalHours && record.totalHours > 0 ? record.totalHours.toFixed(1) : '0';
+                document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
+                document.getElementById('totalOT').innerText = record && record.totalOT && record.totalOT > 0 ? record.totalOT.toFixed(1) : '0';
+                document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
                 updateCameraUI();
                 
                 if (userLocation && userLocation.lat && userLocation.lng) {
@@ -2163,40 +2227,17 @@
                 } else if (currentUser.lat && currentUser.lng) {
                     initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
                 }
-                
-            } catch (error) {
-                console.error('Load home data error:', error);
-                showNotification('Ralat', 'Gagal memuat data kehadiran', true);
-            }
+            } catch (error) { console.error('Load home data error:', error); showNotification('Ralat', 'Gagal memuat data kehadiran', true); }
         }
         
         function updateCameraUI() {
             const today = getCurrentDateMalaysia();
-            
-            // KRITIKAL: Pastikan record adalah untuk hari ini
-            const hasValidRecord = currentAttendanceRecord && 
-                                  currentAttendanceRecord.date === today;
-            
-            const hasClockIn = hasValidRecord && 
-                              currentAttendanceRecord.clockIn &&
-                              currentAttendanceRecord.clockIn !== '' && 
-                              currentAttendanceRecord.clockIn !== 'null' &&
-                              currentAttendanceRecord.clockIn !== '--:--';
-            
-            const hasClockOut = hasValidRecord && 
-                               currentAttendanceRecord.clockOut &&
-                               currentAttendanceRecord.clockOut !== '' && 
-                               currentAttendanceRecord.clockOut !== 'null' &&
-                               currentAttendanceRecord.clockOut !== '--:--';
-            
+            const hasValidRecord = currentAttendanceRecord && currentAttendanceRecord.date === today;
+            const hasClockIn = hasValidRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null' && currentAttendanceRecord.clockIn !== '--:--';
+            const hasClockOut = hasValidRecord && currentAttendanceRecord.clockOut && currentAttendanceRecord.clockOut !== '' && currentAttendanceRecord.clockOut !== 'null' && currentAttendanceRecord.clockOut !== '--:--';
             const cameraStatus = document.getElementById('cameraStatus');
             const masukBtn = document.getElementById('cameraClockInBtn');
             const keluarBtn = document.getElementById('cameraClockOutBtn');
-            
-            console.log('UpdateCameraUI - Today:', today);
-            console.log('Record date:', currentAttendanceRecord?.date);
-            console.log('hasValidRecord:', hasValidRecord);
-            console.log('hasClockIn:', hasClockIn, 'hasClockOut:', hasClockOut);
             
             if (hasClockIn && !hasClockOut) {
                 cameraStatus.innerText = 'DALAM BERTUGAS';
@@ -2204,46 +2245,34 @@
                 cameraStatus.style.color = '#1e3a8a';
                 masukBtn.disabled = true;
                 masukBtn.style.background = '#cbd5e1';
-                masukBtn.style.cursor = 'not-allowed';
                 keluarBtn.disabled = false;
                 keluarBtn.classList.add('active');
                 keluarBtn.style.background = '#ef4444';
-                keluarBtn.style.cursor = 'pointer';
-            } 
-            else if (hasClockIn && hasClockOut) {
+            } else if (hasClockIn && hasClockOut) {
                 cameraStatus.innerText = 'SELESAI';
                 cameraStatus.style.background = '#dcfce7';
                 cameraStatus.style.color = '#166534';
                 masukBtn.disabled = true;
-                masukBtn.style.background = '#cbd5e1';
-                masukBtn.style.cursor = 'not-allowed';
                 keluarBtn.disabled = true;
                 keluarBtn.classList.remove('active');
                 keluarBtn.style.background = '#cbd5e1';
-                keluarBtn.style.cursor = 'not-allowed';
-            } 
-            else {
-                // TIADA rekod untuk hari ini ATAU rekod adalah untuk tarikh lain
+            } else {
                 cameraStatus.innerText = 'BELUM MASUK';
                 cameraStatus.style.background = '#fef3c7';
                 cameraStatus.style.color = '#92400e';
                 masukBtn.disabled = false;
                 masukBtn.style.background = '#10b981';
-                masukBtn.style.cursor = 'pointer';
                 keluarBtn.disabled = true;
                 keluarBtn.classList.remove('active');
                 keluarBtn.style.background = '#f1f5f9';
-                keluarBtn.style.cursor = 'not-allowed';
             }
-            
             updateCameraLocationDisplay();
         }
         
         function updateCameraClock() {
             const now = new Date();
-            const malaysiaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
-            document.getElementById('cameraClockTime').innerText = malaysiaTime.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false, timeZone: 'Asia/Kuching' });
-            document.getElementById('cameraClockDate').innerText = malaysiaTime.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
+            document.getElementById('cameraClockTime').innerText = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+            document.getElementById('cameraClockDate').innerText = now.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         }
         
         setInterval(updateCameraClock, 1000);
@@ -2253,73 +2282,39 @@
         // ============================================
         async function loadAttendanceHistory() {
             if (!currentUser) return;
-            
-            const today = new Date();
-            const malaysiaToday = new Date(today.toLocaleString('en-US', { timeZone: 'Asia/Kuching' }));
-            const thirtyDaysAgo = new Date(malaysiaToday);
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
+            const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
-            const endDate = malaysiaToday.toISOString().split('T')[0];
-            
+            const endDate = new Date().toISOString().split('T')[0];
             try {
-                // Jangan hantar requestingUser - gunakan 3 parameter sahaja
                 const result = await getAttendance(currentUser.uid, startDate, endDate);
-                
                 const historyEl = document.getElementById('attendanceHistoryList');
-                
-                if (!result.success || !result.data || result.data.length === 0) {
-                    historyEl.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
-                    return;
-                }
-                
+                if (!result.success || !result.data || result.data.length === 0) { historyEl.innerHTML = '<div class="text-center py-6 text-gray-400">Tiada rekod kehadiran</div>'; return; }
                 attendanceRecords = {};
-                result.data.forEach(record => {
-                    attendanceRecords[record.date] = record;
-                });
-                
-                const records = result.data;
-                records.sort((a, b) => b.date.localeCompare(a.date));
-                
+                result.data.forEach(record => { attendanceRecords[record.date] = record; });
+                const records = result.data.sort((a, b) => b.date.localeCompare(a.date));
                 let html = '';
                 records.forEach(record => {
                     const date = new Date(record.date);
-                    const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
-                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short', timeZone: 'Asia/Kuching' });
-                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    
-                    html += `
-                        <div class="history-record">
-                            <div>
-                                <div class="history-date">${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}</div>
-                                <div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div>
-                            </div>
-                            ${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}
-                        </div>
-                    `;
+                    const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' });
+                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short' });
+                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    html += `<div class="history-record"><div><div class="history-date">${weekday}, ${formattedDate}</div><div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div></div>${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}</div>`;
                 });
                 historyEl.innerHTML = html;
-                
                 renderCalendar();
                 updateSelectedDateDetails();
-                
-            } catch (error) {
-                console.error('Load attendance error:', error);
-            }
+            } catch (error) { console.error('Load attendance error:', error); }
         }
         
         async function loadAttendanceForDate(date) {
             const dateStr = formatDateKey(date);
             const record = attendanceRecords[dateStr];
-            
-            const updateDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
-            
+            const updateDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
             if (record) {
-                const clockInTime = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                const clockOutTime = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                const clockInTime = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const clockOutTime = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
                 const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                
                 document.getElementById('detailClockIn').innerText = clockInTime;
                 document.getElementById('detailClockOut').innerText = clockOutTime;
                 document.getElementById('detailStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
@@ -2341,9 +2336,9 @@
         }
         
         function updateSelectedDateDetails() {
-            const weekday = selectedDate.toLocaleDateString('ms-MY', { weekday: 'long', timeZone: 'Asia/Kuching' });
+            const weekday = selectedDate.toLocaleDateString('ms-MY', { weekday: 'long' });
             const day = selectedDate.getDate();
-            const month = selectedDate.toLocaleDateString('ms-MY', { month: 'long', timeZone: 'Asia/Kuching' });
+            const month = selectedDate.toLocaleDateString('ms-MY', { month: 'long' });
             const year = selectedDate.getFullYear();
             document.getElementById('selectedDateTitle').innerHTML = `${weekday}, ${day} ${month} ${year}`;
             loadAttendanceForDate(selectedDate);
@@ -2352,50 +2347,32 @@
         function renderCalendar() {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            
-            let startDayOfWeek = firstDay.getDay();
-            let startOffset = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
-            
+            let startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
             const dates = [];
-            for (let i = 0; i < startOffset; i++) {
-                dates.push(null);
-            }
-            for (let i = 1; i <= lastDay.getDate(); i++) {
-                dates.push(new Date(year, month, i));
-            }
-            
+            for (let i = 0; i < startOffset; i++) dates.push(null);
+            for (let i = 1; i <= lastDay.getDate(); i++) dates.push(new Date(year, month, i));
             const container = document.getElementById('calendarDates');
             let html = '';
-            
             dates.forEach(date => {
-                if (!date) {
-                    html += '<div class="calendar-date"></div>';
-                } else {
+                if (!date) { html += '<div class="calendar-date"></div>'; }
+                else {
                     const dateNum = date.getDate();
                     const isToday = formatDateKey(date) === getCurrentDateMalaysia();
                     const isSelected = formatDateKey(date) === formatDateKey(selectedDate);
                     const hasRecord = attendanceRecords[formatDateKey(date)];
-                    
                     let classes = 'calendar-date';
                     if (isSelected) classes += ' selected';
                     if (isToday) classes += ' today';
                     if (hasRecord) classes += ' font-bold';
-                    
                     html += `<div class="${classes}" onclick="selectDate(${date.getFullYear()}, ${date.getMonth()}, ${dateNum})">${dateNum}</div>`;
                 }
             });
-            
             container.innerHTML = html;
         }
         
-        function selectDate(year, month, day) {
-            selectedDate = new Date(year, month, day);
-            updateSelectedDateDetails();
-            renderCalendar();
-        }
+        function selectDate(year, month, day) { selectedDate = new Date(year, month, day); updateSelectedDateDetails(); renderCalendar(); }
         
         function showLocationHistory() {
             const modal = document.getElementById('locationModal');
@@ -2410,45 +2387,24 @@
         
         async function loadLocationHistory() {
             if (!currentUser) return;
-            
             const today = getCurrentDateMalaysia();
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
-            
             try {
-                // Jangan hantar requestingUser - gunakan 3 parameter sahaja
                 const result = await getAttendance(currentUser.uid, startDate, today);
-                
                 const container = document.getElementById('locationHistoryList');
-                
-                if (!result.success || !result.data || result.data.length === 0) {
-                    container.innerHTML = '<div class="text-center py-6 text-gray-400">Tiada rekod lokasi</div>';
-                    return;
-                }
-                
+                if (!result.success || !result.data || result.data.length === 0) { container.innerHTML = '<div class="text-center py-6 text-gray-400">Tiada rekod lokasi</div>'; return; }
                 let html = '';
                 result.data.forEach(record => {
                     const date = new Date(record.date);
-                    const formattedDate = date.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Kuching' });
-                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    
-                    html += `
-                        <div class="location-history-item">
-                            <div style="font-weight: 600; margin-bottom: 8px;">${escapeHtml(formattedDate)}</div>
-                            <div style="display: flex; gap: 16px; font-size: 13px;">
-                                <div>🟢 Masuk: ${clockIn}</div>
-                                <div>🔴 Keluar: ${clockOut}</div>
-                            </div>
-                        </div>
-                    `;
+                    const formattedDate = date.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    html += `<div class="location-history-item"><div style="font-weight: 600; margin-bottom: 8px;">${escapeHtml(formattedDate)}</div><div style="display: flex; gap: 16px; font-size: 13px;"><div>🟢 Masuk: ${clockIn}</div><div>🔴 Keluar: ${clockOut}</div></div></div>`;
                 });
                 container.innerHTML = html;
-                
-            } catch (error) {
-                console.error('Load location history error:', error);
-            }
+            } catch (error) { console.error('Load location history error:', error); }
         }
         
         // ============================================
@@ -2459,10 +2415,7 @@
             const password = document.getElementById('loginPassword').value;
             const btn = document.getElementById('loginBtn');
             
-            if (!email || !password) {
-                showNotification('Ralat', 'Sila isi email dan kata laluan', true);
-                return;
-            }
+            if (!email || !password) { showNotification('Ralat', 'Sila isi email dan kata laluan', true); return; }
             
             btn.disabled = true;
             btn.classList.add('loading');
@@ -2479,9 +2432,7 @@
                             const descriptor = JSON.parse(currentUser.faceDescriptor);
                             const labeledDescriptor = new faceapi.LabeledFaceDescriptors(currentUser.uid, [new Float32Array(descriptor)]);
                             faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
-                        } catch (e) {
-                            console.warn('Face descriptor parse error:', e);
-                        }
+                        } catch (e) { console.warn('Face descriptor parse error:', e); }
                     }
                     
                     btn.style.background = '#10b981';
@@ -2492,48 +2443,23 @@
                         document.getElementById('userMeta').innerText = `${escapeHtml(currentUser.branch)} • ${escapeHtml(currentUser.unit)}`;
                         document.getElementById('loginPage').classList.add('hidden');
                         document.getElementById('app').classList.remove('hidden');
-                        
-                        // Initialize last checked date
                         lastCheckedDate = getCurrentDateMalaysia();
-                        
-                        // Load data in sequence
                         await refreshAttendanceData();
                         await loadHomeData();
                         await loadAttendanceHistory();
                         startLocationTracking();
-                        
+                        checkForMissingClockOut();
                         showNotification('Selamat Datang', `Log masuk berjaya`, false);
                     }, 500);
                 } else {
                     if (result.code === 'ANDROID_WEB_BLOCKED') {
                         showNotification('Akses Ditolak', 'Sila gunakan aplikasi Android IMMI Presence 360', true);
                         document.body.innerHTML = `<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);padding:20px;"><div style="background:white;border-radius:32px;padding:40px;text-align:center;"><h2>📱 Akses Tidak Dibenarkan</h2><p>Sila gunakan aplikasi Android IMMI Presence 360</p></div></div>`;
-                    } else if (result.code === 'MULTIPLE_DEVICE_DETECTED') {
-                        showNotification('Peranti Lain Aktif', result.error, true);
-                    } else {
-                        btn.style.background = '#ef4444';
-                        btn.innerHTML = '✗';
-                        showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true);
-                    }
-                    setTimeout(() => {
-                        btn.style.background = '';
-                        btn.disabled = false;
-                        btn.classList.remove('loading');
-                        btn.innerHTML = 'Log Masuk';
-                    }, 1000);
+                    } else if (result.code === 'MULTIPLE_DEVICE_DETECTED') { showNotification('Peranti Lain Aktif', result.error, true); }
+                    else { btn.style.background = '#ef4444'; btn.innerHTML = '✗'; showNotification('Log Masuk Gagal', result.error || 'Email atau kata laluan salah', true); }
+                    setTimeout(() => { btn.style.background = ''; btn.disabled = false; btn.classList.remove('loading'); btn.innerHTML = 'Log Masuk'; }, 1000);
                 }
-            } catch (error) {
-                console.error('Login error:', error);
-                showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true);
-                btn.style.background = '#ef4444';
-                btn.innerHTML = '✗';
-                setTimeout(() => {
-                    btn.style.background = '';
-                    btn.disabled = false;
-                    btn.classList.remove('loading');
-                    btn.innerHTML = 'Log Masuk';
-                }, 1000);
-            }
+            } catch (error) { console.error('Login error:', error); showNotification('Ralat', 'Gagal berkomunikasi dengan pelayan', true); btn.style.background = '#ef4444'; btn.innerHTML = '✗'; setTimeout(() => { btn.style.background = ''; btn.disabled = false; btn.classList.remove('loading'); btn.innerHTML = 'Log Masuk'; }, 1000); }
         };
         
         window.handleLogout = function() {
@@ -2558,17 +2484,21 @@
         window.startFaceVerification = startFaceVerification;
         window.selectDate = selectDate;
         window.togglePasswordVisibility = togglePasswordVisibility;
+        window.closeExceptionModal = closeExceptionModal;
+        window.closeRequestModal = closeRequestModal;
+        window.closeDiaryModal = closeDiaryModal;
+        window.openRequestModal = openRequestModal;
+        window.openDiaryModal = openDiaryModal;
+        window.submitException = submitException;
+        window.submitRequest = submitRequest;
+        window.submitDiary = submitDiary;
+        window.loadInbox = loadInbox;
+        window.markInboxRead = markInboxRead;
+        window.selectDiaryDate = selectDiaryDate;
         
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            // Pre-load face models in background
-            loadFaceModels();
-        });
-        
-        document.getElementById('loginPassword').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
-        
+        document.addEventListener('DOMContentLoaded', () => { loadFaceModels(); });
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
         window.addEventListener('beforeunload', () => {
             if (videoStream) videoStream.getTracks().forEach(t => t.stop());
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
