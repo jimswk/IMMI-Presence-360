@@ -851,6 +851,22 @@
             color: #1e3a8a;
         }
        
+        .calendar-date.has-remark {
+            position: relative;
+        }
+       
+        .calendar-date.has-remark::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #f59e0b;
+        }
+       
         .detail-card {
             background: white;
             border-radius: 24px;
@@ -875,6 +891,30 @@
             color: #1e293b;
         }
        
+        .remark-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+       
+        .remark-badge.leave {
+            background: #fef3c7;
+            color: #92400e;
+        }
+       
+        .remark-badge.diary {
+            background: #dcfce7;
+            color: #166534;
+        }
+       
+        .remark-badge.exception {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+       
         .history-list {
             background: white;
             border-radius: 24px;
@@ -891,6 +931,41 @@
        
         .history-record:last-child {
             border-bottom: none;
+        }
+       
+        .history-date {
+            font-weight: 600;
+            font-size: 13px;
+        }
+       
+        .history-times {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+       
+        .history-remark {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+       
+        .history-remark.leave {
+            background: #fef3c7;
+            color: #92400e;
+        }
+       
+        .history-remark.diary {
+            background: #dcfce7;
+            color: #166534;
+        }
+       
+        .history-hours {
+            font-weight: 700;
+            font-size: 14px;
+            color: #1e293b;
         }
        
         /* Modal */
@@ -1290,6 +1365,33 @@
             align-items: center;
             gap: 4px;
         }
+        
+        .flex { display: flex; }
+        .gap-2 { gap: 8px; }
+        .gap-3 { gap: 12px; }
+        .gap-4 { gap: 16px; }
+        .justify-between { justify-content: space-between; }
+        .justify-end { justify-content: flex-end; }
+        .items-center { align-items: center; }
+        .text-center { text-align: center; }
+        .text-sm { font-size: 13px; }
+        .text-xs { font-size: 11px; }
+        .font-bold { font-weight: 700; }
+        .mt-1 { margin-top: 4px; }
+        .mt-2 { margin-top: 8px; }
+        .mb-4 { margin-bottom: 16px; }
+        .p-2 { padding: 8px; }
+        .bg-gray-50 { background: #f9fafb; }
+        .rounded-xl { border-radius: 12px; }
+        .text-gray-400 { color: #9ca3af; }
+        .text-gray-500 { color: #6b7280; }
+        .text-gray-600 { color: #4b5563; }
+        .text-blue-600 { color: #2563eb; }
+        .text-amber-600 { color: #d97706; }
+        .w-full { width: 100%; }
+        .border-t { border-top: 1px solid #e5e7eb; }
+        .pt-3 { padding-top: 12px; }
+        .flex-1 { flex: 1; }
     </style>
 </head>
 <body>
@@ -1484,12 +1586,24 @@
                     <div class="calendar-weekdays"><span>Isnin</span><span>Selasa</span><span>Rabu</span><span>Khamis</span><span>Jumaat</span><span>Sabtu</span><span>Ahad</span></div>
                     <div id="calendarDates" class="calendar-dates"></div>
                 </div>
-                <div class="detail-card">
-                    <div class="detail-row"><div><div class="detail-label">Clock In</div><div class="detail-value" id="detailClockIn">--:--</div></div><div><div class="detail-label">Status</div><div class="detail-value" id="detailStatus" style="font-size:13px;">-</div></div></div>
-                    <div class="detail-row"><div><div class="detail-label">Clock Out</div><div class="detail-value" id="detailClockOut">--:--</div></div></div>
-                    <div class="flex gap-4 pt-3 border-t border-gray-100"><div class="flex-1"><div class="detail-label">Jumlah Jam</div><div class="detail-value" id="detailTotalHours">0 Jam</div></div><div class="flex-1"><div class="detail-label">Jumlah OT</div><div class="detail-value" id="detailTotalOT">0 Jam</div></div></div>
+                <div class="detail-card" id="detailCard">
+                    <div class="detail-row">
+                        <div><div class="detail-label">Clock In</div><div class="detail-value" id="detailClockIn">--:--</div></div>
+                        <div><div class="detail-label">Status</div><div class="detail-value" id="detailStatus" style="font-size:13px;">-</div></div>
+                    </div>
+                    <div class="detail-row">
+                        <div><div class="detail-label">Clock Out</div><div class="detail-value" id="detailClockOut">--:--</div></div>
+                    </div>
+                    <div id="detailRemark" class="mt-2"></div>
+                    <div class="flex gap-4 pt-3 border-t border-gray-100">
+                        <div class="flex-1"><div class="detail-label">Jumlah Jam</div><div class="detail-value" id="detailTotalHours">0 Jam</div></div>
+                        <div class="flex-1"><div class="detail-label">Jumlah OT</div><div class="detail-value" id="detailTotalOT">0 Jam</div></div>
+                    </div>
                 </div>
-                <div class="history-list"><h3 style="margin-bottom: 16px;">REKOD KEHADIRAN (30 HARI LEPAS)</h3><div id="attendanceHistoryList"></div></div>
+                <div class="history-list">
+                    <h3 style="margin-bottom: 16px;">REKOD KEHADIRAN (30 HARI LEPAS)</h3>
+                    <div id="attendanceHistoryList"></div>
+                </div>
             </div>
             
             <!-- Page 3: Clock In/Out (Camera) -->
@@ -1515,7 +1629,7 @@
                 <div id="inboxList"></div>
             </div>
 
-            <!-- Page 5: Permohonan -->
+            <!-- Page 5: Permohonan (Cuti Rehat, Cuti Sakit, Kebenaran Keluar Pejabat) -->
             <div id="requestPage" class="page">
                 <div class="request-stats">
                     <div class="request-stat-card"><div class="inbox-stat-number" id="totalRequests">0</div><div class="inbox-stat-label">Jumlah Permohonan</div></div>
@@ -1529,7 +1643,7 @@
                 <div id="requestList"></div>
             </div>
 
-            <!-- Page 6: Diari Kursus -->
+            <!-- Page 6: Diari (Kursus & Tugasan Luar) -->
             <div id="diaryPage" class="page">
                 <div class="calendar-wrapper">
                     <div class="calendar-header">
@@ -1588,12 +1702,20 @@
         </div>
     </div>
 
-    <!-- Request Modal -->
+    <!-- Request Modal (Cuti Rehat, Cuti Sakit, Kebenaran Keluar Pejabat) -->
     <div id="requestModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header"><h3>📋 Permohonan Baru</h3><button class="close-modal" onclick="closeRequestModal()">&times;</button></div>
             <div class="modal-body">
-                <div class="form-group"><label class="form-label">Jenis Permohonan</label><select id="requestType" class="form-select"><option value="out_of_office">Keluar Pejabat</option><option value="sick_leave">Cuti Sakit</option><option value="course">Kursus</option><option value="field_assignment">Tugasan Luar</option></select></div>
+                <div class="form-group">
+                    <label class="form-label">Jenis Permohonan</label>
+                    <select id="requestType" class="form-select">
+                        <option value="annual_leave">Cuti Rehat</option>
+                        <option value="sick_leave">Cuti Sakit</option>
+                        <option value="out_of_office">Kebenaran Keluar Pejabat</option>
+                    </select>
+                    <p id="outOfOfficeWarning" class="text-xs text-amber-600 mt-1 hidden">⚠️ Maksimum 4 jam sahaja. Jika lebih, sila mohon Cuti Rehat.</p>
+                </div>
                 <div class="form-group"><label class="form-label">Tarikh Mula</label><input type="date" id="requestStartDate" class="form-input"></div>
                 <div class="form-group"><label class="form-label">Tarikh Tamat</label><input type="date" id="requestEndDate" class="form-input"></div>
                 <div class="form-group"><label class="form-label">Sebab / Keterangan</label><textarea id="requestReason" class="form-textarea" rows="3" placeholder="Nyatakan sebab permohonan..."></textarea></div>
@@ -1603,7 +1725,7 @@
         </div>
     </div>
 
-    <!-- Diary Modal -->
+    <!-- Diary Modal (Kursus & Tugasan Luar) -->
     <div id="diaryModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header"><h3>📝 Entri Diari</h3><button class="close-modal" onclick="closeDiaryModal()">&times;</button></div>
@@ -1633,7 +1755,8 @@
         let currentAttendanceRecord = null;
         let userMap = null;
         let userMarker = null;
-        let attendanceRecords = {};
+        let attendanceRecords = [];
+        let attendanceRemarks = {};
         let currentDate = new Date();
         let selectedDate = new Date();
         let isCameraActive = false;
@@ -1643,19 +1766,6 @@
         let selectedDiaryDate = null;
         let calendarCurrentDate = new Date();
         let calendarDiaries = [];
-        
-        // ============================================
-        // SIDEBAR FUNCTIONS
-        // ============================================
-        function openSidebar() {
-            document.getElementById('sidebarNav').classList.add('open');
-            document.getElementById('sidebarOverlay').classList.add('show');
-        }
-        
-        function closeSidebar() {
-            document.getElementById('sidebarNav').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('show');
-        }
         
         // ============================================
         // HELPER FUNCTIONS
@@ -1668,14 +1778,18 @@
             return `${year}-${month}-${day}`;
         }
         
-        function getCurrentDateTimeMalaysia() { return new Date(); }
-        
         function formatDateKey(date) {
             if (!date) return '';
             const year = date.getFullYear();
             const month = String(date.getMonth() + 1).padStart(2, '0');
             const day = String(date.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
+        }
+        
+        function formatDateDisplay(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' });
         }
         
         function isNewDay() {
@@ -1747,6 +1861,19 @@
         }
         
         // ============================================
+        // SIDEBAR FUNCTIONS
+        // ============================================
+        function openSidebar() {
+            document.getElementById('sidebarNav').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('show');
+        }
+        
+        function closeSidebar() {
+            document.getElementById('sidebarNav').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('show');
+        }
+        
+        // ============================================
         // UPLOAD FILE TO GOOGLE DRIVE
         // ============================================
         async function uploadFileToDrive(file, folderId) {
@@ -1793,7 +1920,7 @@
         }
         
         // ============================================
-        // LEAVE REQUEST FUNCTIONS
+        // LEAVE REQUEST FUNCTIONS (Cuti Rehat, Cuti Sakit, Kebenaran Keluar Pejabat)
         // ============================================
         async function submitRequest() {
             const type = document.getElementById('requestType').value;
@@ -1801,15 +1928,53 @@
             const endDate = document.getElementById('requestEndDate').value;
             const reason = document.getElementById('requestReason').value.trim();
             const fileInput = document.getElementById('requestFile');
-            if (!startDate || !endDate || !reason) { showNotification('Ralat', 'Sila lengkapkan semua maklumat', true); return; }
+            
+            if (!startDate || !endDate || !reason) { 
+                showNotification('Ralat', 'Sila lengkapkan semua maklumat', true); 
+                return; 
+            }
+            
+            // Validation: Kebenaran Keluar Pejabat maksimum 4 jam
+            if (type === 'out_of_office') {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const hoursRequested = (end - start) / (1000 * 60 * 60);
+                
+                if (hoursRequested > 4) {
+                    showNotification('Ralat', `Kebenaran keluar pejabat maksimum 4 jam sahaja.\nTempoh dimohon: ${hoursRequested.toFixed(1)} jam.\nSila mohon Cuti Rehat untuk tempoh lebih lama.`, true);
+                    return;
+                }
+            }
+            
             showNotification('Memproses', 'Menghantar permohonan...', false);
+            
             try {
                 let fileUrl = '';
-                if (fileInput.files.length > 0) { fileUrl = await uploadFileToDrive(fileInput.files[0]); }
-                const result = await callAPI('submitLeaveRequest', { uid: currentUser.uid, userName: currentUser.name, type: type, startDate: startDate, endDate: endDate, reason: reason, fileUrl: fileUrl });
-                if (result.success) { showNotification('Berjaya', 'Permohonan telah dihantar ke admin', false); closeRequestModal(); loadRequests(); }
-                else { showNotification('Ralat', result.error || 'Gagal menghantar', true); }
-            } catch (error) { showNotification('Ralat', 'Gagal menghantar permohonan', true); }
+                if (fileInput.files.length > 0) { 
+                    fileUrl = await uploadFileToDrive(fileInput.files[0]); 
+                }
+                
+                const result = await callAPI('submitLeaveRequest', { 
+                    uid: currentUser.uid, 
+                    userName: currentUser.name, 
+                    type: type, 
+                    startDate: startDate, 
+                    endDate: endDate, 
+                    reason: reason, 
+                    fileUrl: fileUrl 
+                });
+                
+                if (result.success) { 
+                    showNotification('Berjaya', 'Permohonan telah dihantar ke admin', false); 
+                    closeRequestModal(); 
+                    loadRequests(); 
+                    loadAttendanceHistory(); // Refresh history to show remarks
+                } else { 
+                    showNotification('Ralat', result.error || 'Gagal menghantar', true); 
+                }
+            } catch (error) { 
+                showNotification('Ralat', 'Gagal menghantar permohonan', true); 
+            }
         }
         
         function openRequestModal() {
@@ -1836,12 +2001,38 @@
                 let html = '';
                 result.data.forEach(req => {
                     if (req.status === 'pending') pending++;
-                    const jenisMap = { 'out_of_office': 'Keluar Pejabat', 'sick_leave': 'Cuti Sakit', 'course': 'Kursus', 'field_assignment': 'Tugasan Luar' };
+                    const jenisMap = { 
+                        'annual_leave': '📅 Cuti Rehat', 
+                        'sick_leave': '🤒 Cuti Sakit', 
+                        'out_of_office': '🚪 Kebenaran Keluar Pejabat' 
+                    };
                     let statusClass = '', statusText = '';
                     if (req.status === 'approved') { statusClass = 'request-status-approved'; statusText = '✅ DILULUSKAN'; }
                     else if (req.status === 'rejected') { statusClass = 'request-status-rejected'; statusText = '❌ DITOLAK'; }
                     else { statusClass = 'request-status-pending'; statusText = '⏳ DALAM PROSES'; }
-                    html += `<div class="request-card"><div class="flex justify-between items-start"><div><div class="font-bold">${jenisMap[req.type] || req.type}</div><div class="text-xs text-gray-400 mt-1">${new Date(req.timestamp).toLocaleDateString('ms-MY')}</div></div><span class="request-status ${statusClass}">${statusText}</span></div><div class="text-sm text-gray-600 mt-2">📅 ${new Date(req.startDate).toLocaleDateString('ms-MY')} - ${new Date(req.endDate).toLocaleDateString('ms-MY')}</div><div class="text-sm text-gray-600 mt-1">📝 ${escapeHtml(req.reason)}</div>${req.adminResponse ? `<div class="mt-2 p-2 bg-gray-50 rounded-xl text-sm"><span class="font-bold">Respon Admin:</span> ${escapeHtml(req.adminResponse)}</div>` : ''}${req.fileUrl ? `<div class="mt-2"><a href="${req.fileUrl}" target="_blank" class="text-blue-600 text-sm flex items-center gap-1"><span class="material-symbols-rounded text-sm">attach_file</span> Lihat Dokumen</a></div>` : ''}</div>`;
+                    
+                    let durationText = '';
+                    if (req.type === 'out_of_office') {
+                        const start = new Date(req.startDate);
+                        const end = new Date(req.endDate);
+                        const hours = (end - start) / (1000 * 60 * 60);
+                        durationText = `<div class="text-xs text-amber-600 mt-1">⏱️ Tempoh: ${hours.toFixed(1)} jam (Maksimum 4 jam)</div>`;
+                    }
+                    
+                    html += `<div class="request-card">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="font-bold">${jenisMap[req.type] || req.type}</div>
+                                        <div class="text-xs text-gray-400 mt-1">${new Date(req.timestamp).toLocaleDateString('ms-MY')}</div>
+                                    </div>
+                                    <span class="request-status ${statusClass}">${statusText}</span>
+                                </div>
+                                <div class="text-sm text-gray-600 mt-2">📅 ${new Date(req.startDate).toLocaleDateString('ms-MY')} - ${new Date(req.endDate).toLocaleDateString('ms-MY')}</div>
+                                ${durationText}
+                                <div class="text-sm text-gray-600 mt-1">📝 ${escapeHtml(req.reason)}</div>
+                                ${req.adminResponse ? `<div class="mt-2 p-2 bg-gray-50 rounded-xl text-sm"><span class="font-bold">Respon Admin:</span> ${escapeHtml(req.adminResponse)}</div>` : ''}
+                                ${req.fileUrl ? `<div class="mt-2"><a href="${req.fileUrl}" target="_blank" class="text-blue-600 text-sm flex items-center gap-1"><span class="material-symbols-rounded text-sm">attach_file</span> Lihat Dokumen</a></div>` : ''}
+                            </div>`;
                 });
                 container.innerHTML = html;
                 document.getElementById('totalRequests').innerText = result.data.length;
@@ -1850,7 +2041,7 @@
         }
         
         // ============================================
-        // DIARY FUNCTIONS
+        // DIARY FUNCTIONS (Kursus & Tugasan Luar)
         // ============================================
         async function loadCalendarData() {
             try {
@@ -1948,7 +2139,12 @@
                 let fileUrl = '';
                 if (fileInput.files.length > 0) { fileUrl = await uploadFileToDrive(fileInput.files[0]); }
                 const result = await callAPI('submitCourseDiary', { uid: currentUser.uid, userName: currentUser.name, date: date, type: type, title: title, description: description, fileUrl: fileUrl });
-                if (result.success) { showNotification('Berjaya', 'Diari telah disimpan', false); closeDiaryModal(); await loadCalendarData(); }
+                if (result.success) { 
+                    showNotification('Berjaya', 'Diari telah disimpan', false); 
+                    closeDiaryModal(); 
+                    await loadCalendarData();
+                    await loadAttendanceHistory(); // Refresh history to show diary remarks
+                }
                 else { showNotification('Ralat', result.error || 'Gagal menyimpan', true); }
             } catch (error) { showNotification('Ralat', 'Gagal menyimpan diari', true); }
         }
@@ -1992,6 +2188,238 @@
         }
         
         // ============================================
+        // ATTENDANCE WITH REMARKS (NEW)
+        // ============================================
+        async function loadAttendanceWithRemarks(startDate, endDate) {
+            try {
+                const result = await callAPI('getAttendanceWithRemarks', { 
+                    uid: currentUser.uid, 
+                    startDate: startDate, 
+                    endDate: endDate 
+                });
+                
+                if (result.success && result.data) {
+                    // Store remarks for each date
+                    attendanceRemarks = {};
+                    result.data.forEach(record => {
+                        if (record.remark) {
+                            attendanceRemarks[record.date] = {
+                                remark: record.remark,
+                                remarkType: record.remarkType,
+                                remarkStatus: record.remarkStatus,
+                                remarkStatusText: record.remarkStatusText,
+                                remarkColor: record.remarkColor
+                            };
+                        }
+                    });
+                    
+                    // Store attendance records
+                    attendanceRecords = result.data;
+                    
+                    // Also update the regular attendance records for display
+                    const regularRecords = result.data.map(r => ({
+                        date: r.date,
+                        clockIn: r.clockIn,
+                        clockOut: r.clockOut,
+                        totalHours: r.totalHours,
+                        totalOT: r.totalOT,
+                        remark: r.remark,
+                        remarkType: r.remarkType,
+                        remarkStatus: r.remarkStatus
+                    }));
+                    
+                    return { success: true, data: regularRecords, remarks: attendanceRemarks };
+                }
+                return { success: false, data: [] };
+            } catch (error) {
+                console.error('Load attendance with remarks error:', error);
+                return { success: false, data: [] };
+            }
+        }
+        
+        // ============================================
+        // HISTORY FUNCTIONS (UPDATED with Remarks)
+        // ============================================
+        async function loadAttendanceHistory() {
+            if (!currentUser) return;
+            
+            const historyList = document.getElementById('attendanceHistoryList');
+            if (!historyList) return;
+            
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            const endDate = new Date().toISOString().split('T')[0];
+            
+            try {
+                const result = await loadAttendanceWithRemarks(startDate, endDate);
+                
+                if (!result.success || !result.data || result.data.length === 0) {
+                    historyList.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
+                    return;
+                }
+                
+                const records = result.data;
+                records.sort((a, b) => b.date.localeCompare(a.date));
+                
+                let html = '';
+                records.forEach(record => {
+                    const date = new Date(record.date);
+                    const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
+                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short', timeZone: 'Asia/Kuching' });
+                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                    
+                    // Determine remark display
+                    let remarkHtml = '';
+                    let remarkClass = '';
+                    if (record.remark) {
+                        if (record.remarkType === 'leave') {
+                            remarkClass = 'history-remark leave';
+                            remarkHtml = `<div class="${remarkClass} mt-1">${escapeHtml(record.remark)} (${record.remarkStatus === 'approved' ? 'Diluluskan' : (record.remarkStatus === 'pending' ? 'Menunggu' : 'Ditolak')})</div>`;
+                        } else if (record.remarkType === 'diary') {
+                            remarkClass = 'history-remark diary';
+                            remarkHtml = `<div class="${remarkClass} mt-1">📘 ${escapeHtml(record.remark)} (Dikecualikan)</div>`;
+                        } else if (record.remarkType === 'exception') {
+                            remarkClass = 'history-remark exception';
+                            remarkHtml = `<div class="${remarkClass} mt-1">⚠️ ${escapeHtml(record.remark)}</div>`;
+                        }
+                    }
+                    
+                    html += `
+                        <div class="history-record">
+                            <div>
+                                <div class="history-date">${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}</div>
+                                <div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div>
+                                ${remarkHtml}
+                            </div>
+                            ${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}
+                        </div>
+                    `;
+                });
+                historyList.innerHTML = html;
+                
+                renderCalendarHistoryWithRemarks();
+                updateSelectedDateDetailsWithRemarks();
+                
+            } catch (error) {
+                console.error('Load attendance error:', error);
+                historyList.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Gagal memuat rekod kehadiran</div>';
+            }
+        }
+        
+        function renderCalendarHistoryWithRemarks() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            let startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const dates = [];
+            for (let i = 0; i < startOffset; i++) dates.push(null);
+            for (let i = 1; i <= lastDay.getDate(); i++) dates.push(new Date(year, month, i));
+            const container = document.getElementById('calendarDates');
+            if (!container) return;
+            let html = '';
+            dates.forEach(date => {
+                if (!date) { html += '<div class="calendar-date"></div>'; }
+                else {
+                    const dateNum = date.getDate();
+                    const dateStr = formatDateKey(date);
+                    const isToday = dateStr === getCurrentDateMalaysia();
+                    const isSelected = dateStr === formatDateKey(selectedDate);
+                    const hasRemark = attendanceRemarks[dateStr];
+                    let classes = 'calendar-date';
+                    if (isSelected) classes += ' selected';
+                    if (isToday) classes += ' today';
+                    if (hasRemark) classes += ' has-remark';
+                    html += `<div class="${classes}" onclick="selectDate(${date.getFullYear()}, ${date.getMonth()}, ${dateNum})">${dateNum}</div>`;
+                }
+            });
+            container.innerHTML = html;
+        }
+        
+        function updateSelectedDateDetailsWithRemarks() {
+            const dateStr = formatDateKey(selectedDate);
+            const record = attendanceRecords.find(r => r.date === dateStr);
+            const remark = attendanceRemarks[dateStr];
+            
+            const updateDate = selectedDate.toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            if (record) {
+                const clockInTime = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const clockOutTime = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
+                document.getElementById('detailClockIn').innerText = clockInTime;
+                document.getElementById('detailClockOut').innerText = clockOutTime;
+                document.getElementById('detailStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
+                document.getElementById('detailStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
+                document.getElementById('detailTotalHours').innerHTML = record.totalHours ? `${record.totalHours.toFixed(1)} Jam` : '0 Jam';
+                document.getElementById('detailTotalOT').innerHTML = record.totalOT ? `${record.totalOT.toFixed(1)} Jam` : '0 Jam';
+            } else {
+                document.getElementById('detailClockIn').innerText = '--:--';
+                document.getElementById('detailClockOut').innerText = '--:--';
+                document.getElementById('detailStatus').innerHTML = 'Tiada Rekod';
+                document.getElementById('detailStatus').style.color = '#94a3b8';
+                document.getElementById('detailTotalHours').innerHTML = '0 Jam';
+                document.getElementById('detailTotalOT').innerHTML = '0 Jam';
+            }
+            
+            // Display remark in detail card
+            const remarkContainer = document.getElementById('detailRemark');
+            if (remark) {
+                let remarkClass = '', remarkIcon = '';
+                if (remark.remarkType === 'leave') {
+                    remarkClass = 'remark-badge leave';
+                    remarkIcon = '📋';
+                } else if (remark.remarkType === 'diary') {
+                    remarkClass = 'remark-badge diary';
+                    remarkIcon = '📘';
+                } else if (remark.remarkType === 'exception') {
+                    remarkClass = 'remark-badge exception';
+                    remarkIcon = '⚠️';
+                }
+                remarkContainer.innerHTML = `<div class="${remarkClass}">${remarkIcon} ${escapeHtml(remark.remark)} ${remark.remarkStatus === 'approved' ? '(Lulus)' : (remark.remarkStatus === 'pending' ? '(Menunggu)' : '')}</div>`;
+            } else {
+                remarkContainer.innerHTML = '';
+            }
+        }
+        
+        function selectDate(year, month, day) { 
+            selectedDate = new Date(year, month, day); 
+            updateSelectedDateDetailsWithRemarks(); 
+            renderCalendarHistoryWithRemarks(); 
+        }
+        
+        function showLocationHistory() {
+            const modal = document.getElementById('locationModal');
+            modal.classList.add('active');
+            loadLocationHistory();
+        }
+        
+        function closeLocationModal() { document.getElementById('locationModal').classList.remove('active'); }
+        
+        async function loadLocationHistory() {
+            if (!currentUser) return;
+            const today = getCurrentDateMalaysia();
+            const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            try {
+                const result = await getAttendance(currentUser.uid, startDate, today);
+                const container = document.getElementById('locationHistoryList');
+                if (!result.success || !result.data || result.data.length === 0) { container.innerHTML = '<div class="text-center py-6 text-gray-400">Tiada rekod lokasi</div>'; return; }
+                let html = '';
+                result.data.forEach(record => {
+                    const date = new Date(record.date);
+                    const formattedDate = date.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                    html += `<div class="location-history-item"><div style="font-weight: 600; margin-bottom: 8px;">${escapeHtml(formattedDate)}</div><div style="display: flex; gap: 16px; font-size: 13px;"><div>🟢 Masuk: ${clockIn}</div><div>🔴 Keluar: ${clockOut}</div></div></div>`;
+                });
+                container.innerHTML = html;
+            } catch (error) { console.error('Load location history error:', error); }
+        }
+        
+        // ============================================
         // NAVIGATION
         // ============================================
         function switchPage(page) {
@@ -2002,7 +2430,11 @@
             document.getElementById(`${page}Page`).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(`nav${page.charAt(0).toUpperCase() + page.slice(1)}`).classList.add('active');
-            if (page === 'history') { renderCalendarHistory(); loadAttendanceHistory(); }
+            if (page === 'history') { 
+                currentDate = new Date();
+                selectedDate = new Date();
+                loadAttendanceHistory(); 
+            }
             else if (page === 'camera') { updateCameraClock(); refreshAttendanceData().then(() => updateCameraUI()); }
             else if (page === 'home') { loadHomeData(); }
             else if (page === 'inbox') { loadInbox(); }
@@ -2047,6 +2479,14 @@
             await refreshAttendanceData();
             const today = getCurrentDateMalaysia();
             const isValidRecord = currentAttendanceRecord && currentAttendanceRecord.date === today;
+            
+            // Check if user is exempt from attendance (diary approved)
+            const exemptResult = await callAPI('isExemptFromAttendance', { uid: currentUser.uid, date: today });
+            if (exemptResult.success && exemptResult.exempt) {
+                showNotification('Dikecualikan', `Anda dikecualikan dari clock in/out pada hari ini kerana ${exemptResult.typeName}: "${exemptResult.title}"`, true);
+                return;
+            }
+            
             if (action === 'clockin') {
                 if (isValidRecord && currentAttendanceRecord.clockIn && currentAttendanceRecord.clockIn !== '' && currentAttendanceRecord.clockIn !== 'null') {
                     if (!currentAttendanceRecord.clockOut || currentAttendanceRecord.clockOut === '' || currentAttendanceRecord.clockOut === 'null') {
@@ -2061,19 +2501,24 @@
                     showNotification('Makluman', 'Anda sudah clock out untuk hari ini', false); return;
                 }
             }
+            
             if (!userLocation) { showNotification('Ralat', 'Lokasi tidak dapat dikesan', true); return; }
             const distance = calculateDistance(userLocation.lat, userLocation.lng, parseFloat(currentUser.lat), parseFloat(currentUser.lng));
             const radius = parseInt(currentUser.radius) || 500;
             if (distance > radius) { showNotification('Geofencing', 'Anda berada di luar kawasan yang dibenarkan', true); return; }
+            
             pendingAction = action;
             if (!currentUser.faceDescriptor || currentUser.faceDescriptor === '') { showNotification('Ralat', 'Wajah belum didaftarkan', true); return; }
+            
             const modelsLoadedSuccess = await loadFaceModels();
             if (!modelsLoadedSuccess) return;
+            
             try {
                 const descriptorArray = JSON.parse(currentUser.faceDescriptor);
                 const labeledDescriptor = new faceapi.LabeledFaceDescriptors(currentUser.uid, [new Float32Array(descriptorArray)]);
                 faceMatcher = new faceapi.FaceMatcher([labeledDescriptor]);
             } catch (e) { showNotification('Ralat', 'Data wajah tidak sah', true); return; }
+            
             await showCameraAndVerify();
         }
         
@@ -2255,30 +2700,17 @@
         
         function initLocationMap(lat, lng) {
             const mapContainer = document.getElementById('recentLocationMap');
-            if (!mapContainer) {
-                console.log('Map container not found, skipping map initialization');
-                return;
-            }
-            
+            if (!mapContainer) return;
             if (userMap) {
-                try {
-                    userMap.remove();
-                } catch(e) {
-                    console.log('Error removing existing map:', e);
-                }
+                try { userMap.remove(); } catch(e) {}
                 userMap = null;
             }
-            
             try {
                 userMap = L.map('recentLocationMap').setView([lat, lng], 15);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
                 userMarker = L.marker([lat, lng]).addTo(userMap);
-                setTimeout(() => {
-                    if (userMap) userMap.invalidateSize();
-                }, 100);
-            } catch (error) {
-                console.error('Error initializing map:', error);
-            }
+                setTimeout(() => { if (userMap) userMap.invalidateSize(); }, 100);
+            } catch (error) { console.error('Error initializing map:', error); }
         }
         
         function startLocationTracking() {
@@ -2324,9 +2756,10 @@
             if (!currentUser) return;
             checkAndResetForNewDay();
             const today = getCurrentDateMalaysia();
-            const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            const displayDate = new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             document.getElementById('currentDateDisplay').innerText = displayDate;
             document.getElementById('recentDate').innerText = displayDate;
+            
             try {
                 const result = await getAttendance(currentUser.uid, today, today);
                 const hasRecord = result.success && result.data && result.data.length > 0;
@@ -2336,17 +2769,6 @@
                 const hasClockIn = recordForToday && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '--:--';
                 const hasClockOut = recordForToday && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '--:--';
                 const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
-                
-                const recentLabel = document.querySelector('#recentActivityList .recent-label');
-                if (recentLabel) {
-                    if (hasClockIn && hasClockOut) {
-                        recentLabel.innerHTML = 'Clock Out (Selesai)';
-                    } else if (hasClockIn && !hasClockOut) {
-                        recentLabel.innerHTML = 'Clock In (Dalam Bertugas)';
-                    } else {
-                        recentLabel.innerHTML = 'Clock In (Belum)';
-                    }
-                }
                 
                 if (hasClockIn) {
                     let clockInDate = typeof record.clockIn === 'string' && record.clockIn.includes(' ') ? new Date(record.clockIn) : new Date(today + 'T' + record.clockIn);
@@ -2395,22 +2817,9 @@
                 updateCameraUI();
                 
                 if (userLocation && userLocation.lat && userLocation.lng) {
-                    const mapContainer = document.getElementById('recentLocationMap');
-                    if (mapContainer) {
-                        initLocationMap(userLocation.lat, userLocation.lng);
-                    } else {
-                        console.log('Map container not ready yet, waiting...');
-                        setTimeout(() => {
-                            if (document.getElementById('recentLocationMap')) {
-                                initLocationMap(userLocation.lat, userLocation.lng);
-                            }
-                        }, 500);
-                    }
+                    initLocationMap(userLocation.lat, userLocation.lng);
                 } else if (currentUser.lat && currentUser.lng) {
-                    const mapContainer = document.getElementById('recentLocationMap');
-                    if (mapContainer) {
-                        initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
-                    }
+                    initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
                 }
             } catch (error) {
                 console.error('Load home data error:', error);
@@ -2463,178 +2872,6 @@
         }
         
         setInterval(updateCameraClock, 1000);
-        
-        // ============================================
-        // HISTORY FUNCTIONS
-        // ============================================
-        async function loadAttendanceHistory() {
-            if (!currentUser) return;
-            
-            const historyList = document.getElementById('attendanceHistoryList');
-            if (!historyList) {
-                console.log('Attendance history list element not found');
-                return;
-            }
-            
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
-            const endDate = new Date().toISOString().split('T')[0];
-            
-            try {
-                const result = await getAttendance(currentUser.uid, startDate, endDate);
-                
-                if (!result.success || !result.data || result.data.length === 0) {
-                    historyList.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
-                    return;
-                }
-                
-                attendanceRecords = {};
-                result.data.forEach(record => {
-                    attendanceRecords[record.date] = record;
-                });
-                
-                const records = result.data;
-                records.sort((a, b) => b.date.localeCompare(a.date));
-                
-                let html = '';
-                records.forEach(record => {
-                    const date = new Date(record.date);
-                    const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
-                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short', timeZone: 'Asia/Kuching' });
-                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
-                    
-                    html += `
-                        <div class="history-record">
-                            <div>
-                                <div class="history-date">${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}</div>
-                                <div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div>
-                            </div>
-                            ${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}
-                        </div>
-                    `;
-                });
-                historyList.innerHTML = html;
-                
-                const calendarDates = document.getElementById('calendarDates');
-                if (calendarDates) {
-                    renderCalendarHistory();
-                }
-                
-                const selectedDateTitle = document.getElementById('selectedDateTitle');
-                if (selectedDateTitle) {
-                    updateSelectedDateDetails();
-                }
-                
-            } catch (error) {
-                console.error('Load attendance error:', error);
-                historyList.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Gagal memuat rekod kehadiran</div>';
-            }
-        }
-        
-        async function loadAttendanceForDate(date) {
-            const dateStr = formatDateKey(date);
-            const record = attendanceRecords[dateStr];
-            const updateDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
-            if (record) {
-                const clockInTime = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-                const clockOutTime = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-                const hasClockOut = record.clockOut && record.clockOut !== '' && record.clockOut !== 'null';
-                document.getElementById('detailClockIn').innerText = clockInTime;
-                document.getElementById('detailClockOut').innerText = clockOutTime;
-                document.getElementById('detailStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
-                document.getElementById('detailStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
-                document.getElementById('detailTotalHours').innerHTML = record.totalHours ? `${record.totalHours.toFixed(1)} Jam` : '0 Jam';
-                document.getElementById('detailTotalOT').innerHTML = record.totalOT ? `${record.totalOT.toFixed(1)} Jam` : '0 Jam';
-                document.getElementById('detailTotalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
-                document.getElementById('detailTotalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
-            } else {
-                document.getElementById('detailClockIn').innerText = '--:--';
-                document.getElementById('detailClockOut').innerText = '--:--';
-                document.getElementById('detailStatus').innerHTML = 'Tiada Rekod';
-                document.getElementById('detailStatus').style.color = '#94a3b8';
-                document.getElementById('detailTotalHours').innerHTML = '0 Jam';
-                document.getElementById('detailTotalOT').innerHTML = '0 Jam';
-                document.getElementById('detailTotalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
-                document.getElementById('detailTotalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
-            }
-        }
-        
-        function updateSelectedDateDetails() {
-            const selectedDateTitle = document.getElementById('selectedDateTitle');
-            if (!selectedDateTitle) {
-                console.log('Selected date title element not found');
-                return;
-            }
-            
-            const weekday = selectedDate.toLocaleDateString('ms-MY', { weekday: 'long' });
-            const day = selectedDate.getDate();
-            const month = selectedDate.toLocaleDateString('ms-MY', { month: 'long' });
-            const year = selectedDate.getFullYear();
-            selectedDateTitle.innerHTML = `${weekday}, ${day} ${month} ${year}`;
-            loadAttendanceForDate(selectedDate);
-        }
-        
-        function renderCalendarHistory() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            let startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-            const dates = [];
-            for (let i = 0; i < startOffset; i++) dates.push(null);
-            for (let i = 1; i <= lastDay.getDate(); i++) dates.push(new Date(year, month, i));
-            const container = document.getElementById('calendarDates');
-            if (!container) return;
-            let html = '';
-            dates.forEach(date => {
-                if (!date) { html += '<div class="calendar-date"></div>'; }
-                else {
-                    const dateNum = date.getDate();
-                    const isToday = formatDateKey(date) === getCurrentDateMalaysia();
-                    const isSelected = formatDateKey(date) === formatDateKey(selectedDate);
-                    const hasRecord = attendanceRecords[formatDateKey(date)];
-                    let classes = 'calendar-date';
-                    if (isSelected) classes += ' selected';
-                    if (isToday) classes += ' today';
-                    if (hasRecord) classes += ' font-bold';
-                    html += `<div class="${classes}" onclick="selectDate(${date.getFullYear()}, ${date.getMonth()}, ${dateNum})">${dateNum}</div>`;
-                }
-            });
-            container.innerHTML = html;
-        }
-        
-        function selectDate(year, month, day) { selectedDate = new Date(year, month, day); updateSelectedDateDetails(); renderCalendarHistory(); }
-        
-        function showLocationHistory() {
-            const modal = document.getElementById('locationModal');
-            modal.classList.add('active');
-            loadLocationHistory();
-        }
-        
-        function closeLocationModal() { document.getElementById('locationModal').classList.remove('active'); }
-        
-        async function loadLocationHistory() {
-            if (!currentUser) return;
-            const today = getCurrentDateMalaysia();
-            const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            const startDate = thirtyDaysAgo.toISOString().split('T')[0];
-            try {
-                const result = await getAttendance(currentUser.uid, startDate, today);
-                const container = document.getElementById('locationHistoryList');
-                if (!result.success || !result.data || result.data.length === 0) { container.innerHTML = '<div class="text-center py-6 text-gray-400">Tiada rekod lokasi</div>'; return; }
-                let html = '';
-                result.data.forEach(record => {
-                    const date = new Date(record.date);
-                    const formattedDate = date.toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-                    html += `<div class="location-history-item"><div style="font-weight: 600; margin-bottom: 8px;">${escapeHtml(formattedDate)}</div><div style="display: flex; gap: 16px; font-size: 13px;"><div>🟢 Masuk: ${clockIn}</div><div>🔴 Keluar: ${clockOut}</div></div></div>`;
-                });
-                container.innerHTML = html;
-            } catch (error) { console.error('Load location history error:', error); }
-        }
         
         // ============================================
         // LOGIN
@@ -2697,6 +2934,29 @@
             closeSidebar();
         };
         
+        // Show warning for out_of_office selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const requestTypeSelect = document.getElementById('requestType');
+            if (requestTypeSelect) {
+                requestTypeSelect.addEventListener('change', function() {
+                    const warning = document.getElementById('outOfOfficeWarning');
+                    if (this.value === 'out_of_office') {
+                        warning.classList.remove('hidden');
+                    } else {
+                        warning.classList.add('hidden');
+                    }
+                });
+            }
+            loadFaceModels();
+        });
+        
+        document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+        window.addEventListener('beforeunload', () => {
+            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
+            if (detectionInterval) clearInterval(detectionInterval);
+        });
+        
         // Expose global functions
         window.switchPage = switchPage;
         window.openSidebar = openSidebar;
@@ -2719,15 +2979,6 @@
         window.calendarNextMonth = calendarNextMonth;
         window.showLocationHistory = showLocationHistory;
         window.closeLocationModal = closeLocationModal;
-        
-        document.addEventListener('DOMContentLoaded', () => { loadFaceModels(); });
-        document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
-        window.addEventListener('beforeunload', () => {
-            if (videoStream) videoStream.getTracks().forEach(t => t.stop());
-            if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
-            if (detectionInterval) clearInterval(detectionInterval);
-        });
     </script>
 </body>
 </html>
-
