@@ -184,6 +184,9 @@
             padding: 20px;
             border-bottom-left-radius: 28px;
             border-bottom-right-radius: 28px;
+            position: sticky;
+            top: 0;
+            z-index: 99;
         }
        
         .header-top {
@@ -203,6 +206,11 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+       
+        .menu-btn:hover, .logout-btn:hover {
+            background: rgba(255,255,255,0.2);
         }
        
         .status-pill {
@@ -226,6 +234,89 @@
         .user-meta {
             font-size: 13px;
             color: #94a3b8;
+        }
+       
+        /* Sidebar Navigation (Drawer) */
+        .sidebar-nav {
+            position: fixed;
+            top: 0;
+            left: -280px;
+            width: 280px;
+            height: 100%;
+            background: linear-gradient(165deg, #0b1e33 0%, #132b41 100%);
+            z-index: 200;
+            transition: left 0.3s ease;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+        }
+       
+        .sidebar-nav.open {
+            left: 0;
+        }
+       
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+       
+        .sidebar-header h3 {
+            color: white;
+            font-size: 18px;
+        }
+       
+        .sidebar-header p {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+       
+        .sidebar-menu {
+            padding: 0 16px;
+        }
+       
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: rgba(255,255,255,0.7);
+            width: 100%;
+            background: none;
+            border: none;
+        }
+       
+        .sidebar-item:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+       
+        .sidebar-item.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border-left: 3px solid #fbbf24;
+        }
+       
+        .sidebar-item .material-symbols-rounded {
+            font-size: 22px;
+        }
+       
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 199;
+            display: none;
+        }
+       
+        .sidebar-overlay.show {
+            display: block;
         }
        
         /* Bottom Navigation */
@@ -431,20 +522,6 @@
             background: none;
             border: none;
             cursor: pointer;
-        }
-       
-        .location-map {
-            height: 180px;
-            width: 100%;
-            border-radius: 16px;
-            overflow: hidden;
-            margin-top: 12px;
-        }
-       
-        .map-container {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
         }
        
         .recent-item {
@@ -1227,6 +1304,46 @@
         </div>
     </div>
     
+    <!-- Sidebar Navigation (Drawer) -->
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+    <div id="sidebarNav" class="sidebar-nav">
+        <div class="sidebar-header">
+            <h3 id="sidebarUserName">-</h3>
+            <p id="sidebarUserInfo">-</p>
+        </div>
+        <div class="sidebar-menu">
+            <button class="sidebar-item" onclick="closeSidebar(); switchPage('home')">
+                <span class="material-symbols-rounded">home</span>
+                <span>Utama</span>
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar(); switchPage('history')">
+                <span class="material-symbols-rounded">history</span>
+                <span>Sejarah</span>
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar(); switchPage('camera')">
+                <span class="material-symbols-rounded">fingerprint</span>
+                <span>Clock In/Out</span>
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar(); switchPage('inbox')">
+                <span class="material-symbols-rounded">inbox</span>
+                <span>Inbox</span>
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar(); switchPage('request')">
+                <span class="material-symbols-rounded">assignment</span>
+                <span>Permohonan</span>
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar(); switchPage('diary')">
+                <span class="material-symbols-rounded">book</span>
+                <span>Diari</span>
+            </button>
+            <div style="height: 20px;"></div>
+            <button class="sidebar-item" onclick="handleLogout()">
+                <span class="material-symbols-rounded">logout</span>
+                <span>Log Keluar</span>
+            </button>
+        </div>
+    </div>
+    
     <!-- Login Page -->
     <div id="loginPage" class="login-container">
         <div class="login-card">
@@ -1265,7 +1382,7 @@
             <!-- Header -->
             <header class="header">
                 <div class="header-top">
-                    <button class="menu-btn">
+                    <button class="menu-btn" onclick="openSidebar()">
                         <span class="material-symbols-rounded" style="color: white;">menu</span>
                     </button>
                     <button class="logout-btn" onclick="handleLogout()">
@@ -1337,12 +1454,9 @@
                 </div>
                
                 <div class="recent-card">
-                    <!-- Header -->
                     <div class="recent-header">
                         <h3>Aktiviti Terkini</h3>
                     </div>
-                    
-                    <!-- Recent Activity List -->
                     <div id="recentActivityList">
                         <div class="recent-item">
                             <div class="recent-item-left">
@@ -1357,13 +1471,11 @@
                             <div class="recent-status" id="recentStatus">-</div>
                         </div>
                     </div>
-                    
-                    <!-- Map Container (untuk papar lokasi pejabat) -->
                     <div class="map-container">
                         <div id="recentLocationMap" class="location-map"></div>
                     </div>
-                    
                 </div>
+            </div>
             
             <!-- Page 2: History -->
             <div id="historyPage" class="page">
@@ -1531,6 +1643,19 @@
         let selectedDiaryDate = null;
         let calendarCurrentDate = new Date();
         let calendarDiaries = [];
+        
+        // ============================================
+        // SIDEBAR FUNCTIONS
+        // ============================================
+        function openSidebar() {
+            document.getElementById('sidebarNav').classList.add('open');
+            document.getElementById('sidebarOverlay').classList.add('show');
+        }
+        
+        function closeSidebar() {
+            document.getElementById('sidebarNav').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('show');
+        }
         
         // ============================================
         // HELPER FUNCTIONS
@@ -1738,43 +1863,40 @@
         }
         
         function renderCalendar() {
-            const calendarDates = document.getElementById('calendarDates');
-            if (!calendarDates) {
-                console.log('Calendar container not found');
-                return;
-            }
-            
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            
+            const year = calendarCurrentDate.getFullYear();
+            const month = calendarCurrentDate.getMonth();
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            let startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-            
-            const dates = [];
-            for (let i = 0; i < startOffset; i++) dates.push(null);
-            for (let i = 1; i <= lastDay.getDate(); i++) dates.push(new Date(year, month, i));
-            
-            let html = '';
-            dates.forEach(date => {
-                if (!date) {
-                    html += '<div class="calendar-date"></div>';
-                } else {
-                    const dateNum = date.getDate();
-                    const isToday = formatDateKey(date) === getCurrentDateMalaysia();
-                    const isSelected = formatDateKey(date) === formatDateKey(selectedDate);
-                    const hasRecord = attendanceRecords[formatDateKey(date)];
-                    
-                    let classes = 'calendar-date';
-                    if (isSelected) classes += ' selected';
+            const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            const monthNames = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+            document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year}`;
+            const weekdays = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'];
+            let weekdaysHtml = '';
+            weekdays.forEach(day => { weekdaysHtml += `<div class="calendar-weekday">${day}</div>`; });
+            document.getElementById('calendarWeekdays').innerHTML = weekdaysHtml;
+            let days = [];
+            for (let i = 0; i < startDayOfWeek; i++) { days.push(null); }
+            for (let i = 1; i <= lastDay.getDate(); i++) { days.push(new Date(year, month, i)); }
+            const todayStr = getCurrentDateMalaysia();
+            const selectedDateStr = selectedDiaryDate || todayStr;
+            let daysHtml = '';
+            days.forEach(date => {
+                if (!date) { daysHtml += `<div class="calendar-day"></div>`; }
+                else {
+                    const dateStr = formatDateKey(date);
+                    const isToday = dateStr === todayStr;
+                    const isSelected = dateStr === selectedDateStr;
+                    const isOtherMonth = date.getMonth() !== month;
+                    const hasDiary = calendarDiaries.some(d => d.date === dateStr);
+                    let classes = 'calendar-day';
                     if (isToday) classes += ' today';
-                    if (hasRecord) classes += ' font-bold';
-                    
-                    html += `<div class="${classes}" onclick="selectDate(${date.getFullYear()}, ${date.getMonth()}, ${dateNum})">${dateNum}</div>`;
+                    if (isSelected) classes += ' selected';
+                    if (isOtherMonth) classes += ' other-month';
+                    if (hasDiary) classes += ' has-diary';
+                    daysHtml += `<div class="${classes}" onclick="selectCalendarDate('${dateStr}')"><div class="calendar-day-number">${date.getDate()}</div></div>`;
                 }
             });
-            
-            calendarDates.innerHTML = html;
+            document.getElementById('calendarDays').innerHTML = daysHtml;
         }
         
         function selectCalendarDate(dateStr) {
@@ -1875,11 +1997,12 @@
         function switchPage(page) {
             if (isCameraActive) stopCameraAndReset();
             checkAndResetForNewDay();
+            closeSidebar();
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(`${page}Page`).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById(`nav${page.charAt(0).toUpperCase() + page.slice(1)}`).classList.add('active');
-            if (page === 'history') { renderCalendar(); loadAttendanceHistory(); }
+            if (page === 'history') { renderCalendarHistory(); loadAttendanceHistory(); }
             else if (page === 'camera') { updateCameraClock(); refreshAttendanceData().then(() => updateCameraUI()); }
             else if (page === 'home') { loadHomeData(); }
             else if (page === 'inbox') { loadInbox(); }
@@ -1901,7 +2024,7 @@
         }
         
         // ============================================
-        // FACE VERIFICATION (Ringkasan - sama seperti asal)
+        // FACE VERIFICATION
         // ============================================
         async function loadFaceModels() {
             if (modelsLoaded) return true;
@@ -2197,104 +2320,103 @@
         // ============================================
         // LOAD HOME DATA
         // ============================================
-async function loadHomeData() {
-    if (!currentUser) return;
-    checkAndResetForNewDay();
-    const today = getCurrentDateMalaysia();
-    const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    document.getElementById('currentDateDisplay').innerText = displayDate;
-    document.getElementById('recentDate').innerText = displayDate;
-    try {
-        const result = await getAttendance(currentUser.uid, today, today);
-        const hasRecord = result.success && result.data && result.data.length > 0;
-        const record = hasRecord ? result.data[0] : null;
-        currentAttendanceRecord = record;
-        const recordForToday = record && record.date === today;
-        const hasClockIn = recordForToday && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '--:--';
-        const hasClockOut = recordForToday && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '--:--';
-        const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
-        
-        // 🔥 TAMBAHAN: Ubah label recent berdasarkan status
-        const recentLabel = document.querySelector('#recentActivityList .recent-label');
-        if (recentLabel) {
-            if (hasClockIn && hasClockOut) {
-                recentLabel.innerHTML = 'Clock Out (Selesai)';
-            } else if (hasClockIn && !hasClockOut) {
-                recentLabel.innerHTML = 'Clock In (Dalam Bertugas)';
-            } else {
-                recentLabel.innerHTML = 'Clock In (Belum)';
-            }
-        }
-        
-        if (hasClockIn) {
-            let clockInDate = typeof record.clockIn === 'string' && record.clockIn.includes(' ') ? new Date(record.clockIn) : new Date(today + 'T' + record.clockIn);
-            const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-            const timeParts = clockInTime.split(' ');
-            document.getElementById('clockInTime').innerText = timeParts[0];
-            document.getElementById('clockInAmPm').innerText = timeParts[1] || '';
-            document.getElementById('clockInStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
-            document.getElementById('clockInStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
-            const clockInBtn = document.getElementById('clockInBtn');
-            clockInBtn.disabled = hasClockOut;
-            clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
-            document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
-            document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
-            document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
-        } else {
-            document.getElementById('clockInTime').innerText = '--:--';
-            document.getElementById('clockInAmPm').innerText = '';
-            document.getElementById('clockInStatus').innerHTML = 'Belum Masuk';
-            document.getElementById('clockInStatus').style.color = '#94a3b8';
-            const clockInBtn = document.getElementById('clockInBtn');
-            clockInBtn.disabled = false;
-            clockInBtn.style.background = '#10b981';
-            document.getElementById('recentStatus').innerHTML = 'BELUM MASUK';
-            document.getElementById('recentStatus').style.background = '#fef3c7';
-            document.getElementById('recentStatus').style.color = '#92400e';
-        }
-        
-        if (hasClockOut) {
-            let clockOutDate = typeof record.clockOut === 'string' && record.clockOut.includes(' ') ? new Date(record.clockOut) : new Date(today + 'T' + record.clockOut);
-            const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-            const timeParts = clockOutTime.split(' ');
-            document.getElementById('clockOutTime').innerText = timeParts[0];
-            document.getElementById('clockOutStatus').innerHTML = 'Tamat bertugas';
-            document.getElementById('clockOutStatus').style.color = '#10b981';
-        } else {
-            document.getElementById('clockOutTime').innerText = '— • —';
-            document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
-            document.getElementById('clockOutStatus').style.color = '#94a3b8';
-        }
-        
-        document.getElementById('totalHours').innerText = record && record.totalHours && record.totalHours > 0 ? record.totalHours.toFixed(1) : '0';
-        document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
-        document.getElementById('totalOT').innerText = record && record.totalOT && record.totalOT > 0 ? record.totalOT.toFixed(1) : '0';
-        document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
-        updateCameraUI();
-        
-        if (userLocation && userLocation.lat && userLocation.lng) {
-            const mapContainer = document.getElementById('recentLocationMap');
-            if (mapContainer) {
-                initLocationMap(userLocation.lat, userLocation.lng);
-            } else {
-                console.log('Map container not ready yet, waiting...');
-                setTimeout(() => {
-                    if (document.getElementById('recentLocationMap')) {
-                        initLocationMap(userLocation.lat, userLocation.lng);
+        async function loadHomeData() {
+            if (!currentUser) return;
+            checkAndResetForNewDay();
+            const today = getCurrentDateMalaysia();
+            const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('currentDateDisplay').innerText = displayDate;
+            document.getElementById('recentDate').innerText = displayDate;
+            try {
+                const result = await getAttendance(currentUser.uid, today, today);
+                const hasRecord = result.success && result.data && result.data.length > 0;
+                const record = hasRecord ? result.data[0] : null;
+                currentAttendanceRecord = record;
+                const recordForToday = record && record.date === today;
+                const hasClockIn = recordForToday && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '--:--';
+                const hasClockOut = recordForToday && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '--:--';
+                const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+                
+                const recentLabel = document.querySelector('#recentActivityList .recent-label');
+                if (recentLabel) {
+                    if (hasClockIn && hasClockOut) {
+                        recentLabel.innerHTML = 'Clock Out (Selesai)';
+                    } else if (hasClockIn && !hasClockOut) {
+                        recentLabel.innerHTML = 'Clock In (Dalam Bertugas)';
+                    } else {
+                        recentLabel.innerHTML = 'Clock In (Belum)';
                     }
-                }, 500);
-            }
-        } else if (currentUser.lat && currentUser.lng) {
-            const mapContainer = document.getElementById('recentLocationMap');
-            if (mapContainer) {
-                initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
+                }
+                
+                if (hasClockIn) {
+                    let clockInDate = typeof record.clockIn === 'string' && record.clockIn.includes(' ') ? new Date(record.clockIn) : new Date(today + 'T' + record.clockIn);
+                    const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    const timeParts = clockInTime.split(' ');
+                    document.getElementById('clockInTime').innerText = timeParts[0];
+                    document.getElementById('clockInAmPm').innerText = timeParts[1] || '';
+                    document.getElementById('clockInStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
+                    document.getElementById('clockInStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
+                    const clockInBtn = document.getElementById('clockInBtn');
+                    clockInBtn.disabled = hasClockOut;
+                    clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
+                    document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
+                    document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
+                    document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
+                } else {
+                    document.getElementById('clockInTime').innerText = '--:--';
+                    document.getElementById('clockInAmPm').innerText = '';
+                    document.getElementById('clockInStatus').innerHTML = 'Belum Masuk';
+                    document.getElementById('clockInStatus').style.color = '#94a3b8';
+                    const clockInBtn = document.getElementById('clockInBtn');
+                    clockInBtn.disabled = false;
+                    clockInBtn.style.background = '#10b981';
+                    document.getElementById('recentStatus').innerHTML = 'BELUM MASUK';
+                    document.getElementById('recentStatus').style.background = '#fef3c7';
+                    document.getElementById('recentStatus').style.color = '#92400e';
+                }
+                
+                if (hasClockOut) {
+                    let clockOutDate = typeof record.clockOut === 'string' && record.clockOut.includes(' ') ? new Date(record.clockOut) : new Date(today + 'T' + record.clockOut);
+                    const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    const timeParts = clockOutTime.split(' ');
+                    document.getElementById('clockOutTime').innerText = timeParts[0];
+                    document.getElementById('clockOutStatus').innerHTML = 'Tamat bertugas';
+                    document.getElementById('clockOutStatus').style.color = '#10b981';
+                } else {
+                    document.getElementById('clockOutTime').innerText = '— • —';
+                    document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
+                    document.getElementById('clockOutStatus').style.color = '#94a3b8';
+                }
+                
+                document.getElementById('totalHours').innerText = record && record.totalHours && record.totalHours > 0 ? record.totalHours.toFixed(1) : '0';
+                document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
+                document.getElementById('totalOT').innerText = record && record.totalOT && record.totalOT > 0 ? record.totalOT.toFixed(1) : '0';
+                document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
+                updateCameraUI();
+                
+                if (userLocation && userLocation.lat && userLocation.lng) {
+                    const mapContainer = document.getElementById('recentLocationMap');
+                    if (mapContainer) {
+                        initLocationMap(userLocation.lat, userLocation.lng);
+                    } else {
+                        console.log('Map container not ready yet, waiting...');
+                        setTimeout(() => {
+                            if (document.getElementById('recentLocationMap')) {
+                                initLocationMap(userLocation.lat, userLocation.lng);
+                            }
+                        }, 500);
+                    }
+                } else if (currentUser.lat && currentUser.lng) {
+                    const mapContainer = document.getElementById('recentLocationMap');
+                    if (mapContainer) {
+                        initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
+                    }
+                }
+            } catch (error) {
+                console.error('Load home data error:', error);
+                showNotification('Ralat', 'Gagal memuat data kehadiran', true);
             }
         }
-    } catch (error) {
-        console.error('Load home data error:', error);
-        showNotification('Ralat', 'Gagal memuat data kehadiran', true);
-    }
-}
         
         function updateCameraUI() {
             const today = getCurrentDateMalaysia();
@@ -2395,10 +2517,9 @@ async function loadHomeData() {
                 });
                 historyList.innerHTML = html;
                 
-                // Call renderCalendar and updateSelectedDateDetails only if elements exist
                 const calendarDates = document.getElementById('calendarDates');
                 if (calendarDates) {
-                    renderCalendar();
+                    renderCalendarHistory();
                 }
                 
                 const selectedDateTitle = document.getElementById('selectedDateTitle');
@@ -2442,15 +2563,6 @@ async function loadHomeData() {
         
         function updateSelectedDateDetails() {
             const selectedDateTitle = document.getElementById('selectedDateTitle');
-            const detailClockIn = document.getElementById('detailClockIn');
-            const detailClockOut = document.getElementById('detailClockOut');
-            const detailStatus = document.getElementById('detailStatus');
-            const detailTotalHours = document.getElementById('detailTotalHours');
-            const detailTotalOT = document.getElementById('detailTotalOT');
-            const detailTotalHoursDate = document.getElementById('detailTotalHoursDate');
-            const detailTotalOTDate = document.getElementById('detailTotalOTDate');
-            
-            // Check if elements exist before using them
             if (!selectedDateTitle) {
                 console.log('Selected date title element not found');
                 return;
@@ -2460,9 +2572,7 @@ async function loadHomeData() {
             const day = selectedDate.getDate();
             const month = selectedDate.toLocaleDateString('ms-MY', { month: 'long' });
             const year = selectedDate.getFullYear();
-            
-            if (selectedDateTitle) selectedDateTitle.innerHTML = `${weekday}, ${day} ${month} ${year}`;
-            
+            selectedDateTitle.innerHTML = `${weekday}, ${day} ${month} ${year}`;
             loadAttendanceForDate(selectedDate);
         }
         
@@ -2476,6 +2586,7 @@ async function loadHomeData() {
             for (let i = 0; i < startOffset; i++) dates.push(null);
             for (let i = 1; i <= lastDay.getDate(); i++) dates.push(new Date(year, month, i));
             const container = document.getElementById('calendarDates');
+            if (!container) return;
             let html = '';
             dates.forEach(date => {
                 if (!date) { html += '<div class="calendar-date"></div>'; }
@@ -2549,6 +2660,8 @@ async function loadHomeData() {
                     setTimeout(async () => {
                         document.getElementById('userName').innerText = escapeHtml(currentUser.name);
                         document.getElementById('userMeta').innerText = `${escapeHtml(currentUser.branch)} • ${escapeHtml(currentUser.unit)}`;
+                        document.getElementById('sidebarUserName').innerText = escapeHtml(currentUser.name);
+                        document.getElementById('sidebarUserInfo').innerText = `${escapeHtml(currentUser.branch)} • ${escapeHtml(currentUser.unit)}`;
                         document.getElementById('loginPage').classList.add('hidden');
                         document.getElementById('app').classList.remove('hidden');
                         lastCheckedDate = getCurrentDateMalaysia();
@@ -2581,10 +2694,13 @@ async function loadHomeData() {
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginPassword').value = '';
             isCameraActive = false; currentUser = null; faceMatcher = null; currentAttendanceRecord = null; lastCheckedDate = null;
+            closeSidebar();
         };
         
         // Expose global functions
         window.switchPage = switchPage;
+        window.openSidebar = openSidebar;
+        window.closeSidebar = closeSidebar;
         window.startFaceVerification = startFaceVerification;
         window.selectDate = selectDate;
         window.togglePasswordVisibility = togglePasswordVisibility;
@@ -2601,6 +2717,8 @@ async function loadHomeData() {
         window.selectCalendarDate = selectCalendarDate;
         window.calendarPrevMonth = calendarPrevMonth;
         window.calendarNextMonth = calendarNextMonth;
+        window.showLocationHistory = showLocationHistory;
+        window.closeLocationModal = closeLocationModal;
         
         document.addEventListener('DOMContentLoaded', () => { loadFaceModels(); });
         document.getElementById('loginPassword').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
