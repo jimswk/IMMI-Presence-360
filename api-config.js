@@ -1,12 +1,15 @@
 // ============================================
 // API CONFIGURATION - IMMI PRESENCE 360
-// VERSION: 3.2 (Fixed iPhone Model Detection - Prioritizes Model Identifier)
-// LAST UPDATED: 10 April 2026
+// VERSION: 4.0 (Complete with Exception, Leave Requests, Course Diaries, Inbox)
+// LAST UPDATED: 13 April 2026
 // ============================================
 
 const CONFIG = {
     API_BASE_URL: 'https://script.google.com/macros/s/AKfycbwXKIM8LMK9c93r4wFHEA2grIaF7T87FSexUALcH8KgfOD5GRgzxPwt-bTXwYm4vWhvNw/exec'
 };
+
+// Google Drive Folder ID untuk penyimpanan fail
+const DRIVE_FOLDER_ID = '1MIGgknZhgw594XgeSetALOpdiMW5VVak';
 
 // ============================================
 // CORE API FUNCTIONS
@@ -50,7 +53,7 @@ async function callAPI(method, params = {}) {
 }
 
 // ============================================
-// ENHANCED DEVICE MODEL DETECTION (PRIORITIZES MODEL IDENTIFIER)
+// ENHANCED DEVICE MODEL DETECTION
 // ============================================
 
 function detectDeviceModel(userAgent) {
@@ -58,110 +61,48 @@ function detectDeviceModel(userAgent) {
     let brand = 'Unknown';
     let modelFound = false;
     
-    // ============================================
-    // iOS / iPhone MODEL DETECTION (Prioritize Model Identifier)
-    // ============================================
     if (/iPhone/i.test(userAgent)) {
         brand = 'Apple';
         
-        // Complete iPhone model mapping by identifier (MOST ACCURATE)
         const modelMatches = {
-            // iPhone 16 Series (2024)
-            'iPhone17,1': 'iPhone 16 Pro',
-            'iPhone17,2': 'iPhone 16 Pro Max',
-            'iPhone17,3': 'iPhone 16',
-            'iPhone17,4': 'iPhone 16 Plus',
-            
-            // iPhone 15 Series (2023)
-            'iPhone16,1': 'iPhone 15 Pro',
-            'iPhone16,2': 'iPhone 15 Pro Max',
-            'iPhone16,3': 'iPhone 15',
-            'iPhone16,4': 'iPhone 15 Plus',
-            
-            // iPhone 14 Series (2022)
-            'iPhone15,2': 'iPhone 14 Pro',
-            'iPhone15,3': 'iPhone 14 Pro Max',
-            'iPhone15,4': 'iPhone 14',
-            'iPhone15,5': 'iPhone 14 Plus',
-            
-            // iPhone 13 Series (2021)
-            'iPhone14,5': 'iPhone 13',
-            'iPhone14,2': 'iPhone 13 Pro',
-            'iPhone14,3': 'iPhone 13 Pro Max',
-            'iPhone14,4': 'iPhone 13 mini',
-            
-            // iPhone 12 Series (2020)
-            'iPhone13,2': 'iPhone 12',
-            'iPhone13,3': 'iPhone 12 Pro',
-            'iPhone13,4': 'iPhone 12 Pro Max',
-            'iPhone13,1': 'iPhone 12 mini',
-            
-            // iPhone 11 Series (2019)
-            'iPhone12,1': 'iPhone 11',
-            'iPhone12,3': 'iPhone 11 Pro',
-            'iPhone12,5': 'iPhone 11 Pro Max',
-            
-            // iPhone XS Series (2018)
-            'iPhone11,2': 'iPhone XS',
-            'iPhone11,4': 'iPhone XS Max',
-            'iPhone11,6': 'iPhone XS Max',
-            'iPhone11,8': 'iPhone XR',
-            
-            // iPhone X (2017)
-            'iPhone10,3': 'iPhone X',
-            'iPhone10,6': 'iPhone X',
-            
-            // iPhone 8 Series (2017)
-            'iPhone10,1': 'iPhone 8',
-            'iPhone10,4': 'iPhone 8',
-            'iPhone10,2': 'iPhone 8 Plus',
-            'iPhone10,5': 'iPhone 8 Plus',
-            
-            // iPhone 7 Series (2016)
-            'iPhone9,1': 'iPhone 7',
-            'iPhone9,3': 'iPhone 7',
-            'iPhone9,2': 'iPhone 7 Plus',
-            'iPhone9,4': 'iPhone 7 Plus',
-            
-            // iPhone SE Series
-            'iPhone8,4': 'iPhone SE (1st gen)',
-            'iPhone14,6': 'iPhone SE (3rd gen)',
-            
-            // iPhone 6 Series (2014)
-            'iPhone7,2': 'iPhone 6',
-            'iPhone7,1': 'iPhone 6 Plus',
-            
-            // iPhone 6S Series (2015)
-            'iPhone8,1': 'iPhone 6s',
-            'iPhone8,2': 'iPhone 6s Plus',
-            
-            // Older models
-            'iPhone5,1': 'iPhone 5',
-            'iPhone5,2': 'iPhone 5',
-            'iPhone5,3': 'iPhone 5c',
-            'iPhone5,4': 'iPhone 5c',
-            'iPhone6,1': 'iPhone 5s',
-            'iPhone6,2': 'iPhone 5s',
-            'iPhone4,1': 'iPhone 4s',
-            'iPhone3,1': 'iPhone 4',
-            'iPhone3,2': 'iPhone 4',
-            'iPhone3,3': 'iPhone 4',
-            'iPhone2,1': 'iPhone 3GS',
-            'iPhone1,1': 'iPhone 2G',
-            'iPhone1,2': 'iPhone 3G'
+            'iPhone17,1': 'iPhone 16 Pro', 'iPhone17,2': 'iPhone 16 Pro Max',
+            'iPhone17,3': 'iPhone 16', 'iPhone17,4': 'iPhone 16 Plus',
+            'iPhone16,1': 'iPhone 15 Pro', 'iPhone16,2': 'iPhone 15 Pro Max',
+            'iPhone16,3': 'iPhone 15', 'iPhone16,4': 'iPhone 15 Plus',
+            'iPhone15,2': 'iPhone 14 Pro', 'iPhone15,3': 'iPhone 14 Pro Max',
+            'iPhone15,4': 'iPhone 14', 'iPhone15,5': 'iPhone 14 Plus',
+            'iPhone14,5': 'iPhone 13', 'iPhone14,2': 'iPhone 13 Pro',
+            'iPhone14,3': 'iPhone 13 Pro Max', 'iPhone14,4': 'iPhone 13 mini',
+            'iPhone13,2': 'iPhone 12', 'iPhone13,3': 'iPhone 12 Pro',
+            'iPhone13,4': 'iPhone 12 Pro Max', 'iPhone13,1': 'iPhone 12 mini',
+            'iPhone12,1': 'iPhone 11', 'iPhone12,3': 'iPhone 11 Pro',
+            'iPhone12,5': 'iPhone 11 Pro Max', 'iPhone11,2': 'iPhone XS',
+            'iPhone11,4': 'iPhone XS Max', 'iPhone11,6': 'iPhone XS Max',
+            'iPhone11,8': 'iPhone XR', 'iPhone10,3': 'iPhone X',
+            'iPhone10,6': 'iPhone X', 'iPhone10,1': 'iPhone 8',
+            'iPhone10,4': 'iPhone 8', 'iPhone10,2': 'iPhone 8 Plus',
+            'iPhone10,5': 'iPhone 8 Plus', 'iPhone9,1': 'iPhone 7',
+            'iPhone9,3': 'iPhone 7', 'iPhone9,2': 'iPhone 7 Plus',
+            'iPhone9,4': 'iPhone 7 Plus', 'iPhone8,4': 'iPhone SE (1st gen)',
+            'iPhone14,6': 'iPhone SE (3rd gen)', 'iPhone7,2': 'iPhone 6',
+            'iPhone7,1': 'iPhone 6 Plus', 'iPhone8,1': 'iPhone 6s',
+            'iPhone8,2': 'iPhone 6s Plus', 'iPhone5,1': 'iPhone 5',
+            'iPhone5,2': 'iPhone 5', 'iPhone5,3': 'iPhone 5c',
+            'iPhone5,4': 'iPhone 5c', 'iPhone6,1': 'iPhone 5s',
+            'iPhone6,2': 'iPhone 5s', 'iPhone4,1': 'iPhone 4s',
+            'iPhone3,1': 'iPhone 4', 'iPhone3,2': 'iPhone 4',
+            'iPhone3,3': 'iPhone 4', 'iPhone2,1': 'iPhone 3GS',
+            'iPhone1,1': 'iPhone 2G', 'iPhone1,2': 'iPhone 3G'
         };
         
-        // PRIORITY 1: Check for exact model identifier in userAgent
         for (var identifier in modelMatches) {
             if (userAgent.includes(identifier)) {
                 deviceModel = modelMatches[identifier];
                 modelFound = true;
-                console.log('[iPhone Detection] Found by identifier:', identifier, '→', deviceModel);
                 break;
             }
         }
         
-        // PRIORITY 2: Extract model code using regex if not found
         if (!modelFound) {
             const deviceMatch = userAgent.match(/iPhone([0-9]+,[0-9]+)/);
             if (deviceMatch && deviceMatch[1]) {
@@ -169,22 +110,10 @@ function detectDeviceModel(userAgent) {
                 if (modelMatches[deviceCode]) {
                     deviceModel = modelMatches[deviceCode];
                     modelFound = true;
-                    console.log('[iPhone Detection] Found by regex:', deviceCode, '→', deviceModel);
                 }
             }
         }
         
-        // PRIORITY 3: Fallback to device name from userAgent
-        if (!modelFound) {
-            const deviceNameMatch = userAgent.match(/Device: iPhone([^,)]+)/i);
-            if (deviceNameMatch && deviceNameMatch[1]) {
-                deviceModel = 'iPhone ' + deviceNameMatch[1].trim();
-                modelFound = true;
-                console.log('[iPhone Detection] Found by device name:', deviceModel);
-            }
-        }
-        
-        // PRIORITY 4: Last resort - infer from OS version (ONLY when no identifier found)
         if (!modelFound) {
             const osMatch = userAgent.match(/OS (\d+)_/);
             if (osMatch) {
@@ -192,77 +121,38 @@ function detectDeviceModel(userAgent) {
                 if (osVersion >= 18) deviceModel = 'iPhone (iOS 18)';
                 else if (osVersion >= 17) deviceModel = 'iPhone (iOS 17)';
                 else if (osVersion >= 16) deviceModel = 'iPhone (iOS 16)';
-                else if (osVersion >= 15) deviceModel = 'iPhone (iOS 15)';
                 else deviceModel = 'iPhone';
-                console.log('[iPhone Detection] Fallback from OS version:', deviceModel);
             } else {
                 deviceModel = 'iPhone';
-                console.log('[iPhone Detection] Fallback to generic iPhone');
             }
         }
     } 
-    
-    // ============================================
-    // IPAD MODEL DETECTION
-    // ============================================
     else if (/iPad/i.test(userAgent)) {
         brand = 'Apple';
-        let iPadFound = false;
-        
         const iPadMatches = {
-            'iPad14,1': 'iPad Pro 11" (4th gen)',
-            'iPad14,2': 'iPad Pro 12.9" (6th gen)',
-            'iPad13,4': 'iPad Pro 11" (3rd gen)',
-            'iPad13,5': 'iPad Pro 11" (3rd gen)',
-            'iPad13,6': 'iPad Pro 11" (3rd gen)',
-            'iPad13,7': 'iPad Pro 11" (3rd gen)',
-            'iPad13,8': 'iPad Pro 12.9" (5th gen)',
-            'iPad13,9': 'iPad Pro 12.9" (5th gen)',
-            'iPad13,10': 'iPad Pro 12.9" (5th gen)',
-            'iPad13,11': 'iPad Pro 12.9" (5th gen)',
-            'iPad12,1': 'iPad (9th gen)',
-            'iPad12,2': 'iPad (9th gen)',
-            'iPad11,6': 'iPad (8th gen)',
-            'iPad11,7': 'iPad (8th gen)',
-            'iPad8,1': 'iPad Pro 11" (1st gen)',
-            'iPad8,2': 'iPad Pro 11" (1st gen)',
-            'iPad8,3': 'iPad Pro 11" (1st gen)',
-            'iPad8,4': 'iPad Pro 11" (1st gen)',
-            'iPad8,5': 'iPad Pro 12.9" (3rd gen)',
-            'iPad8,6': 'iPad Pro 12.9" (3rd gen)',
-            'iPad8,7': 'iPad Pro 12.9" (3rd gen)',
-            'iPad8,8': 'iPad Pro 12.9" (3rd gen)'
+            'iPad14,1': 'iPad Pro 11" (4th gen)', 'iPad14,2': 'iPad Pro 12.9" (6th gen)',
+            'iPad13,4': 'iPad Pro 11" (3rd gen)', 'iPad13,5': 'iPad Pro 11" (3rd gen)',
+            'iPad13,6': 'iPad Pro 11" (3rd gen)', 'iPad13,7': 'iPad Pro 11" (3rd gen)',
+            'iPad13,8': 'iPad Pro 12.9" (5th gen)', 'iPad13,9': 'iPad Pro 12.9" (5th gen)',
+            'iPad13,10': 'iPad Pro 12.9" (5th gen)', 'iPad13,11': 'iPad Pro 12.9" (5th gen)',
+            'iPad12,1': 'iPad (9th gen)', 'iPad12,2': 'iPad (9th gen)',
+            'iPad11,6': 'iPad (8th gen)', 'iPad11,7': 'iPad (8th gen)',
+            'iPad8,1': 'iPad Pro 11" (1st gen)', 'iPad8,2': 'iPad Pro 11" (1st gen)',
+            'iPad8,3': 'iPad Pro 11" (1st gen)', 'iPad8,4': 'iPad Pro 11" (1st gen)',
+            'iPad8,5': 'iPad Pro 12.9" (3rd gen)', 'iPad8,6': 'iPad Pro 12.9" (3rd gen)',
+            'iPad8,7': 'iPad Pro 12.9" (3rd gen)', 'iPad8,8': 'iPad Pro 12.9" (3rd gen)'
         };
         
         for (var identifier in iPadMatches) {
             if (userAgent.includes(identifier)) {
                 deviceModel = iPadMatches[identifier];
-                iPadFound = true;
+                modelFound = true;
                 break;
             }
         }
-        
-        if (!iPadFound) {
-            const deviceMatch = userAgent.match(/iPad([0-9]+,[0-9]+)/);
-            if (deviceMatch && deviceMatch[1]) {
-                const deviceCode = 'iPad' + deviceMatch[1];
-                if (iPadMatches[deviceCode]) {
-                    deviceModel = iPadMatches[deviceCode];
-                    iPadFound = true;
-                }
-            }
-        }
-        
-        if (!iPadFound) {
-            deviceModel = 'iPad';
-        }
+        if (!modelFound) deviceModel = 'iPad';
     }
-    
-    // ============================================
-    // ANDROID MODEL DETECTION
-    // ============================================
     else if (/Android/i.test(userAgent)) {
-        // Extract device model from userAgent
         const modelMatch = userAgent.match(/; ([\w\s]+?) Build/);
         if (modelMatch && modelMatch[1]) {
             let rawModel = modelMatch[1].trim();
@@ -272,167 +162,52 @@ function detectDeviceModel(userAgent) {
             deviceModel = rawModel;
         }
         
-        // Detect Samsung
         if (userAgent.includes('SM-')) {
             brand = 'Samsung';
             const smMatch = userAgent.match(/SM-[A-Z0-9]+/);
             if (smMatch) {
                 const samsungModels = {
-                    'SM-S928': 'Galaxy S24 Ultra',
-                    'SM-S926': 'Galaxy S24+',
-                    'SM-S921': 'Galaxy S24',
-                    'SM-S918': 'Galaxy S23 Ultra',
-                    'SM-S916': 'Galaxy S23+',
-                    'SM-S911': 'Galaxy S23',
-                    'SM-S908': 'Galaxy S22 Ultra',
-                    'SM-S906': 'Galaxy S22+',
-                    'SM-S901': 'Galaxy S22',
-                    'SM-N986': 'Galaxy Note 20 Ultra',
-                    'SM-N981': 'Galaxy Note 20',
-                    'SM-F936': 'Galaxy Z Fold 4',
-                    'SM-F946': 'Galaxy Z Fold 5',
-                    'SM-F956': 'Galaxy Z Fold 6',
-                    'SM-F721': 'Galaxy Z Flip 4',
-                    'SM-F731': 'Galaxy Z Flip 5',
-                    'SM-F741': 'Galaxy Z Flip 6',
-                    'SM-A736': 'Galaxy A73',
-                    'SM-A536': 'Galaxy A53',
-                    'SM-A546': 'Galaxy A54',
-                    'SM-A556': 'Galaxy A55',
-                    'SM-A336': 'Galaxy A33',
-                    'SM-A236': 'Galaxy A23',
-                    'SM-A146': 'Galaxy A14',
+                    'SM-S928': 'Galaxy S24 Ultra', 'SM-S926': 'Galaxy S24+',
+                    'SM-S921': 'Galaxy S24', 'SM-S918': 'Galaxy S23 Ultra',
+                    'SM-S916': 'Galaxy S23+', 'SM-S911': 'Galaxy S23',
+                    'SM-S908': 'Galaxy S22 Ultra', 'SM-S906': 'Galaxy S22+',
+                    'SM-S901': 'Galaxy S22', 'SM-N986': 'Galaxy Note 20 Ultra',
+                    'SM-N981': 'Galaxy Note 20', 'SM-F936': 'Galaxy Z Fold 4',
+                    'SM-F946': 'Galaxy Z Fold 5', 'SM-F721': 'Galaxy Z Flip 4',
+                    'SM-F731': 'Galaxy Z Flip 5', 'SM-A736': 'Galaxy A73',
+                    'SM-A536': 'Galaxy A53', 'SM-A546': 'Galaxy A54',
+                    'SM-A556': 'Galaxy A55', 'SM-A336': 'Galaxy A33',
+                    'SM-A236': 'Galaxy A23', 'SM-A146': 'Galaxy A14',
                     'SM-A056': 'Galaxy A05'
                 };
-                
                 let modelCode = smMatch[0].substring(0, 7);
-                if (samsungModels[modelCode]) {
-                    deviceModel = samsungModels[modelCode];
-                } else {
-                    deviceModel = smMatch[0];
-                }
+                if (samsungModels[modelCode]) deviceModel = samsungModels[modelCode];
+                else deviceModel = smMatch[0];
             }
         }
-        // Detect Google Pixel
         else if (userAgent.includes('Pixel')) {
             brand = 'Google';
             const pixelMatch = userAgent.match(/Pixel (\d+)/);
-            if (pixelMatch) {
-                const pixelNum = parseInt(pixelMatch[1]);
-                if (pixelNum === 9) deviceModel = 'Pixel 9 Pro';
-                else if (pixelNum === 8) deviceModel = 'Pixel 8 Pro';
-                else if (pixelNum === 7) deviceModel = 'Pixel 7 Pro';
-                else if (pixelNum === 6) deviceModel = 'Pixel 6 Pro';
-                else deviceModel = `Pixel ${pixelMatch[1]}`;
-            }
+            if (pixelMatch) deviceModel = `Pixel ${pixelMatch[1]}`;
         }
-        // Detect Xiaomi
-        else if (userAgent.includes('Redmi')) {
-            brand = 'Xiaomi';
-            const redmiMatch = userAgent.match(/Redmi (\w+)/);
-            if (redmiMatch) {
-                deviceModel = `Redmi ${redmiMatch[1]}`;
-            }
-        }
-        else if (userAgent.includes('Mi ')) {
-            brand = 'Xiaomi';
-            const miMatch = userAgent.match(/Mi (\w+)/);
-            if (miMatch) {
-                deviceModel = `Xiaomi Mi ${miMatch[1]}`;
-            }
-        }
-        else if (userAgent.includes('POCO')) {
-            brand = 'Xiaomi';
-            const pocoMatch = userAgent.match(/POCO (\w+)/);
-            if (pocoMatch) {
-                deviceModel = `POCO ${pocoMatch[1]}`;
-            }
-        }
-        // Detect Realme
-        else if (userAgent.includes('RMX')) {
-            brand = 'Realme';
-            const rmxMatch = userAgent.match(/RMX\w+/);
-            if (rmxMatch) {
-                deviceModel = rmxMatch[0];
-            }
-        }
-        // Detect Huawei
-        else if (userAgent.includes('VOG')) {
-            brand = 'Huawei';
-            deviceModel = 'P30 Pro';
-        }
-        else if (userAgent.includes('LYA')) {
-            brand = 'Huawei';
-            deviceModel = 'Mate 20 Pro';
-        }
-        else if (userAgent.includes('NOH')) {
-            brand = 'Huawei';
-            deviceModel = 'Mate 40 Pro';
-        }
-        // Detect OPPO
-        else if (userAgent.includes('OPPO')) {
-            brand = 'OPPO';
-            const oppoMatch = userAgent.match(/OPPO (\w+)/);
-            if (oppoMatch) {
-                deviceModel = `OPPO ${oppoMatch[1]}`;
-            }
-        }
-        // Detect vivo
-        else if (userAgent.includes('vivo')) {
-            brand = 'vivo';
-            const vivoMatch = userAgent.match(/vivo (\w+)/);
-            if (vivoMatch) {
-                deviceModel = `vivo ${vivoMatch[1]}`;
-            }
-        }
-        // Detect OnePlus
-        else if (userAgent.includes('OnePlus')) {
-            brand = 'OnePlus';
-            const oneplusMatch = userAgent.match(/OnePlus (\w+)/);
-            if (oneplusMatch) {
-                deviceModel = `OnePlus ${oneplusMatch[1]}`;
-            }
-        }
-        // Detect Nothing Phone
-        else if (userAgent.includes('Nothing')) {
-            brand = 'Nothing';
-            deviceModel = 'Nothing Phone';
-        }
-        // Detect Nokia
-        else if (userAgent.includes('Nokia')) {
-            brand = 'Nokia';
-            const nokiaMatch = userAgent.match(/Nokia (\w+)/);
-            if (nokiaMatch) {
-                deviceModel = `Nokia ${nokiaMatch[1]}`;
-            }
-        }
-        // Detect Motorola
-        else if (userAgent.includes('Moto')) {
-            brand = 'Motorola';
-            const motoMatch = userAgent.match(/Moto (\w+)/);
-            if (motoMatch) {
-                deviceModel = `Motorola ${motoMatch[1]}`;
-            }
-        }
-        else {
-            brand = 'Android';
-        }
+        else if (userAgent.includes('Redmi')) { brand = 'Xiaomi'; }
+        else if (userAgent.includes('Mi ')) { brand = 'Xiaomi'; }
+        else if (userAgent.includes('POCO')) { brand = 'Xiaomi'; }
+        else if (userAgent.includes('RMX')) { brand = 'Realme'; }
+        else if (userAgent.includes('VOG') || userAgent.includes('LYA') || userAgent.includes('NOH')) { brand = 'Huawei'; }
+        else if (userAgent.includes('OPPO')) { brand = 'OPPO'; }
+        else if (userAgent.includes('vivo')) { brand = 'vivo'; }
+        else if (userAgent.includes('OnePlus')) { brand = 'OnePlus'; }
+        else if (userAgent.includes('Nothing')) { brand = 'Nothing'; }
+        else if (userAgent.includes('Nokia')) { brand = 'Nokia'; }
+        else if (userAgent.includes('Moto')) { brand = 'Motorola'; }
+        else { brand = 'Android'; }
     }
-    
-    // ============================================
-    // DESKTOP / LAPTOP DETECTION
-    // ============================================
     else if (/Macintosh|Mac OS X/i.test(userAgent)) {
         brand = 'Apple';
-        if (userAgent.includes('Mac OS X')) {
-            if (userAgent.includes('Intel Mac OS X')) {
-                deviceModel = 'Mac (Intel)';
-            } else if (userAgent.includes('ARM')) {
-                deviceModel = 'Mac (Apple Silicon)';
-            } else {
-                deviceModel = 'Mac';
-            }
-        }
+        if (userAgent.includes('Intel Mac OS X')) deviceModel = 'Mac (Intel)';
+        else if (userAgent.includes('ARM')) deviceModel = 'Mac (Apple Silicon)';
+        else deviceModel = 'Mac';
     }
     else if (/Windows NT/i.test(userAgent)) {
         brand = 'Microsoft';
@@ -444,9 +219,7 @@ function detectDeviceModel(userAgent) {
             else if (version === '6.2') deviceModel = 'Windows 8 PC';
             else if (version === '6.1') deviceModel = 'Windows 7 PC';
             else deviceModel = 'Windows PC';
-        } else {
-            deviceModel = 'Windows PC';
-        }
+        } else { deviceModel = 'Windows PC'; }
     }
     else if (/Linux/i.test(userAgent) && !/Android/i.test(userAgent)) {
         brand = 'Linux';
@@ -457,7 +230,6 @@ function detectDeviceModel(userAgent) {
         deviceModel = 'Chromebook';
     }
     
-    console.log('[Device Detection] Final result:', { deviceModel, brand });
     return { deviceModel, brand };
 }
 
@@ -522,8 +294,6 @@ function getWebGLFingerprint() {
 
 async function getDetailedDeviceInfo() {
     const userAgent = navigator.userAgent;
-    console.log('[Device Detection] Raw UserAgent:', userAgent);
-    
     const { deviceModel, brand } = detectDeviceModel(userAgent);
     
     const screenDetails = {
@@ -1116,6 +886,140 @@ async function confirmOvertime(uid, status) {
 }
 
 // ============================================
+// NEW: EXCEPTION REPORT FUNCTIONS
+// ============================================
+
+async function submitException(uid, userName, date, reason, fileUrl) {
+    return await callAPI('submitException', {
+        uid: uid,
+        userName: userName,
+        date: date,
+        reason: reason,
+        fileUrl: fileUrl
+    });
+}
+
+async function getPendingExceptions(requestingUser) {
+    return await callAPI('getPendingExceptions', { requestingUser: JSON.stringify(requestingUser) });
+}
+
+async function updateExceptionStatus(exceptionId, status, adminResponse) {
+    return await callAPI('updateExceptionStatus', {
+        exceptionId: exceptionId,
+        status: status,
+        adminResponse: adminResponse
+    });
+}
+
+// ============================================
+// NEW: LEAVE REQUEST FUNCTIONS
+// ============================================
+
+async function submitLeaveRequest(uid, userName, type, startDate, endDate, reason, fileUrl) {
+    return await callAPI('submitLeaveRequest', {
+        uid: uid,
+        userName: userName,
+        type: type,
+        startDate: startDate,
+        endDate: endDate,
+        reason: reason,
+        fileUrl: fileUrl
+    });
+}
+
+async function getPendingLeaveRequests(requestingUser) {
+    return await callAPI('getPendingLeaveRequests', { requestingUser: JSON.stringify(requestingUser) });
+}
+
+async function getUserLeaveRequests(uid) {
+    return await callAPI('getUserLeaveRequests', { uid: uid });
+}
+
+async function updateLeaveRequestStatus(requestId, status, adminResponse) {
+    return await callAPI('updateLeaveRequestStatus', {
+        requestId: requestId,
+        status: status,
+        adminResponse: adminResponse
+    });
+}
+
+// ============================================
+// NEW: COURSE DIARY FUNCTIONS
+// ============================================
+
+async function submitCourseDiary(uid, userName, date, type, title, description, fileUrl) {
+    return await callAPI('submitCourseDiary', {
+        uid: uid,
+        userName: userName,
+        date: date,
+        type: type,
+        title: title,
+        description: description,
+        fileUrl: fileUrl
+    });
+}
+
+async function getPendingDiaries(requestingUser) {
+    return await callAPI('getPendingDiaries', { requestingUser: JSON.stringify(requestingUser) });
+}
+
+async function getUserDiaries(uid) {
+    return await callAPI('getUserDiaries', { uid: uid });
+}
+
+async function updateDiaryStatus(diaryId, status, adminNotes) {
+    return await callAPI('updateDiaryStatus', {
+        diaryId: diaryId,
+        status: status,
+        adminNotes: adminNotes
+    });
+}
+
+// ============================================
+// NEW: INBOX FUNCTIONS
+// ============================================
+
+async function getUserInbox(uid) {
+    return await callAPI('getUserInbox', { uid: uid });
+}
+
+async function markInboxAsRead(inboxId, uid) {
+    return await callAPI('markInboxAsRead', { inboxId: inboxId, uid: uid });
+}
+
+async function sendToInbox(uid, title, message, type, referenceId, status) {
+    return await callAPI('sendToInbox', {
+        uid: uid,
+        title: title,
+        message: message,
+        type: type,
+        referenceId: referenceId,
+        status: status
+    });
+}
+
+// ============================================
+// NEW: GET ALL PENDING REQUESTS (ADMIN)
+// ============================================
+
+async function getAllPendingRequests(requestingUser) {
+    return await callAPI('getAllPendingRequests', { requestingUser: JSON.stringify(requestingUser) });
+}
+
+// ============================================
+// NEW: UPLOAD FILE TO GOOGLE DRIVE
+// ============================================
+
+async function uploadFileToDrive(fileName, fileBase64, folderId, mimeType) {
+    return await callAPI('uploadFileToDrive', {
+        fileName: fileName,
+        fileBase64: fileBase64,
+        folderId: folderId || DRIVE_FOLDER_ID,
+        mimeType: mimeType
+    });
+}
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 
@@ -1150,7 +1054,7 @@ async function getCurrentIPLocation() {
 }
 
 // ============================================
-// DEBUG FUNCTION
+// DEBUG FUNCTIONS
 // ============================================
 
 async function debugDeviceInfo() {
@@ -1179,34 +1083,22 @@ async function debugIPhoneDetection() {
     console.log('=== IPHONE DETECTION DEBUG ===');
     console.log('Full UserAgent:', userAgent);
     
-    // Check for iPhone model identifier
     const modelMatch = userAgent.match(/iPhone([0-9]+,[0-9]+)/);
     if (modelMatch) {
         console.log('✅ Found iPhone model identifier:', modelMatch[0]);
         console.log('   Model code:', modelMatch[1]);
         
-        // Map to friendly name
         const modelMap = {
-            '13,4': 'iPhone 12 Pro Max',
-            '13,3': 'iPhone 12 Pro',
-            '13,2': 'iPhone 12',
-            '13,1': 'iPhone 12 mini',
-            '14,3': 'iPhone 13 Pro Max',
-            '14,2': 'iPhone 13 Pro',
-            '14,5': 'iPhone 13',
-            '14,4': 'iPhone 13 mini',
-            '15,3': 'iPhone 14 Pro Max',
-            '15,2': 'iPhone 14 Pro',
-            '15,4': 'iPhone 14',
-            '15,5': 'iPhone 14 Plus',
-            '16,2': 'iPhone 15 Pro Max',
-            '16,1': 'iPhone 15 Pro',
-            '16,3': 'iPhone 15',
-            '16,4': 'iPhone 15 Plus',
-            '17,2': 'iPhone 16 Pro Max',
-            '17,1': 'iPhone 16 Pro',
-            '17,3': 'iPhone 16',
-            '17,4': 'iPhone 16 Plus'
+            '13,4': 'iPhone 12 Pro Max', '13,3': 'iPhone 12 Pro',
+            '13,2': 'iPhone 12', '13,1': 'iPhone 12 mini',
+            '14,3': 'iPhone 13 Pro Max', '14,2': 'iPhone 13 Pro',
+            '14,5': 'iPhone 13', '14,4': 'iPhone 13 mini',
+            '15,3': 'iPhone 14 Pro Max', '15,2': 'iPhone 14 Pro',
+            '15,4': 'iPhone 14', '15,5': 'iPhone 14 Plus',
+            '16,2': 'iPhone 15 Pro Max', '16,1': 'iPhone 15 Pro',
+            '16,3': 'iPhone 15', '16,4': 'iPhone 15 Plus',
+            '17,2': 'iPhone 16 Pro Max', '17,1': 'iPhone 16 Pro',
+            '17,3': 'iPhone 16', '17,4': 'iPhone 16 Plus'
         };
         
         if (modelMap[modelMatch[1]]) {
@@ -1216,13 +1108,11 @@ async function debugIPhoneDetection() {
         console.log('❌ No iPhone model identifier found in UserAgent');
     }
     
-    // Check for OS version
     const osMatch = userAgent.match(/OS (\d+)_/);
     if (osMatch) {
         console.log('iOS Version:', osMatch[1]);
     }
     
-    // Run detection
     const result = detectDeviceModel(userAgent);
     console.log('Detection result:', result);
     console.log('================================');
@@ -1233,5 +1123,5 @@ async function debugIPhoneDetection() {
 // ============================================
 // INITIALIZATION
 // ============================================
-console.log('✅ api-config.js v3.2 loaded - iPhone model detection prioritizes model identifier over OS version');
+console.log('✅ api-config.js v4.0 loaded - Complete with Exception, Leave Requests, Course Diaries, Inbox');
 
