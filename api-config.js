@@ -1,6 +1,6 @@
 // ============================================
 // API CONFIGURATION - IMMI PRESENCE 360
-// VERSION: 5.0 (No APK Management + Leave Validation + Diary Exempt)
+// VERSION: 5.1 (With Force Update + Web Block)
 // LAST UPDATED: 14 April 2026
 // ============================================
 
@@ -13,6 +13,10 @@ const DRIVE_FOLDER_ID = '1MIGgknZhgw594XgeSetALOpdiMW5VVak';
 
 // Maximum hours for Kebenaran Keluar Pejabat
 const MAX_OUT_OF_OFFICE_HOURS = 4;
+
+// APK Configuration (untuk force update)
+const APK_DOWNLOAD_URL = 'https://github.com/jimswk/IMMI-Presence-360/releases/latest/download/app-release.apk';
+const MIN_REQUIRED_ANDROID_VERSION = '1.0.6';
 
 // ============================================
 // CORE API FUNCTIONS
@@ -53,6 +57,162 @@ async function callAPI(method, params = {}) {
         console.error('API Error:', error);
         return { success: false, error: error.toString() };
     }
+}
+
+// ============================================
+// FORCE UPDATE & WEB BLOCK FUNCTIONS
+// ============================================
+
+/**
+ * Check if current app version needs update
+ */
+async function checkForAppUpdate(currentVersion) {
+    try {
+        const result = await callAPI('checkForAppUpdate', {
+            userAgent: navigator.userAgent,
+            currentVersion: currentVersion
+        });
+        return result;
+    } catch (error) {
+        console.error('Check update error:', error);
+        return { success: false, error: error.toString() };
+    }
+}
+
+/**
+ * Get APK download info from server
+ */
+async function getApkDownloadInfo() {
+    try {
+        const result = await callAPI('getApkDownloadInfo');
+        return result;
+    } catch (error) {
+        console.error('Get APK info error:', error);
+        return { 
+            success: false, 
+            downloadUrl: APK_DOWNLOAD_URL,
+            version: MIN_REQUIRED_ANDROID_VERSION,
+            error: error.toString()
+        };
+    }
+}
+
+/**
+ * Show force update dialog to Android user
+ */
+function showForceUpdateDialog(downloadUrl, latestVersion, currentVersion) {
+    // Create modal overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    `;
+    
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        background: white;
+        border-radius: 32px;
+        padding: 32px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    `;
+    
+    dialog.innerHTML = `
+        <div style="width: 80px; height: 80px; background: #fef3c7; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+            <span style="font-size: 48px;">📱</span>
+        </div>
+        <h2 style="margin: 0 0 12px; font-size: 24px; font-weight: 800; color: #1e293b;">Kemas Kini Diperlukan</h2>
+        <p style="color: #64748b; margin-bottom: 20px; line-height: 1.5;">
+            Versi aplikasi anda (${currentVersion}) sudah lama.<br>
+            Sila kemas kini ke versi ${latestVersion} untuk terus menggunakan sistem.
+        </p>
+        <div style="background: #f1f5f9; padding: 12px; border-radius: 16px; margin: 20px 0;">
+            <p style="color: #475569; font-size: 14px;">
+                <span style="font-weight: 700;">⚡ Perubahan dalam versi baru:</span><br>
+                • Penambahbaikan prestasi<br>
+                • Pembetulan isu GPS<br>
+                • Peningkatan keselamatan
+            </p>
+        </div>
+        <button onclick="window.location.href='${downloadUrl}'" style="
+            width: 100%;
+            background: #1e3a8a;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 12px;
+        ">
+            📥 Muat Turun Sekarang
+        </button>
+        <button onclick="window.location.reload()" style="
+            width: 100%;
+            background: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 12px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        ">
+            Cuba Semula
+        </button>
+        <p style="font-size: 11px; color: #94a3b8; margin-top: 16px;">
+            Jika muat turun tidak bermula, <a href="${downloadUrl}" style="color: #1e3a8a;">klik di sini</a>
+        </p>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    // Make overlay non-removable
+    overlay.style.pointerEvents = 'auto';
+}
+
+/**
+ * Show Android web access blocked dialog
+ */
+function showAndroidWebBlockedDialog(downloadUrl) {
+    document.body.innerHTML = `
+        <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;">
+            <div style="background: white; border-radius: 32px; padding: 40px; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);">
+                <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <span style="font-size: 48px;">🚫</span>
+                </div>
+                <h2 style="margin: 20px 0 10px; font-size: 24px; font-weight: 800; color: #1e293b;">Akses Tidak Dibenarkan</h2>
+                <p style="color: #64748b; margin-bottom: 24px; line-height: 1.5;">
+                    <strong>Sila gunakan Aplikasi Android IMMI Presence 360</strong><br>
+                    untuk akses sistem.
+                </p>
+                <div style="background: #f0fdf4; padding: 16px; border-radius: 20px; margin: 20px 0;">
+                    <p style="color: #166534; font-size: 14px; font-weight: 600;">📱 Muat Turun Aplikasi</p>
+                    <a href="${downloadUrl}" style="display: inline-block; margin-top: 12px; background: #059669; color: white; text-decoration: none; padding: 12px 24px; border-radius: 30px; font-weight: 700;">
+                        Klik untuk Muat Turun
+                    </a>
+                </div>
+                <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
+                    Versi web hanya untuk pengguna iOS dan Desktop.<br>
+                    Jika anda sudah memasang aplikasi, sila buka dari aplikasi.
+                </p>
+            </div>
+        </div>
+    `;
 }
 
 // ============================================
@@ -234,6 +394,83 @@ function detectDeviceModel(userAgent) {
     }
     
     return { deviceModel, brand };
+}
+
+// ============================================
+// PLATFORM DETECTION
+// ============================================
+
+function isAndroidDevice() {
+    return /android/i.test(navigator.userAgent);
+}
+
+function isIOSDevice() {
+    return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isDesktopDevice() {
+    const ua = navigator.userAgent;
+    const isMobile = /mobile|android|iphone|ipad|ipod/i.test(ua);
+    return !isMobile;
+}
+
+function isFromNativeApp() {
+    // Check for custom user agent from Android app
+    return navigator.userAgent.includes('IMMI-Android-App') || 
+           navigator.userAgent.includes('IMMI-Presence-360');
+}
+
+/**
+ * Check and block Android web access if needed
+ * Returns true if blocked, false if allowed
+ */
+async function checkAndBlockAndroidWeb() {
+    if (!isAndroidDevice()) return false;
+    
+    // If from native app, allow
+    if (isFromNativeApp()) return false;
+    
+    // Check with server if web access is blocked
+    try {
+        const result = await callAPI('checkAndroidVersion', {
+            userAgent: navigator.userAgent,
+            appVersion: null // No app version for web
+        });
+        
+        if (!result.success && result.code === 'ANDROID_WEB_BLOCKED') {
+            showAndroidWebBlockedDialog(result.downloadUrl || APK_DOWNLOAD_URL);
+            return true;
+        }
+    } catch (error) {
+        console.error('Check web block error:', error);
+        // Default to block if can't verify (security measure)
+        showAndroidWebBlockedDialog(APK_DOWNLOAD_URL);
+        return true;
+    }
+    
+    return false;
+}
+
+/**
+ * Check app version and show force update if needed
+ * Call this after successful login for Android native app
+ */
+async function checkAndForceUpdate(currentVersion) {
+    if (!isAndroidDevice()) return false;
+    if (!isFromNativeApp()) return false;
+    
+    try {
+        const result = await checkForAppUpdate(currentVersion);
+        
+        if (result.success && result.needsUpdate) {
+            showForceUpdateDialog(result.downloadUrl, result.latestVersion, currentVersion);
+            return true;
+        }
+    } catch (error) {
+        console.error('Force update check error:', error);
+    }
+    
+    return false;
 }
 
 // ============================================
@@ -421,13 +658,13 @@ async function getDeviceInfo() {
     let platform = 'Web';
     let deviceName = deviceModel || 'Desktop Browser';
     
-    if (/android/i.test(userAgent)) {
+    if (isAndroidDevice()) {
         platform = 'Android';
         deviceName = deviceModel || 'Android Device';
-    } else if (/iphone|ipad|ipod/i.test(userAgent)) {
+    } else if (isIOSDevice()) {
         platform = 'iOS';
         deviceName = deviceModel || 'iPhone/iPad';
-    } else if (/windows|mac|linux/i.test(userAgent) && !/mobile/i.test(userAgent)) {
+    } else if (isDesktopDevice()) {
         platform = 'Desktop';
         deviceName = deviceModel || (navigator.platform.includes('Mac') ? 'Mac' : 'Windows PC');
     }
@@ -479,58 +716,6 @@ function getSimpleDeviceFingerprint() {
         hash: Math.abs(hash).toString(16),
         components: components
     };
-}
-
-// ============================================
-// PLATFORM DETECTION
-// ============================================
-
-function isAndroidDevice() {
-    return /android/i.test(navigator.userAgent);
-}
-
-function isIOSDevice() {
-    return /iphone|ipad|ipod/i.test(navigator.userAgent);
-}
-
-function isDesktopDevice() {
-    const ua = navigator.userAgent;
-    const isMobile = /mobile|android|iphone|ipad|ipod/i.test(ua);
-    return !isMobile;
-}
-
-function isFromNativeApp() {
-    return navigator.userAgent.includes('IMMI-Android-App');
-}
-
-function blockAndroidIfNeeded() {
-    if (isAndroidDevice() && !isFromNativeApp()) {
-        document.body.innerHTML = `
-            <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px; font-family: 'Inter', sans-serif;">
-                <div style="background: white; border-radius: 32px; padding: 40px; max-width: 400px; text-align: center;">
-                    <div style="width: 80px; height: 80px; background: #fee2e2; border-radius: 40px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                        <span style="font-size: 48px;">📱</span>
-                    </div>
-                    <h2 style="margin: 20px 0 10px; font-size: 24px; font-weight: 800;">Akses Tidak Dibenarkan</h2>
-                    <p style="color: #64748b; margin-bottom: 24px; line-height: 1.5;">
-                        Sila gunakan <strong>Aplikasi Android IMMI Presence 360</strong> untuk akses sistem.
-                    </p>
-                    <div style="background: #f0fdf4; padding: 16px; border-radius: 20px; margin: 20px 0;">
-                        <p style="color: #166534; font-size: 14px; font-weight: 600;">📱 Muat Turun Aplikasi</p>
-                        <p style="color: #166534; font-size: 12px; margin-top: 4px;">Hubungi Administrator</p>
-                    </div>
-                    <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
-                        Versi web hanya untuk pengguna iOS dan Desktop.
-                    </p>
-                    <button onclick="location.reload()" style="margin-top: 24px; background: #1e3a8a; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-weight: 700; cursor: pointer;">
-                        Cuba Lagi
-                    </button>
-                </div>
-            </div>
-        `;
-        return true;
-    }
-    return false;
 }
 
 // ============================================
@@ -630,14 +815,14 @@ function stopPeriodicLocationTracking() {
 }
 
 // ============================================
-// AUTHENTICATION FUNCTIONS
+// AUTHENTICATION FUNCTIONS (UPDATED with version)
 // ============================================
 
 async function login(email, password) {
     return await callAPI('login', { email: email, password: password });
 }
 
-async function userLogin(email, password) {
+async function userLogin(email, password, appVersion = null) {
     const deviceInfo = await getDeviceInfo();
     
     return await callAPI('userLogin', { 
@@ -650,6 +835,7 @@ async function userLogin(email, password) {
         language: deviceInfo.language,
         hardwareConcurrency: deviceInfo.hardwareConcurrency,
         deviceMemory: deviceInfo.deviceMemory,
+        appVersion: appVersion,
         deviceModel: deviceInfo.deviceModel,
         brand: deviceInfo.brand
     });
@@ -1254,5 +1440,10 @@ async function debugIPhoneDetection() {
 // ============================================
 // INITIALIZATION
 // ============================================
-console.log('✅ api-config.js v5.0 loaded - No APK Management, with Leave Validation & Diary Exempt');
+console.log('✅ api-config.js v5.1 loaded - With Force Update & Web Block');
+
+// Auto-check Android web access when script loads
+if (isAndroidDevice() && !isFromNativeApp()) {
+    checkAndBlockAndroidWeb();
+}
 
