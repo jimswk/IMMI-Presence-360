@@ -2197,84 +2197,104 @@
         // ============================================
         // LOAD HOME DATA
         // ============================================
-        async function loadHomeData() {
-            if (!currentUser) return;
-            checkAndResetForNewDay();
-            const today = getCurrentDateMalaysia();
-            const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            document.getElementById('currentDateDisplay').innerText = displayDate;
-            document.getElementById('recentDate').innerText = displayDate;
-            try {
-                const result = await getAttendance(currentUser.uid, today, today);
-                const hasRecord = result.success && result.data && result.data.length > 0;
-                const record = hasRecord ? result.data[0] : null;
-                currentAttendanceRecord = record;
-                const recordForToday = record && record.date === today;
-                const hasClockIn = recordForToday && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '--:--';
-                const hasClockOut = recordForToday && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '--:--';
-                const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
-                if (hasClockIn) {
-                    let clockInDate = typeof record.clockIn === 'string' && record.clockIn.includes(' ') ? new Date(record.clockIn) : new Date(today + 'T' + record.clockIn);
-                    const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-                    const timeParts = clockInTime.split(' ');
-                    document.getElementById('clockInTime').innerText = timeParts[0];
-                    document.getElementById('clockInAmPm').innerText = timeParts[1] || '';
-                    document.getElementById('clockInStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
-                    document.getElementById('clockInStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
-                    const clockInBtn = document.getElementById('clockInBtn');
-                    clockInBtn.disabled = hasClockOut;
-                    clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
-                    document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
-                    document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
-                    document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
-                } else {
-                    document.getElementById('clockInTime').innerText = '--:--';
-                    document.getElementById('clockInAmPm').innerText = '';
-                    document.getElementById('clockInStatus').innerHTML = 'Belum Masuk';
-                    document.getElementById('clockInStatus').style.color = '#94a3b8';
-                    const clockInBtn = document.getElementById('clockInBtn');
-                    clockInBtn.disabled = false;
-                    clockInBtn.style.background = '#10b981';
-                    document.getElementById('recentStatus').innerHTML = 'BELUM MASUK';
-                    document.getElementById('recentStatus').style.background = '#fef3c7';
-                    document.getElementById('recentStatus').style.color = '#92400e';
-                }
-                if (hasClockOut) {
-                    let clockOutDate = typeof record.clockOut === 'string' && record.clockOut.includes(' ') ? new Date(record.clockOut) : new Date(today + 'T' + record.clockOut);
-                    const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
-                    const timeParts = clockOutTime.split(' ');
-                    document.getElementById('clockOutTime').innerText = timeParts[0];
-                    document.getElementById('clockOutStatus').innerHTML = 'Tamat bertugas';
-                    document.getElementById('clockOutStatus').style.color = '#10b981';
-                } else {
-                    document.getElementById('clockOutTime').innerText = '— • —';
-                    document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
-                    document.getElementById('clockOutStatus').style.color = '#94a3b8';
-                }
-                document.getElementById('totalHours').innerText = record && record.totalHours && record.totalHours > 0 ? record.totalHours.toFixed(1) : '0';
-                document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
-                document.getElementById('totalOT').innerText = record && record.totalOT && record.totalOT > 0 ? record.totalOT.toFixed(1) : '0';
-                document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
-                updateCameraUI();
-                if (userLocation && userLocation.lat && userLocation.lng) {
-                    // Pastikan container map wujud sebelum init
-                    const mapContainer = document.getElementById('recentLocationMap');
-                    if (mapContainer) {
+async function loadHomeData() {
+    if (!currentUser) return;
+    checkAndResetForNewDay();
+    const today = getCurrentDateMalaysia();
+    const displayDate = getCurrentDateTimeMalaysia().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    document.getElementById('currentDateDisplay').innerText = displayDate;
+    document.getElementById('recentDate').innerText = displayDate;
+    try {
+        const result = await getAttendance(currentUser.uid, today, today);
+        const hasRecord = result.success && result.data && result.data.length > 0;
+        const record = hasRecord ? result.data[0] : null;
+        currentAttendanceRecord = record;
+        const recordForToday = record && record.date === today;
+        const hasClockIn = recordForToday && record.clockIn && record.clockIn !== '' && record.clockIn !== 'null' && record.clockIn !== '--:--';
+        const hasClockOut = recordForToday && record.clockOut && record.clockOut !== '' && record.clockOut !== 'null' && record.clockOut !== '--:--';
+        const updateDate = new Date(today).toLocaleDateString('ms-MY', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        // 🔥 TAMBAHAN: Ubah label recent berdasarkan status
+        const recentLabel = document.querySelector('#recentActivityList .recent-label');
+        if (recentLabel) {
+            if (hasClockIn && hasClockOut) {
+                recentLabel.innerHTML = 'Clock Out (Selesai)';
+            } else if (hasClockIn && !hasClockOut) {
+                recentLabel.innerHTML = 'Clock In (Dalam Bertugas)';
+            } else {
+                recentLabel.innerHTML = 'Clock In (Belum)';
+            }
+        }
+        
+        if (hasClockIn) {
+            let clockInDate = typeof record.clockIn === 'string' && record.clockIn.includes(' ') ? new Date(record.clockIn) : new Date(today + 'T' + record.clockIn);
+            const clockInTime = clockInDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const timeParts = clockInTime.split(' ');
+            document.getElementById('clockInTime').innerText = timeParts[0];
+            document.getElementById('clockInAmPm').innerText = timeParts[1] || '';
+            document.getElementById('clockInStatus').innerHTML = hasClockOut ? 'Selesai' : 'Dalam Bertugas';
+            document.getElementById('clockInStatus').style.color = hasClockOut ? '#10b981' : '#1e3a8a';
+            const clockInBtn = document.getElementById('clockInBtn');
+            clockInBtn.disabled = hasClockOut;
+            clockInBtn.style.background = hasClockOut ? '#cbd5e1' : '#10b981';
+            document.getElementById('recentStatus').innerHTML = hasClockOut ? 'SELESAI' : 'MASUK';
+            document.getElementById('recentStatus').style.background = hasClockOut ? '#dcfce7' : '#dbeafe';
+            document.getElementById('recentStatus').style.color = hasClockOut ? '#166534' : '#1e3a8a';
+        } else {
+            document.getElementById('clockInTime').innerText = '--:--';
+            document.getElementById('clockInAmPm').innerText = '';
+            document.getElementById('clockInStatus').innerHTML = 'Belum Masuk';
+            document.getElementById('clockInStatus').style.color = '#94a3b8';
+            const clockInBtn = document.getElementById('clockInBtn');
+            clockInBtn.disabled = false;
+            clockInBtn.style.background = '#10b981';
+            document.getElementById('recentStatus').innerHTML = 'BELUM MASUK';
+            document.getElementById('recentStatus').style.background = '#fef3c7';
+            document.getElementById('recentStatus').style.color = '#92400e';
+        }
+        
+        if (hasClockOut) {
+            let clockOutDate = typeof record.clockOut === 'string' && record.clockOut.includes(' ') ? new Date(record.clockOut) : new Date(today + 'T' + record.clockOut);
+            const clockOutTime = clockOutDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const timeParts = clockOutTime.split(' ');
+            document.getElementById('clockOutTime').innerText = timeParts[0];
+            document.getElementById('clockOutStatus').innerHTML = 'Tamat bertugas';
+            document.getElementById('clockOutStatus').style.color = '#10b981';
+        } else {
+            document.getElementById('clockOutTime').innerText = '— • —';
+            document.getElementById('clockOutStatus').innerHTML = 'Belum tamat waktu bertugas';
+            document.getElementById('clockOutStatus').style.color = '#94a3b8';
+        }
+        
+        document.getElementById('totalHours').innerText = record && record.totalHours && record.totalHours > 0 ? record.totalHours.toFixed(1) : '0';
+        document.getElementById('totalHoursDate').innerHTML = `Kemaskini, ${updateDate}`;
+        document.getElementById('totalOT').innerText = record && record.totalOT && record.totalOT > 0 ? record.totalOT.toFixed(1) : '0';
+        document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
+        updateCameraUI();
+        
+        if (userLocation && userLocation.lat && userLocation.lng) {
+            const mapContainer = document.getElementById('recentLocationMap');
+            if (mapContainer) {
+                initLocationMap(userLocation.lat, userLocation.lng);
+            } else {
+                console.log('Map container not ready yet, waiting...');
+                setTimeout(() => {
+                    if (document.getElementById('recentLocationMap')) {
                         initLocationMap(userLocation.lat, userLocation.lng);
-                    } else {
-                        console.log('Map container not ready yet, waiting...');
-                        setTimeout(() => {
-                            if (document.getElementById('recentLocationMap')) {
-                                initLocationMap(userLocation.lat, userLocation.lng);
-                            }
-                        }, 500);
                     }
-                } else if (currentUser.lat && currentUser.lng) {
-                    const mapContainer = document.getElementById('recentLocationMap');
-                    if (mapContainer) {
-                        initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
-                    }
-                }
+                }, 500);
+            }
+        } else if (currentUser.lat && currentUser.lng) {
+            const mapContainer = document.getElementById('recentLocationMap');
+            if (mapContainer) {
+                initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
+            }
+        }
+    } catch (error) {
+        console.error('Load home data error:', error);
+        showNotification('Ralat', 'Gagal memuat data kehadiran', true);
+    }
+}
         
         function updateCameraUI() {
             const today = getCurrentDateMalaysia();
