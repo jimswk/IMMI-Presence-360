@@ -1,7 +1,7 @@
 // ============================================
 // API CONFIGURATION - IMMI PRESENCE 360
-// VERSION: 4.0 (Complete with Exception, Leave Requests, Course Diaries, Inbox)
-// LAST UPDATED: 13 April 2026
+// VERSION: 5.0 (No APK Management + Leave Validation + Diary Exempt)
+// LAST UPDATED: 14 April 2026
 // ============================================
 
 const CONFIG = {
@@ -10,6 +10,9 @@ const CONFIG = {
 
 // Google Drive Folder ID untuk penyimpanan fail
 const DRIVE_FOLDER_ID = '1MIGgknZhgw594XgeSetALOpdiMW5VVak';
+
+// Maximum hours for Kebenaran Keluar Pejabat
+const MAX_OUT_OF_OFFICE_HOURS = 4;
 
 // ============================================
 // CORE API FUNCTIONS
@@ -514,7 +517,7 @@ function blockAndroidIfNeeded() {
                     </p>
                     <div style="background: #f0fdf4; padding: 16px; border-radius: 20px; margin: 20px 0;">
                         <p style="color: #166534; font-size: 14px; font-weight: 600;">📱 Muat Turun Aplikasi</p>
-                        <p style="color: #166534; font-size: 12px; margin-top: 4px;">Google Play Store / GitHub</p>
+                        <p style="color: #166534; font-size: 12px; margin-top: 4px;">Hubungi Administrator</p>
                     </div>
                     <p style="margin-top: 20px; font-size: 12px; color: #94a3b8;">
                         Versi web hanya untuk pengguna iOS dan Desktop.
@@ -740,6 +743,20 @@ async function getAttendance(uid, startDate, endDate, requestingUser = null) {
     return await callAPI('getAttendance', params);
 }
 
+async function getAttendanceWithRemarks(uid, startDate, endDate, requestingUser = null) {
+    const params = { 
+        uid: uid, 
+        startDate: startDate, 
+        endDate: endDate
+    };
+    
+    if (requestingUser && (requestingUser.role === 'admin' || requestingUser.role === 'superadmin')) {
+        params.requestingUser = JSON.stringify(requestingUser);
+    }
+    
+    return await callAPI('getAttendanceWithRemarks', params);
+}
+
 async function clockIn(uid, location, user) {
     return await callAPI('clockIn', {
         uid: uid,
@@ -792,52 +809,6 @@ async function sendEmail(to, subject, body) {
 }
 
 // ============================================
-// APK MANAGEMENT FUNCTIONS
-// ============================================
-
-async function saveApkVersion(version, fileId, downloadUrl, fileSize, releaseNotes, uploadedBy) {
-    return await callAPI('saveApkVersion', {
-        version: version,
-        fileId: fileId,
-        downloadUrl: downloadUrl,
-        fileSize: fileSize,
-        releaseNotes: releaseNotes,
-        uploadedBy: uploadedBy
-    });
-}
-
-async function getLatestApkVersion() {
-    return await callAPI('getLatestApkVersion');
-}
-
-async function getAllApkVersions() {
-    return await callAPI('getAllApkVersions');
-}
-
-async function notifyUsersAboutNewApk(version, releaseNotes, downloadUrl) {
-    return await callAPI('notifyUsersAboutNewApk', {
-        version: version,
-        releaseNotes: releaseNotes,
-        downloadUrl: downloadUrl
-    });
-}
-
-async function getAllAndroidUsers() {
-    return await callAPI('getAllAndroidUsers');
-}
-
-async function sendNewUserNotification(userEmail, userName, branch, unit, password, userPlatform) {
-    return await callAPI('sendNewUserNotification', {
-        userEmail: userEmail,
-        userName: userName,
-        branch: branch,
-        unit: unit,
-        password: password,
-        userPlatform: userPlatform
-    });
-}
-
-// ============================================
 // BLOCKED USERS MANAGEMENT
 // ============================================
 
@@ -886,7 +857,79 @@ async function confirmOvertime(uid, status) {
 }
 
 // ============================================
-// NEW: EXCEPTION REPORT FUNCTIONS
+// DEVICE REPLACEMENT FUNCTIONS
+// ============================================
+
+async function requestDeviceReplacement(uid, newDeviceId, reason) {
+    return await callAPI('requestDeviceReplacement', {
+        uid: uid,
+        newDeviceId: newDeviceId,
+        reason: reason
+    });
+}
+
+async function getPendingDeviceRequests(requestingUser) {
+    return await callAPI('getPendingDeviceRequests', { requestingUser: JSON.stringify(requestingUser) });
+}
+
+async function approveDeviceReplacement(requestId, requestingUser) {
+    return await callAPI('approveDeviceReplacement', {
+        requestId: requestId,
+        requestingUser: JSON.stringify(requestingUser)
+    });
+}
+
+async function rejectDeviceReplacement(requestId, reason, requestingUser) {
+    return await callAPI('rejectDeviceReplacement', {
+        requestId: requestId,
+        reason: reason,
+        requestingUser: JSON.stringify(requestingUser)
+    });
+}
+
+// ============================================
+// LOCATION OFF TRACKING
+// ============================================
+
+async function reportLocationOff(uid, duration) {
+    return await callAPI('reportLocationOff', {
+        uid: uid,
+        duration: duration
+    });
+}
+
+async function getLocationOffLogs(requestingUser, startDate, endDate) {
+    return await callAPI('getLocationOffLogs', {
+        requestingUser: JSON.stringify(requestingUser),
+        startDate: startDate,
+        endDate: endDate
+    });
+}
+
+// ============================================
+// TODAY ATTENDANCE WITH COLOR
+// ============================================
+
+async function getTodayAttendanceWithColor(uid, date) {
+    return await callAPI('getTodayAttendanceWithColor', {
+        uid: uid,
+        date: date
+    });
+}
+
+// ============================================
+// DIARY EXEMPT CHECK
+// ============================================
+
+async function isExemptFromAttendance(uid, date) {
+    return await callAPI('isExemptFromAttendance', {
+        uid: uid,
+        date: date
+    });
+}
+
+// ============================================
+// EXCEPTION REPORT FUNCTIONS
 // ============================================
 
 async function submitException(uid, userName, date, reason, fileUrl) {
@@ -912,10 +955,24 @@ async function updateExceptionStatus(exceptionId, status, adminResponse) {
 }
 
 // ============================================
-// NEW: LEAVE REQUEST FUNCTIONS
+// LEAVE REQUEST FUNCTIONS (with 4-hour validation)
 // ============================================
 
 async function submitLeaveRequest(uid, userName, type, startDate, endDate, reason, fileUrl) {
+    // Frontend validation for out_of_office (max 4 hours)
+    if (type === 'out_of_office') {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const hoursRequested = (end - start) / (1000 * 60 * 60);
+        
+        if (hoursRequested > MAX_OUT_OF_OFFICE_HOURS) {
+            return { 
+                success: false, 
+                error: `Kebenaran keluar pejabat maksimum ${MAX_OUT_OF_OFFICE_HOURS} jam sahaja.\n\nTempoh dimohon: ${hoursRequested.toFixed(1)} jam\n\nSila mohon CUTI REHAT untuk tempoh lebih lama.` 
+            };
+        }
+    }
+    
     return await callAPI('submitLeaveRequest', {
         uid: uid,
         userName: userName,
@@ -944,7 +1001,7 @@ async function updateLeaveRequestStatus(requestId, status, adminResponse) {
 }
 
 // ============================================
-// NEW: COURSE DIARY FUNCTIONS
+// COURSE DIARY FUNCTIONS (Exempt from attendance)
 // ============================================
 
 async function submitCourseDiary(uid, userName, date, type, title, description, fileUrl) {
@@ -976,7 +1033,7 @@ async function updateDiaryStatus(diaryId, status, adminNotes) {
 }
 
 // ============================================
-// NEW: INBOX FUNCTIONS
+// INBOX FUNCTIONS
 // ============================================
 
 async function getUserInbox(uid) {
@@ -999,7 +1056,7 @@ async function sendToInbox(uid, title, message, type, referenceId, status) {
 }
 
 // ============================================
-// NEW: GET ALL PENDING REQUESTS (ADMIN)
+// GET ALL PENDING REQUESTS (ADMIN)
 // ============================================
 
 async function getAllPendingRequests(requestingUser) {
@@ -1007,7 +1064,7 @@ async function getAllPendingRequests(requestingUser) {
 }
 
 // ============================================
-// NEW: UPLOAD FILE TO GOOGLE DRIVE
+// UPLOAD FILE TO GOOGLE DRIVE
 // ============================================
 
 async function uploadFileToDrive(fileName, fileBase64, folderId, mimeType) {
@@ -1051,6 +1108,80 @@ async function resetTodayAttendance(data) {
 
 async function getCurrentIPLocation() {
     return await getIPLocation();
+}
+
+// ============================================
+// CRASH REPORT FUNCTIONS (Emergency)
+// ============================================
+
+async function reportCrash(crashData) {
+    return await callAPI('report_crash', crashData);
+}
+
+async function getActiveEmergency(uid) {
+    return await callAPI('getActiveEmergency', { uid: uid });
+}
+
+async function updateEmergencyStatus(uid, reportId, status) {
+    return await callAPI('updateEmergencyStatus', {
+        uid: uid,
+        reportId: reportId,
+        status: status
+    });
+}
+
+async function getNearbyCrashes(latitude, longitude, radius, hours) {
+    return await callAPI('get_nearby_crashes', {
+        latitude: latitude,
+        longitude: longitude,
+        radius: radius,
+        hours: hours
+    });
+}
+
+async function confirmRescue(rescueData) {
+    return await callAPI('confirm_rescue', rescueData);
+}
+
+async function getAllCrashReports(requestingUser) {
+    return await callAPI('getAllCrashReports', { requestingUser: JSON.stringify(requestingUser) });
+}
+
+// ============================================
+// EMERGENCY CONTACT FUNCTIONS
+// ============================================
+
+async function addEmergencyContact(data, requestingUser) {
+    return await callAPI('addEmergencyContact', {
+        data: JSON.stringify(data),
+        requestingUser: JSON.stringify(requestingUser)
+    });
+}
+
+async function getEmergencyContacts(uid, requestingUser) {
+    return await callAPI('getEmergencyContacts', {
+        uid: uid,
+        requestingUser: JSON.stringify(requestingUser)
+    });
+}
+
+async function deleteEmergencyContact(uid, contactEmail, requestingUser) {
+    return await callAPI('deleteEmergencyContact', {
+        uid: uid,
+        contactEmail: contactEmail,
+        requestingUser: JSON.stringify(requestingUser)
+    });
+}
+
+// ============================================
+// AUDIT LOG FUNCTIONS
+// ============================================
+
+async function getAuditLogs(requestingUser, filters) {
+    return await callAPI('getAuditLogs', {
+        requestingUser: JSON.stringify(requestingUser),
+        filters: filters ? JSON.stringify(filters) : null
+    });
 }
 
 // ============================================
@@ -1123,5 +1254,5 @@ async function debugIPhoneDetection() {
 // ============================================
 // INITIALIZATION
 // ============================================
-console.log('✅ api-config.js v4.0 loaded - Complete with Exception, Leave Requests, Course Diaries, Inbox');
+console.log('✅ api-config.js v5.0 loaded - No APK Management, with Leave Validation & Diary Exempt');
 
