@@ -435,35 +435,6 @@
             background: rgba(255,255,255,0.5);
         }
 
-        .confidence-badge {
-            position: absolute;
-            bottom: -25px;
-            left: 0;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        .refresh-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .refresh-btn:hover {
-            background: #e2e8f0;
-        }
-
         .badge {
             display: inline-flex;
             align-items: center;
@@ -525,6 +496,30 @@
         .remark-sick { background: #fef3c7; color: #92400e; }
         .remark-exception { background: #fed7aa; color: #9a3412; }
         .remark-none { background: #f1f5f9; color: #64748b; }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner-large {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1e3a8a;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            background: white;
+            padding: 10px;
+        }
 
         @media (max-width: 768px) {
             .sidebar { width: 240px; }
@@ -606,7 +601,7 @@
         </div>
     </div>
 
-    <!-- User Details Modal (Direct/Fix - Bukan Popup) -->
+    <!-- User Details Modal -->
     <div id="userDetailsModal" class="confirm-modal" style="display: none;">
         <div class="confirm-content" style="max-width: 800px; max-height: 85vh; overflow-y: auto;">
             <div class="flex justify-between items-center mb-4">
@@ -620,6 +615,7 @@
             <div class="sub-tabs">
                 <div class="sub-tab active" onclick="switchUserSubTabModal('attendance')" id="modalSubTabAttendance">Rekod Kehadiran</div>
                 <div class="sub-tab" onclick="switchUserSubTabModal('info')" id="modalSubTabInfo">Maklumat Kakitangan</div>
+                <div class="sub-tab" onclick="switchUserSubTabModal('requests')" id="modalSubTabRequests">Permohonan</div>
             </div>
 
             <div id="modalAttendanceSubTab">
@@ -653,8 +649,32 @@
                     <div><h4 class="font-black text-md mb-3">Maklumat Asas</h4><div class="space-y-3"><div><p class="text-xs font-bold text-gray-400">Nama Penuh</p><p class="font-bold text-gray-800" id="modalInfoName">-</p></div><div><p class="text-xs font-bold text-gray-400">Emel</p><p class="font-bold text-gray-800" id="modalInfoEmail">-</p></div><div><p class="text-xs font-bold text-gray-400">Unit</p><p class="font-bold text-gray-800" id="modalInfoUnit">-</p></div><div><p class="text-xs font-bold text-gray-400">Cawangan</p><p class="font-bold text-gray-800" id="modalInfoBranch">-</p></div><div><p class="text-xs font-bold text-gray-400">Status Biometrik</p><p class="font-bold text-gray-800" id="modalInfoFaceStatus">-</p></div><div><p class="text-xs font-bold text-gray-400">Platform Peranti</p><p class="font-bold text-gray-800" id="modalInfoPlatform">-</p></div></div></div>
                     <div><h4 class="font-black text-md mb-3">Geofencing</h4><div class="space-y-3"><div><p class="text-xs font-bold text-gray-400">Lokasi Pejabat</p><p class="font-bold text-gray-800" id="modalInfoLocation">-</p></div><div><p class="text-xs font-bold text-gray-400">Koordinat</p><p class="font-bold text-gray-800" id="modalInfoCoord">-</p></div><div><p class="text-xs font-bold text-gray-400">Radius</p><p class="font-bold text-gray-800" id="modalInfoRadius">-</p></div></div></div>
                 </div>
-                <div class="mt-6 pt-4 border-t"><h4 class="font-black text-md mb-3">Tindakan Pentadbiran</h4><div class="flex gap-3"><button onclick="forceLogoutUserFromModal()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-bold">Force Logout</button><button onclick="resetUserFaceFromModal()" class="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-bold">Reset Pendaftaran Wajah</button></div></div>
+                <div class="mt-6 pt-4 border-t"><h4 class="font-black text-md mb-3">Tindakan Pentadbiran</h4><div class="flex gap-3 flex-wrap"><button onclick="forceLogoutUserFromModal()" class="bg-red-500 text-white px-4 py-2 rounded-xl text-sm font-bold">Force Logout</button><button onclick="resetUserFaceFromModal()" class="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-bold">Reset Pendaftaran Wajah</button><button onclick="blockUserFromModal()" class="bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-bold">Sekat Akaun</button></div></div>
             </div>
+
+            <div id="modalRequestsSubTab" class="hidden">
+                <div class="sub-tabs mb-4" style="background: #f1f5f9;">
+                    <div class="sub-tab active" onclick="switchRequestSubTab('leave')">Cuti</div>
+                    <div class="sub-tab" onclick="switchRequestSubTab('diary')">Diari</div>
+                    <div class="sub-tab" onclick="switchRequestSubTab('exception')">Exception</div>
+                </div>
+                <div id="leaveRequestsList" class="space-y-3"></div>
+                <div id="diaryRequestsList" class="space-y-3 hidden"></div>
+                <div id="exceptionRequestsList" class="space-y-3 hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Requests Modal -->
+    <div id="pendingRequestsModal" class="confirm-modal" style="display: none;">
+        <div class="confirm-content" style="max-width: 900px; max-height: 85vh; overflow-y: auto;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-black text-xl text-gray-800">Permohonan Menunggu Kelulusan</h3>
+                <button onclick="closePendingRequestsModal()" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div id="pendingRequestsList"></div>
         </div>
     </div>
 
@@ -720,6 +740,11 @@
                         <span class="material-symbols-rounded">admin_panel_settings</span> 
                         <span class="font-bold">Pengurusan Admin</span>
                     </div>
+                    <div class="nav-item" onclick="switchTab('pending')" id="navPending">
+                        <span class="material-symbols-rounded">pending_actions</span> 
+                        <span class="font-bold">Permohonan</span>
+                        <span id="pendingBadge" class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5 ml-auto hidden">0</span>
+                    </div>
                     <div class="nav-item" onclick="switchTab('reports')" id="navReports">
                         <span class="material-symbols-rounded">summarize</span> 
                         <span class="font-bold">Laporan Kehadiran</span>
@@ -764,9 +789,6 @@
                         <label>Cawangan</label>
                         <select id="filterBranch" onchange="filterUsers()">
                             <option value="all">Semua Cawangan</option>
-                            <option value="Putrajaya">Putrajaya</option>
-                            <option value="Johor">Johor</option>
-                            <option value="Sarawak">Sarawak</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -795,7 +817,7 @@
                 </div>
             </div>
 
-            <!-- Register User Tab (Tanpa Pendaftaran Pengguna - Tiada tab Register untuk pengguna biasa, hanya admin yang daftar) -->
+            <!-- Register User Tab -->
             <div id="registerTab" class="hidden">
                 <div class="max-w-4xl">
                     <h1 class="text-4xl font-black text-gray-800 mb-2">Daftar Kakitangan Baru</h1>
@@ -817,7 +839,7 @@
                                 <div class="col-span-2"><label class="input-label">Nama Penuh</label><input type="text" id="userName" class="input-field" placeholder="Masukkan nama penuh"></div>
                                 <div class="col-span-2"><label class="input-label">Emel Rasmi</label><input type="email" id="userEmail" class="input-field" placeholder="contoh@imigresen.gov.my"></div>
                                 <div><label class="input-label">Unit / Bahagian</label><input type="text" id="userUnit" class="input-field" placeholder="Contoh: UPSKK"></div>
-                                <div><label class="input-label">Cawangan</label><select id="userBranch" class="input-field"><option value="">Pilih Cawangan</option><option value="Putrajaya">Putrajaya</option><option value="Johor">Johor</option><option value="Sarawak">Sarawak</option></select></div>
+                                <div><label class="input-label">Cawangan</label><select id="userBranch" class="input-field"><option value="">Pilih Cawangan</option></select></div>
                                 <div class="col-span-2"><label class="input-label">Kata Laluan Sistem</label><input type="password" id="userPassword" class="input-field" placeholder="Min 6 aksara"></div>
                                 <div class="col-span-2"><label class="input-label">No. Telefon</label><input type="tel" id="userPhone" class="input-field" placeholder="0123456789"></div>
                             </div>
@@ -845,7 +867,7 @@
                 </div>
             </div>
 
-            <!-- Admins Management Tab - Superadmin boleh tambah, kemaskini, delete admin -->
+            <!-- Admins Management Tab -->
             <div id="adminsTab" class="hidden">
                 <div class="flex justify-between items-center mb-8">
                     <h1 class="text-4xl font-black text-gray-800">Pengurusan Admin</h1>
@@ -859,12 +881,29 @@
                 </div>
             </div>
 
+            <!-- Pending Requests Tab -->
+            <div id="pendingTab" class="hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-4xl font-black text-gray-800">Permohonan Menunggu Kelulusan</h1>
+                    <button onclick="refreshPendingRequests()" class="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2">
+                        <span class="material-symbols-rounded">refresh</span> Muat Semula
+                    </button>
+                </div>
+                <div id="pendingRequestsContainer" class="space-y-4"></div>
+            </div>
+
             <!-- Reports Tab -->
             <div id="reportsTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Laporan Kehadiran</h1>
                 <div class="bg-white rounded-[40px] p-10 shadow-sm max-w-2xl">
-                    <div class="grid grid-cols-2 gap-6 mb-8"><div><label class="input-label">Cawangan</label><select id="reportBranch"><option value="all">Semua</option></select></div><div><label class="input-label">Unit</label><select id="reportUnit"><option value="all">Semua Unit</option></select></div></div>
-                    <div class="grid grid-cols-2 gap-6 mb-8"><div><label class="input-label">Tarikh Mula</label><input type="date" id="startDate"></div><div><label class="input-label">Tarikh Tamat</label><input type="date" id="endDate"></div></div>
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div><label class="input-label">Cawangan</label><select id="reportBranch"><option value="all">Semua</option></select></div>
+                        <div><label class="input-label">Unit</label><select id="reportUnit"><option value="all">Semua Unit</option></select></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div><label class="input-label">Tarikh Mula</label><input type="date" id="startDate"></div>
+                        <div><label class="input-label">Tarikh Tamat</label><input type="date" id="endDate"></div>
+                    </div>
                     <div class="mb-8"><label class="input-label">Pilih Kakitangan</label><select id="reportUser"></select></div>
                     <button onclick="generatePDF()" class="w-full bg-blue-800 text-white py-5 rounded-[20px] font-black flex items-center justify-center gap-4">📄 Jana Laporan PDF</button>
                 </div>
@@ -885,8 +924,18 @@
             <!-- Audit Log Tab -->
             <div id="auditTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Log Aktiviti Sistem</h1>
-                <div class="filter-bar"><div class="filter-group"><label>Tarikh Mula</label><input type="date" id="auditStartDate"></div><div class="filter-group"><label>Tarikh Tamat</label><input type="date" id="auditEndDate"></div><div class="filter-group"><button onclick="loadAuditLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold">Cari</button></div></div>
-                <div class="bg-white rounded-[40px] p-6 shadow-sm overflow-x-auto"><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh & Masa</th><th>Pengguna</th><th>Cawangan</th><th>Tindakan</th><th>Butiran</th><th>IP Address</th></tr></thead><tbody id="auditLogsBody"></tbody></table></div>
+                <div class="filter-bar">
+                    <div class="filter-group"><label>Tarikh Mula</label><input type="date" id="auditStartDate"></div>
+                    <div class="filter-group"><label>Tarikh Tamat</label><input type="date" id="auditEndDate"></div>
+                    <div class="filter-group"><label>Tindakan</label><select id="auditAction"><option value="">Semua</option><option value="LOGIN">Login</option><option value="LOGOUT">Logout</option><option value="USER_CREATED">User Created</option><option value="USER_DELETED">User Deleted</option><option value="CLOCK_IN">Clock In</option><option value="CLOCK_OUT">Clock Out</option></select></div>
+                    <div class="filter-group"><button onclick="loadAuditLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold">Cari</button></div>
+                </div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm overflow-x-auto">
+                    <table class="w-full min-w-[800px]">
+                        <thead><tr><th>Tarikh & Masa</th><th>Pengguna</th><th>Cawangan</th><th>Tindakan</th><th>Butiran</th><th>IP Address</th></tr></thead>
+                        <tbody id="auditLogsBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -898,22 +947,30 @@
             <div class="text-left">
                 <div class="mb-3"><label class="input-label text-left">Nama Penuh</label><input type="text" id="adminName" class="input-field"></div>
                 <div class="mb-3"><label class="input-label text-left">Email</label><input type="email" id="adminEmail" class="input-field"></div>
-                <div class="mb-3"><label class="input-label text-left">Cawangan</label><select id="adminBranch" class="input-field"><option value="">Pilih Cawangan</option><option value="Putrajaya">Putrajaya</option><option value="Johor">Johor</option><option value="Sarawak">Sarawak</option></select></div>
+                <div class="mb-3"><label class="input-label text-left">Cawangan</label><select id="adminBranch" class="input-field"><option value="">Pilih Cawangan</option></select></div>
                 <div class="mb-3"><label class="input-label text-left">Unit</label><input type="text" id="adminUnit" class="input-field"></div>
                 <div class="mb-3"><label class="input-label text-left">Peranan</label><select id="adminRole" class="input-field"><option value="admin">Admin</option><option value="superadmin">Superadmin</option></select></div>
                 <div class="mb-3"><label class="input-label text-left">Kata Laluan</label><input type="password" id="adminPassword" class="input-field"></div>
             </div>
-            <div class="grid grid-cols-2 gap-3 mt-4"><button onclick="document.getElementById('addAdminModal').style.display='none'" class="bg-gray-100 text-gray-500 py-3 rounded-2xl font-bold">Batal</button><button onclick="createAdmin()" class="bg-green-600 text-white py-3 rounded-2xl font-bold">Daftar</button></div>
+            <div class="grid grid-cols-2 gap-3 mt-4"><button onclick="closeAddAdminModal()" class="bg-gray-100 text-gray-500 py-3 rounded-2xl font-bold">Batal</button><button onclick="createAdmin()" class="bg-green-600 text-white py-3 rounded-2xl font-bold">Daftar</button></div>
         </div>
     </div>
 
     <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        // IMPORTANT: Replace this with your actual Google Apps Script Web App URL
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+        
         // ============================================
         // DATA STORES
         // ============================================
         let currentUser = null;
         let allUsers = [];
         let admins = [];
+        let allBranches = new Set();
+        let allUnits = new Set();
         let currentStep = 1;
         let videoStream = null;
         let modelsLoaded = false;
@@ -924,28 +981,77 @@
         let realTimeDetectionInterval = null;
         let isProcessing = false;
         let currentModalUser = null;
+        let currentRequestSubTab = 'leave';
+        let pendingRequestsCount = 0;
+        let platformChart = null;
+        let branchChart = null;
 
-        // Sample data
-        const sampleUsers = [
-            { uid: '1', name: 'Ahmad Bin Abdullah', email: 'ahmad@imigresen.gov.my', branch: 'Putrajaya', unit: 'Unit Teknologi', phone: '0123456789', faceDescriptor: 'sample123', location: 'Kompleks Imigresen Putrajaya', lat: 2.9264, lng: 101.6964, radius: 500, registeredPlatform: 'Android' },
-            { uid: '2', name: 'Siti Binti Hassan', email: 'siti@imigresen.gov.my', branch: 'Johor', unit: 'Bahagian Pasport', phone: '0123456790', faceDescriptor: '', location: 'Pejabat Imigresen Johor', lat: 1.4927, lng: 103.7414, radius: 500, registeredPlatform: '' },
-            { uid: '3', name: 'Muhammad Faiz Bin Rosli', email: 'faiz@imigresen.gov.my', branch: 'Sarawak', unit: 'Unit Keselamatan', phone: '0123456791', faceDescriptor: 'sample456', location: 'Pejabat Imigresen Kuching', lat: 1.5575, lng: 110.3438, radius: 500, registeredPlatform: 'iOS' }
-        ];
+        // ============================================
+        // API CALL FUNCTION
+        // ============================================
+        async function callAPI(method, params = {}) {
+            try {
+                // Add requestingUser if logged in
+                if (currentUser) {
+                    params.requestingUser = JSON.stringify(currentUser);
+                }
+                
+                const url = new URL(APPS_SCRIPT_URL);
+                url.searchParams.append('method', method);
+                
+                for (const key in params) {
+                    if (params[key] !== undefined && params[key] !== null) {
+                        url.searchParams.append(key, typeof params[key] === 'object' ? JSON.stringify(params[key]) : params[key]);
+                    }
+                }
+                
+                const response = await fetch(url.toString(), {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                return { success: false, error: error.message };
+            }
+        }
 
-        const sampleAdmins = [
-            { uid: 'a1', name: 'Super Admin Utama', email: 'superadmin@imigresen.gov.my', branch: 'Putrajaya', unit: 'Pentadbiran', role: 'superadmin' },
-            { uid: 'a2', name: 'Admin Johor', email: 'admin.johor@imigresen.gov.my', branch: 'Johor', unit: 'Pentadbiran', role: 'admin' }
-        ];
+        async function callAPIPost(action, data) {
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    cache: 'no-cache',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action: action, ...data })
+                });
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                return { success: false, error: error.message };
+            }
+        }
 
-        const sampleAttendance = [
-            { date: '2026-04-14', clockIn: '2026-04-14T08:00:00', clockOut: '2026-04-14T17:00:00', totalHours: 9, totalOT: 0.5, remark: '' },
-            { date: '2026-04-13', clockIn: '2026-04-13T08:15:00', clockOut: '2026-04-13T17:30:00', totalHours: 9.25, totalOT: 1, remark: 'cuti rehat' }
-        ];
-
-        const sampleAuditLogs = [
-            { timestamp: '2026-04-14T08:00:00', userName: 'Ahmad Bin Abdullah', userBranch: 'Putrajaya', action: 'LOGIN', details: 'Log masuk dari Android', ipAddress: '192.168.1.1', status: 'success' },
-            { timestamp: '2026-04-14T07:30:00', userName: 'Super Admin', userBranch: 'Putrajaya', action: 'USER_CREATED', details: 'Mencipta pengguna baru', ipAddress: '192.168.1.100', status: 'success' }
-        ];
+        function showLoading(show) {
+            let overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'loadingOverlay';
+                    overlay.className = 'loading-overlay';
+                    overlay.innerHTML = '<div class="loading-spinner-large"></div>';
+                    document.body.appendChild(overlay);
+                }
+                overlay.style.display = 'flex';
+            } else if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
 
         // ============================================
         // HELPER FUNCTIONS
@@ -984,14 +1090,219 @@
             newCancel.addEventListener('click', () => { modal.style.display = 'none'; });
         }
 
-        function escapeHtml(text) { if (!text) return ''; return text.replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; }); }
+        function escapeHtml(text) { if (!text) return ''; return String(text).replace(/[&<>]/g, function(m) { if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m; }); }
 
         function formatJam(decimalJam) { if (!decimalJam || decimalJam <= 0) return '-'; const jam = Math.floor(decimalJam); const minit = Math.round((decimalJam - jam) * 60); return `${jam}j ${minit}m`; }
 
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
         // ============================================
-        // USER DETAILS MODAL (Direct/Fix - Bukan Popup)
+        // LOAD DATA FROM BACKEND
         // ============================================
-        function showUserDetailsModal(user) {
+        async function loadAllUsers() {
+            showLoading(true);
+            const result = await callAPI('getAllUsers');
+            showLoading(false);
+            if (result.success) {
+                allUsers = result.data || [];
+                updateBranchesAndUnits();
+                renderUsersTable();
+                updateDashboardStats();
+                updateReportDropdown();
+                return true;
+            } else {
+                showAlert('Ralat', result.error || 'Gagal memuatkan senarai pengguna', 'error');
+                return false;
+            }
+        }
+
+        async function loadAdmins() {
+            const result = await callAPI('getAdmins');
+            if (result.success) {
+                admins = result.data || [];
+                renderAdminsTable();
+                return true;
+            } else {
+                console.error('Failed to load admins:', result.error);
+                return false;
+            }
+        }
+
+        async function loadAuditLogs() {
+            const startDate = document.getElementById('auditStartDate').value;
+            const endDate = document.getElementById('auditEndDate').value;
+            const action = document.getElementById('auditAction').value;
+            
+            const filters = {};
+            if (startDate) filters.startDate = startDate;
+            if (endDate) filters.endDate = endDate;
+            if (action) filters.action = action;
+            
+            showLoading(true);
+            const result = await callAPI('getAuditLogs', { filters: JSON.stringify(filters) });
+            showLoading(false);
+            
+            if (result.success) {
+                const tbody = document.getElementById('auditLogsBody');
+                let html = '';
+                (result.data || []).forEach(log => {
+                    html += `<tr>
+                        <td class="p-3 text-sm">${formatDateTime(log.timestamp)}</td>
+                        <td class="p-3">${escapeHtml(log.userName || '-')}</td>
+                        <td class="p-3">${escapeHtml(log.branch || '-')}</td>
+                        <td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs">${escapeHtml(log.action)}</span></td>
+                        <td class="p-3 text-sm">${escapeHtml(log.details || '-')}</td>
+                        <td class="p-3 text-xs">${escapeHtml(log.ipAddress || '-')}</td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html || '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</td></tr>';
+            }
+        }
+
+        async function loadPendingRequestsCount() {
+            const result = await callAPI('getAllPendingRequests');
+            if (result.success && result.data) {
+                pendingRequestsCount = result.data.length;
+                const badge = document.getElementById('pendingBadge');
+                if (pendingRequestsCount > 0) {
+                    badge.classList.remove('hidden');
+                    badge.innerText = pendingRequestsCount;
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        }
+
+        async function loadPendingRequests() {
+            showLoading(true);
+            const result = await callAPI('getAllPendingRequests');
+            showLoading(false);
+            
+            if (result.success && result.data) {
+                displayPendingRequests(result.data);
+            } else {
+                document.getElementById('pendingRequestsContainer').innerHTML = '<div class="bg-white rounded-2xl p-8 text-center text-gray-400">Tiada permohonan menunggu</div>';
+            }
+        }
+
+        function displayPendingRequests(requests) {
+            const container = document.getElementById('pendingRequestsContainer');
+            if (!requests || requests.length === 0) {
+                container.innerHTML = '<div class="bg-white rounded-2xl p-8 text-center text-gray-400">Tiada permohonan menunggu</div>';
+                return;
+            }
+            
+            let html = '';
+            requests.forEach(req => {
+                let typeLabel = '', typeColor = '', details = '';
+                if (req.requestType === 'leave') {
+                    typeLabel = 'Cuti';
+                    typeColor = 'bg-blue-100 text-blue-800';
+                    const typeMap = { 'out_of_office': 'Kebenaran Keluar', 'sick_leave': 'Cuti Sakit', 'annual_leave': 'Cuti Rehat' };
+                    details = `${typeMap[req.type] || req.type} | ${req.startDate} → ${req.endDate}`;
+                } else if (req.requestType === 'exception') {
+                    typeLabel = 'Exception Report';
+                    typeColor = 'bg-orange-100 text-orange-800';
+                    details = `Tarikh: ${req.date} | Sebab: ${escapeHtml(req.reason || '-')}`;
+                } else if (req.requestType === 'diary') {
+                    typeLabel = 'Diari';
+                    typeColor = 'bg-purple-100 text-purple-800';
+                    const typeMap = { 'course': 'Kursus', 'assignment': 'Tugasan Luar' };
+                    details = `${typeMap[req.type] || req.type} | ${req.date} | ${escapeHtml(req.title || '-')}`;
+                }
+                
+                html += `
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start flex-wrap gap-4">
+                            <div>
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${typeColor}">${typeLabel}</span>
+                                    <span class="text-xs text-gray-400">${formatDateTime(req.timestamp)}</span>
+                                </div>
+                                <p class="font-bold text-gray-800">${escapeHtml(req.userName)}</p>
+                                <p class="text-sm text-gray-500">${escapeHtml(req.userEmail || '')}</p>
+                                <p class="text-xs text-gray-400 mt-1">${details}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                ${req.requestType === 'leave' ? `<button onclick="openLeaveActionModal('${req.requestId}', '${escapeHtml(req.userName)}', '${req.type}')" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Proses</button>` : ''}
+                                ${req.requestType === 'exception' ? `<button onclick="openExceptionActionModal('${req.requestId}', '${escapeHtml(req.userName)}')" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Proses</button>` : ''}
+                                ${req.requestType === 'diary' ? `<button onclick="openDiaryActionModal('${req.diaryId}', '${escapeHtml(req.userName)}')" class="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Proses</button>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // LEAVE REQUEST ACTIONS
+        // ============================================
+        function openLeaveActionModal(requestId, userName, type) {
+            showConfirm('Luluskan Permohonan?', `Luluskan permohonan ${type} untuk ${userName}?`, async () => {
+                showLoading(true);
+                const result = await callAPI('updateLeaveRequestStatus', {
+                    requestId: requestId,
+                    status: 'approved',
+                    adminResponse: 'Diluluskan oleh Superadmin'
+                });
+                showLoading(false);
+                if (result.success) {
+                    showNotif('Berjaya', 'Permohonan diluluskan', false);
+                    loadPendingRequests();
+                    loadPendingRequestsCount();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal memproses', 'error');
+                }
+            });
+        }
+
+        function openExceptionActionModal(requestId, userName) {
+            showConfirm('Luluskan Exception Report?', `Sahkan exception report untuk ${userName}?`, async () => {
+                showLoading(true);
+                const result = await callAPI('updateExceptionStatus', {
+                    exceptionId: requestId,
+                    status: 'approved',
+                    adminResponse: 'Diluluskan oleh Superadmin'
+                });
+                showLoading(false);
+                if (result.success) {
+                    showNotif('Berjaya', 'Exception report diluluskan', false);
+                    loadPendingRequests();
+                    loadPendingRequestsCount();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal memproses', 'error');
+                }
+            });
+        }
+
+        function openDiaryActionModal(diaryId, userName) {
+            showConfirm('Luluskan Diari?', `Luluskan diari untuk ${userName}? (Pengguna akan dikecualikan dari clock in/out pada tarikh tersebut)`, async () => {
+                showLoading(true);
+                const result = await callAPI('updateDiaryStatus', {
+                    diaryId: diaryId,
+                    status: 'reviewed',
+                    adminNotes: 'Diluluskan oleh Superadmin'
+                });
+                showLoading(false);
+                if (result.success) {
+                    showNotif('Berjaya', 'Diari diluluskan', false);
+                    loadPendingRequests();
+                    loadPendingRequestsCount();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal memproses', 'error');
+                }
+            });
+        }
+
+        // ============================================
+        // USER DETAILS MODAL
+        // ============================================
+        async function showUserDetailsModal(user) {
             currentModalUser = user;
             document.getElementById('modalUserName').innerText = user.name;
             document.getElementById('modalUserInfo').innerText = `${user.email} • ${user.unit || 'Tiada Unit'} • ${user.branch}`;
@@ -1002,7 +1313,7 @@
             document.getElementById('modalInfoFaceStatus').innerHTML = user.faceDescriptor ? '<span class="text-green-600">✓ DIDAFTAR</span>' : '<span class="text-red-500">✗ TIADA REKOD</span>';
             document.getElementById('modalInfoPlatform').innerText = user.registeredPlatform || 'Belum daftar';
             document.getElementById('modalInfoLocation').innerText = user.location || 'Pejabat Am';
-            document.getElementById('modalInfoCoord').innerText = user.lat ? `${user.lat.toFixed(6)}, ${user.lng.toFixed(6)}` : '-';
+            document.getElementById('modalInfoCoord').innerText = user.lat ? `${parseFloat(user.lat).toFixed(6)}, ${parseFloat(user.lng).toFixed(6)}` : '-';
             document.getElementById('modalInfoRadius').innerText = user.radius ? `${user.radius}m` : '500m';
             
             const today = new Date();
@@ -1011,7 +1322,8 @@
             document.getElementById('modalEndDate').value = today.toISOString().split('T')[0];
             
             document.getElementById('userDetailsModal').style.display = 'flex';
-            loadModalAttendance();
+            await loadModalAttendance();
+            await loadUserRequests();
         }
 
         function closeUserDetailsModal() { document.getElementById('userDetailsModal').style.display = 'none'; currentModalUser = null; }
@@ -1019,77 +1331,252 @@
         function switchUserSubTabModal(tab) {
             document.getElementById('modalSubTabAttendance').classList.toggle('active', tab === 'attendance');
             document.getElementById('modalSubTabInfo').classList.toggle('active', tab === 'info');
+            document.getElementById('modalSubTabRequests').classList.toggle('active', tab === 'requests');
             document.getElementById('modalAttendanceSubTab').classList.toggle('hidden', tab !== 'attendance');
             document.getElementById('modalInfoSubTab').classList.toggle('hidden', tab !== 'info');
+            document.getElementById('modalRequestsSubTab').classList.toggle('hidden', tab !== 'requests');
         }
 
-        function loadModalAttendance() {
+        function switchRequestSubTab(tab) {
+            currentRequestSubTab = tab;
+            document.querySelectorAll('#modalRequestsSubTab .sub-tab').forEach(el => el.classList.remove('active'));
+            if (tab === 'leave') {
+                document.querySelector('#modalRequestsSubTab .sub-tab:first-child').classList.add('active');
+                document.getElementById('leaveRequestsList').classList.remove('hidden');
+                document.getElementById('diaryRequestsList').classList.add('hidden');
+                document.getElementById('exceptionRequestsList').classList.add('hidden');
+            } else if (tab === 'diary') {
+                document.querySelector('#modalRequestsSubTab .sub-tab:nth-child(2)').classList.add('active');
+                document.getElementById('leaveRequestsList').classList.add('hidden');
+                document.getElementById('diaryRequestsList').classList.remove('hidden');
+                document.getElementById('exceptionRequestsList').classList.add('hidden');
+            } else if (tab === 'exception') {
+                document.querySelector('#modalRequestsSubTab .sub-tab:last-child').classList.add('active');
+                document.getElementById('leaveRequestsList').classList.add('hidden');
+                document.getElementById('diaryRequestsList').classList.add('hidden');
+                document.getElementById('exceptionRequestsList').classList.remove('hidden');
+            }
+        }
+
+        async function loadUserRequests() {
             if (!currentModalUser) return;
-            const tbody = document.getElementById('modalAttendanceBody');
+            
+            // Load leave requests
+            const leaveResult = await callAPI('getUserLeaveRequests', { uid: currentModalUser.uid });
+            if (leaveResult.success) {
+                const container = document.getElementById('leaveRequestsList');
+                displayUserRequests(container, leaveResult.data || [], 'leave');
+            }
+            
+            // Load diaries
+            const diaryResult = await callAPI('getUserDiaries', { uid: currentModalUser.uid });
+            if (diaryResult.success) {
+                const container = document.getElementById('diaryRequestsList');
+                displayUserRequests(container, diaryResult.data || [], 'diary');
+            }
+        }
+
+        function displayUserRequests(container, requests, type) {
+            if (!requests || requests.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-4">Tiada rekod</div>';
+                return;
+            }
+            
             let html = '';
-            sampleAttendance.forEach(record => {
-                const date = new Date(record.date);
-                const tarikh = date.toLocaleDateString('ms-MY');
-                const hari = date.toLocaleDateString('ms-MY', { weekday: 'long' });
-                let jamMasuk = '-', jamKeluar = '-';
-                if(record.clockIn) jamMasuk = new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
-                if(record.clockOut) jamKeluar = new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
-                const remarkClass = record.remark ? 'remark-leave' : 'remark-none';
-                const remarkText = record.remark || '-';
-                html += `<tr><td class="p-3">${tarikh}</td><td class="p-3">${hari}</td><td class="p-3">${jamMasuk}</td><td class="p-3">${jamKeluar}</td><td class="p-3">${formatJam(record.totalHours)}</td><td class="p-3">${formatJam(record.totalOT)}</td><td class="p-3"><span class="status-green px-3 py-1 rounded-full text-xs">SELESAI</span></td><td class="p-3"><span class="remark-badge ${remarkClass}">${remarkText}</span></td></tr>`;
+            requests.forEach(req => {
+                const statusColor = req.status === 'approved' ? 'text-green-600' : (req.status === 'rejected' ? 'text-red-600' : 'text-yellow-600');
+                const statusText = req.status === 'approved' ? 'LULUS' : (req.status === 'rejected' ? 'DITOLAK' : 'MENUNGGU');
+                
+                if (type === 'leave') {
+                    const typeMap = { 'out_of_office': 'Kebenaran Keluar', 'sick_leave': 'Cuti Sakit', 'annual_leave': 'Cuti Rehat' };
+                    html += `
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold">${typeMap[req.type] || req.type}</p>
+                                    <p class="text-xs text-gray-500">${req.startDate} → ${req.endDate}</p>
+                                    <p class="text-xs text-gray-400 mt-1">${escapeHtml(req.reason || '-')}</p>
+                                </div>
+                                <span class="text-xs font-bold ${statusColor}">${statusText}</span>
+                            </div>
+                            ${req.adminResponse ? `<p class="text-xs text-gray-500 mt-2">Respons: ${escapeHtml(req.adminResponse)}</p>` : ''}
+                        </div>
+                    `;
+                } else if (type === 'diary') {
+                    const typeMap = { 'course': 'Kursus', 'assignment': 'Tugasan Luar' };
+                    html += `
+                        <div class="bg-gray-50 rounded-xl p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold">${typeMap[req.type] || req.type}</p>
+                                    <p class="text-xs text-gray-500">Tarikh: ${req.date}</p>
+                                    <p class="text-xs font-semibold">${escapeHtml(req.title || '-')}</p>
+                                </div>
+                                <span class="text-xs font-bold ${statusColor}">${statusText}</span>
+                            </div>
+                            ${req.adminNotes ? `<p class="text-xs text-gray-500 mt-2">Catatan: ${escapeHtml(req.adminNotes)}</p>` : ''}
+                        </div>
+                    `;
+                }
             });
-            tbody.innerHTML = html || '<tr><td colspan="8" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
+            container.innerHTML = html;
         }
 
-        function forceLogoutUserFromModal() { if(currentModalUser) showConfirm('Force Logout', `Logout ${currentModalUser.name} dari semua peranti?`, () => showAlert('Berjaya', 'Pengguna telah dilogout', 'success')); }
-        function resetUserFaceFromModal() { closeUserDetailsModal(); showAlert('Reset Wajah', 'Sila imbas semula wajah kakitangan', 'info'); switchTab('register'); }
-
-        // ============================================
-        // LOGIN
-        // ============================================
-        function togglePasswordVisibility() {
-            const pwd = document.getElementById('loginPassword');
-            const icon = document.querySelector('.password-eye .material-symbols-rounded');
-            if(pwd.type === 'password') { pwd.type = 'text'; icon.innerText = 'visibility'; }
-            else { pwd.type = 'password'; icon.innerText = 'visibility_off'; }
+        async function loadModalAttendance() {
+            if (!currentModalUser) return;
+            const startDate = document.getElementById('modalStartDate').value;
+            const endDate = document.getElementById('modalEndDate').value;
+            
+            showLoading(true);
+            const result = await callAPI('getAttendanceWithRemarks', {
+                uid: currentModalUser.uid,
+                startDate: startDate,
+                endDate: endDate
+            });
+            showLoading(false);
+            
+            const tbody = document.getElementById('modalAttendanceBody');
+            if (result.success && result.data) {
+                let html = '';
+                result.data.forEach(record => {
+                    const remarkClass = record.remark ? `remark-${record.remarkType === 'leave' ? 'leave' : (record.remarkType === 'diary' ? 'course' : 'exception')}` : 'remark-none';
+                    const remarkText = record.remark || '-';
+                    let statusClass = 'status-green';
+                    if (record.status === 'clocked_in') statusClass = 'status-yellow';
+                    if (!record.clockIn) statusClass = 'status-red';
+                    
+                    html += `<tr>
+                        <td class="p-3">${record.date}</td>
+                        <td class="p-3">${record.weekday || '-'}</td>
+                        <td class="p-3">${record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                        <td class="p-3">${record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+                        <td class="p-3">${formatJam(record.totalHours)}</td>
+                        <td class="p-3">${formatJam(record.totalOT)}</td>
+                        <td class="p-3"><span class="${statusClass} px-3 py-1 rounded-full text-xs">${record.status === 'clocked_out' ? 'SELESAI' : (record.status === 'clocked_in' ? 'DALAM BERTUGAS' : 'TIADA')}</span></td>
+                        <td class="p-3"><span class="remark-badge ${remarkClass}">${remarkText}</span></td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html || '<tr><td colspan="8" class="text-center py-10 text-gray-400">Tiada rekod kehadiran</td></tr>';
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-10 text-gray-400">Gagal memuatkan rekod</td></tr>';
+            }
         }
 
-        async function handleLogin() {
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            if(email === 'superadmin@imigresen.gov.my' && password === 'admin123') {
-                currentUser = { name: 'Super Admin', email: email, role: 'superadmin' };
-                document.getElementById('loginPage').classList.add('hidden');
-                document.getElementById('adminDashboard').classList.remove('hidden');
-                document.getElementById('adminName').innerText = currentUser.name;
-                await loadData();
-                showNotif('Berjaya', 'Log masuk berjaya', false);
-            } else { showAlert('Gagal', 'Emel atau kata laluan salah', 'error'); }
+        async function forceLogoutUserFromModal() {
+            if (!currentModalUser) return;
+            showConfirm('Force Logout', `Logout ${currentModalUser.name} dari semua peranti?`, async () => {
+                showLoading(true);
+                const result = await callAPI('forceLogoutUser', { uid: currentModalUser.uid });
+                showLoading(false);
+                if (result.success) {
+                    showNotif('Berjaya', 'Pengguna telah dilogout', false);
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal logout', 'error');
+                }
+            });
         }
 
-        function handleLogout() { document.getElementById('adminDashboard').classList.add('hidden'); document.getElementById('loginPage').classList.remove('hidden'); currentUser = null; }
+        async function resetUserFaceFromModal() {
+            if (!currentModalUser) return;
+            showConfirm('Reset Wajah', `Reset pendaftaran wajah untuk ${currentModalUser.name}?`, async () => {
+                showLoading(true);
+                const result = await callAPI('updateUserFace', {
+                    uid: currentModalUser.uid,
+                    faceDescriptor: ''
+                });
+                showLoading(false);
+                if (result.success) {
+                    showNotif('Berjaya', 'Pendaftaran wajah telah direset', false);
+                    await loadAllUsers();
+                    closeUserDetailsModal();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal reset', 'error');
+                }
+            });
+        }
 
-        async function loadData() {
-            allUsers = [...sampleUsers];
-            admins = [...sampleAdmins];
-            renderUsersTable();
-            renderAdminsTable();
-            updateDashboardStats();
-            updateReportDropdown();
-            loadAuditLogs();
+        async function blockUserFromModal() {
+            if (!currentModalUser) return;
+            showConfirm('Sekat Akaun', `Sekat akaun ${currentModalUser.name}?`, async () => {
+                showLoading(true);
+                const result = await callAPI('updateUser', {
+                    uid: currentModalUser.uid,
+                    isBlocked: true,
+                    blockReason: 'Disekat oleh Superadmin'
+                });
+                showLoading(false);
+                if (result.success) {
+                    showNotif('Berjaya', 'Akaun telah disekat', false);
+                    await loadAllUsers();
+                    closeUserDetailsModal();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal menyekat akaun', 'error');
+                }
+            });
         }
 
         // ============================================
         // USERS MANAGEMENT
         // ============================================
+        function updateBranchesAndUnits() {
+            allBranches.clear();
+            allUnits.clear();
+            allUsers.forEach(u => {
+                if (u.branch) allBranches.add(u.branch);
+                if (u.unit) allUnits.add(u.unit);
+            });
+            
+            const branchSelects = ['filterBranch', 'userBranch', 'adminBranch', 'reportBranch'];
+            branchSelects.forEach(id => {
+                const select = document.getElementById(id);
+                if (select) {
+                    const currentValue = select.value;
+                    select.innerHTML = '<option value="">Pilih Cawangan</option>';
+                    Array.from(allBranches).sort().forEach(b => {
+                        select.innerHTML += `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`;
+                    });
+                    if (currentValue && Array.from(allBranches).includes(currentValue)) select.value = currentValue;
+                }
+            });
+            
+            const unitSelect = document.getElementById('filterUnit');
+            if (unitSelect) {
+                const currentValue = unitSelect.value;
+                unitSelect.innerHTML = '<option value="all">Semua Unit</option>';
+                Array.from(allUnits).sort().forEach(u => {
+                    unitSelect.innerHTML += `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`;
+                });
+                if (currentValue && currentValue !== 'all' && Array.from(allUnits).includes(currentValue)) unitSelect.value = currentValue;
+            }
+        }
+
         function renderUsersTable() {
             const tbody = document.getElementById('usersTableBody');
+            const branchFilter = document.getElementById('filterBranch').value;
+            const unitFilter = document.getElementById('filterUnit').value;
+            const faceFilter = document.getElementById('filterFaceStatus').value;
+            
+            let filteredUsers = [...allUsers];
+            if (branchFilter && branchFilter !== 'all') {
+                filteredUsers = filteredUsers.filter(u => u.branch === branchFilter);
+            }
+            if (unitFilter && unitFilter !== 'all') {
+                filteredUsers = filteredUsers.filter(u => u.unit === unitFilter);
+            }
+            if (faceFilter === 'registered') {
+                filteredUsers = filteredUsers.filter(u => u.faceDescriptor);
+            } else if (faceFilter === 'unregistered') {
+                filteredUsers = filteredUsers.filter(u => !u.faceDescriptor);
+            }
+            
             let html = '';
-            allUsers.forEach(u => {
+            filteredUsers.forEach(u => {
                 const faceStatus = u.faceDescriptor ? '<span class="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-100 text-red-500 text-xs font-bold px-3 py-1 rounded-full">BELUM DAFTAR</span>';
                 const locationText = u.location ? u.location.substring(0, 30) : 'Pejabat Am';
+                const platformBadge = u.registeredPlatform === 'Android' ? '<span class="badge badge-android">🤖 Android</span>' : (u.registeredPlatform === 'iOS' ? '<span class="badge badge-ios">🍎 iOS</span>' : '<span class="badge badge-web">🌐 Web</span>');
+                
                 html += `<tr>
-                    <td class="p-3"><div class="font-black">${escapeHtml(u.name)}</div><div class="text-xs text-gray-400">${escapeHtml(u.email)}</div></td>
+                    <td class="p-3"><div class="font-black">${escapeHtml(u.name)}</div><div class="text-xs text-gray-400">${escapeHtml(u.email)}</div>${platformBadge}</td>
                     <td class="p-3">${escapeHtml(u.branch)}</td>
                     <td class="p-3">${escapeHtml(u.unit || '-')}</td>
                     <td class="p-3">${faceStatus}</td>
@@ -1105,47 +1592,94 @@
             tbody.innerHTML = html || '<tr><td colspan="7" class="text-center py-10 text-gray-400">Tiada rekod kakitangan</td></tr>';
         }
 
-        function refreshUsersList() { renderUsersTable(); showNotif('Berjaya', 'Senarai dikemaskini', false); }
-        function searchUsers() { const term = document.getElementById('searchUser').value.toLowerCase(); document.querySelectorAll('#usersTableBody tr').forEach(row => { row.style.display = row.innerText.toLowerCase().includes(term) ? '' : 'none'; }); }
+        function refreshUsersList() { loadAllUsers(); }
+        function searchUsers() { renderUsersTable(); }
         function filterUsers() { renderUsersTable(); }
-        function editUser(uid) { const user = allUsers.find(u => u.uid === uid); if(user) showAlert('Edit Pengguna', 'Fungsi edit akan datang', 'info'); }
-        function confirmDeleteUser(uid, name) { showConfirm('Padam Kakitangan', `Padamkan ${name}?`, () => { allUsers = allUsers.filter(u => u.uid !== uid); renderUsersTable(); showAlert('Berjaya', 'Rekod dipadam', 'success'); }); }
+        
+        function editUser(uid) {
+            const user = allUsers.find(u => u.uid === uid);
+            if(user) showAlert('Edit Pengguna', 'Fungsi edit akan datang', 'info');
+        }
+        
+        async function confirmDeleteUser(uid, name) {
+            showConfirm('Padam Kakitangan', `Padamkan ${name}?`, async () => {
+                showLoading(true);
+                const result = await callAPI('deleteUser', { uid: uid });
+                showLoading(false);
+                if (result.success) {
+                    showNotif('Berjaya', 'Rekod dipadam', false);
+                    await loadAllUsers();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal memadam', 'error');
+                }
+            });
+        }
 
         // ============================================
-        // ADMIN MANAGEMENT (Superadmin boleh tambah, kemaskini, delete admin)
+        // ADMIN MANAGEMENT
         // ============================================
         function renderAdminsTable() {
             const tbody = document.getElementById('adminsTableBody');
             let html = '';
             admins.forEach(a => {
                 const roleBadge = a.role === 'superadmin' ? '<span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold">Superadmin</span>' : '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">Admin</span>';
-                html += `<tr><td class="p-3 font-bold">${escapeHtml(a.name)}</td><td class="p-3">${escapeHtml(a.email)}</td><td class="p-3">${escapeHtml(a.branch)}</td><td class="p-3">${escapeHtml(a.unit || '-')}</td><td class="p-3">${roleBadge}</td><td class="p-3 text-center"><button onclick="deleteAdmin('${a.uid}', '${escapeHtml(a.name)}')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Hapus</button></td></tr>`;
+                html += `<tr>
+                    <td class="p-3 font-bold">${escapeHtml(a.name)}</td>
+                    <td class="p-3">${escapeHtml(a.email)}</td>
+                    <td class="p-3">${escapeHtml(a.branch)}</td>
+                    <td class="p-3">${escapeHtml(a.unit || '-')}</td>
+                    <td class="p-3">${roleBadge}</td>
+                    <td class="p-3 text-center"><button onclick="deleteAdmin('${a.uid}', '${escapeHtml(a.name)}')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Hapus</button></td>
+                </tr>`;
             });
             tbody.innerHTML = html || '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada admin didaftarkan</td></tr>';
         }
 
         function showAddAdminModal() { document.getElementById('addAdminModal').style.display = 'flex'; }
-        function createAdmin() {
+        function closeAddAdminModal() { document.getElementById('addAdminModal').style.display = 'none'; }
+        
+        async function createAdmin() {
             const name = document.getElementById('adminName').value;
             const email = document.getElementById('adminEmail').value;
             const branch = document.getElementById('adminBranch').value;
             const unit = document.getElementById('adminUnit').value;
             const role = document.getElementById('adminRole').value;
             const password = document.getElementById('adminPassword').value;
+            
             if(!name || !email || !branch || !password) { showAlert('Ralat', 'Sila lengkapkan maklumat wajib', 'error'); return; }
-            const newAdmin = { uid: 'a' + Date.now(), name, email, branch, unit, role };
-            admins.push(newAdmin);
-            renderAdminsTable();
-            document.getElementById('addAdminModal').style.display = 'none';
-            document.getElementById('adminName').value = '';
-            document.getElementById('adminEmail').value = '';
-            document.getElementById('adminBranch').value = '';
-            document.getElementById('adminUnit').value = '';
-            document.getElementById('adminPassword').value = '';
-            showAlert('Berjaya', 'Admin baru didaftarkan', 'success');
+            
+            showLoading(true);
+            const result = await callAPI('createAdmin', {
+                data: JSON.stringify({ name, email, branch, unit, role, password })
+            });
+            showLoading(false);
+            
+            if (result.success) {
+                closeAddAdminModal();
+                document.getElementById('adminName').value = '';
+                document.getElementById('adminEmail').value = '';
+                document.getElementById('adminUnit').value = '';
+                document.getElementById('adminPassword').value = '';
+                showNotif('Berjaya', 'Admin baru didaftarkan', false);
+                await loadAdmins();
+            } else {
+                showAlert('Ralat', result.error || 'Gagal mendaftar admin', 'error');
+            }
         }
 
-        function deleteAdmin(uid, name) { showConfirm('Hapus Admin', `Padamkan admin ${name}?`, () => { admins = admins.filter(a => a.uid !== uid); renderAdminsTable(); showAlert('Berjaya', 'Admin dihapuskan', 'success'); }); }
+        async function deleteAdmin(uid, name) {
+            showConfirm('Hapus Admin', `Padamkan admin ${name}?`, async () => {
+                showLoading(true);
+                const result = await callAPI('deleteAdmin', { uid: uid });
+                showLoading(false);
+                if (result.success) {
+                    showNotif('Berjaya', 'Admin dihapuskan', false);
+                    await loadAdmins();
+                } else {
+                    showAlert('Ralat', result.error || 'Gagal menghapus admin', 'error');
+                }
+            });
+        }
 
         // ============================================
         // DASHBOARD & REPORTS
@@ -1154,29 +1688,42 @@
             document.getElementById('totalUsersStat').innerText = allUsers.length;
             document.getElementById('faceRegisteredStat').innerText = allUsers.filter(u => u.faceDescriptor).length;
             document.getElementById('presentTodayStat').innerText = Math.floor(allUsers.length * 0.7);
-            document.getElementById('totalBranchesStat').innerText = new Set(allUsers.map(u => u.branch)).size;
+            document.getElementById('totalBranchesStat').innerText = allBranches.size;
+            
+            // Update charts
+            const platformCount = { Android: 0, iOS: 0, Web: 0 };
+            const branchCount = {};
+            allUsers.forEach(u => {
+                if (u.registeredPlatform === 'Android') platformCount.Android++;
+                else if (u.registeredPlatform === 'iOS') platformCount.iOS++;
+                else platformCount.Web++;
+                
+                if (u.branch) branchCount[u.branch] = (branchCount[u.branch] || 0) + 1;
+            });
+            
+            if (platformChart) platformChart.destroy();
+            if (branchChart) branchChart.destroy();
+            
+            const platformCtx = document.getElementById('platformChart').getContext('2d');
+            platformChart = new Chart(platformCtx, {
+                type: 'doughnut',
+                data: { labels: ['Android', 'iOS', 'Web'], datasets: [{ data: [platformCount.Android, platformCount.iOS, platformCount.Web], backgroundColor: ['#059669', '#2563eb', '#d97706'] }] }
+            });
+            
+            const branchCtx = document.getElementById('branchChart').getContext('2d');
+            branchChart = new Chart(branchCtx, {
+                type: 'bar',
+                data: { labels: Object.keys(branchCount), datasets: [{ label: 'Bilangan Kakitangan', data: Object.values(branchCount), backgroundColor: '#1e3a8a' }] }
+            });
         }
 
         function updateReportDropdown() {
             const sel = document.getElementById('reportUser');
             sel.innerHTML = '<option value="">-- PILIH KAKITANGAN --</option>';
-            allUsers.forEach(u => { sel.innerHTML += `<option value="${u.uid}">${u.name} (${u.branch})</option>`; });
+            allUsers.forEach(u => { sel.innerHTML += `<option value="${u.uid}">${escapeHtml(u.name)} (${u.branch})</option>`; });
         }
 
         function generatePDF() { showAlert('PDF', 'Fungsi laporan PDF akan datang', 'info'); }
-
-        // ============================================
-        // AUDIT LOGS
-        // ============================================
-        function loadAuditLogs() {
-            const tbody = document.getElementById('auditLogsBody');
-            let html = '';
-            sampleAuditLogs.forEach(log => {
-                const timestamp = new Date(log.timestamp).toLocaleString('ms-MY');
-                html += `<tr><td class="p-3 text-sm">${timestamp}</td><td class="p-3">${escapeHtml(log.userName)}</td><td class="p-3">${escapeHtml(log.userBranch)}</td><td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs">${log.action}</span></td><td class="p-3 text-sm">${escapeHtml(log.details)}</td><td class="p-3 text-xs">${log.ipAddress}</td></tr>`;
-            });
-            tbody.innerHTML = html || '<tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</td></tr>';
-        }
 
         // ============================================
         // REGISTER USER FUNCTIONS
@@ -1189,6 +1736,7 @@
             document.getElementById('nextBtn').classList.toggle('hidden', currentStep===3);
             document.getElementById('saveBtn').classList.toggle('hidden', currentStep!==3);
         }
+        
         function nextStep() { if(currentStep<3) { currentStep++; updateStepUI(); if(currentStep===2 && !userMap) initMap(2.9264, 101.6964, 500); if(currentStep===3) initCamera(); } }
         function prevStep() { if(currentStep>1) { currentStep--; updateStepUI(); if(currentStep===2 && userMap) setTimeout(()=>userMap.invalidateSize(),100); } }
         function cancelAndReset() { switchTab('users'); currentStep=1; updateStepUI(); stopCamera(); if(userMap){userMap.remove(); userMap=null;} }
@@ -1247,7 +1795,10 @@
             btn.innerHTML = 'Mengesan...';
             statusMsg.innerHTML = "<span class='text-blue-600'>🔍 Mengesan wajah...</span>";
             await new Promise(r => setTimeout(r, 1500));
-            document.getElementById('faceDescriptor').value = 'sample_face_descriptor_data';
+            
+            // In a real implementation, you would extract actual face descriptor here
+            const fakeDescriptor = 'sample_face_descriptor_' + Date.now();
+            document.getElementById('faceDescriptor').value = fakeDescriptor;
             statusMsg.innerHTML = "<span class='text-green-600 font-black'>✓ WAJAH BERJAYA DIREKOD</span>";
             btn.classList.add('hidden');
             document.getElementById('resetFaceBtn').classList.remove('hidden');
@@ -1264,46 +1815,141 @@
             if(!name || !email || !password) { showAlert('Ralat', 'Sila lengkapkan maklumat', 'error'); return; }
             const faceDesc = document.getElementById('faceDescriptor').value;
             if(!faceDesc) { showAlert('Ralat', 'Sila imbas wajah terlebih dahulu', 'error'); return; }
-            const newUser = { uid: Date.now().toString(), name, email, branch: document.getElementById('userBranch').value, unit: document.getElementById('userUnit').value, phone: document.getElementById('userPhone').value, location: document.getElementById('userLocation').value, lat: document.getElementById('userLat').value, lng: document.getElementById('userLng').value, radius: document.getElementById('userRadius').value, faceDescriptor: faceDesc };
-            allUsers.push(newUser);
-            renderUsersTable();
-            updateDashboardStats();
-            cancelAndReset();
-            showAlert('Berjaya', 'Kakitangan berjaya didaftarkan', 'success');
+            
+            const userData = {
+                name: name,
+                email: email,
+                branch: document.getElementById('userBranch').value,
+                unit: document.getElementById('userUnit').value,
+                phone: document.getElementById('userPhone').value,
+                location: document.getElementById('userLocation').value || 'Pejabat Am',
+                lat: parseFloat(document.getElementById('userLat').value) || 0,
+                lng: parseFloat(document.getElementById('userLng').value) || 0,
+                radius: parseInt(document.getElementById('userRadius').value) || 500,
+                faceDescriptor: faceDesc,
+                password: password,
+                createdBy: currentUser?.name || 'Superadmin'
+            };
+            
+            showLoading(true);
+            const result = await callAPI('createUser', { data: JSON.stringify(userData) });
+            showLoading(false);
+            
+            if (result.success) {
+                await loadAllUsers();
+                cancelAndReset();
+                showNotif('Berjaya', 'Kakitangan berjaya didaftarkan', false);
+            } else {
+                showAlert('Ralat', result.error || 'Gagal mendaftar', 'error');
+            }
         }
 
         // ============================================
-        // LOAD FACE MODELS
+        // LOGIN & NAVIGATION
+        // ============================================
+        async function handleLogin() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!email || !password) {
+                showAlert('Ralat', 'Sila masukkan emel dan kata laluan', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            const result = await callAPI('login', { email: email, password: password });
+            showLoading(false);
+            
+            if (result.success && result.user) {
+                currentUser = result.user;
+                document.getElementById('loginPage').classList.add('hidden');
+                document.getElementById('adminDashboard').classList.remove('hidden');
+                document.getElementById('adminName').innerText = currentUser.name;
+                document.getElementById('adminRoleDisplay').innerHTML = currentUser.role === 'superadmin' ? '👑 Superadmin' : '👤 Admin';
+                
+                await loadAllUsers();
+                await loadAdmins();
+                await loadPendingRequestsCount();
+                await loadAuditLogs();
+                showNotif('Berjaya', 'Log masuk berjaya', false);
+            } else {
+                showAlert('Gagal', result.error || 'Emel atau kata laluan salah', 'error');
+            }
+        }
+
+        function handleLogout() { 
+            document.getElementById('adminDashboard').classList.add('hidden'); 
+            document.getElementById('loginPage').classList.remove('hidden'); 
+            currentUser = null;
+            document.getElementById('loginEmail').value = '';
+            document.getElementById('loginPassword').value = '';
+        }
+
+        function togglePasswordVisibility() {
+            const pwd = document.getElementById('loginPassword');
+            const icon = document.querySelector('.password-eye .material-symbols-rounded');
+            if(pwd.type === 'password') { pwd.type = 'text'; icon.innerText = 'visibility'; }
+            else { pwd.type = 'password'; icon.innerText = 'visibility_off'; }
+        }
+
+        function switchTab(tab) {
+            stopCamera();
+            document.querySelectorAll('.main-content > div').forEach(d => d.classList.add('hidden'));
+            document.getElementById(`${tab}Tab`).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navMap = { users:'navUsers', register:'navRegister', admins:'navAdmins', pending:'navPending', reports:'navReports', dashboard:'navDashboard', audit:'navAudit' };
+            if(navMap[tab]) document.getElementById(navMap[tab]).classList.add('active');
+            if(tab === 'register') { currentStep=1; updateStepUI(); }
+            if(tab === 'reports') updateReportDropdown();
+            if(tab === 'dashboard') updateDashboardStats();
+            if(tab === 'pending') loadPendingRequests();
+            if(tab === 'audit') loadAuditLogs();
+        }
+
+        function refreshPendingRequests() { loadPendingRequests(); }
+        function closePendingRequestsModal() { document.getElementById('pendingRequestsModal').style.display = 'none'; }
+        function closeResetModal() { document.getElementById('resetConfirmModal').style.display = 'none'; }
+
+        // ============================================
+        // INITIALIZATION
         // ============================================
         async function loadFaceModels() {
             if(modelsLoaded) return;
             try {
                 await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights');
                 modelsLoaded = true;
+                console.log('Face models loaded');
             } catch(e) { console.log('Face models load failed, using demo mode'); modelsLoaded = true; }
         }
 
-        // ============================================
-        // NAVIGATION
-        // ============================================
-        function switchTab(tab) {
-            stopCamera();
-            document.querySelectorAll('.main-content > div').forEach(d => d.classList.add('hidden'));
-            document.getElementById(`${tab}Tab`).classList.remove('hidden');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            const navMap = { users:'navUsers', register:'navRegister', admins:'navAdmins', reports:'navReports', dashboard:'navDashboard', audit:'navAudit' };
-            if(navMap[tab]) document.getElementById(navMap[tab]).classList.add('active');
-            if(tab === 'register') { currentStep=1; updateStepUI(); }
-            if(tab === 'reports') updateReportDropdown();
-            if(tab === 'dashboard') { updateDashboardStats(); }
+        // Initialize dropdowns
+        function initializeDropdowns() {
+            const branches = ['Putrajaya', 'Johor', 'Sarawak', 'Sabah', 'Kedah', 'Penang', 'Perak', 'Selangor'];
+            const branchSelects = ['userBranch', 'adminBranch', 'reportBranch', 'filterBranch'];
+            branchSelects.forEach(id => {
+                const select = document.getElementById(id);
+                if (select && select.innerHTML === '') {
+                    select.innerHTML = '<option value="">Pilih Cawangan</option>';
+                    branches.forEach(b => { select.innerHTML += `<option value="${b}">${b}</option>`; });
+                }
+            });
         }
 
-        function closeResetModal() { document.getElementById('resetConfirmModal').style.display = 'none'; }
+        // Set default dates for audit logs
+        function setDefaultDates() {
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            document.getElementById('auditStartDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+            document.getElementById('auditEndDate').value = today.toISOString().split('T')[0];
+            document.getElementById('startDate').value = thirtyDaysAgo.toISOString().split('T')[0];
+            document.getElementById('endDate').value = today.toISOString().split('T')[0];
+        }
 
-        // Initial load
+        // Start
         loadFaceModels();
-        document.getElementById('reportBranch').innerHTML = '<option value="all">Semua</option><option>Putrajaya</option><option>Johor</option><option>Sarawak</option>';
-        document.getElementById('reportUnit').innerHTML = '<option value="all">Semua Unit</option><option>Unit Teknologi</option><option>Bahagian Pasport</option>';
+        initializeDropdowns();
+        setDefaultDates();
     </script>
 </body>
 </html>
