@@ -243,6 +243,20 @@
             margin: 0 auto;
             z-index: 100;
         }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .location-map {
+            height: 180px;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
        
         .nav-item {
             display: flex;
@@ -1323,20 +1337,33 @@
                 </div>
                
                 <div class="recent-card">
+                    <!-- Header -->
                     <div class="recent-header">
                         <h3>Aktiviti Terkini</h3>
                     </div>
+                    
+                    <!-- Recent Activity List -->
                     <div id="recentActivityList">
                         <div class="recent-item">
                             <div class="recent-item-left">
-                                <div class="recent-icon"><span class="material-symbols-rounded" style="font-size: 18px;">login</span></div>
-                                <div><div class="recent-label">Clock In</div><div class="recent-date" id="recentDate">-</div></div>
+                                <div class="recent-icon">
+                                    <span class="material-symbols-rounded" style="font-size: 18px;">login</span>
+                                </div>
+                                <div>
+                                    <div class="recent-label">Clock In</div>
+                                    <div class="recent-date" id="recentDate">-</div>
+                                </div>
                             </div>
                             <div class="recent-status" id="recentStatus">-</div>
                         </div>
                     </div>
+                    
+                    <!-- Map Container (untuk papar lokasi pejabat) -->
+                    <div class="map-container">
+                        <div id="recentLocationMap" class="location-map"></div>
+                    </div>
+                    
                 </div>
-            </div>
             
             <!-- Page 2: History -->
             <div id="historyPage" class="page">
@@ -1711,40 +1738,43 @@
         }
         
         function renderCalendar() {
-            const year = calendarCurrentDate.getFullYear();
-            const month = calendarCurrentDate.getMonth();
+            const calendarDates = document.getElementById('calendarDates');
+            if (!calendarDates) {
+                console.log('Calendar container not found');
+                return;
+            }
+            
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            const startDayOfWeek = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-            const monthNames = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
-            document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year}`;
-            const weekdays = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'];
-            let weekdaysHtml = '';
-            weekdays.forEach(day => { weekdaysHtml += `<div class="calendar-weekday">${day}</div>`; });
-            document.getElementById('calendarWeekdays').innerHTML = weekdaysHtml;
-            let days = [];
-            for (let i = 0; i < startDayOfWeek; i++) { days.push(null); }
-            for (let i = 1; i <= lastDay.getDate(); i++) { days.push(new Date(year, month, i)); }
-            const todayStr = getCurrentDateMalaysia();
-            const selectedDateStr = selectedDiaryDate || todayStr;
-            let daysHtml = '';
-            days.forEach(date => {
-                if (!date) { daysHtml += `<div class="calendar-day"></div>`; }
-                else {
-                    const dateStr = formatDateKey(date);
-                    const isToday = dateStr === todayStr;
-                    const isSelected = dateStr === selectedDateStr;
-                    const isOtherMonth = date.getMonth() !== month;
-                    const hasDiary = calendarDiaries.some(d => d.date === dateStr);
-                    let classes = 'calendar-day';
-                    if (isToday) classes += ' today';
+            let startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+            
+            const dates = [];
+            for (let i = 0; i < startOffset; i++) dates.push(null);
+            for (let i = 1; i <= lastDay.getDate(); i++) dates.push(new Date(year, month, i));
+            
+            let html = '';
+            dates.forEach(date => {
+                if (!date) {
+                    html += '<div class="calendar-date"></div>';
+                } else {
+                    const dateNum = date.getDate();
+                    const isToday = formatDateKey(date) === getCurrentDateMalaysia();
+                    const isSelected = formatDateKey(date) === formatDateKey(selectedDate);
+                    const hasRecord = attendanceRecords[formatDateKey(date)];
+                    
+                    let classes = 'calendar-date';
                     if (isSelected) classes += ' selected';
-                    if (isOtherMonth) classes += ' other-month';
-                    if (hasDiary) classes += ' has-diary';
-                    daysHtml += `<div class="${classes}" onclick="selectCalendarDate('${dateStr}')"><div class="calendar-day-number">${date.getDate()}</div></div>`;
+                    if (isToday) classes += ' today';
+                    if (hasRecord) classes += ' font-bold';
+                    
+                    html += `<div class="${classes}" onclick="selectDate(${date.getFullYear()}, ${date.getMonth()}, ${dateNum})">${dateNum}</div>`;
                 }
             });
-            document.getElementById('calendarDays').innerHTML = daysHtml;
+            
+            calendarDates.innerHTML = html;
         }
         
         function selectCalendarDate(dateStr) {
@@ -2101,11 +2131,31 @@
         }
         
         function initLocationMap(lat, lng) {
-            if (userMap) userMap.remove();
-            userMap = L.map('recentLocationMap').setView([lat, lng], 15);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
-            userMarker = L.marker([lat, lng]).addTo(userMap);
-            setTimeout(() => userMap?.invalidateSize(), 100);
+            const mapContainer = document.getElementById('recentLocationMap');
+            if (!mapContainer) {
+                console.log('Map container not found, skipping map initialization');
+                return;
+            }
+            
+            if (userMap) {
+                try {
+                    userMap.remove();
+                } catch(e) {
+                    console.log('Error removing existing map:', e);
+                }
+                userMap = null;
+            }
+            
+            try {
+                userMap = L.map('recentLocationMap').setView([lat, lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
+                userMarker = L.marker([lat, lng]).addTo(userMap);
+                setTimeout(() => {
+                    if (userMap) userMap.invalidateSize();
+                }, 100);
+            } catch (error) {
+                console.error('Error initializing map:', error);
+            }
         }
         
         function startLocationTracking() {
@@ -2206,10 +2256,25 @@
                 document.getElementById('totalOT').innerText = record && record.totalOT && record.totalOT > 0 ? record.totalOT.toFixed(1) : '0';
                 document.getElementById('totalOTDate').innerHTML = `Kemaskini, ${updateDate}`;
                 updateCameraUI();
-                if (userLocation && userLocation.lat && userLocation.lng) { initLocationMap(userLocation.lat, userLocation.lng); }
-                else if (currentUser.lat && currentUser.lng) { initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng)); }
-            } catch (error) { console.error('Load home data error:', error); showNotification('Ralat', 'Gagal memuat data kehadiran', true); }
-        }
+                if (userLocation && userLocation.lat && userLocation.lng) {
+                    // Pastikan container map wujud sebelum init
+                    const mapContainer = document.getElementById('recentLocationMap');
+                    if (mapContainer) {
+                        initLocationMap(userLocation.lat, userLocation.lng);
+                    } else {
+                        console.log('Map container not ready yet, waiting...');
+                        setTimeout(() => {
+                            if (document.getElementById('recentLocationMap')) {
+                                initLocationMap(userLocation.lat, userLocation.lng);
+                            }
+                        }, 500);
+                    }
+                } else if (currentUser.lat && currentUser.lng) {
+                    const mapContainer = document.getElementById('recentLocationMap');
+                    if (mapContainer) {
+                        initLocationMap(parseFloat(currentUser.lat), parseFloat(currentUser.lng));
+                    }
+                }
         
         function updateCameraUI() {
             const today = getCurrentDateMalaysia();
@@ -2262,29 +2327,69 @@
         // ============================================
         async function loadAttendanceHistory() {
             if (!currentUser) return;
-            const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            const historyList = document.getElementById('attendanceHistoryList');
+            if (!historyList) {
+                console.log('Attendance history list element not found');
+                return;
+            }
+            
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const startDate = thirtyDaysAgo.toISOString().split('T')[0];
             const endDate = new Date().toISOString().split('T')[0];
+            
             try {
                 const result = await getAttendance(currentUser.uid, startDate, endDate);
-                const historyEl = document.getElementById('attendanceHistoryList');
-                if (!result.success || !result.data || result.data.length === 0) { historyEl.innerHTML = '<div class="text-center py-6 text-gray-400">Tiada rekod kehadiran</div>'; return; }
+                
+                if (!result.success || !result.data || result.data.length === 0) {
+                    historyList.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Tiada rekod kehadiran</div>';
+                    return;
+                }
+                
                 attendanceRecords = {};
-                result.data.forEach(record => { attendanceRecords[record.date] = record; });
-                const records = result.data.sort((a, b) => b.date.localeCompare(a.date));
+                result.data.forEach(record => {
+                    attendanceRecords[record.date] = record;
+                });
+                
+                const records = result.data;
+                records.sort((a, b) => b.date.localeCompare(a.date));
+                
                 let html = '';
                 records.forEach(record => {
                     const date = new Date(record.date);
-                    const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' });
-                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short' });
-                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '--:--';
-                    html += `<div class="history-record"><div><div class="history-date">${weekday}, ${formattedDate}</div><div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div></div>${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}</div>`;
+                    const formattedDate = date.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', timeZone: 'Asia/Kuching' });
+                    const weekday = date.toLocaleDateString('ms-MY', { weekday: 'short', timeZone: 'Asia/Kuching' });
+                    const clockIn = record.clockIn ? new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                    const clockOut = record.clockOut ? new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kuching' }) : '--:--';
+                    
+                    html += `
+                        <div class="history-record">
+                            <div>
+                                <div class="history-date">${escapeHtml(weekday)}, ${escapeHtml(formattedDate)}</div>
+                                <div class="history-times">Masuk: ${clockIn} | Keluar: ${clockOut}</div>
+                            </div>
+                            ${record.totalHours ? `<div class="history-hours">${record.totalHours.toFixed(1)}j</div>` : ''}
+                        </div>
+                    `;
                 });
-                historyEl.innerHTML = html;
-                renderCalendarHistory();
-                updateSelectedDateDetails();
-            } catch (error) { console.error('Load attendance error:', error); }
+                historyList.innerHTML = html;
+                
+                // Call renderCalendar and updateSelectedDateDetails only if elements exist
+                const calendarDates = document.getElementById('calendarDates');
+                if (calendarDates) {
+                    renderCalendar();
+                }
+                
+                const selectedDateTitle = document.getElementById('selectedDateTitle');
+                if (selectedDateTitle) {
+                    updateSelectedDateDetails();
+                }
+                
+            } catch (error) {
+                console.error('Load attendance error:', error);
+                historyList.innerHTML = '<div class="text-center py-6 text-gray-400 text-sm">Gagal memuat rekod kehadiran</div>';
+            }
         }
         
         async function loadAttendanceForDate(date) {
@@ -2316,11 +2421,28 @@
         }
         
         function updateSelectedDateDetails() {
+            const selectedDateTitle = document.getElementById('selectedDateTitle');
+            const detailClockIn = document.getElementById('detailClockIn');
+            const detailClockOut = document.getElementById('detailClockOut');
+            const detailStatus = document.getElementById('detailStatus');
+            const detailTotalHours = document.getElementById('detailTotalHours');
+            const detailTotalOT = document.getElementById('detailTotalOT');
+            const detailTotalHoursDate = document.getElementById('detailTotalHoursDate');
+            const detailTotalOTDate = document.getElementById('detailTotalOTDate');
+            
+            // Check if elements exist before using them
+            if (!selectedDateTitle) {
+                console.log('Selected date title element not found');
+                return;
+            }
+            
             const weekday = selectedDate.toLocaleDateString('ms-MY', { weekday: 'long' });
             const day = selectedDate.getDate();
             const month = selectedDate.toLocaleDateString('ms-MY', { month: 'long' });
             const year = selectedDate.getFullYear();
-            document.getElementById('selectedDateTitle').innerHTML = `${weekday}, ${day} ${month} ${year}`;
+            
+            if (selectedDateTitle) selectedDateTitle.innerHTML = `${weekday}, ${day} ${month} ${year}`;
+            
             loadAttendanceForDate(selectedDate);
         }
         
