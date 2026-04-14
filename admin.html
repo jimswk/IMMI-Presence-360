@@ -638,6 +638,12 @@
                 flex-wrap: wrap;
             }
         }
+
+        .status-green { background: #dcfce7; color: #166534; font-weight: bold; }
+        .status-yellow { background: #fef3c7; color: #92400e; font-weight: bold; }
+        .status-red { background: #fee2e2; color: #991b1b; font-weight: bold; }
+        .status-orange { background: #ffedd5; color: #9a3412; font-weight: bold; }
+        .status-blue { background: #dbeafe; color: #1e3a8a; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -2980,12 +2986,19 @@ Jabatan Imigresen Malaysia`;
                 const attendance = await getUserAttendanceColor(u.uid);
                 let statusClass = '';
                 let statusText = '';
+                
                 if (attendance.color === 'green') {
                     statusClass = 'status-green';
                     statusText = `✅ ${attendance.totalHours.toFixed(1)}j (CUKUP)`;
+                } else if (attendance.color === 'orange') {
+                    statusClass = 'status-orange';
+                    statusText = `⚠️ ${attendance.totalHours.tofixed(1)}j (KURANG)`;
                 } else if (attendance.color === 'yellow') {
                     statusClass = 'status-yellow';
-                    statusText = attendance.totalHours > 0 ? `⚠️ ${attendance.totalHours.toFixed(1)}j (KURANG)` : '🟡 DALAM BERTUGAS';
+                    statusText = '🟡 DALAM BERTUGAS';
+                } else if (attendance.color === 'blue') {
+                    statusClass = 'status-blue';
+                    statusText = '📋 DIKECUALIKAN';
                 } else {
                     statusClass = 'status-red';
                     statusText = '❌ TIADA CLOCK IN';
