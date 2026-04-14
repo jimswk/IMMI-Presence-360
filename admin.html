@@ -416,6 +416,8 @@
         .status-green { background: #dcfce7; color: #166534; font-weight: bold; }
         .status-yellow { background: #fef3c7; color: #92400e; font-weight: bold; }
         .status-red { background: #fee2e2; color: #991b1b; font-weight: bold; }
+        .status-orange { background: #ffedd5; color: #9a3412; font-weight: bold; }
+        .status-blue { background: #dbeafe; color: #1e3a8a; font-weight: bold; }
 
         .progress-bar {
             height: 4px;
@@ -591,8 +593,6 @@
         .badge-approved { background: #dcfce7; color: #166534; }
         .badge-rejected { background: #fee2e2; color: #991b1b; }
         .badge-reviewed { background: #dbeafe; color: #1e3a8a; }
-        .badge-verified { background: #dcfce7; color: #166534; }
-        .badge-failed { background: #fee2e2; color: #991b1b; }
 
         .remark-badge {
             display: inline-block;
@@ -605,43 +605,6 @@
         .remark-badge.leave { background: #fef3c7; color: #92400e; }
         .remark-badge.diary { background: #dcfce7; color: #166534; }
         .remark-badge.exception { background: #fee2e2; color: #991b1b; }
-
-        /* Live Map Styles */
-        .custom-marker {
-            background: transparent;
-            border: none;
-        }
-        
-        .live-marker {
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.7; }
-            70% { transform: scale(1.1); opacity: 0.4; }
-            100% { transform: scale(0.95); opacity: 0.7; }
-        }
-        
-        .marker-popup .leaflet-popup-content-wrapper {
-            border-radius: 16px;
-            padding: 0;
-            overflow: hidden;
-        }
-        
-        .marker-popup .leaflet-popup-content {
-            margin: 0;
-            min-width: 220px;
-        }
-        
-        .user-popup-card {
-            padding: 12px;
-        }
-        
-        .user-popup-card h4 {
-            font-weight: 800;
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
 
         @media (max-width: 640px) {
             .floating-input {
@@ -867,14 +830,6 @@
                         <span class="material-symbols-rounded">location_off</span> 
                         <span class="font-bold">Lokasi OFF</span>
                     </div>
-                    <div class="nav-item" onclick="switchTab('livemap')" id="navLivemap">
-                        <span class="material-symbols-rounded">map</span> 
-                        <span class="font-bold">Live Map</span>
-                    </div>
-                    <div class="nav-item" onclick="switchTab('integrity')" id="navIntegrity">
-                        <span class="material-symbols-rounded">verified</span> 
-                        <span class="font-bold">Integrity Check</span>
-                    </div>
                     <div class="nav-item" onclick="switchTab('tools')" id="navTools">
                         <span class="material-symbols-rounded">build</span> 
                         <span class="font-bold">Alat Sistem</span>
@@ -1039,7 +994,7 @@
                             <h2 class="text-2xl font-black text-gray-800">Rekod Kehadiran</h2>
                             <div class="flex gap-3"><input type="date" id="userHistoryStartDate" class="input-field mb-0 w-40"><span class="text-gray-400 self-center">hingga</span><input type="date" id="userHistoryEndDate" class="input-field mb-0 w-40"><button onclick="loadUserAttendance()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2"><span class="material-symbols-rounded">search</span> Cari</button></div>
                         </div>
-                        <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Tarikh</th><th>Hari</th><th>Jam Masuk</th><th>Jam Keluar</th><th>Jumlah Jam</th><th>OT</th><th>Status</th><th>Remark</th></tr></thead><tbody id="userAttendanceBody"><tr><td colspan="8" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr></tbody></table></div>
+                        <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Tarikh</th><th>Hari</th><th>Jam Masuk</th><th>Jam Keluar</th><th>Jumlah Jam</th><th>OT</th><th>Status</th><th>Remark</th></tr></thead><tbody id="userAttendanceBody"><tr><td colspan="8" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</div></div></table></tbody></table></div>
                     </div>
                 </div>
                 <div id="userInfoSubTab" class="hidden">
@@ -1055,7 +1010,7 @@
             <!-- Devices Tab -->
             <div id="devicesTab" class="hidden">
                 <div class="flex justify-between items-center mb-6"><h1 class="text-4xl font-black text-gray-800">Peranti Pengguna</h1><div class="flex gap-3"><button onclick="loadUserDevices()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula data"><span class="material-symbols-rounded text-sm">refresh</span></button></div></div>
-                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[900px]"><thead><tr><th>Nama</th><th>Cawangan</th><th>Unit</th><th>IP Terkini</th><th>Lokasi Anggaran</th><th>Platform</th><th>Terakhir Aktif</th><th>Trust</th><th>Tindakan</th></tr></thead><tbody id="devicesTableBody"><tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[900px]"><thead><tr><th>Nama</th><th>Cawangan</th><th>Unit</th><th>IP Terkini</th><th>Lokasi Anggaran</th><th>Platform</th><th>Terakhir Aktif</th><th>Trust</th><th>Tindakan</th></tr></thead><tbody id="devicesTableBody"><tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></tr></tbody></table></div>
             </div>
 
             <!-- Reports Tab -->
@@ -1089,74 +1044,29 @@
                     <div class="filter-group"><label>Carian</label><input type="text" id="auditSearch" placeholder="Nama pengguna..."></div>
                     <div class="filter-group"><button onclick="loadAuditLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button></div>
                 </div>
-                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[1000px]"><thead><tr><th>Tarikh & Masa</th><th>Pengguna</th><th>Tindakan</th><th>Butiran</th><th>IP Address</th><th>Status</th></tr></thead><tbody id="auditLogsBody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</td></tr></tbody></table></div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[1000px]"><thead><tr><th>Tarikh & Masa</th><th>Pengguna</th><th>Tindakan</th><th>Butiran</th><th>IP Address</th><th>Status</th></tr></thead><tbody id="auditLogsBody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</div></div></tr></tbody></table></div>
             </div>
 
             <!-- Requests Tab -->
             <div id="requestsTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Permohonan & Laporan</h1>
                 <div class="request-tabs"><div class="request-tab-btn active" onclick="switchRequestTab('exceptions')">Exception Reports</div><div class="request-tab-btn" onclick="switchRequestTab('leave')">Permohonan (Cuti/Kebenaran)</div><div class="request-tab-btn" onclick="switchRequestTab('diaries')">Diari (Kursus/Tugasan)</div></div>
-                <div id="exceptionsPanel" class="request-panel active"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Exception Reports</h2><button onclick="loadAllExceptions()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh</th><th>Nama</th><th>Tarikh Kehadiran</th><th>Sebab</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="exceptionsTableBody"><tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div></div>
-                <div id="leavePanel" class="request-panel"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Permohonan</h2><button onclick="loadAllLeaveRequests()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh Mohon</th><th>Nama</th><th>Jenis</th><th>Tempoh</th><th>Sebab</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="leaveRequestsTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div></div>
-                <div id="diariesPanel" class="request-panel"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Diari (Kursus/Tugasan)</h2><button onclick="loadAllDiaries()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh Hantar</th><th>Nama</th><th>Jenis</th><th>Tarikh Aktiviti</th><th>Tajuk</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="diariesTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div></div>
+                <div id="exceptionsPanel" class="request-panel active"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Exception Reports</h2><button onclick="loadAllExceptions()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh</th><th>Nama</th><th>Tarikh Kehadiran</th><th>Sebab</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="exceptionsTableBody"><tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td></tbody></table></div></div>
+                <div id="leavePanel" class="request-panel"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Permohonan</h2><button onclick="loadAllLeaveRequests()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh Mohon</th><th>Nama</th><th>Jenis</th><th>Tempoh</th><th>Sebab</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="leaveRequestsTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td></tbody></table></div></div>
+                <div id="diariesPanel" class="request-panel"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Diari (Kursus/Tugasan)</h2><button onclick="loadAllDiaries()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh Hantar</th><th>Nama</th><th>Jenis</th><th>Tarikh Aktiviti</th><th>Tajuk</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="diariesTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td></tbody></table></div></div>
             </div>
 
             <!-- Device Requests Tab -->
             <div id="devicerequestsTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Permohonan Gantian Peranti</h1>
-                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh</th><th>Nama</th><th>Email</th><th>Peranti Lama</th><th>Peranti Baru</th><th>Sebab</th><th>Tindakan</th></tr></thead><tbody id="deviceRequestsBody"><tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh</th><th>Nama</th><th>Email</th><th>Peranti Lama</th><th>Peranti Baru</th><th>Sebab</th><th>Tindakan</th></tr></thead><tbody id="deviceRequestsBody"><tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td></tbody></table></div>
             </div>
 
             <!-- Location Off Logs Tab -->
             <div id="locationoffTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Lokasi Dimatikan</h1>
                 <div class="filter-bar"><div class="filter-group"><label>Tarikh Mula</label><input type="date" id="locOffStartDate"></div><div class="filter-group"><label>Tarikh Tamat</label><input type="date" id="locOffEndDate"></div><div class="filter-group"><button onclick="loadLocationOffLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button></div></div>
-                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh & Masa</th><th>Nama</th><th>Cawangan</th><th>Unit</th><th>Tempoh OFF</th><th>Status</th></tr></thead><tbody id="locationOffBody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div>
-            </div>
-
-            <!-- Live Map Tab -->
-            <div id="livemapTab" class="hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <div><h1 class="text-4xl font-black text-gray-800">Live Tracking</h1><p class="text-gray-400 text-sm mt-1">Pergerakan real-time kakitangan yang sedang bertugas</p></div>
-                    <div class="flex gap-3 items-center">
-                        <div class="bg-white rounded-full px-4 py-2 shadow-sm flex items-center gap-2"><span class="material-symbols-rounded text-green-500 text-sm">fiber_manual_record</span><span class="text-xs font-bold" id="activeUsersCount">0</span><span class="text-xs text-gray-400">Aktif</span></div>
-                        <button onclick="refreshLiveMap()" class="bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-all"><span class="material-symbols-rounded text-sm">refresh</span> Refresh</button>
-                        <button onclick="centerMapOnBranch()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-gray-200 transition-all"><span class="material-symbols-rounded text-sm">my_location</span> Cawangan Saya</button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-4 gap-4 mb-6">
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center"><span class="material-symbols-rounded text-green-600">check_circle</span></div><div><p class="text-xs text-gray-400">Sedang Bertugas</p><p class="text-2xl font-black" id="onDutyCount">0</p></div></div></div>
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="material-symbols-rounded text-blue-600">location_on</span></div><div><p class="text-xs text-gray-400">Dalam Geofence</p><p class="text-2xl font-black" id="inGeofenceCount">0</p></div></div></div>
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><span class="material-symbols-rounded text-amber-600">warning</span></div><div><p class="text-xs text-gray-400">Luar Geofence</p><p class="text-2xl font-black" id="outsideGeofenceCount">0</p></div></div></div>
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><span class="material-symbols-rounded text-purple-600">speed</span></div><div><p class="text-xs text-gray-400">Device Online</p><p class="text-2xl font-black" id="onlineDevicesCount">0</p></div></div></div>
-                </div>
-                <div class="bg-white rounded-[32px] p-2 shadow-sm border border-gray-100"><div id="liveUserMap" style="height: 550px; width: 100%; border-radius: 28px; z-index: 1;"></div></div>
-                <div class="grid grid-cols-2 gap-6 mt-6">
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><h3 class="font-bold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-rounded text-sm">info</span> Petunjuk Marker</h3><div class="space-y-2 text-xs"><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-green-500"></div><span>Dalam Kawasan Geofence (Clock In)</span></div><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-amber-500"></div><span>Luar Kawasan Geofence (Amaran)</span></div><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-red-500"></div><span>Location OFF / Tiada GPS</span></div><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-gray-400"></div><span>Belum Clock In / Tidak Aktif</span></div></div></div>
-                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><h3 class="font-bold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-rounded text-sm">schedule</span> Status Kakitangan</h3><div id="liveUserList" class="max-h-40 overflow-y-auto space-y-2 text-xs"><p class="text-gray-400 text-center">Memuatkan data...</p></div></div>
-                </div>
-            </div>
-
-            <!-- Integrity Check Tab -->
-            <div id="integrityTab" class="hidden">
-                <h1 class="text-4xl font-black text-gray-800 mb-8">Integrity Check System</h1>
-                <div class="bg-blue-50 rounded-2xl p-4 mb-6 flex items-center gap-3">
-                    <span class="material-symbols-rounded text-blue-600">verified</span>
-                    <div><p class="text-sm font-bold text-blue-800">Sistem Integrity Check</p><p class="text-xs text-blue-600">Setiap kakitangan akan menghantar lokasi dan imbasan wajah setiap 1 jam untuk pengesahan integriti.</p></div>
-                </div>
-                <div class="filter-bar">
-                    <div class="filter-group"><label>Tarikh Mula</label><input type="date" id="integrityStartDate"></div>
-                    <div class="filter-group"><label>Tarikh Tamat</label><input type="date" id="integrityEndDate"></div>
-                    <div class="filter-group"><label>Status</label><select id="integrityStatus"><option value="">SEMUA</option><option value="verified">Disahkan</option><option value="failed">Gagal</option><option value="pending">Menunggu</option></select></div>
-                    <div class="filter-group"><label>Nama</label><input type="text" id="integritySearch" placeholder="Cari nama..."></div>
-                    <div class="filter-group"><button onclick="loadIntegrityChecks()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button></div>
-                </div>
-                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
-                    <table class="w-full min-w-[1000px]">
-                        <thead><tr><th>Tarikh & Masa</th><th>Nama</th><th>Unit</th><th>Lokasi</th><th>Status Wajah</th><th>Dalam Geofence</th><th>Skor</th><th>Status</th></tr></thead>
-                        <tbody id="integrityTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody>
-                    </table>
-                </div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh & Masa</th><th>Nama</th><th>Cawangan</th><th>Unit</th><th>Tempoh OFF</th><th>Status</th></tr></thead><tbody id="locationOffBody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td></tbody></table></div>
             </div>
 
             <!-- Tools Tab -->
@@ -1214,13 +1124,6 @@
         let currentLeaveRequestId = null;
         let currentDiaryId = null;
         let currentRequestUserName = '';
-        
-        // Live Map variables
-        let liveMap = null;
-        let liveMarkers = new Map();
-        let liveUpdateInterval = null;
-        let branchCenter = { lat: 1.5533, lng: 110.3592 };
-        let userGeofences = new Map();
 
         // ============================================
         // PASSWORD VISIBILITY TOGGLE
@@ -1253,7 +1156,6 @@
         async function sendUserCredentialsEmail(email, name, password, branch, unit) {
             try {
                 const webAppUrl = 'https://jimswk.github.io/IMMI-Presence-360';
-                const apkDownloadLink = 'https://github.com/jimswk/IMMI-Presence-360/releases/latest/download/app-release.apk';
                 
                 const subject = `Selamat Datang ke IMMI Presence 360 - Akaun Anda Telah Dicipta`;
                 
@@ -1326,7 +1228,7 @@ Jabatan Imigresen Malaysia`;
             }
             
             const subject = `[IMMI Presence 360] Perubahan Data Pengguna: ${userName}`;
-            const body = `Assalamualaikum dan Salam Sejahtera,\n\nIni adalah notifikasi automatik daripada Sistem IMMI Presence 360.\n\nMAKLUMAT PERUBAHAN DATA PENGGUNA:\n==================================\nNama Pengguna: ${userName}\nTarikh Perubahan: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}\nDibuat oleh: ${adminName} (${adminBranch})\n\nBUTIRAN PERUBAHAN:\n==================${changesDetails}\n\nSEBAB PERUBAHAN:\n================\n${reasonParam}\n\nSila semak dan sahkan perubahan ini di dalam sistem.\n\nSekian, terima kasih.\n\n--\nIMMI Presence 360 - Sistem Kehadiran Pintar\nJabatan Imigresen Malaysia`;
+            const body = `Assalamualaikum dan Salam Sejahtera,\n\nIni adalah notifikasi automatik daripada Sistem IMMI Presence 360.\n\nMAKLUMAT PERUBAHAN DATA PENGGUNA:\n==================================\nNama Pengguna: ${userName}\nTarikh Perubahan: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}\nDibuat oleh: ${adminName} (${adminBranch})\n\nBUTIRAN PERUBAHAN:\n==================${changesDetails}\n\nSEBAB PERUBAHAN:\n================\n${reason}\n\nSila semak dan sahkan perubahan ini di dalam sistem.\n\nSekian, terima kasih.\n\n--\nIMMI Presence 360 - Sistem Kehadiran Pintar\nJabatan Imigresen Malaysia`;
             
             try {
                 const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
@@ -1597,7 +1499,7 @@ Jabatan Imigresen Malaysia`;
             if (!locationInput) return;
             locationInput.value = "Mencari alamat...";
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=ms`);
                 const data = await response.json();
                 locationInput.value = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
             } catch (error) {
@@ -1769,7 +1671,7 @@ Jabatan Imigresen Malaysia`;
                 }
             } catch (error) {
                 console.error('Load diaries error:', error);
-                document.getElementById('diariesTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
+                document.getElementById('diariesTableBody').innerHTML = '<td><td colspan="8" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
             }
         }
 
@@ -2082,11 +1984,6 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('auditStartDate').value = sevenDaysAgo.toISOString().split('T')[0];
             document.getElementById('auditEndDate').value = today.toISOString().split('T')[0];
             
-            const thirtyDaysAgoIntegrity = new Date();
-            thirtyDaysAgoIntegrity.setDate(thirtyDaysAgoIntegrity.getDate() - 30);
-            document.getElementById('integrityStartDate').value = thirtyDaysAgoIntegrity.toISOString().split('T')[0];
-            document.getElementById('integrityEndDate').value = today.toISOString().split('T')[0];
-            
             loadUsers();
             loadFaceModels();
             loadUserDevices();
@@ -2096,7 +1993,6 @@ Jabatan Imigresen Malaysia`;
             loadAllExceptions();
             loadAllLeaveRequests();
             loadAllDiaries();
-            loadIntegrityChecks();
         }
 
         // ============================================
@@ -2142,7 +2038,7 @@ Jabatan Imigresen Malaysia`;
                     platformIcon = '💻';
                 }
                 
-                html += `<tr><td class="p-3 font-bold">${escapeHtml(device.name)}</td><td class="p-3">${escapeHtml(device.branch)}</td><td class="p-3">${escapeHtml(device.unit || '-')}</td><td class="p-3 text-sm">${device.ip || '-'}</td><td class="p-3 text-sm">${device.city || '-'}, ${device.region || '-'}</td><td class="p-3"><span class="badge ${platformClass}">${platformIcon} ${device.source || 'Web'}</span></td><td class="p-3 text-sm">${lastSeen}</td><td class="p-3 text-center"><span class="${trustColor} font-bold">${trustScore}%</span></td><td class="p-3 text-center"><button onclick="forceLogoutUser('${device.uid}', '${escapeHtml(device.name)}')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-all">Force Logout</button></td></tr>`;
+                html += `<tr><td class="p-3 font-bold">${escapeHtml(device.name)}</div></td><td class="p-3">${escapeHtml(device.branch)}</div></td><td class="p-3">${escapeHtml(device.unit || '-')}</div></td><td class="p-3 text-sm">${device.ip || '-'}</div></td><td class="p-3 text-sm">${device.city || '-'}, ${device.region || '-'}</div></td><td class="p-3"><span class="badge ${platformClass}">${platformIcon} ${device.source || 'Web'}</span></div></td><td class="p-3 text-sm">${lastSeen}</div></td><td class="p-3 text-center"><span class="${trustColor} font-bold">${trustScore}%</span></div></td><td class="p-3 text-center"><button onclick="forceLogoutUser('${device.uid}', '${escapeHtml(device.name)}')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-all">Force Logout</button></div></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -2220,7 +2116,7 @@ Jabatan Imigresen Malaysia`;
             let html = '';
             requests.forEach(req => {
                 const requestDate = new Date(req.requestedAt).toLocaleString('ms-MY');
-                html += `<tr><td class="p-3 text-sm">${requestDate}</td><td class="p-3 font-bold">${escapeHtml(req.userName)}</td><td class="p-3">${escapeHtml(req.userEmail)}</td><td class="p-3 text-xs font-mono">${req.oldDeviceId || '-'}</td><td class="p-3 text-xs font-mono">${req.newDeviceId}</td><td class="p-3 text-sm">${escapeHtml(req.reason)}</td><td class="p-3 text-center"><button onclick="openDeviceRequestModal('${req.requestId}', '${escapeHtml(req.userName)}', '${escapeHtml(req.userEmail)}', '${escapeHtml(req.oldDeviceId || '')}', '${escapeHtml(req.newDeviceId)}', '${escapeHtml(req.reason)}')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">Proses</button></td></tr>`;
+                html += `<tr><td class="p-3 text-sm">${requestDate}</div></td><td class="p-3 font-bold">${escapeHtml(req.userName)}</div></td><td class="p-3">${escapeHtml(req.userEmail)}</div></td><td class="p-3 text-xs font-mono">${req.oldDeviceId || '-'}</div></td><td class="p-3 text-xs font-mono">${req.newDeviceId}</div></td><td class="p-3 text-sm">${escapeHtml(req.reason)}</div></td><td class="p-3 text-center"><button onclick="openDeviceRequestModal('${req.requestId}', '${escapeHtml(req.userName)}', '${escapeHtml(req.userEmail)}', '${escapeHtml(req.oldDeviceId || '')}', '${escapeHtml(req.newDeviceId)}', '${escapeHtml(req.reason)}')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">Proses</button></div></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -2331,7 +2227,7 @@ Jabatan Imigresen Malaysia`;
                 let statusClass = log.status === 'success' ? 'text-green-600' : (log.status === 'warning' ? 'text-amber-600' : 'text-red-600');
                 let statusIcon = log.status === 'success' ? '✓' : (log.status === 'warning' ? '⚠️' : '✗');
                 
-                html += `<tr><td class="p-3 text-sm">${timestamp}</td><td class="p-3"><div class="font-bold">${escapeHtml(log.userName || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(log.userEmail || '-')}</div></td><td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold">${log.action}</span></td><td class="p-3 text-sm max-w-[300px] truncate" title="${escapeHtml(log.details)}">${escapeHtml(log.details || '-')}</td><td class="p-3 text-xs">${log.ipAddress || '-'}</td><td class="p-3"><span class="${statusClass}">${statusIcon} ${log.status}</span></td></tr>`;
+                html += `<tr><td class="p-3 text-sm">${timestamp}</div></td><td class="p-3"><div class="font-bold">${escapeHtml(log.userName || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(log.userEmail || '-')}</div></div></td><td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold">${log.action}</span></div></td><td class="p-3 text-sm max-w-[300px] truncate" title="${escapeHtml(log.details)}">${escapeHtml(log.details || '-')}</div></td><td class="p-3 text-xs">${log.ipAddress || '-'}</div></td><td class="p-3"><span class="${statusClass}">${statusIcon} ${log.status}</span></div></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -2373,341 +2269,7 @@ Jabatan Imigresen Malaysia`;
                 let statusClass = log.status === 'resolved' ? 'text-green-600' : 'text-amber-600';
                 let statusText = log.status === 'resolved' ? 'Selesai' : 'Dalam Perhatian';
                 
-                html += `<tr><td class="p-3 text-sm">${timestamp}</td><td class="p-3 font-bold">${escapeHtml(log.userName)}</td><td class="p-3">${escapeHtml(log.branch)}</td><td class="p-3">${escapeHtml(log.unit)}</td><td class="p-3">${log.duration} minit</div></td><td class="p-3"><span class="${statusClass}">${statusText}</span></td></tr>`;
-            });
-            tbody.innerHTML = html;
-        }
-
-        // ============================================
-        // LIVE MAP FUNCTIONS (Seperti Grab)
-        // ============================================
-        function initLiveMap() {
-            if (liveMap) {
-                liveMap.remove();
-                liveMap = null;
-            }
-            
-            if (currentUser && currentUser.lat && currentUser.lng) {
-                branchCenter = { lat: parseFloat(currentUser.lat), lng: parseFloat(currentUser.lng) };
-            }
-            
-            liveMap = L.map('liveUserMap').setView([branchCenter.lat, branchCenter.lng], 13);
-            
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
-                subdomains: 'abcd',
-                maxZoom: 19,
-                minZoom: 5
-            }).addTo(liveMap);
-            
-            L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo(liveMap);
-            
-            loadLiveLocations();
-            
-            if (liveUpdateInterval) clearInterval(liveUpdateInterval);
-            liveUpdateInterval = setInterval(() => {
-                if (document.getElementById('livemapTab') && !document.getElementById('livemapTab').classList.contains('hidden')) {
-                    loadLiveLocations();
-                }
-            }, 10000);
-        }
-
-        async function loadLiveLocations() {
-            try {
-                const result = await callAPI('getLiveUserLocations', { 
-                    branch: currentUser.branch,
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                
-                if (result.success && result.data) {
-                    updateLiveMapMarkers(result.data);
-                    updateStatsAndList(result.data);
-                } else {
-                    updateStatsAndList([]);
-                }
-            } catch (error) {
-                console.error('Load live locations error:', error);
-            }
-        }
-
-        function updateLiveMapMarkers(locations) {
-            const activeUserIds = new Set();
-            let onlineCount = 0;
-            
-            locations.forEach(loc => {
-                activeUserIds.add(loc.uid);
-                
-                const lastSeen = new Date(loc.lastSeen);
-                const minutesAgo = (new Date() - lastSeen) / 1000 / 60;
-                if (minutesAgo < 2) onlineCount++;
-                
-                const lat = parseFloat(loc.lat);
-                const lng = parseFloat(loc.lng);
-                
-                if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
-                
-                let markerColor = 'gray';
-                let statusText = '';
-                
-                if (loc.isClockedIn) {
-                    if (loc.isInGeofence) {
-                        markerColor = 'green';
-                        statusText = '✅ Dalam Kawasan';
-                    } else {
-                        markerColor = 'amber';
-                        statusText = '⚠️ Luar Kawasan';
-                    }
-                } else {
-                    if (loc.isLocationOff) {
-                        markerColor = 'red';
-                        statusText = '📍 OFF';
-                    } else {
-                        markerColor = 'gray';
-                        statusText = '⏳ Belum Clock In';
-                    }
-                }
-                
-                let marker = liveMarkers.get(loc.uid);
-                
-                if (marker) {
-                    const oldLatLng = marker.getLatLng();
-                    const newLatLng = L.latLng(lat, lng);
-                    const distance = oldLatLng.distanceTo(newLatLng);
-                    if (distance > 10) {
-                        marker.setLatLng(newLatLng);
-                        if (marker._icon) {
-                            marker._icon.classList.add('live-marker');
-                            setTimeout(() => {
-                                if (marker._icon) marker._icon.classList.remove('live-marker');
-                            }, 1500);
-                        }
-                    }
-                    marker.bindPopup(getPopupContent(loc, statusText));
-                } else {
-                    const iconHtml = getMarkerIcon(markerColor);
-                    const customIcon = L.divIcon({
-                        html: iconHtml,
-                        className: 'custom-marker',
-                        iconSize: [32, 32],
-                        popupAnchor: [0, -16]
-                    });
-                    
-                    marker = L.marker([lat, lng], { icon: customIcon }).addTo(liveMap);
-                    marker.bindPopup(getPopupContent(loc, statusText));
-                    liveMarkers.set(loc.uid, marker);
-                }
-                
-                if (loc.geofenceLat && loc.geofenceLng && loc.geofenceRadius) {
-                    let geofenceCircle = userGeofences.get(`${loc.uid}_fence`);
-                    if (!geofenceCircle) {
-                        geofenceCircle = L.circle(
-                            [parseFloat(loc.geofenceLat), parseFloat(loc.geofenceLng)],
-                            {
-                                radius: parseInt(loc.geofenceRadius),
-                                color: '#3b82f6',
-                                weight: 1,
-                                fillColor: '#3b82f6',
-                                fillOpacity: 0.05,
-                                interactive: false
-                            }
-                        ).addTo(liveMap);
-                        userGeofences.set(`${loc.uid}_fence`, geofenceCircle);
-                    } else {
-                        geofenceCircle.setLatLng([parseFloat(loc.geofenceLat), parseFloat(loc.geofenceLng)]);
-                        geofenceCircle.setRadius(parseInt(loc.geofenceRadius));
-                    }
-                }
-            });
-            
-            for (const [uid, marker] of liveMarkers) {
-                if (!activeUserIds.has(uid)) {
-                    liveMap.removeLayer(marker);
-                    liveMarkers.delete(uid);
-                }
-            }
-            
-            for (const [key, circle] of userGeofences) {
-                const uid = key.replace('_fence', '');
-                if (!activeUserIds.has(uid)) {
-                    liveMap.removeLayer(circle);
-                    userGeofences.delete(key);
-                }
-            }
-            
-            document.getElementById('onlineDevicesCount').innerText = onlineCount;
-        }
-
-        function getMarkerIcon(color) {
-            const colors = { green: '#10b981', amber: '#f59e0b', red: '#ef4444', gray: '#9ca3af' };
-            const bgColor = colors[color] || colors.gray;
-            
-            return `<div style="position: relative; cursor: pointer;"><div style="width: 32px; height: 32px; background: ${bgColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 2px solid white;"><span class="material-symbols-rounded" style="font-size: 18px; color: white;">person</span></div><div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; background: white; border-radius: 50%;"></div></div>`;
-        }
-
-        function getPopupContent(loc, statusText) {
-            const lastSeen = new Date(loc.lastSeen).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
-            const clockInTime = loc.clockInTime ? new Date(loc.clockInTime).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '-';
-            
-            let statusBadgeClass = '';
-            if (loc.isClockedIn && loc.isInGeofence) {
-                statusBadgeClass = 'bg-green-100 text-green-700';
-            } else if (loc.isClockedIn && !loc.isInGeofence) {
-                statusBadgeClass = 'bg-amber-100 text-amber-700';
-            } else if (loc.isLocationOff) {
-                statusBadgeClass = 'bg-red-100 text-red-700';
-            } else {
-                statusBadgeClass = 'bg-gray-100 text-gray-600';
-            }
-            
-            return `<div class="user-popup-card"><h4>${escapeHtml(loc.name)}</h4><p class="text-xs text-gray-500">${escapeHtml(loc.unit || 'Tiada Unit')} | ${escapeHtml(loc.branch)}</p><div class="mt-2 space-y-1 text-xs"><div class="flex justify-between"><span class="text-gray-500">Status:</span><span class="${statusBadgeClass} px-2 rounded-full text-[10px] font-bold">${statusText}</span></div><div class="flex justify-between"><span class="text-gray-500">Clock In:</span><span class="font-medium">${clockInTime}</span></div><div class="flex justify-between"><span class="text-gray-500">Last Seen:</span><span class="font-mono text-[10px]">${lastSeen}</span></div><div class="flex justify-between"><span class="text-gray-500">Device:</span><span>${loc.devicePlatform || 'Web'}</span></div></div><button onclick="viewUserDetailsFromMap('${loc.uid}')" class="mt-3 w-full bg-blue-50 text-blue-700 text-xs font-bold py-1.5 rounded-xl hover:bg-blue-100 transition-all">Lihat Rekod Kehadiran</button></div>`;
-        }
-
-        function updateStatsAndList(locations) {
-            let onDuty = 0, inGeofence = 0, outsideGeofence = 0;
-            
-            const userListHtml = [];
-            
-            locations.forEach(loc => {
-                const lastSeen = new Date(loc.lastSeen);
-                const minutesAgo = Math.floor((new Date() - lastSeen) / 1000 / 60);
-                const isRecent = minutesAgo < 5;
-                
-                if (loc.isClockedIn && isRecent) onDuty++;
-                if (loc.isClockedIn && loc.isInGeofence) inGeofence++;
-                if (loc.isClockedIn && !loc.isInGeofence) outsideGeofence++;
-                
-                let statusIcon = '';
-                let statusColor = '';
-                
-                if (loc.isClockedIn && loc.isInGeofence) {
-                    statusIcon = '🟢';
-                    statusColor = 'text-green-600';
-                } else if (loc.isClockedIn && !loc.isInGeofence) {
-                    statusIcon = '🟡';
-                    statusColor = 'text-amber-600';
-                } else if (loc.isLocationOff) {
-                    statusIcon = '🔴';
-                    statusColor = 'text-red-600';
-                } else {
-                    statusIcon = '⚪';
-                    statusColor = 'text-gray-400';
-                }
-                
-                userListHtml.push(`<div class="flex items-center justify-between py-2 border-b border-gray-50 cursor-pointer hover:bg-gray-50 px-2 rounded-lg" onclick="viewUserDetailsFromMap('${loc.uid}')"><div class="flex items-center gap-2"><span class="${statusColor}">${statusIcon}</span><div><p class="font-bold text-xs">${escapeHtml(loc.name)}</p><p class="text-[10px] text-gray-400">${escapeHtml(loc.unit || '-')}</p></div></div><div class="text-right"><p class="text-[10px] font-mono">${lastSeen.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}</p><p class="text-[9px] text-gray-400">${minutesAgo} minit lalu</p></div></div>`);
-            });
-            
-            document.getElementById('onDutyCount').innerText = onDuty;
-            document.getElementById('inGeofenceCount').innerText = inGeofence;
-            document.getElementById('outsideGeofenceCount').innerText = outsideGeofence;
-            document.getElementById('activeUsersCount').innerText = locations.length;
-            
-            const listContainer = document.getElementById('liveUserList');
-            if (userListHtml.length > 0) {
-                listContainer.innerHTML = userListHtml.join('');
-            } else {
-                listContainer.innerHTML = '<p class="text-gray-400 text-center py-4">Tiada kakitangan aktif</p>';
-            }
-        }
-
-        function refreshLiveMap() {
-            loadLiveLocations();
-            showNotif('Live Map', 'Data lokasi dikemaskini', false);
-        }
-
-        function centerMapOnBranch() {
-            if (liveMap) {
-                liveMap.setView([branchCenter.lat, branchCenter.lng], 14);
-                showNotif('Peta', 'Berpusat ke cawangan anda', false);
-            }
-        }
-
-        function viewUserDetailsFromMap(uid) {
-            const user = users.find(u => u.uid === uid);
-            if (user) {
-                selectedUser = user;
-                viewUserDetails(uid);
-            }
-        }
-
-        function cleanupLiveMap() {
-            if (liveUpdateInterval) {
-                clearInterval(liveUpdateInterval);
-                liveUpdateInterval = null;
-            }
-            if (liveMarkers) {
-                liveMarkers.forEach((marker) => {
-                    if (liveMap) liveMap.removeLayer(marker);
-                });
-                liveMarkers.clear();
-            }
-            if (userGeofences) {
-                userGeofences.forEach((circle) => {
-                    if (liveMap) liveMap.removeLayer(circle);
-                });
-                userGeofences.clear();
-            }
-        }
-
-        // ============================================
-        // INTEGRITY CHECK FUNCTIONS
-        // ============================================
-        async function loadIntegrityChecks() {
-            const startDate = document.getElementById('integrityStartDate').value;
-            const endDate = document.getElementById('integrityEndDate').value;
-            const status = document.getElementById('integrityStatus').value;
-            const search = document.getElementById('integritySearch').value;
-            
-            const filters = {};
-            if (startDate) filters.startDate = startDate;
-            if (endDate) filters.endDate = endDate;
-            if (status) filters.status = status;
-            if (search) filters.userName = search;
-            
-            try {
-                const result = await callAPI('getIntegrityChecks', { 
-                    filters: JSON.stringify(filters),
-                    branch: currentUser.branch,
-                    requestingUser: JSON.stringify(currentUser)
-                });
-                if (result.success && result.data) {
-                    renderIntegrityChecks(result.data);
-                } else {
-                    document.getElementById('integrityTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada rekod integrity check</div></div></td>';
-                }
-            } catch (error) {
-                console.error('Load integrity checks error:', error);
-                document.getElementById('integrityTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
-            }
-        }
-
-        function renderIntegrityChecks(checks) {
-            const tbody = document.getElementById('integrityTableBody');
-            if (!checks || checks.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada rekod integrity check</div></div></td>';
-                return;
-            }
-            
-            let html = '';
-            checks.forEach(check => {
-                const timestamp = new Date(check.timestamp).toLocaleString('ms-MY');
-                const faceStatusClass = check.faceVerified ? 'badge-verified' : 'badge-failed';
-                const faceStatusText = check.faceVerified ? '✅ Disahkan' : '❌ Gagal';
-                const geofenceClass = check.inGeofence ? 'text-green-600' : 'text-red-600';
-                const geofenceText = check.inGeofence ? '✅ Dalam' : '❌ Luar';
-                const overallStatusClass = check.status === 'verified' ? 'badge-verified' : 'badge-failed';
-                const overallStatusText = check.status === 'verified' ? 'Lulus' : 'Gagal';
-                const score = Math.round(check.verificationScore * 100);
-                
-                html += `<tr>
-                    <td class="p-3 text-sm">${timestamp}</div>
-                    <td class="p-3 font-bold">${escapeHtml(check.userName)}</div>
-                    <td class="p-3 text-xs">${escapeHtml(check.unit || '-')}</div>
-                    <td class="p-3 text-xs max-w-[200px] truncate" title="${escapeHtml(check.location)}">${escapeHtml(check.location || '-')}</div>
-                    <td class="p-3"><span class="${faceStatusClass} px-2 py-1 rounded-full text-xs font-bold">${faceStatusText}</span></div>
-                    <td class="p-3"><span class="${geofenceClass} font-bold">${geofenceText}</span></div>
-                    <td class="p-3"><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 rounded-full h-2" style="width: ${score}%"></div></div><span class="text-xs">${score}%</span></div>
-                    <td class="p-3"><span class="${overallStatusClass} px-2 py-1 rounded-full text-xs font-bold">${overallStatusText}</span></div>
-                </tr>`;
+                html += `<tr><td class="p-3 text-sm">${timestamp}</div></td><td class="p-3 font-bold">${escapeHtml(log.userName)}</div></td><td class="p-3">${escapeHtml(log.branch)}</div></td><td class="p-3">${escapeHtml(log.unit)}</div></td><td class="p-3">${log.duration} minit</div></td><td class="p-3"><span class="${statusClass}">${statusText}</span></div></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -2906,7 +2468,7 @@ Jabatan Imigresen Malaysia`;
                         remarkHtml = `<div class="${remarkClass} mt-1">${escapeHtml(record.remark)} ${record.remarkStatus === 'approved' ? '(Lulus)' : (record.remarkStatus === 'pending' ? '(Menunggu)' : '')}</div>`;
                     }
                     
-                    html += `<tr><td class="p-3">${tarikh}</td><td class="p-3">${hari}</td><td class="p-3 text-center">${jamMasuk}</td><td class="p-3 text-center">${jamKeluar}</td><td class="p-3 text-center">${jumlahJam}</td><td class="p-3 text-center">${jumlahOT}</td><td class="p-3 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td><td class="p-3">${remarkHtml}</td></tr>`;
+                    html += `<tr><td class="p-3">${tarikh}</div></td><td class="p-3">${hari}</div></td><td class="p-3 text-center">${jamMasuk}</div></td><td class="p-3 text-center">${jamKeluar}</div></td><td class="p-3 text-center">${jumlahJam}</div></td><td class="p-3 text-center">${jumlahOT}</div></td><td class="p-3 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></div></td><td class="p-3">${remarkHtml}</div></tr>`;
                 });
                 tbody.innerHTML = html;
                 
@@ -3269,14 +2831,6 @@ Jabatan Imigresen Malaysia`;
             if (tab === 'devicerequests') loadDeviceRequests();
             if (tab === 'audit') loadAuditLogs();
             if (tab === 'locationoff') loadLocationOffLogs();
-            if (tab === 'livemap') {
-                setTimeout(() => {
-                    initLiveMap();
-                }, 100);
-            } else {
-                cleanupLiveMap();
-            }
-            if (tab === 'integrity') loadIntegrityChecks();
         };
         window.nextStep = function() {
             if (currentStep === 1) {
@@ -3397,7 +2951,6 @@ Jabatan Imigresen Malaysia`;
         window.handleLogout = function() {
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             stopCamera();
-            cleanupLiveMap();
             const btn = document.getElementById('loginBtn');
             btn.style.backgroundColor = '';
             btn.disabled = false;
@@ -3672,6 +3225,3 @@ Jabatan Imigresen Malaysia`;
     </script>
 </body>
 </html>
-
-
-
