@@ -549,6 +549,58 @@ async function getDeviceInfo() {
 }
 
 // ============================================
+// INTEGRITY CHECK FUNCTIONS (Every 1 Hour)
+// ============================================
+
+/**
+ * Save integrity check data (location + face)
+ * Called by mobile app every 1 hour while clocked in
+ */
+async function saveIntegrityCheck(data) {
+    return await callAPI('saveIntegrityCheck', {
+        uid: data.uid,
+        name: data.name,
+        email: data.email,
+        branch: data.branch,
+        unit: data.unit,
+        lat: data.lat,
+        lng: data.lng,
+        location: data.location,
+        faceDescriptor: data.faceDescriptor,
+        timestamp: data.timestamp,
+        deviceInfo: JSON.stringify(data.deviceInfo || {})
+    });
+}
+
+/**
+ * Get live user locations for map (only users currently clocked in)
+ */
+async function getLiveUserLocations(params) {
+    return await callAPI('getLiveUserLocations', {
+        branch: params.branch,
+        requestingUser: JSON.stringify(params.requestingUser)
+    });
+}
+
+/**
+ * Get integrity check history with filters
+ */
+async function getIntegrityChecks(params) {
+    return await callAPI('getIntegrityChecks', {
+        filters: params.filters,
+        branch: params.branch,
+        requestingUser: JSON.stringify(params.requestingUser)
+    });
+}
+
+/**
+ * Get latest integrity check for a user
+ */
+async function getLatestIntegrityCheck(uid) {
+    return await callAPI('getLatestIntegrityCheck', { uid: uid });
+}
+
+// ============================================
 // IP LOCATION FUNCTIONS
 // ============================================
 
