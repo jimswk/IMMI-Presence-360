@@ -1,6 +1,6 @@
 // ============================================
 // API CONFIGURATION - IMMI PRESENCE 360
-// VERSION: 5.3 (With Force Update + Web Block + Native Bridge)
+// VERSION: 6.0 (With Live Map & Integrity Check)
 // LAST UPDATED: 14 April 2026
 // ============================================
 
@@ -64,7 +64,6 @@ async function callAPI(method, params = {}) {
 // ============================================
 
 function getNativeAppVersion() {
-    // Check if running in Android WebView with our interface
     if (typeof Android !== 'undefined' && Android && Android.getAppVersion) {
         try {
             const version = Android.getAppVersion();
@@ -76,7 +75,6 @@ function getNativeAppVersion() {
         }
     }
     
-    // Check for custom user agent
     const userAgent = navigator.userAgent;
     if (userAgent.includes('IMMI-Presence-360')) {
         const match = userAgent.match(/IMMI-Presence-360\/([\d.]+)/);
@@ -86,7 +84,6 @@ function getNativeAppVersion() {
         }
     }
     
-    // Check localStorage (for testing)
     const storedVersion = localStorage.getItem('appVersion');
     if (storedVersion) {
         console.log('Version from localStorage:', storedVersion);
@@ -184,7 +181,6 @@ function showForceUpdateDialog(downloadUrl, latestVersion, currentVersion) {
         </div>
     `;
     
-    // Disable back button
     history.pushState(null, null, location.href);
     window.onpopstate = function() {
         history.pushState(null, null, location.href);
@@ -549,58 +545,6 @@ async function getDeviceInfo() {
 }
 
 // ============================================
-// INTEGRITY CHECK FUNCTIONS (Every 1 Hour)
-// ============================================
-
-/**
- * Save integrity check data (location + face)
- * Called by mobile app every 1 hour while clocked in
- */
-async function saveIntegrityCheck(data) {
-    return await callAPI('saveIntegrityCheck', {
-        uid: data.uid,
-        name: data.name,
-        email: data.email,
-        branch: data.branch,
-        unit: data.unit,
-        lat: data.lat,
-        lng: data.lng,
-        location: data.location,
-        faceDescriptor: data.faceDescriptor,
-        timestamp: data.timestamp,
-        deviceInfo: JSON.stringify(data.deviceInfo || {})
-    });
-}
-
-/**
- * Get live user locations for map (only users currently clocked in)
- */
-async function getLiveUserLocations(params) {
-    return await callAPI('getLiveUserLocations', {
-        branch: params.branch,
-        requestingUser: JSON.stringify(params.requestingUser)
-    });
-}
-
-/**
- * Get integrity check history with filters
- */
-async function getIntegrityChecks(params) {
-    return await callAPI('getIntegrityChecks', {
-        filters: params.filters,
-        branch: params.branch,
-        requestingUser: JSON.stringify(params.requestingUser)
-    });
-}
-
-/**
- * Get latest integrity check for a user
- */
-async function getLatestIntegrityCheck(uid) {
-    return await callAPI('getLatestIntegrityCheck', { uid: uid });
-}
-
-// ============================================
 // IP LOCATION FUNCTIONS
 // ============================================
 
@@ -697,7 +641,49 @@ function stopPeriodicLocationTracking() {
 }
 
 // ============================================
-// AUTHENTICATION FUNCTIONS (UPDATED)
+// INTEGRITY CHECK FUNCTIONS (Every 1 Hour)
+// ============================================
+
+/**
+ * Save integrity check data (location + face)
+ * Called by mobile app every 1 hour while clocked in
+ */
+async function saveIntegrityCheck(data) {
+    return await callAPI('saveIntegrityCheck', {
+        data: JSON.stringify(data)
+    });
+}
+
+/**
+ * Get live user locations for map (only users currently clocked in)
+ */
+async function getLiveUserLocations(params) {
+    return await callAPI('getLiveUserLocations', {
+        branch: params.branch,
+        requestingUser: JSON.stringify(params.requestingUser)
+    });
+}
+
+/**
+ * Get integrity check history with filters
+ */
+async function getIntegrityChecks(params) {
+    return await callAPI('getIntegrityChecks', {
+        filters: params.filters,
+        branch: params.branch,
+        requestingUser: JSON.stringify(params.requestingUser)
+    });
+}
+
+/**
+ * Get latest integrity check for a user
+ */
+async function getLatestIntegrityCheck(uid) {
+    return await callAPI('getLatestIntegrityCheck', { uid: uid });
+}
+
+// ============================================
+// AUTHENTICATION FUNCTIONS
 // ============================================
 
 async function login(email, password) {
@@ -1262,7 +1248,7 @@ async function debugDeviceInfo() {
 // INITIALIZATION
 // ============================================
 
-console.log('✅ api-config.js v5.3 loaded - With Force Update & Native Bridge');
+console.log('✅ api-config.js v6.0 loaded - With Live Map & Integrity Check');
 
 // Run check on page load
 window.addEventListener('DOMContentLoaded', async () => {
