@@ -482,10 +482,6 @@
             color: #64748b;
         }
 
-        .sub-tab:not(.active):hover {
-            background: rgba(255,255,255,0.5);
-        }
-
         .confidence-badge {
             position: absolute;
             bottom: -25px;
@@ -595,8 +591,9 @@
         .badge-approved { background: #dcfce7; color: #166534; }
         .badge-rejected { background: #fee2e2; color: #991b1b; }
         .badge-reviewed { background: #dbeafe; color: #1e3a8a; }
+        .badge-verified { background: #dcfce7; color: #166534; }
+        .badge-failed { background: #fee2e2; color: #991b1b; }
 
-        /* Remark badge styles */
         .remark-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -608,6 +605,43 @@
         .remark-badge.leave { background: #fef3c7; color: #92400e; }
         .remark-badge.diary { background: #dcfce7; color: #166534; }
         .remark-badge.exception { background: #fee2e2; color: #991b1b; }
+
+        /* Live Map Styles */
+        .custom-marker {
+            background: transparent;
+            border: none;
+        }
+        
+        .live-marker {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            70% { transform: scale(1.1); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+        
+        .marker-popup .leaflet-popup-content-wrapper {
+            border-radius: 16px;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .marker-popup .leaflet-popup-content {
+            margin: 0;
+            min-width: 220px;
+        }
+        
+        .user-popup-card {
+            padding: 12px;
+        }
+        
+        .user-popup-card h4 {
+            font-weight: 800;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
 
         @media (max-width: 640px) {
             .floating-input {
@@ -638,12 +672,6 @@
                 flex-wrap: wrap;
             }
         }
-
-        .status-green { background: #dcfce7; color: #166534; font-weight: bold; }
-        .status-yellow { background: #fef3c7; color: #92400e; font-weight: bold; }
-        .status-red { background: #fee2e2; color: #991b1b; font-weight: bold; }
-        .status-orange { background: #ffedd5; color: #9a3412; font-weight: bold; }
-        .status-blue { background: #dbeafe; color: #1e3a8a; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -708,16 +736,13 @@
         </div>
     </div>
 
-    <!-- Request Approval Modal -->
     <div id="requestApprovalModal" class="confirm-modal" style="display: none;">
         <div class="confirm-content" style="max-width: 500px;">
             <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span class="material-symbols-rounded text-4xl" id="modalIcon">assignment</span>
             </div>
             <h3 class="font-black text-xl text-gray-800" id="modalTitle">Luluskan Permohonan</h3>
-            <div id="requestDetails" class="text-left text-sm text-gray-600 my-4 max-h-60 overflow-y-auto">
-                <!-- Details will be filled dynamically -->
-            </div>
+            <div id="requestDetails" class="text-left text-sm text-gray-600 my-4 max-h-60 overflow-y-auto"></div>
             <div class="mb-4">
                 <label class="input-label text-left block">Respons / Catatan</label>
                 <textarea id="adminResponseInput" class="input-field" rows="3" placeholder="Sila nyatakan tindakan anda..."></textarea>
@@ -730,7 +755,6 @@
         </div>
     </div>
 
-    <!-- Device Request Modal -->
     <div id="deviceRequestModal" class="confirm-modal" style="display: none;">
         <div class="confirm-content" style="max-width: 500px;">
             <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -843,6 +867,14 @@
                         <span class="material-symbols-rounded">location_off</span> 
                         <span class="font-bold">Lokasi OFF</span>
                     </div>
+                    <div class="nav-item" onclick="switchTab('livemap')" id="navLivemap">
+                        <span class="material-symbols-rounded">map</span> 
+                        <span class="font-bold">Live Map</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('integrity')" id="navIntegrity">
+                        <span class="material-symbols-rounded">verified</span> 
+                        <span class="font-bold">Integrity Check</span>
+                    </div>
                     <div class="nav-item" onclick="switchTab('tools')" id="navTools">
                         <span class="material-symbols-rounded">build</span> 
                         <span class="font-bold">Alat Sistem</span>
@@ -882,15 +914,7 @@
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
-                                <tr>
-                                    <th>Nama Kakitangan</th>
-                                    <th>Unit / Bahagian</th>
-                                    <th>Status Biometrik</th>
-                                    <th>Geofencing</th>
-                                    <th>Platform</th>
-                                    <th>Status Kehadiran</th>
-                                    <th class="text-center">Tindakan</th>
-                                </tr>
+                                <tr><th>Nama Kakitangan</th><th>Unit / Bahagian</th><th>Status Biometrik</th><th>Geofencing</th><th>Platform</th><th>Status Kehadiran</th><th class="text-center">Tindakan</th></tr>
                             </thead>
                             <tbody id="usersTableBody"></tbody>
                         </table>
@@ -906,18 +930,9 @@
 
                     <div class="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
                         <div class="step-indicator max-w-2xl mx-auto">
-                            <div class="step active" id="step1">
-                                <div class="step-number">1</div>
-                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Profil Asas</p>
-                            </div>
-                            <div class="step" id="step2">
-                                <div class="step-number">2</div>
-                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Zon Lokasi</p>
-                            </div>
-                            <div class="step" id="step3">
-                                <div class="step-number">3</div>
-                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Biometrik</p>
-                            </div>
+                            <div class="step active" id="step1"><div class="step-number">1</div><p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Profil Asas</p></div>
+                            <div class="step" id="step2"><div class="step-number">2</div><p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Zon Lokasi</p></div>
+                            <div class="step" id="step3"><div class="step-number">3</div><p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Biometrik</p></div>
                         </div>
 
                         <input type="hidden" id="userId">
@@ -926,105 +941,32 @@
 
                         <div id="step1Content" class="wizard-step active">
                             <div class="grid grid-cols-2 gap-x-6">
-                                <div class="col-span-2">
-                                    <label class="input-label">Nama Penuh Kakitangan</label>
-                                    <input type="text" id="userName" class="input-field" placeholder="Masukkan nama penuh mengikut IC">
-                                </div>
-                                <div class="col-span-2">
-                                    <label class="input-label">Emel Rasmi (.gov.my)</label>
-                                    <input type="email" id="userEmail" class="input-field" placeholder="contoh@imigresen.gov.my">
-                                </div>
-                                <div>
-                                    <label class="input-label">Unit / Bahagian</label>
-                                    <input type="text" id="userUnit" class="input-field" placeholder="Contoh: UPSKK, Unit Teknologi">
-                                </div>
-                                <div>
-                                    <label class="input-label">Cawangan</label>
-                                    <input type="text" id="userBranch" class="input-field bg-gray-100 text-gray-500 font-black" readonly>
-                                </div>
-                                <div class="col-span-2">
-                                    <label class="input-label">Kata Laluan Sistem (Min 6 aksara)</label>
-                                    <input type="password" id="userPassword" class="input-field" placeholder="••••••••">
-                                </div>
+                                <div class="col-span-2"><label class="input-label">Nama Penuh Kakitangan</label><input type="text" id="userName" class="input-field" placeholder="Masukkan nama penuh mengikut IC"></div>
+                                <div class="col-span-2"><label class="input-label">Emel Rasmi (.gov.my)</label><input type="email" id="userEmail" class="input-field" placeholder="contoh@imigresen.gov.my"></div>
+                                <div><label class="input-label">Unit / Bahagian</label><input type="text" id="userUnit" class="input-field" placeholder="Contoh: UPSKK, Unit Teknologi"></div>
+                                <div><label class="input-label">Cawangan</label><input type="text" id="userBranch" class="input-field bg-gray-100 text-gray-500 font-black" readonly></div>
+                                <div class="col-span-2"><label class="input-label">Kata Laluan Sistem (Min 6 aksara)</label><input type="password" id="userPassword" class="input-field" placeholder="••••••••"></div>
                             </div>
                         </div>
 
                         <div id="step2Content" class="wizard-step">
-                            <div class="mb-6">
-                                <label class="input-label">Alamat / Lokasi Pejabat</label>
-                                <input type="text" id="userLocation" class="input-field" placeholder="Alamat akan diisi automatik dari peta" readonly>
-                                <p class="text-xs text-gray-400 mt-1">Klik pada peta atau seret penanda untuk isi alamat automatik</p>
-                            </div>
-                            
-                            <div class="mb-6 flex justify-between items-center">
-                                <div>
-                                    <label class="input-label">Tetapan Pagar Maya (Geofencing)</label>
-                                    <p class="text-xs text-gray-400">Tentukan kawasan di mana kakitangan dibenarkan melakukan 'Clock-In'.</p>
-                                </div>
-                                <div class="bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-black" id="radiusValDisplay">500 Meter</div>
-                            </div>
-                            
+                            <div class="mb-6"><label class="input-label">Alamat / Lokasi Pejabat</label><input type="text" id="userLocation" class="input-field" placeholder="Alamat akan diisi automatik dari peta" readonly><p class="text-xs text-gray-400 mt-1">Klik pada peta atau seret penanda untuk isi alamat automatik</p></div>
+                            <div class="mb-6 flex justify-between items-center"><div><label class="input-label">Tetapan Pagar Maya (Geofencing)</label><p class="text-xs text-gray-400">Tentukan kawasan di mana kakitangan dibenarkan melakukan 'Clock-In'.</p></div><div class="bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-black" id="radiusValDisplay">500 Meter</div></div>
                             <div id="userLocationMap" class="location-map"></div>
-                            
                             <div class="grid grid-cols-2 gap-6 items-end">
-                                <div class="space-y-4">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="input-label">Latitud</label>
-                                            <input type="text" id="userLat" class="input-field mb-0 text-xs font-bold" readonly>
-                                        </div>
-                                        <div>
-                                            <label class="input-label">Longitud</label>
-                                            <input type="text" id="userLng" class="input-field mb-0 text-xs font-bold" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                                        <label class="input-label mb-4">Radius Kehadiran</label>
-                                        <input type="range" id="userRadius" min="100" max="2000" step="100" value="500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-800" oninput="updateRadius(this.value)">
-                                        <div class="flex justify-between mt-2 text-[10px] font-bold text-gray-400">
-                                            <span>100m</span>
-                                            <span>1000m</span>
-                                            <span>2000m</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="bg-amber-50 p-6 rounded-3xl border border-amber-100">
-                                    <div class="flex gap-3 items-start">
-                                        <span class="material-symbols-rounded text-amber-600">info</span>
-                                        <p class="text-xs text-amber-900 font-medium leading-relaxed">
-                                            Klik pada mana-mana lokasi di atas peta atau seret penanda biru untuk menetapkan pusat kawasan bertugas kakitangan.<br>
-                                            <span class="font-bold">Alamat akan diisi automatik.</span>
-                                        </p>
-                                    </div>
-                                </div>
+                                <div class="space-y-4"><div class="grid grid-cols-2 gap-4"><div><label class="input-label">Latitud</label><input type="text" id="userLat" class="input-field mb-0 text-xs font-bold" readonly></div><div><label class="input-label">Longitud</label><input type="text" id="userLng" class="input-field mb-0 text-xs font-bold" readonly></div></div><div class="bg-gray-50 p-6 rounded-3xl border border-gray-100"><label class="input-label mb-4">Radius Kehadiran</label><input type="range" id="userRadius" min="100" max="2000" step="100" value="500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-800" oninput="updateRadius(this.value)"><div class="flex justify-between mt-2 text-[10px] font-bold text-gray-400"><span>100m</span><span>1000m</span><span>2000m</span></div></div></div>
+                                <div class="bg-amber-50 p-6 rounded-3xl border border-amber-100"><div class="flex gap-3 items-start"><span class="material-symbols-rounded text-amber-600">info</span><p class="text-xs text-amber-900 font-medium leading-relaxed">Klik pada mana-mana lokasi di atas peta atau seret penanda biru untuk menetapkan pusat kawasan bertugas kakitangan.<br><span class="font-bold">Alamat akan diisi automatik.</span></p></div></div>
                             </div>
                         </div>
 
                         <div id="step3Content" class="wizard-step">
-                            <div class="video-container">
-                                <video id="faceVideo" autoplay muted playsinline></video>
-                                <div class="face-guide"></div>
-                                <div id="faceOverlay" class="face-overlay"></div>
-                            </div>
-
-                            <div class="progress-bar mt-4">
-                                <div id="progressFill" class="progress-fill"></div>
-                            </div>
-
-                            <div id="faceStatus" class="max-w-md mx-auto text-center bg-gray-50 p-6 rounded-[32px] border border-gray-100 mb-8">
-                                <p class="text-sm font-bold text-gray-500" id="faceStatusMsg">Sedia untuk melakukan pengesahan biometrik wajah...</p>
-                            </div>
-
+                            <div class="video-container"><video id="faceVideo" autoplay muted playsinline></video><div class="face-guide"></div><div id="faceOverlay" class="face-overlay"></div></div>
+                            <div class="progress-bar mt-4"><div id="progressFill" class="progress-fill"></div></div>
+                            <div id="faceStatus" class="max-w-md mx-auto text-center bg-gray-50 p-6 rounded-[32px] border border-gray-100 mb-8"><p class="text-sm font-bold text-gray-500" id="faceStatusMsg">Sedia untuk melakukan pengesahan biometrik wajah...</p></div>
                             <div class="flex justify-center gap-4">
-                                <button onclick="initCamera()" id="retryCamBtn" class="hidden bg-blue-600 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
-                                    <span class="material-symbols-rounded">videocam</span> Aktifkan Kamera
-                                </button>
-                                <button onclick="captureFace()" id="captureBtn" class="bg-amber-500 text-white px-10 py-4 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-amber-900/20 active:scale-95 transition-all">
-                                    <span class="material-symbols-rounded">face</span> Imbas Wajah Kakitangan
-                                </button>
-                                <button onclick="resetFace()" id="resetFaceBtn" class="hidden bg-gray-100 text-gray-500 px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-gray-200 transition-all">
-                                    <span class="material-symbols-rounded">refresh</span> Padam & Imbas Semula
-                                </button>
+                                <button onclick="initCamera()" id="retryCamBtn" class="hidden bg-blue-600 text-white px-8 py-4 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95 transition-all"><span class="material-symbols-rounded">videocam</span> Aktifkan Kamera</button>
+                                <button onclick="captureFace()" id="captureBtn" class="bg-amber-500 text-white px-10 py-4 rounded-2xl font-black flex items-center gap-2 shadow-lg shadow-amber-900/20 active:scale-95 transition-all"><span class="material-symbols-rounded">face</span> Imbas Wajah Kakitangan</button>
+                                <button onclick="resetFace()" id="resetFaceBtn" class="hidden bg-gray-100 text-gray-500 px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:bg-gray-200 transition-all"><span class="material-symbols-rounded">refresh</span> Padam & Imbas Semula</button>
                             </div>
                         </div>
 
@@ -1032,12 +974,8 @@
                             <button onclick="cancelAndReset()" class="text-gray-400 font-bold px-6 py-2 hover:text-red-500 transition-colors">Batal</button>
                             <div class="flex gap-3">
                                 <button onclick="prevStep()" id="prevBtn" class="hidden bg-gray-100 text-gray-600 px-8 py-4 rounded-2xl font-bold active:scale-95 transition-all">Sebelumnya</button>
-                                <button onclick="nextStep()" id="nextBtn" class="bg-blue-800 text-white px-10 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-blue-900/10">
-                                    Seterusnya <span class="material-symbols-rounded">arrow_forward</span>
-                                </button>
-                                <button onclick="saveUser()" id="saveBtn" class="hidden bg-green-600 text-white px-12 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-green-900/10">
-                                    <span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan
-                                </button>
+                                <button onclick="nextStep()" id="nextBtn" class="bg-blue-800 text-white px-10 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-blue-900/10">Seterusnya <span class="material-symbols-rounded">arrow_forward</span></button>
+                                <button onclick="saveUser()" id="saveBtn" class="hidden bg-green-600 text-white px-12 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-green-900/10"><span class="material-symbols-rounded">save</span> Simpan Rekod Kakitangan</button>
                             </div>
                         </div>
                     </div>
@@ -1049,109 +987,36 @@
                 <div class="max-w-4xl">
                     <h1 class="text-4xl font-black text-gray-800 mb-2" id="editFormTitle">Kemaskini Kakitangan</h1>
                     <p class="text-gray-400 text-sm mb-10">Kemaskini maklumat asas dan lokasi kakitangan.</p>
-
                     <div class="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100">
                         <div class="step-indicator-2">
-                            <div class="step-2 active" id="editStep1">
-                                <div class="step-number-2">1</div>
-                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Profil Asas</p>
-                            </div>
-                            <div class="step-2" id="editStep2">
-                                <div class="step-number-2">2</div>
-                                <p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Zon Lokasi</p>
-                            </div>
+                            <div class="step-2 active" id="editStep1"><div class="step-number-2">1</div><p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Profil Asas</p></div>
+                            <div class="step-2" id="editStep2"><div class="step-number-2">2</div><p class="text-[10px] font-black text-center mt-2 uppercase tracking-tighter">Zon Lokasi</p></div>
                         </div>
-
-                        <input type="hidden" id="editUserId">
-                        <input type="hidden" id="editUserUid">
-
+                        <input type="hidden" id="editUserId"><input type="hidden" id="editUserUid">
                         <div id="editStep1Content" class="wizard-step-2 active">
                             <div class="grid grid-cols-2 gap-x-6">
-                                <div class="col-span-2">
-                                    <label class="input-label">Nama Penuh Kakitangan</label>
-                                    <input type="text" id="editUserName" class="input-field" placeholder="Masukkan nama penuh mengikut IC">
-                                </div>
-                                <div class="col-span-2">
-                                    <label class="input-label">Emel Rasmi (.gov.my)</label>
-                                    <input type="email" id="editUserEmail" class="input-field" placeholder="contoh@imigresen.gov.my">
-                                </div>
-                                <div>
-                                    <label class="input-label">Unit / Bahagian</label>
-                                    <input type="text" id="editUserUnit" class="input-field" placeholder="Contoh: UPSKK, Unit Teknologi">
-                                    <p class="text-xs text-blue-500 mt-1">*Admin boleh menukar unit/bahagian</p>
-                                </div>
-                                <div>
-                                    <label class="input-label">Cawangan</label>
-                                    <input type="text" id="editUserBranch" class="input-field bg-gray-100 text-gray-500 font-black" readonly>
-                                    <p class="text-xs text-gray-400 mt-1">*Cawangan hanya boleh ditukar oleh Superadmin</p>
-                                </div>
-                                <div class="col-span-2">
-                                    <label class="input-label">Kata Laluan (Kosongkan jika tidak mahu tukar)</label>
-                                    <input type="password" id="editUserPassword" class="input-field" placeholder="••••••••">
-                                </div>
+                                <div class="col-span-2"><label class="input-label">Nama Penuh Kakitangan</label><input type="text" id="editUserName" class="input-field" placeholder="Masukkan nama penuh mengikut IC"></div>
+                                <div class="col-span-2"><label class="input-label">Emel Rasmi (.gov.my)</label><input type="email" id="editUserEmail" class="input-field" placeholder="contoh@imigresen.gov.my"></div>
+                                <div><label class="input-label">Unit / Bahagian</label><input type="text" id="editUserUnit" class="input-field" placeholder="Contoh: UPSKK, Unit Teknologi"><p class="text-xs text-blue-500 mt-1">*Admin boleh menukar unit/bahagian</p></div>
+                                <div><label class="input-label">Cawangan</label><input type="text" id="editUserBranch" class="input-field bg-gray-100 text-gray-500 font-black" readonly><p class="text-xs text-gray-400 mt-1">*Cawangan hanya boleh ditukar oleh Superadmin</p></div>
+                                <div class="col-span-2"><label class="input-label">Kata Laluan (Kosongkan jika tidak mahu tukar)</label><input type="password" id="editUserPassword" class="input-field" placeholder="••••••••"></div>
                             </div>
                         </div>
-
                         <div id="editStep2Content" class="wizard-step-2">
-                            <div class="mb-6">
-                                <label class="input-label">Alamat / Lokasi Pejabat</label>
-                                <input type="text" id="editUserLocation" class="input-field" placeholder="Alamat akan diisi automatik dari peta" readonly>
-                                <p class="text-xs text-gray-400 mt-1">Klik pada peta atau seret penanda untuk isi alamat automatik</p>
-                            </div>
-                            
-                            <div class="mb-6 flex justify-between items-center">
-                                <div>
-                                    <label class="input-label">Tetapan Pagar Maya (Geofencing)</label>
-                                    <p class="text-xs text-gray-400">Tentukan kawasan di mana kakitangan dibenarkan melakukan 'Clock-In'.</p>
-                                </div>
-                                <div class="bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-black" id="editRadiusValDisplay">500 Meter</div>
-                            </div>
-                            
+                            <div class="mb-6"><label class="input-label">Alamat / Lokasi Pejabat</label><input type="text" id="editUserLocation" class="input-field" placeholder="Alamat akan diisi automatik dari peta" readonly><p class="text-xs text-gray-400 mt-1">Klik pada peta atau seret penanda untuk isi alamat automatik</p></div>
+                            <div class="mb-6 flex justify-between items-center"><div><label class="input-label">Tetapan Pagar Maya (Geofencing)</label><p class="text-xs text-gray-400">Tentukan kawasan di mana kakitangan dibenarkan melakukan 'Clock-In'.</p></div><div class="bg-blue-800 text-white px-4 py-2 rounded-xl text-xs font-black" id="editRadiusValDisplay">500 Meter</div></div>
                             <div id="editUserLocationMap" class="location-map"></div>
-                            
                             <div class="grid grid-cols-2 gap-6 items-end">
-                                <div class="space-y-4">
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="input-label">Latitud</label>
-                                            <input type="text" id="editUserLat" class="input-field mb-0 text-xs font-bold" readonly>
-                                        </div>
-                                        <div>
-                                            <label class="input-label">Longitud</label>
-                                            <input type="text" id="editUserLng" class="input-field mb-0 text-xs font-bold" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100">
-                                        <label class="input-label mb-4">Radius Kehadiran</label>
-                                        <input type="range" id="editUserRadius" min="100" max="2000" step="100" value="500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-800" oninput="updateEditRadius(this.value)">
-                                        <div class="flex justify-between mt-2 text-[10px] font-bold text-gray-400">
-                                            <span>100m</span>
-                                            <span>1000m</span>
-                                            <span>2000m</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="bg-amber-50 p-6 rounded-3xl border border-amber-100">
-                                    <div class="flex gap-3 items-start">
-                                        <span class="material-symbols-rounded text-amber-600">info</span>
-                                        <p class="text-xs text-amber-900 font-medium leading-relaxed">
-                                            Klik pada mana-mana lokasi di atas peta atau seret penanda biru untuk menetapkan pusat kawasan bertugas kakitangan.
-                                        </p>
-                                    </div>
-                                </div>
+                                <div class="space-y-4"><div class="grid grid-cols-2 gap-4"><div><label class="input-label">Latitud</label><input type="text" id="editUserLat" class="input-field mb-0 text-xs font-bold" readonly></div><div><label class="input-label">Longitud</label><input type="text" id="editUserLng" class="input-field mb-0 text-xs font-bold" readonly></div></div><div class="bg-gray-50 p-6 rounded-3xl border border-gray-100"><label class="input-label mb-4">Radius Kehadiran</label><input type="range" id="editUserRadius" min="100" max="2000" step="100" value="500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-800" oninput="updateEditRadius(this.value)"><div class="flex justify-between mt-2 text-[10px] font-bold text-gray-400"><span>100m</span><span>1000m</span><span>2000m</span></div></div></div>
+                                <div class="bg-amber-50 p-6 rounded-3xl border border-amber-100"><div class="flex gap-3 items-start"><span class="material-symbols-rounded text-amber-600">info</span><p class="text-xs text-amber-900 font-medium leading-relaxed">Klik pada mana-mana lokasi di atas peta atau seret penanda biru untuk menetapkan pusat kawasan bertugas kakitangan.</p></div></div>
                             </div>
                         </div>
-
                         <div class="mt-12 pt-8 border-t border-gray-100 flex justify-between items-center">
                             <button onclick="cancelEdit()" class="text-gray-400 font-bold px-6 py-2 hover:text-red-500 transition-colors">Batal</button>
                             <div class="flex gap-3">
                                 <button onclick="prevEditStep()" id="prevEditBtn" class="hidden bg-gray-100 text-gray-600 px-8 py-4 rounded-2xl font-bold active:scale-95 transition-all">Sebelumnya</button>
-                                <button onclick="nextEditStep()" id="nextEditBtn" class="bg-blue-800 text-white px-10 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-blue-900/10">
-                                    Seterusnya <span class="material-symbols-rounded">arrow_forward</span>
-                                </button>
-                                <button onclick="updateUser()" id="updateBtn" class="hidden bg-green-600 text-white px-12 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-green-900/10">
-                                    <span class="material-symbols-rounded">save</span> Kemaskini Kakitangan
-                                </button>
+                                <button onclick="nextEditStep()" id="nextEditBtn" class="bg-blue-800 text-white px-10 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-blue-900/10">Seterusnya <span class="material-symbols-rounded">arrow_forward</span></button>
+                                <button onclick="updateUser()" id="updateBtn" class="hidden bg-green-600 text-white px-12 py-4 rounded-2xl font-bold active:scale-95 transition-all flex items-center gap-3 shadow-lg shadow-green-900/10"><span class="material-symbols-rounded">save</span> Kemaskini Kakitangan</button>
                             </div>
                         </div>
                     </div>
@@ -1161,75 +1026,27 @@
             <!-- User Details Tab -->
             <div id="userDetailsTab" class="hidden">
                 <div class="flex justify-between items-center mb-6">
-                    <div>
-                        <h1 class="text-4xl font-black text-gray-800" id="selectedUserName">-</h1>
-                        <p class="text-gray-400 text-sm mt-1" id="selectedUserInfo">-</p>
-                    </div>
-                    <button onclick="backToUsersList()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-gray-200 transition-all">
-                        <span class="material-symbols-rounded">arrow_back</span> Kembali ke Senarai
-                    </button>
+                    <div><h1 class="text-4xl font-black text-gray-800" id="selectedUserName">-</h1><p class="text-gray-400 text-sm mt-1" id="selectedUserInfo">-</p></div>
+                    <button onclick="backToUsersList()" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-gray-200 transition-all"><span class="material-symbols-rounded">arrow_back</span> Kembali ke Senarai</button>
                 </div>
-
                 <div class="sub-tabs">
                     <div class="sub-tab active" onclick="switchUserSubTab('attendance')" id="subTabAttendance">Rekod Kehadiran</div>
                     <div class="sub-tab" onclick="switchUserSubTab('info')" id="subTabInfo">Maklumat Kakitangan</div>
                 </div>
-
                 <div id="userAttendanceSubTab">
                     <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100 mb-8">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="text-2xl font-black text-gray-800">Rekod Kehadiran</h2>
-                            <div class="flex gap-3">
-                                <input type="date" id="userHistoryStartDate" class="input-field mb-0 w-40">
-                                <span class="text-gray-400 self-center">hingga</span>
-                                <input type="date" id="userHistoryEndDate" class="input-field mb-0 w-40">
-                                <button onclick="loadUserAttendance()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2">
-                                    <span class="material-symbols-rounded">search</span> Cari
-                                </button>
-                            </div>
+                            <div class="flex gap-3"><input type="date" id="userHistoryStartDate" class="input-field mb-0 w-40"><span class="text-gray-400 self-center">hingga</span><input type="date" id="userHistoryEndDate" class="input-field mb-0 w-40"><button onclick="loadUserAttendance()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2"><span class="material-symbols-rounded">search</span> Cari</button></div>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead>
-                                    <tr>
-                                        <th>Tarikh</th>
-                                        <th>Hari</th>
-                                        <th>Jam Masuk</th>
-                                        <th>Jam Keluar</th>
-                                        <th>Jumlah Jam</th>
-                                        <th>OT</th>
-                                        <th>Status</th>
-                                        <th>Remark</th>
-                                    </thead>
-                                <tbody id="userAttendanceBody">
-                                    <tr><td colspan="8" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</div></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <div class="overflow-x-auto"><table class="w-full"><thead><tr><th>Tarikh</th><th>Hari</th><th>Jam Masuk</th><th>Jam Keluar</th><th>Jumlah Jam</th><th>OT</th><th>Status</th><th>Remark</th></tr></thead><tbody id="userAttendanceBody"><tr><td colspan="8" class="text-center py-10 text-gray-400">Pilih tarikh untuk lihat rekod</td></tr></tbody></table></div>
                     </div>
                 </div>
-
                 <div id="userInfoSubTab" class="hidden">
                     <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
                         <div class="grid grid-cols-2 gap-8">
-                            <div>
-                                <h3 class="font-black text-lg mb-4">Maklumat Asas</h3>
-                                <div class="space-y-3">
-                                    <div><p class="text-xs font-bold text-gray-400">Nama Penuh</p><p class="font-bold text-gray-800" id="infoName">-</p></div>
-                                    <div><p class="text-xs font-bold text-gray-400">Emel</p><p class="font-bold text-gray-800" id="infoEmail">-</p></div>
-                                    <div><p class="text-xs font-bold text-gray-400">Unit</p><p class="font-bold text-gray-800" id="infoUnit">-</p></div>
-                                    <div><p class="text-xs font-bold text-gray-400">Cawangan</p><p class="font-bold text-gray-800" id="infoBranch">-</p></div>
-                                    <div><p class="text-xs font-bold text-gray-400">Status Biometrik</p><p class="font-bold text-gray-800" id="infoFaceStatus">-</p></div>
-                                </div>
-                            </div>
-                            <div>
-                                <h3 class="font-black text-lg mb-4">Geofencing</h3>
-                                <div class="space-y-3">
-                                    <div><p class="text-xs font-bold text-gray-400">Lokasi Pejabat</p><p class="font-bold text-gray-800" id="infoLocation">-</p></div>
-                                    <div><p class="text-xs font-bold text-gray-400">Koordinat</p><p class="font-bold text-gray-800" id="infoCoord">-</p></div>
-                                    <div><p class="text-xs font-bold text-gray-400">Radius</p><p class="font-bold text-gray-800" id="infoRadius">-</p></div>
-                                </div>
-                            </div>
+                            <div><h3 class="font-black text-lg mb-4">Maklumat Asas</h3><div class="space-y-3"><div><p class="text-xs font-bold text-gray-400">Nama Penuh</p><p class="font-bold text-gray-800" id="infoName">-</p></div><div><p class="text-xs font-bold text-gray-400">Emel</p><p class="font-bold text-gray-800" id="infoEmail">-</p></div><div><p class="text-xs font-bold text-gray-400">Unit</p><p class="font-bold text-gray-800" id="infoUnit">-</p></div><div><p class="text-xs font-bold text-gray-400">Cawangan</p><p class="font-bold text-gray-800" id="infoBranch">-</p></div><div><p class="text-xs font-bold text-gray-400">Status Biometrik</p><p class="font-bold text-gray-800" id="infoFaceStatus">-</p></div></div></div>
+                            <div><h3 class="font-black text-lg mb-4">Geofencing</h3><div class="space-y-3"><div><p class="text-xs font-bold text-gray-400">Lokasi Pejabat</p><p class="font-bold text-gray-800" id="infoLocation">-</p></div><div><p class="text-xs font-bold text-gray-400">Koordinat</p><p class="font-bold text-gray-800" id="infoCoord">-</p></div><div><p class="text-xs font-bold text-gray-400">Radius</p><p class="font-bold text-gray-800" id="infoRadius">-</p></div></div></div>
                         </div>
                     </div>
                 </div>
@@ -1237,52 +1054,17 @@
 
             <!-- Devices Tab -->
             <div id="devicesTab" class="hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-4xl font-black text-gray-800">Peranti Pengguna</h1>
-                    <div class="flex gap-3">
-                        <button onclick="loadUserDevices()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula data">
-                            <span class="material-symbols-rounded text-sm">refresh</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
-                    <table class="w-full min-w-[900px]">
-                        <thead>
-                            <tr>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Nama</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Cawangan</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Unit</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">IP Terkini</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Lokasi Anggaran</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Platform</th>
-                                <th class="text-left p-3 text-xs font-bold text-gray-400">Terakhir Aktif</th>
-                                <th class="text-center p-3 text-xs font-bold text-gray-400">Trust</th>
-                                <th class="text-center p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="devicesTableBody">
-                            <tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</div></td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <div class="flex justify-between items-center mb-6"><h1 class="text-4xl font-black text-gray-800">Peranti Pengguna</h1><div class="flex gap-3"><button onclick="loadUserDevices()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all" title="Muat semula data"><span class="material-symbols-rounded text-sm">refresh</span></button></div></div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[900px]"><thead><tr><th>Nama</th><th>Cawangan</th><th>Unit</th><th>IP Terkini</th><th>Lokasi Anggaran</th><th>Platform</th><th>Terakhir Aktif</th><th>Trust</th><th>Tindakan</th></tr></thead><tbody id="devicesTableBody"><tr><td colspan="9" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div>
             </div>
 
             <!-- Reports Tab -->
             <div id="reportsTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Laporan Kehadiran</h1>
                 <div class="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100 max-w-2xl">
-                    <div class="grid grid-cols-2 gap-6 mb-8">
-                        <div><label class="input-label">Tarikh Mula</label><input type="date" id="startDate" class="input-field mb-0"></div>
-                        <div><label class="input-label">Tarikh Tamat</label><input type="date" id="endDate" class="input-field mb-0"></div>
-                    </div>
-                    <div class="mb-8">
-                        <label class="input-label">Pilih Kakitangan</label>
-                        <select id="reportUser" class="input-field mb-0"></select>
-                    </div>
-                    <button onclick="generatePDF()" class="w-full bg-blue-800 text-white py-5 rounded-[20px] font-black flex items-center justify-center gap-4 shadow-lg shadow-blue-900/10 hover:bg-blue-700 transition-all">
-                        <span class="material-symbols-rounded">picture_as_pdf</span> Jana Laporan PDF Terperinci
-                    </button>
+                    <div class="grid grid-cols-2 gap-6 mb-8"><div><label class="input-label">Tarikh Mula</label><input type="date" id="startDate" class="input-field mb-0"></div><div><label class="input-label">Tarikh Tamat</label><input type="date" id="endDate" class="input-field mb-0"></div></div>
+                    <div class="mb-8"><label class="input-label">Pilih Kakitangan</label><select id="reportUser" class="input-field mb-0"></select></div>
+                    <button onclick="generatePDF()" class="w-full bg-blue-800 text-white py-5 rounded-[20px] font-black flex items-center justify-center gap-4 shadow-lg shadow-blue-900/10 hover:bg-blue-700 transition-all"><span class="material-symbols-rounded">picture_as_pdf</span> Jana Laporan PDF Terperinci</button>
                 </div>
             </div>
 
@@ -1290,248 +1072,89 @@
             <div id="dashboardTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-10">Statistik Cawangan</h1>
                 <div class="grid grid-cols-3 gap-8">
-                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
-                        <div class="w-14 h-14 bg-blue-50 text-blue-800 rounded-2xl flex items-center justify-center mb-6">
-                            <span class="material-symbols-rounded text-3xl">groups</span>
-                        </div>
-                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Jumlah Kakitangan</p>
-                        <h3 class="text-5xl font-black text-blue-800" id="totalUsersStat">0</h3>
-                    </div>
-                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
-                        <div class="w-14 h-14 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6">
-                            <span class="material-symbols-rounded text-3xl">face</span>
-                        </div>
-                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Biometrik Aktif</p>
-                        <h3 class="text-5xl font-black text-green-600" id="faceRegisteredStat">0</h3>
-                    </div>
-                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm">
-                        <div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6">
-                            <span class="material-symbols-rounded text-3xl">event_available</span>
-                        </div>
-                        <p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Kehadiran Hari Ini</p>
-                        <h3 class="text-5xl font-black text-amber-500" id="presentTodayStat">0</h3>
-                    </div>
+                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm"><div class="w-14 h-14 bg-blue-50 text-blue-800 rounded-2xl flex items-center justify-center mb-6"><span class="material-symbols-rounded text-3xl">groups</span></div><p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Jumlah Kakitangan</p><h3 class="text-5xl font-black text-blue-800" id="totalUsersStat">0</h3></div>
+                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm"><div class="w-14 h-14 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6"><span class="material-symbols-rounded text-3xl">face</span></div><p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Biometrik Aktif</p><h3 class="text-5xl font-black text-green-600" id="faceRegisteredStat">0</h3></div>
+                    <div class="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm"><div class="w-14 h-14 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center mb-6"><span class="material-symbols-rounded text-3xl">event_available</span></div><p class="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Kehadiran Hari Ini</p><h3 class="text-5xl font-black text-amber-500" id="presentTodayStat">0</h3></div>
                 </div>
-                <div class="bg-white rounded-[40px] p-6 border mt-8">
-                    <h2 class="font-bold text-sm mb-4">Taburan Platform Pengguna</h2>
-                    <canvas id="platformChart" height="80"></canvas>
-                </div>
+                <div class="bg-white rounded-[40px] p-6 border mt-8"><h2 class="font-bold text-sm mb-4">Taburan Platform Pengguna</h2><canvas id="platformChart" height="80"></canvas></div>
             </div>
 
             <!-- Audit Log Tab -->
             <div id="auditTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Log Aktiviti Sistem</h1>
-                
                 <div class="filter-bar">
-                    <div class="filter-group">
-                        <label>Tarikh Mula</label>
-                        <input type="date" id="auditStartDate">
-                    </div>
-                    <div class="filter-group">
-                        <label>Tarikh Tamat</label>
-                        <input type="date" id="auditEndDate">
-                    </div>
-                    <div class="filter-group">
-                        <label>Tindakan</label>
-                        <select id="auditAction">
-                            <option value="">SEMUA</option>
-                            <option value="LOGIN">Login</option>
-                            <option value="LOGOUT">Logout</option>
-                            <option value="CLOCK_IN">Clock In</option>
-                            <option value="CLOCK_OUT">Clock Out</option>
-                            <option value="USER_CREATED">Pengguna Dicipta</option>
-                            <option value="USER_UPDATED">Pengguna Dikemaskini</option>
-                            <option value="USER_DELETED">Pengguna Dipadam</option>
-                            <option value="FORCE_LOGOUT">Force Logout</option>
-                            <option value="DEVICE_REPLACEMENT_REQUEST">Permohonan Peranti</option>
-                            <option value="DEVICE_REPLACEMENT_APPROVED">Peranti Diluluskan</option>
-                            <option value="CRASH_REPORT">Laporan Kemalangan</option>
-                            <option value="EXCEPTION_REPORT">Exception Report</option>
-                            <option value="LEAVE_REQUEST">Permohonan Cuti</option>
-                            <option value="COURSE_DIARY">Diari Kursus</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Carian</label>
-                        <input type="text" id="auditSearch" placeholder="Nama pengguna...">
-                    </div>
-                    <div class="filter-group">
-                        <button onclick="loadAuditLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button>
-                    </div>
+                    <div class="filter-group"><label>Tarikh Mula</label><input type="date" id="auditStartDate"></div>
+                    <div class="filter-group"><label>Tarikh Tamat</label><input type="date" id="auditEndDate"></div>
+                    <div class="filter-group"><label>Tindakan</label><select id="auditAction"><option value="">SEMUA</option><option value="LOGIN">Login</option><option value="LOGOUT">Logout</option><option value="CLOCK_IN">Clock In</option><option value="CLOCK_OUT">Clock Out</option><option value="USER_CREATED">Pengguna Dicipta</option><option value="USER_UPDATED">Pengguna Dikemaskini</option><option value="USER_DELETED">Pengguna Dipadam</option><option value="FORCE_LOGOUT">Force Logout</option><option value="DEVICE_REPLACEMENT_REQUEST">Permohonan Peranti</option><option value="DEVICE_REPLACEMENT_APPROVED">Peranti Diluluskan</option><option value="CRASH_REPORT">Laporan Kemalangan</option><option value="EXCEPTION_REPORT">Exception Report</option><option value="LEAVE_REQUEST">Permohonan Cuti</option><option value="COURSE_DIARY">Diari Kursus</option></select></div>
+                    <div class="filter-group"><label>Carian</label><input type="text" id="auditSearch" placeholder="Nama pengguna..."></div>
+                    <div class="filter-group"><button onclick="loadAuditLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button></div>
                 </div>
-                
-                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
-                    <table class="w-full min-w-[1000px]">
-                        <thead>
-                            <tr>
-                                <th class="p-3 text-xs font-bold text-gray-400">Tarikh & Masa</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Pengguna</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Butiran</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">IP Address</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="auditLogsBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</div></div></td>
-                        </tbody>
-                    </table>
-                </div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[1000px]"><thead><tr><th>Tarikh & Masa</th><th>Pengguna</th><th>Tindakan</th><th>Butiran</th><th>IP Address</th><th>Status</th></tr></thead><tbody id="auditLogsBody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Tiada rekod log</td></tr></tbody></table></div>
             </div>
 
-            <!-- Requests Tab (Exception, Leave, Course Diaries) -->
+            <!-- Requests Tab -->
             <div id="requestsTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Permohonan & Laporan</h1>
-                
-                <div class="request-tabs">
-                    <div class="request-tab-btn active" onclick="switchRequestTab('exceptions')">Exception Reports</div>
-                    <div class="request-tab-btn" onclick="switchRequestTab('leave')">Permohonan (Cuti/Kebenaran)</div>
-                    <div class="request-tab-btn" onclick="switchRequestTab('diaries')">Diari (Kursus/Tugasan)</div>
-                </div>
-
-                <!-- Exception Reports Panel -->
-                <div id="exceptionsPanel" class="request-panel active">
-                    <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold">Senarai Exception Reports</h2>
-                            <button onclick="loadAllExceptions()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all">
-                                <span class="material-symbols-rounded text-sm">refresh</span>
-                            </button>
-                        </div>
-                        <table class="w-full min-w-[800px]">
-                            <thead>
-                                <tr>
-                                    <th>Tarikh</th>
-                                    <th>Nama</th>
-                                    <th>Tarikh Kehadiran</th>
-                                    <th>Sebab</th>
-                                    <th>Dokumen</th>
-                                    <th>Status</th>
-                                    <th>Tindakan</th>
-                                </tr>
-                            </thead>
-                            <tbody id="exceptionsTableBody">
-                                <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Leave Requests Panel (Cuti Rehat, Cuti Sakit, Kebenaran Keluar Pejabat) -->
-                <div id="leavePanel" class="request-panel">
-                    <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold">Senarai Permohonan</h2>
-                            <button onclick="loadAllLeaveRequests()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all">
-                                <span class="material-symbols-rounded text-sm">refresh</span>
-                            </button>
-                        </div>
-                        <table class="w-full min-w-[800px]">
-                            <thead>
-                                <tr>
-                                    <th>Tarikh Mohon</th>
-                                    <th>Nama</th>
-                                    <th>Jenis</th>
-                                    <th>Tempoh</th>
-                                    <th>Sebab</th>
-                                    <th>Dokumen</th>
-                                    <th>Status</th>
-                                    <th>Tindakan</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leaveRequestsTableBody">
-                                <tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Course Diaries Panel (Kursus & Tugasan Luar) -->
-                <div id="diariesPanel" class="request-panel">
-                    <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold">Senarai Diari (Kursus/Tugasan)</h2>
-                            <button onclick="loadAllDiaries()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all">
-                                <span class="material-symbols-rounded text-sm">refresh</span>
-                            </button>
-                        </div>
-                        <table class="w-full min-w-[800px]">
-                            <thead>
-                                <tr>
-                                    <th>Tarikh Hantar</th>
-                                    <th>Nama</th>
-                                    <th>Jenis</th>
-                                    <th>Tarikh Aktiviti</th>
-                                    <th>Tajuk</th>
-                                    <th>Dokumen</th>
-                                    <th>Status</th>
-                                    <th>Tindakan</th>
-                                </tr>
-                            </thead>
-                            <tbody id="diariesTableBody">
-                                <tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                <div class="request-tabs"><div class="request-tab-btn active" onclick="switchRequestTab('exceptions')">Exception Reports</div><div class="request-tab-btn" onclick="switchRequestTab('leave')">Permohonan (Cuti/Kebenaran)</div><div class="request-tab-btn" onclick="switchRequestTab('diaries')">Diari (Kursus/Tugasan)</div></div>
+                <div id="exceptionsPanel" class="request-panel active"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Exception Reports</h2><button onclick="loadAllExceptions()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh</th><th>Nama</th><th>Tarikh Kehadiran</th><th>Sebab</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="exceptionsTableBody"><tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div></div>
+                <div id="leavePanel" class="request-panel"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Permohonan</h2><button onclick="loadAllLeaveRequests()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh Mohon</th><th>Nama</th><th>Jenis</th><th>Tempoh</th><th>Sebab</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="leaveRequestsTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div></div>
+                <div id="diariesPanel" class="request-panel"><div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Senarai Diari (Kursus/Tugasan)</h2><button onclick="loadAllDiaries()" class="refresh-btn p-2 hover:bg-gray-200 rounded-full transition-all"><span class="material-symbols-rounded text-sm">refresh</span></button></div><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh Hantar</th><th>Nama</th><th>Jenis</th><th>Tarikh Aktiviti</th><th>Tajuk</th><th>Dokumen</th><th>Status</th><th>Tindakan</th></tr></thead><tbody id="diariesTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div></div>
             </div>
 
             <!-- Device Requests Tab -->
             <div id="devicerequestsTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Permohonan Gantian Peranti</h1>
-                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
-                    <table class="w-full min-w-[800px]">
-                        <thead>
-                            <tr>
-                                <th class="p-3 text-xs font-bold text-gray-400">Tarikh</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Nama</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Email</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Peranti Lama</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Peranti Baru</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Sebab</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Tindakan</th>
-                            </tr>
-                        </thead>
-                        <tbody id="deviceRequestsBody">
-                            <tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
-                        </tbody>
-                    </table>
-                </div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh</th><th>Nama</th><th>Email</th><th>Peranti Lama</th><th>Peranti Baru</th><th>Sebab</th><th>Tindakan</th></tr></thead><tbody id="deviceRequestsBody"><tr><td colspan="7" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div>
             </div>
 
             <!-- Location Off Logs Tab -->
             <div id="locationoffTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Lokasi Dimatikan</h1>
-                
-                <div class="filter-bar">
-                    <div class="filter-group">
-                        <label>Tarikh Mula</label>
-                        <input type="date" id="locOffStartDate">
-                    </div>
-                    <div class="filter-group">
-                        <label>Tarikh Tamat</label>
-                        <input type="date" id="locOffEndDate">
-                    </div>
-                    <div class="filter-group">
-                        <button onclick="loadLocationOffLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button>
+                <div class="filter-bar"><div class="filter-group"><label>Tarikh Mula</label><input type="date" id="locOffStartDate"></div><div class="filter-group"><label>Tarikh Tamat</label><input type="date" id="locOffEndDate"></div><div class="filter-group"><button onclick="loadLocationOffLogs()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button></div></div>
+                <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto"><table class="w-full min-w-[800px]"><thead><tr><th>Tarikh & Masa</th><th>Nama</th><th>Cawangan</th><th>Unit</th><th>Tempoh OFF</th><th>Status</th></tr></thead><tbody id="locationOffBody"><tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody></table></div>
+            </div>
+
+            <!-- Live Map Tab -->
+            <div id="livemapTab" class="hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div><h1 class="text-4xl font-black text-gray-800">Live Tracking</h1><p class="text-gray-400 text-sm mt-1">Pergerakan real-time kakitangan yang sedang bertugas</p></div>
+                    <div class="flex gap-3 items-center">
+                        <div class="bg-white rounded-full px-4 py-2 shadow-sm flex items-center gap-2"><span class="material-symbols-rounded text-green-500 text-sm">fiber_manual_record</span><span class="text-xs font-bold" id="activeUsersCount">0</span><span class="text-xs text-gray-400">Aktif</span></div>
+                        <button onclick="refreshLiveMap()" class="bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-700 transition-all"><span class="material-symbols-rounded text-sm">refresh</span> Refresh</button>
+                        <button onclick="centerMapOnBranch()" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-gray-200 transition-all"><span class="material-symbols-rounded text-sm">my_location</span> Cawangan Saya</button>
                     </div>
                 </div>
-                
+                <div class="grid grid-cols-4 gap-4 mb-6">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center"><span class="material-symbols-rounded text-green-600">check_circle</span></div><div><p class="text-xs text-gray-400">Sedang Bertugas</p><p class="text-2xl font-black" id="onDutyCount">0</p></div></div></div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center"><span class="material-symbols-rounded text-blue-600">location_on</span></div><div><p class="text-xs text-gray-400">Dalam Geofence</p><p class="text-2xl font-black" id="inGeofenceCount">0</p></div></div></div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center"><span class="material-symbols-rounded text-amber-600">warning</span></div><div><p class="text-xs text-gray-400">Luar Geofence</p><p class="text-2xl font-black" id="outsideGeofenceCount">0</p></div></div></div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center"><span class="material-symbols-rounded text-purple-600">speed</span></div><div><p class="text-xs text-gray-400">Device Online</p><p class="text-2xl font-black" id="onlineDevicesCount">0</p></div></div></div>
+                </div>
+                <div class="bg-white rounded-[32px] p-2 shadow-sm border border-gray-100"><div id="liveUserMap" style="height: 550px; width: 100%; border-radius: 28px; z-index: 1;"></div></div>
+                <div class="grid grid-cols-2 gap-6 mt-6">
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><h3 class="font-bold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-rounded text-sm">info</span> Petunjuk Marker</h3><div class="space-y-2 text-xs"><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-green-500"></div><span>Dalam Kawasan Geofence (Clock In)</span></div><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-amber-500"></div><span>Luar Kawasan Geofence (Amaran)</span></div><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-red-500"></div><span>Location OFF / Tiada GPS</span></div><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full bg-gray-400"></div><span>Belum Clock In / Tidak Aktif</span></div></div></div>
+                    <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100"><h3 class="font-bold text-sm mb-3 flex items-center gap-2"><span class="material-symbols-rounded text-sm">schedule</span> Status Kakitangan</h3><div id="liveUserList" class="max-h-40 overflow-y-auto space-y-2 text-xs"><p class="text-gray-400 text-center">Memuatkan data...</p></div></div>
+                </div>
+            </div>
+
+            <!-- Integrity Check Tab -->
+            <div id="integrityTab" class="hidden">
+                <h1 class="text-4xl font-black text-gray-800 mb-8">Integrity Check System</h1>
+                <div class="bg-blue-50 rounded-2xl p-4 mb-6 flex items-center gap-3">
+                    <span class="material-symbols-rounded text-blue-600">verified</span>
+                    <div><p class="text-sm font-bold text-blue-800">Sistem Integrity Check</p><p class="text-xs text-blue-600">Setiap kakitangan akan menghantar lokasi dan imbasan wajah setiap 1 jam untuk pengesahan integriti.</p></div>
+                </div>
+                <div class="filter-bar">
+                    <div class="filter-group"><label>Tarikh Mula</label><input type="date" id="integrityStartDate"></div>
+                    <div class="filter-group"><label>Tarikh Tamat</label><input type="date" id="integrityEndDate"></div>
+                    <div class="filter-group"><label>Status</label><select id="integrityStatus"><option value="">SEMUA</option><option value="verified">Disahkan</option><option value="failed">Gagal</option><option value="pending">Menunggu</option></select></div>
+                    <div class="filter-group"><label>Nama</label><input type="text" id="integritySearch" placeholder="Cari nama..."></div>
+                    <div class="filter-group"><button onclick="loadIntegrityChecks()" class="bg-blue-800 text-white px-6 py-2 rounded-xl font-bold text-sm">Cari</button></div>
+                </div>
                 <div class="bg-white rounded-[40px] p-6 shadow-sm border border-gray-100 overflow-x-auto">
-                    <table class="w-full min-w-[800px]">
-                        <thead>
-                            <tr>
-                                <th class="p-3 text-xs font-bold text-gray-400">Tarikh & Masa</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Nama</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Cawangan</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Unit</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Tempoh OFF</th>
-                                <th class="p-3 text-xs font-bold text-gray-400">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="locationOffBody">
-                            <tr><td colspan="6" class="text-center py-8 text-gray-400">Memuatkan data...</div></div></td>
-                        </tbody>
+                    <table class="w-full min-w-[1000px]">
+                        <thead><tr><th>Tarikh & Masa</th><th>Nama</th><th>Unit</th><th>Lokasi</th><th>Status Wajah</th><th>Dalam Geofence</th><th>Skor</th><th>Status</th></tr></thead>
+                        <tbody id="integrityTableBody"><tr><td colspan="8" class="text-center py-8 text-gray-400">Memuatkan data...</td></tr></tbody>
                     </table>
                 </div>
             </div>
@@ -1539,50 +1162,13 @@
             <!-- Tools Tab -->
             <div id="toolsTab" class="hidden">
                 <h1 class="text-4xl font-black text-gray-800 mb-8">Alat Sistem</h1>
-                
                 <div class="bg-white rounded-[40px] p-8 shadow-sm border border-gray-100">
-                    <div class="flex items-center gap-3 mb-6">
-                        <span class="material-symbols-rounded text-3xl text-amber-600">recalculate</span>
-                        <h2 class="text-2xl font-black text-gray-800">Kira Semula Overtime</h2>
-                    </div>
-                    
-                    <p class="text-gray-600 mb-6">Gunakan alat ini untuk mengira semula Overtime bagi rekod kehadiran lama.<br>
-                    <span class="text-sm text-gray-500">• Standard kerja: 9 jam sehari<br>
-                    • OT dikira selepas 9 jam bekerja</span></p>
-                    
-                    <div class="grid grid-cols-2 gap-6 mb-8">
-                        <div>
-                            <label class="input-label">Tarikh Mula</label>
-                            <input type="date" id="recalcStartDate" class="input-field" value="2024-01-01">
-                        </div>
-                        <div>
-                            <label class="input-label">Tarikh Tamat</label>
-                            <input type="date" id="recalcEndDate" class="input-field">
-                        </div>
-                    </div>
-                    
-                    <div class="flex gap-4">
-                        <button onclick="recalculateOvertime()" id="recalcBtn" class="bg-amber-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-amber-700 transition-all">
-                            <span class="material-symbols-rounded">refresh</span> Kira Semula OT
-                        </button>
-                        <button onclick="recalculateAllOvertime()" id="recalcAllBtn" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-red-700 transition-all">
-                            <span class="material-symbols-rounded">warning</span> Kira Semua Data
-                        </button>
-                    </div>
-                    
-                    <div id="recalcResult" class="mt-6 hidden">
-                        <div class="p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3">
-                            <span class="material-symbols-rounded">check_circle</span>
-                            <span id="recalcMessage"></span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8 pt-6 border-t border-gray-100">
-                        <p class="text-xs text-gray-400 flex items-center gap-1">
-                            <span class="material-symbols-rounded text-sm">info</span>
-                            Nota: Proses ini mungkin mengambil masa beberapa minit bergantung kepada jumlah data.
-                        </p>
-                    </div>
+                    <div class="flex items-center gap-3 mb-6"><span class="material-symbols-rounded text-3xl text-amber-600">recalculate</span><h2 class="text-2xl font-black text-gray-800">Kira Semula Overtime</h2></div>
+                    <p class="text-gray-600 mb-6">Gunakan alat ini untuk mengira semula Overtime bagi rekod kehadiran lama.<br><span class="text-sm text-gray-500">• Standard kerja: 9 jam sehari<br>• OT dikira selepas 9 jam bekerja</span></p>
+                    <div class="grid grid-cols-2 gap-6 mb-8"><div><label class="input-label">Tarikh Mula</label><input type="date" id="recalcStartDate" class="input-field" value="2024-01-01"></div><div><label class="input-label">Tarikh Tamat</label><input type="date" id="recalcEndDate" class="input-field"></div></div>
+                    <div class="flex gap-4"><button onclick="recalculateOvertime()" id="recalcBtn" class="bg-amber-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-amber-700 transition-all"><span class="material-symbols-rounded">refresh</span> Kira Semula OT</button><button onclick="recalculateAllOvertime()" id="recalcAllBtn" class="bg-red-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center gap-3 hover:bg-red-700 transition-all"><span class="material-symbols-rounded">warning</span> Kira Semua Data</button></div>
+                    <div id="recalcResult" class="mt-6 hidden"><div class="p-4 rounded-2xl bg-green-50 text-green-700 flex items-center gap-3"><span class="material-symbols-rounded">check_circle</span><span id="recalcMessage"></span></div></div>
+                    <div class="mt-8 pt-6 border-t border-gray-100"><p class="text-xs text-gray-400 flex items-center gap-1"><span class="material-symbols-rounded text-sm">info</span> Nota: Proses ini mungkin mengambil masa beberapa minit bergantung kepada jumlah data.</p></div>
                 </div>
             </div>
         </div>
@@ -1590,15 +1176,10 @@
 
     <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000;">
         <div style="background: white; border-radius: 40px; max-width: 400px; width: 90%; padding: 32px; text-align: center;">
-            <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span class="material-symbols-rounded text-4xl">delete_forever</span>
-            </div>
+            <div class="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4"><span class="material-symbols-rounded text-4xl">delete_forever</span></div>
             <h3 class="font-black text-xl text-gray-800">Padam Rekod?</h3>
             <p class="text-sm text-gray-400 mt-2">Tindakan ini tidak boleh diundur. Semua data kakitangan ini akan dipadam kekal.</p>
-            <div class="grid grid-cols-2 gap-3 mt-8">
-                <button onclick="document.getElementById('deleteModal').style.display='none'" class="bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold">Batal</button>
-                <button id="confirmDeleteBtn" class="bg-red-600 text-white py-4 rounded-2xl font-bold">Ya, Padam</button>
-            </div>
+            <div class="grid grid-cols-2 gap-3 mt-8"><button onclick="document.getElementById('deleteModal').style.display='none'" class="bg-gray-100 text-gray-500 py-4 rounded-2xl font-bold">Batal</button><button id="confirmDeleteBtn" class="bg-red-600 text-white py-4 rounded-2xl font-bold">Ya, Padam</button></div>
         </div>
     </div>
 
@@ -1633,6 +1214,13 @@
         let currentLeaveRequestId = null;
         let currentDiaryId = null;
         let currentRequestUserName = '';
+        
+        // Live Map variables
+        let liveMap = null;
+        let liveMarkers = new Map();
+        let liveUpdateInterval = null;
+        let branchCenter = { lat: 1.5533, lng: 110.3592 };
+        let userGeofences = new Map();
 
         // ============================================
         // PASSWORD VISIBILITY TOGGLE
@@ -1738,7 +1326,7 @@ Jabatan Imigresen Malaysia`;
             }
             
             const subject = `[IMMI Presence 360] Perubahan Data Pengguna: ${userName}`;
-            const body = `Assalamualaikum dan Salam Sejahtera,\n\nIni adalah notifikasi automatik daripada Sistem IMMI Presence 360.\n\nMAKLUMAT PERUBAHAN DATA PENGGUNA:\n==================================\nNama Pengguna: ${userName}\nTarikh Perubahan: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}\nDibuat oleh: ${adminName} (${adminBranch})\n\nBUTIRAN PERUBAHAN:\n==================${changesDetails}\n\nSEBAB PERUBAHAN:\n================\n${reason}\n\nSila semak dan sahkan perubahan ini di dalam sistem.\n\nSekian, terima kasih.\n\n--\nIMMI Presence 360 - Sistem Kehadiran Pintar\nJabatan Imigresen Malaysia`;
+            const body = `Assalamualaikum dan Salam Sejahtera,\n\nIni adalah notifikasi automatik daripada Sistem IMMI Presence 360.\n\nMAKLUMAT PERUBAHAN DATA PENGGUNA:\n==================================\nNama Pengguna: ${userName}\nTarikh Perubahan: ${new Date().toLocaleString('ms-MY', { timeZone: 'Asia/Kuching' })}\nDibuat oleh: ${adminName} (${adminBranch})\n\nBUTIRAN PERUBAHAN:\n==================${changesDetails}\n\nSEBAB PERUBAHAN:\n================\n${reasonParam}\n\nSila semak dan sahkan perubahan ini di dalam sistem.\n\nSekian, terima kasih.\n\n--\nIMMI Presence 360 - Sistem Kehadiran Pintar\nJabatan Imigresen Malaysia`;
             
             try {
                 const result = await callAPI('getAdmins', { requestingUser: JSON.stringify(currentUser) });
@@ -1789,25 +1377,10 @@ Jabatan Imigresen Malaysia`;
             
             let iconHtml = '', iconBg = '', iconColor = '';
             switch(icon) {
-                case 'success':
-                    iconHtml = 'check_circle';
-                    iconBg = 'bg-green-50';
-                    iconColor = 'text-green-600';
-                    break;
-                case 'error':
-                    iconHtml = 'error';
-                    iconBg = 'bg-red-50';
-                    iconColor = 'text-red-600';
-                    break;
-                case 'warning':
-                    iconHtml = 'warning';
-                    iconBg = 'bg-amber-50';
-                    iconColor = 'text-amber-600';
-                    break;
-                default:
-                    iconHtml = 'info';
-                    iconBg = 'bg-blue-50';
-                    iconColor = 'text-blue-600';
+                case 'success': iconHtml = 'check_circle'; iconBg = 'bg-green-50'; iconColor = 'text-green-600'; break;
+                case 'error': iconHtml = 'error'; iconBg = 'bg-red-50'; iconColor = 'text-red-600'; break;
+                case 'warning': iconHtml = 'warning'; iconBg = 'bg-amber-50'; iconColor = 'text-amber-600'; break;
+                default: iconHtml = 'info'; iconBg = 'bg-blue-50'; iconColor = 'text-blue-600';
             }
             
             iconEl.className = `w-16 h-16 ${iconBg} ${iconColor} rounded-full flex items-center justify-center mx-auto mb-4`;
@@ -2144,30 +1717,13 @@ Jabatan Imigresen Malaysia`;
             let html = '';
             exceptions.forEach((ex, index) => {
                 const submitDate = new Date(ex.submittedAt).toLocaleString('ms-MY');
-                html += `
-                    <tr>
-                        <td class="p-3 text-sm">${submitDate}</div></td>
-                        <td class="p-3 font-bold">${escapeHtml(ex.userName)}</div></td>
-                        <td class="p-3">${ex.date}</div></td>
-                        <td class="p-3 text-sm">${escapeHtml(ex.reason)}</div></td>
-                        <td class="p-3">
-                            ${ex.fileUrl ? `<a href="${ex.fileUrl}" target="_blank" class="text-blue-600 underline text-sm">Lihat</a>` : '-'}
-                        </div></td>
-                        <td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></div></td>
-                        <td class="p-3">
-                            <button onclick="openRequestApprovalModal('exception', ${index}, '${ex.uid}', '${escapeHtml(ex.userName)}', '${ex.date}', '${escapeHtml(ex.reason)}')" 
-                                    class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">
-                                Proses
-                            </button>
-                        </div></td>
-                    </tr>
-                `;
+                html += `<tr><td class="p-3 text-sm">${submitDate}</td><td class="p-3 font-bold">${escapeHtml(ex.userName)}</td><td class="p-3">${ex.date}</td><td class="p-3 text-sm">${escapeHtml(ex.reason)}</td><td class="p-3">${ex.fileUrl ? `<a href="${ex.fileUrl}" target="_blank" class="text-blue-600 underline text-sm">Lihat</a>` : '-'}</td><td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></td><td class="p-3"><button onclick="openRequestApprovalModal('exception', ${index}, '${ex.uid}', '${escapeHtml(ex.userName)}', '${ex.date}', '${escapeHtml(ex.reason)}')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">Proses</button></td></tr>`;
             });
             tbody.innerHTML = html;
         }
 
         // ============================================
-        // LEAVE REQUESTS FUNCTIONS (Cuti Rehat, Cuti Sakit, Kebenaran Keluar Pejabat)
+        // LEAVE REQUESTS FUNCTIONS
         // ============================================
         async function loadAllLeaveRequests() {
             try {
@@ -2190,47 +1746,18 @@ Jabatan Imigresen Malaysia`;
                 return;
             }
             
-            const typeMap = { 
-                'annual_leave': '📅 Cuti Rehat', 
-                'sick_leave': '🤒 Cuti Sakit', 
-                'out_of_office': '🚪 Kebenaran Keluar Pejabat' 
-            };
+            const typeMap = { 'annual_leave': '📅 Cuti Rehat', 'sick_leave': '🤒 Cuti Sakit', 'out_of_office': '🚪 Kebenaran Keluar Pejabat' };
             
             let html = '';
-            requests.forEach((req, index) => {
+            requests.forEach((req) => {
                 const submitDate = new Date(req.timestamp).toLocaleString('ms-MY');
-                let durationInfo = '';
-                if (req.type === 'out_of_office') {
-                    const start = new Date(req.startDate);
-                    const end = new Date(req.endDate);
-                    const hours = (end - start) / (1000 * 60 * 60);
-                    durationInfo = `<span class="text-xs text-amber-600"> (${hours.toFixed(1)} jam)</span>`;
-                }
-                html += `
-                    <tr>
-                        <td class="p-3 text-sm">${submitDate}</div></td>
-                        <td class="p-3 font-bold">${escapeHtml(req.userName)}</div></td>
-                        <td class="p-3">${typeMap[req.type] || req.type}${durationInfo}</div></td>
-                        <td class="p-3 text-sm">${req.startDate} hingga ${req.endDate}</div></td>
-                        <td class="p-3 text-sm">${escapeHtml(req.reason)}</div></td>
-                        <td class="p-3">
-                            ${req.fileUrl ? `<a href="${req.fileUrl}" target="_blank" class="text-blue-600 underline text-sm">Lihat</a>` : '-'}
-                        </div></td>
-                        <td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></div></td>
-                        <td class="p-3">
-                            <button onclick="openLeaveRequestModal('${req.requestId}', '${escapeHtml(req.userName)}', '${typeMap[req.type] || req.type}', '${req.startDate}', '${req.endDate}', '${escapeHtml(req.reason)}', '${req.fileUrl || ''}')" 
-                                    class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">
-                                Proses
-                            </button>
-                        </div></td>
-                    </tr>
-                `;
+                html += `<tr><td class="p-3 text-sm">${submitDate}</td><td class="p-3 font-bold">${escapeHtml(req.userName)}</td><td class="p-3">${typeMap[req.type] || req.type}</td><td class="p-3 text-sm">${req.startDate} hingga ${req.endDate}</td><td class="p-3 text-sm">${escapeHtml(req.reason)}</td><td class="p-3">${req.fileUrl ? `<a href="${req.fileUrl}" target="_blank" class="text-blue-600 underline text-sm">Lihat</a>` : '-'}</td><td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></td><td class="p-3"><button onclick="openLeaveRequestModal('${req.requestId}', '${escapeHtml(req.userName)}', '${typeMap[req.type] || req.type}', '${req.startDate}', '${req.endDate}', '${escapeHtml(req.reason)}', '${req.fileUrl || ''}')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">Proses</button></td></tr>`;
             });
             tbody.innerHTML = html;
         }
 
         // ============================================
-        // COURSE DIARIES FUNCTIONS (Kursus & Tugasan Luar)
+        // COURSE DIARIES FUNCTIONS
         // ============================================
         async function loadAllDiaries() {
             try {
@@ -2256,27 +1783,9 @@ Jabatan Imigresen Malaysia`;
             const typeMap = { 'course': '📘 Kursus', 'assignment': '📋 Tugasan Luar' };
             
             let html = '';
-            diaries.forEach((diary, index) => {
+            diaries.forEach((diary) => {
                 const submitDate = new Date(diary.timestamp).toLocaleString('ms-MY');
-                html += `
-                    <tr>
-                        <td class="p-3 text-sm">${submitDate}</div></td>
-                        <td class="p-3 font-bold">${escapeHtml(diary.userName)}</div></td>
-                        <td class="p-3">${typeMap[diary.type] || diary.type}</div></td>
-                        <td class="p-3">${diary.date}</div></td>
-                        <td class="p-3 text-sm">${escapeHtml(diary.title)}</div></td>
-                        <td class="p-3">
-                            ${diary.fileUrl ? `<a href="${diary.fileUrl}" target="_blank" class="text-blue-600 underline text-sm">Lihat</a>` : '-'}
-                        </div></td>
-                        <td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></div></td>
-                        <td class="p-3">
-                            <button onclick="openDiaryModal('${diary.diaryId}', '${escapeHtml(diary.userName)}', '${typeMap[diary.type] || diary.type}', '${diary.date}', '${escapeHtml(diary.title)}', '${escapeHtml(diary.description)}', '${diary.fileUrl || ''}')" 
-                                    class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">
-                                Proses
-                            </button>
-                        </div></td>
-                    </tr>
-                `;
+                html += `<tr><td class="p-3 text-sm">${submitDate}</td><td class="p-3 font-bold">${escapeHtml(diary.userName)}</td><td class="p-3">${typeMap[diary.type] || diary.type}</td><td class="p-3">${diary.date}</td><td class="p-3 text-sm">${escapeHtml(diary.title)}</td><td class="p-3">${diary.fileUrl ? `<a href="${diary.fileUrl}" target="_blank" class="text-blue-600 underline text-sm">Lihat</a>` : '-'}</td><td class="p-3"><span class="badge-pending px-2 py-1 rounded-full text-xs">PENDING</span></td><td class="p-3"><button onclick="openDiaryModal('${diary.diaryId}', '${escapeHtml(diary.userName)}', '${typeMap[diary.type] || diary.type}', '${diary.date}', '${escapeHtml(diary.title)}', '${escapeHtml(diary.description)}', '${diary.fileUrl || ''}')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">Proses</button></td></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -2292,11 +1801,7 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('modalTitle').innerText = 'Luluskan Exception Report';
             document.getElementById('modalIcon').innerHTML = 'assignment';
             
-            const detailsHtml = `
-                <p><strong>Nama:</strong> ${escapeHtml(userName)}</p>
-                <p><strong>Tarikh Kehadiran:</strong> ${date}</p>
-                <p><strong>Sebab:</strong> ${escapeHtml(reason)}</p>
-            `;
+            const detailsHtml = `<p><strong>Nama:</strong> ${escapeHtml(userName)}</p><p><strong>Tarikh Kehadiran:</strong> ${date}</p><p><strong>Sebab:</strong> ${escapeHtml(reason)}</p>`;
             document.getElementById('requestDetails').innerHTML = detailsHtml;
             document.getElementById('adminResponseInput').value = '';
             document.getElementById('requestApprovalModal').style.display = 'flex';
@@ -2310,13 +1815,7 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('modalTitle').innerText = 'Luluskan Permohonan';
             document.getElementById('modalIcon').innerHTML = 'assignment';
             
-            const detailsHtml = `
-                <p><strong>Nama:</strong> ${escapeHtml(userName)}</p>
-                <p><strong>Jenis:</strong> ${type}</p>
-                <p><strong>Tempoh:</strong> ${startDate} hingga ${endDate}</p>
-                <p><strong>Sebab:</strong> ${escapeHtml(reason)}</p>
-                ${fileUrl ? `<p><strong>Dokumen:</strong> <a href="${fileUrl}" target="_blank" class="text-blue-600">Lihat</a></p>` : ''}
-            `;
+            const detailsHtml = `<p><strong>Nama:</strong> ${escapeHtml(userName)}</p><p><strong>Jenis:</strong> ${type}</p><p><strong>Tempoh:</strong> ${startDate} hingga ${endDate}</p><p><strong>Sebab:</strong> ${escapeHtml(reason)}</p>${fileUrl ? `<p><strong>Dokumen:</strong> <a href="${fileUrl}" target="_blank" class="text-blue-600">Lihat</a></p>` : ''}`;
             document.getElementById('requestDetails').innerHTML = detailsHtml;
             document.getElementById('adminResponseInput').value = '';
             document.getElementById('requestApprovalModal').style.display = 'flex';
@@ -2330,15 +1829,7 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('modalTitle').innerText = 'Review Diari';
             document.getElementById('modalIcon').innerHTML = 'book';
             
-            const detailsHtml = `
-                <p><strong>Nama:</strong> ${escapeHtml(userName)}</p>
-                <p><strong>Jenis:</strong> ${type}</p>
-                <p><strong>Tarikh Aktiviti:</strong> ${date}</p>
-                <p><strong>Tajuk:</strong> ${escapeHtml(title)}</p>
-                <p><strong>Keterangan:</strong> ${escapeHtml(description)}</p>
-                ${fileUrl ? `<p><strong>Dokumen:</strong> <a href="${fileUrl}" target="_blank" class="text-blue-600">Lihat</a></p>` : ''}
-                <p class="mt-3 text-amber-600 text-xs"><strong>Nota:</strong> Jika diluluskan, pengguna akan dikecualikan dari clock in/out pada tarikh ini.</p>
-            `;
+            const detailsHtml = `<p><strong>Nama:</strong> ${escapeHtml(userName)}</p><p><strong>Jenis:</strong> ${type}</p><p><strong>Tarikh Aktiviti:</strong> ${date}</p><p><strong>Tajuk:</strong> ${escapeHtml(title)}</p><p><strong>Keterangan:</strong> ${escapeHtml(description)}</p>${fileUrl ? `<p><strong>Dokumen:</strong> <a href="${fileUrl}" target="_blank" class="text-blue-600">Lihat</a></p>` : ''}<p class="mt-3 text-amber-600 text-xs"><strong>Nota:</strong> Jika diluluskan, pengguna akan dikecualikan dari clock in/out pada tarikh ini.</p>`;
             document.getElementById('requestDetails').innerHTML = detailsHtml;
             document.getElementById('adminResponseInput').value = '';
             document.getElementById('requestApprovalModal').style.display = 'flex';
@@ -2591,6 +2082,11 @@ Jabatan Imigresen Malaysia`;
             document.getElementById('auditStartDate').value = sevenDaysAgo.toISOString().split('T')[0];
             document.getElementById('auditEndDate').value = today.toISOString().split('T')[0];
             
+            const thirtyDaysAgoIntegrity = new Date();
+            thirtyDaysAgoIntegrity.setDate(thirtyDaysAgoIntegrity.getDate() - 30);
+            document.getElementById('integrityStartDate').value = thirtyDaysAgoIntegrity.toISOString().split('T')[0];
+            document.getElementById('integrityEndDate').value = today.toISOString().split('T')[0];
+            
             loadUsers();
             loadFaceModels();
             loadUserDevices();
@@ -2600,6 +2096,7 @@ Jabatan Imigresen Malaysia`;
             loadAllExceptions();
             loadAllLeaveRequests();
             loadAllDiaries();
+            loadIntegrityChecks();
         }
 
         // ============================================
@@ -2645,24 +2142,7 @@ Jabatan Imigresen Malaysia`;
                     platformIcon = '💻';
                 }
                 
-                html += `
-                    <tr>
-                        <td class="p-3 font-bold">${escapeHtml(device.name)}</div></td>
-                        <td class="p-3">${escapeHtml(device.branch)}</div></td>
-                        <td class="p-3">${escapeHtml(device.unit || '-')}</div></td>
-                        <td class="p-3 text-sm">${device.ip || '-'}</div></td>
-                        <td class="p-3 text-sm">${device.city || '-'}, ${device.region || '-'}</div></td>
-                        <td class="p-3"><span class="badge ${platformClass}">${platformIcon} ${device.source || 'Web'}</span></div></td>
-                        <td class="p-3 text-sm">${lastSeen}</div></td>
-                        <td class="p-3 text-center"><span class="${trustColor} font-bold">${trustScore}%</span></div></td>
-                        <td class="p-3 text-center">
-                            <button onclick="forceLogoutUser('${device.uid}', '${escapeHtml(device.name)}')" 
-                                    class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-all">
-                                Force Logout
-                            </button>
-                        </div></td>
-                    </tr>
-                `;
+                html += `<tr><td class="p-3 font-bold">${escapeHtml(device.name)}</td><td class="p-3">${escapeHtml(device.branch)}</td><td class="p-3">${escapeHtml(device.unit || '-')}</td><td class="p-3 text-sm">${device.ip || '-'}</td><td class="p-3 text-sm">${device.city || '-'}, ${device.region || '-'}</td><td class="p-3"><span class="badge ${platformClass}">${platformIcon} ${device.source || 'Web'}</span></td><td class="p-3 text-sm">${lastSeen}</td><td class="p-3 text-center"><span class="${trustColor} font-bold">${trustScore}%</span></td><td class="p-3 text-center"><button onclick="forceLogoutUser('${device.uid}', '${escapeHtml(device.name)}')" class="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-600 transition-all">Force Logout</button></td></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -2740,22 +2220,7 @@ Jabatan Imigresen Malaysia`;
             let html = '';
             requests.forEach(req => {
                 const requestDate = new Date(req.requestedAt).toLocaleString('ms-MY');
-                html += `
-                    <tr>
-                        <td class="p-3 text-sm">${requestDate}</div></td>
-                        <td class="p-3 font-bold">${escapeHtml(req.userName)}</div></td>
-                        <td class="p-3">${escapeHtml(req.userEmail)}</div></td>
-                        <td class="p-3 text-xs font-mono">${req.oldDeviceId || '-'}</div></td>
-                        <td class="p-3 text-xs font-mono">${req.newDeviceId}</div></td>
-                        <td class="p-3 text-sm">${escapeHtml(req.reason)}</div></td>
-                        <td class="p-3 text-center">
-                            <button onclick="openDeviceRequestModal('${req.requestId}', '${escapeHtml(req.userName)}', '${escapeHtml(req.userEmail)}', '${escapeHtml(req.oldDeviceId || '')}', '${escapeHtml(req.newDeviceId)}', '${escapeHtml(req.reason)}')" 
-                                    class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">
-                                Proses
-                            </button>
-                        </div></td>
-                    </tr>
-                `;
+                html += `<tr><td class="p-3 text-sm">${requestDate}</td><td class="p-3 font-bold">${escapeHtml(req.userName)}</td><td class="p-3">${escapeHtml(req.userEmail)}</td><td class="p-3 text-xs font-mono">${req.oldDeviceId || '-'}</td><td class="p-3 text-xs font-mono">${req.newDeviceId}</td><td class="p-3 text-sm">${escapeHtml(req.reason)}</td><td class="p-3 text-center"><button onclick="openDeviceRequestModal('${req.requestId}', '${escapeHtml(req.userName)}', '${escapeHtml(req.userEmail)}', '${escapeHtml(req.oldDeviceId || '')}', '${escapeHtml(req.newDeviceId)}', '${escapeHtml(req.reason)}')" class="bg-amber-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-amber-700 transition-all">Proses</button></td></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -2866,16 +2331,7 @@ Jabatan Imigresen Malaysia`;
                 let statusClass = log.status === 'success' ? 'text-green-600' : (log.status === 'warning' ? 'text-amber-600' : 'text-red-600');
                 let statusIcon = log.status === 'success' ? '✓' : (log.status === 'warning' ? '⚠️' : '✗');
                 
-                html += `
-                    <tr>
-                        <td class="p-3 text-sm">${timestamp}</div></td>
-                        <td class="p-3"><div class="font-bold">${escapeHtml(log.userName || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(log.userEmail || '-')}</div></div></td>
-                        <td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold">${log.action}</span></div></td>
-                        <td class="p-3 text-sm max-w-[300px] truncate" title="${escapeHtml(log.details)}">${escapeHtml(log.details || '-')}</div></td>
-                        <td class="p-3 text-xs">${log.ipAddress || '-'}</div></td>
-                        <td class="p-3"><span class="${statusClass}">${statusIcon} ${log.status}</span></div></td>
-                    </tr>
-                `;
+                html += `<tr><td class="p-3 text-sm">${timestamp}</td><td class="p-3"><div class="font-bold">${escapeHtml(log.userName || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(log.userEmail || '-')}</div></td><td class="p-3"><span class="bg-gray-100 px-2 py-1 rounded-lg text-xs font-bold">${log.action}</span></td><td class="p-3 text-sm max-w-[300px] truncate" title="${escapeHtml(log.details)}">${escapeHtml(log.details || '-')}</td><td class="p-3 text-xs">${log.ipAddress || '-'}</td><td class="p-3"><span class="${statusClass}">${statusIcon} ${log.status}</span></td></tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -2917,16 +2373,341 @@ Jabatan Imigresen Malaysia`;
                 let statusClass = log.status === 'resolved' ? 'text-green-600' : 'text-amber-600';
                 let statusText = log.status === 'resolved' ? 'Selesai' : 'Dalam Perhatian';
                 
-                html += `
-                    <tr>
-                        <td class="p-3 text-sm">${timestamp}</div></td>
-                        <td class="p-3 font-bold">${escapeHtml(log.userName)}</div></td>
-                        <td class="p-3">${escapeHtml(log.branch)}</div></td>
-                        <td class="p-3">${escapeHtml(log.unit)}</div></td>
-                        <td class="p-3">${log.duration} minit</div></td>
-                        <td class="p-3"><span class="${statusClass}">${statusText}</span></div></td>
-                    </tr>
-                `;
+                html += `<tr><td class="p-3 text-sm">${timestamp}</td><td class="p-3 font-bold">${escapeHtml(log.userName)}</td><td class="p-3">${escapeHtml(log.branch)}</td><td class="p-3">${escapeHtml(log.unit)}</td><td class="p-3">${log.duration} minit</div></td><td class="p-3"><span class="${statusClass}">${statusText}</span></td></tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // ============================================
+        // LIVE MAP FUNCTIONS (Seperti Grab)
+        // ============================================
+        function initLiveMap() {
+            if (liveMap) {
+                liveMap.remove();
+                liveMap = null;
+            }
+            
+            if (currentUser && currentUser.lat && currentUser.lng) {
+                branchCenter = { lat: parseFloat(currentUser.lat), lng: parseFloat(currentUser.lng) };
+            }
+            
+            liveMap = L.map('liveUserMap').setView([branchCenter.lat, branchCenter.lng], 13);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB',
+                subdomains: 'abcd',
+                maxZoom: 19,
+                minZoom: 5
+            }).addTo(liveMap);
+            
+            L.control.scale({ metric: true, imperial: false, position: 'bottomleft' }).addTo(liveMap);
+            
+            loadLiveLocations();
+            
+            if (liveUpdateInterval) clearInterval(liveUpdateInterval);
+            liveUpdateInterval = setInterval(() => {
+                if (document.getElementById('livemapTab') && !document.getElementById('livemapTab').classList.contains('hidden')) {
+                    loadLiveLocations();
+                }
+            }, 10000);
+        }
+
+        async function loadLiveLocations() {
+            try {
+                const result = await callAPI('getLiveUserLocations', { 
+                    branch: currentUser.branch,
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                
+                if (result.success && result.data) {
+                    updateLiveMapMarkers(result.data);
+                    updateStatsAndList(result.data);
+                } else {
+                    updateStatsAndList([]);
+                }
+            } catch (error) {
+                console.error('Load live locations error:', error);
+            }
+        }
+
+        function updateLiveMapMarkers(locations) {
+            const activeUserIds = new Set();
+            let onlineCount = 0;
+            
+            locations.forEach(loc => {
+                activeUserIds.add(loc.uid);
+                
+                const lastSeen = new Date(loc.lastSeen);
+                const minutesAgo = (new Date() - lastSeen) / 1000 / 60;
+                if (minutesAgo < 2) onlineCount++;
+                
+                const lat = parseFloat(loc.lat);
+                const lng = parseFloat(loc.lng);
+                
+                if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
+                
+                let markerColor = 'gray';
+                let statusText = '';
+                
+                if (loc.isClockedIn) {
+                    if (loc.isInGeofence) {
+                        markerColor = 'green';
+                        statusText = '✅ Dalam Kawasan';
+                    } else {
+                        markerColor = 'amber';
+                        statusText = '⚠️ Luar Kawasan';
+                    }
+                } else {
+                    if (loc.isLocationOff) {
+                        markerColor = 'red';
+                        statusText = '📍 OFF';
+                    } else {
+                        markerColor = 'gray';
+                        statusText = '⏳ Belum Clock In';
+                    }
+                }
+                
+                let marker = liveMarkers.get(loc.uid);
+                
+                if (marker) {
+                    const oldLatLng = marker.getLatLng();
+                    const newLatLng = L.latLng(lat, lng);
+                    const distance = oldLatLng.distanceTo(newLatLng);
+                    if (distance > 10) {
+                        marker.setLatLng(newLatLng);
+                        if (marker._icon) {
+                            marker._icon.classList.add('live-marker');
+                            setTimeout(() => {
+                                if (marker._icon) marker._icon.classList.remove('live-marker');
+                            }, 1500);
+                        }
+                    }
+                    marker.bindPopup(getPopupContent(loc, statusText));
+                } else {
+                    const iconHtml = getMarkerIcon(markerColor);
+                    const customIcon = L.divIcon({
+                        html: iconHtml,
+                        className: 'custom-marker',
+                        iconSize: [32, 32],
+                        popupAnchor: [0, -16]
+                    });
+                    
+                    marker = L.marker([lat, lng], { icon: customIcon }).addTo(liveMap);
+                    marker.bindPopup(getPopupContent(loc, statusText));
+                    liveMarkers.set(loc.uid, marker);
+                }
+                
+                if (loc.geofenceLat && loc.geofenceLng && loc.geofenceRadius) {
+                    let geofenceCircle = userGeofences.get(`${loc.uid}_fence`);
+                    if (!geofenceCircle) {
+                        geofenceCircle = L.circle(
+                            [parseFloat(loc.geofenceLat), parseFloat(loc.geofenceLng)],
+                            {
+                                radius: parseInt(loc.geofenceRadius),
+                                color: '#3b82f6',
+                                weight: 1,
+                                fillColor: '#3b82f6',
+                                fillOpacity: 0.05,
+                                interactive: false
+                            }
+                        ).addTo(liveMap);
+                        userGeofences.set(`${loc.uid}_fence`, geofenceCircle);
+                    } else {
+                        geofenceCircle.setLatLng([parseFloat(loc.geofenceLat), parseFloat(loc.geofenceLng)]);
+                        geofenceCircle.setRadius(parseInt(loc.geofenceRadius));
+                    }
+                }
+            });
+            
+            for (const [uid, marker] of liveMarkers) {
+                if (!activeUserIds.has(uid)) {
+                    liveMap.removeLayer(marker);
+                    liveMarkers.delete(uid);
+                }
+            }
+            
+            for (const [key, circle] of userGeofences) {
+                const uid = key.replace('_fence', '');
+                if (!activeUserIds.has(uid)) {
+                    liveMap.removeLayer(circle);
+                    userGeofences.delete(key);
+                }
+            }
+            
+            document.getElementById('onlineDevicesCount').innerText = onlineCount;
+        }
+
+        function getMarkerIcon(color) {
+            const colors = { green: '#10b981', amber: '#f59e0b', red: '#ef4444', gray: '#9ca3af' };
+            const bgColor = colors[color] || colors.gray;
+            
+            return `<div style="position: relative; cursor: pointer;"><div style="width: 32px; height: 32px; background: ${bgColor}; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border: 2px solid white;"><span class="material-symbols-rounded" style="font-size: 18px; color: white;">person</span></div><div style="position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 8px; height: 8px; background: white; border-radius: 50%;"></div></div>`;
+        }
+
+        function getPopupContent(loc, statusText) {
+            const lastSeen = new Date(loc.lastSeen).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+            const clockInTime = loc.clockInTime ? new Date(loc.clockInTime).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) : '-';
+            
+            let statusBadgeClass = '';
+            if (loc.isClockedIn && loc.isInGeofence) {
+                statusBadgeClass = 'bg-green-100 text-green-700';
+            } else if (loc.isClockedIn && !loc.isInGeofence) {
+                statusBadgeClass = 'bg-amber-100 text-amber-700';
+            } else if (loc.isLocationOff) {
+                statusBadgeClass = 'bg-red-100 text-red-700';
+            } else {
+                statusBadgeClass = 'bg-gray-100 text-gray-600';
+            }
+            
+            return `<div class="user-popup-card"><h4>${escapeHtml(loc.name)}</h4><p class="text-xs text-gray-500">${escapeHtml(loc.unit || 'Tiada Unit')} | ${escapeHtml(loc.branch)}</p><div class="mt-2 space-y-1 text-xs"><div class="flex justify-between"><span class="text-gray-500">Status:</span><span class="${statusBadgeClass} px-2 rounded-full text-[10px] font-bold">${statusText}</span></div><div class="flex justify-between"><span class="text-gray-500">Clock In:</span><span class="font-medium">${clockInTime}</span></div><div class="flex justify-between"><span class="text-gray-500">Last Seen:</span><span class="font-mono text-[10px]">${lastSeen}</span></div><div class="flex justify-between"><span class="text-gray-500">Device:</span><span>${loc.devicePlatform || 'Web'}</span></div></div><button onclick="viewUserDetailsFromMap('${loc.uid}')" class="mt-3 w-full bg-blue-50 text-blue-700 text-xs font-bold py-1.5 rounded-xl hover:bg-blue-100 transition-all">Lihat Rekod Kehadiran</button></div>`;
+        }
+
+        function updateStatsAndList(locations) {
+            let onDuty = 0, inGeofence = 0, outsideGeofence = 0;
+            
+            const userListHtml = [];
+            
+            locations.forEach(loc => {
+                const lastSeen = new Date(loc.lastSeen);
+                const minutesAgo = Math.floor((new Date() - lastSeen) / 1000 / 60);
+                const isRecent = minutesAgo < 5;
+                
+                if (loc.isClockedIn && isRecent) onDuty++;
+                if (loc.isClockedIn && loc.isInGeofence) inGeofence++;
+                if (loc.isClockedIn && !loc.isInGeofence) outsideGeofence++;
+                
+                let statusIcon = '';
+                let statusColor = '';
+                
+                if (loc.isClockedIn && loc.isInGeofence) {
+                    statusIcon = '🟢';
+                    statusColor = 'text-green-600';
+                } else if (loc.isClockedIn && !loc.isInGeofence) {
+                    statusIcon = '🟡';
+                    statusColor = 'text-amber-600';
+                } else if (loc.isLocationOff) {
+                    statusIcon = '🔴';
+                    statusColor = 'text-red-600';
+                } else {
+                    statusIcon = '⚪';
+                    statusColor = 'text-gray-400';
+                }
+                
+                userListHtml.push(`<div class="flex items-center justify-between py-2 border-b border-gray-50 cursor-pointer hover:bg-gray-50 px-2 rounded-lg" onclick="viewUserDetailsFromMap('${loc.uid}')"><div class="flex items-center gap-2"><span class="${statusColor}">${statusIcon}</span><div><p class="font-bold text-xs">${escapeHtml(loc.name)}</p><p class="text-[10px] text-gray-400">${escapeHtml(loc.unit || '-')}</p></div></div><div class="text-right"><p class="text-[10px] font-mono">${lastSeen.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' })}</p><p class="text-[9px] text-gray-400">${minutesAgo} minit lalu</p></div></div>`);
+            });
+            
+            document.getElementById('onDutyCount').innerText = onDuty;
+            document.getElementById('inGeofenceCount').innerText = inGeofence;
+            document.getElementById('outsideGeofenceCount').innerText = outsideGeofence;
+            document.getElementById('activeUsersCount').innerText = locations.length;
+            
+            const listContainer = document.getElementById('liveUserList');
+            if (userListHtml.length > 0) {
+                listContainer.innerHTML = userListHtml.join('');
+            } else {
+                listContainer.innerHTML = '<p class="text-gray-400 text-center py-4">Tiada kakitangan aktif</p>';
+            }
+        }
+
+        function refreshLiveMap() {
+            loadLiveLocations();
+            showNotif('Live Map', 'Data lokasi dikemaskini', false);
+        }
+
+        function centerMapOnBranch() {
+            if (liveMap) {
+                liveMap.setView([branchCenter.lat, branchCenter.lng], 14);
+                showNotif('Peta', 'Berpusat ke cawangan anda', false);
+            }
+        }
+
+        function viewUserDetailsFromMap(uid) {
+            const user = users.find(u => u.uid === uid);
+            if (user) {
+                selectedUser = user;
+                viewUserDetails(uid);
+            }
+        }
+
+        function cleanupLiveMap() {
+            if (liveUpdateInterval) {
+                clearInterval(liveUpdateInterval);
+                liveUpdateInterval = null;
+            }
+            if (liveMarkers) {
+                liveMarkers.forEach((marker) => {
+                    if (liveMap) liveMap.removeLayer(marker);
+                });
+                liveMarkers.clear();
+            }
+            if (userGeofences) {
+                userGeofences.forEach((circle) => {
+                    if (liveMap) liveMap.removeLayer(circle);
+                });
+                userGeofences.clear();
+            }
+        }
+
+        // ============================================
+        // INTEGRITY CHECK FUNCTIONS
+        // ============================================
+        async function loadIntegrityChecks() {
+            const startDate = document.getElementById('integrityStartDate').value;
+            const endDate = document.getElementById('integrityEndDate').value;
+            const status = document.getElementById('integrityStatus').value;
+            const search = document.getElementById('integritySearch').value;
+            
+            const filters = {};
+            if (startDate) filters.startDate = startDate;
+            if (endDate) filters.endDate = endDate;
+            if (status) filters.status = status;
+            if (search) filters.userName = search;
+            
+            try {
+                const result = await callAPI('getIntegrityChecks', { 
+                    filters: JSON.stringify(filters),
+                    branch: currentUser.branch,
+                    requestingUser: JSON.stringify(currentUser)
+                });
+                if (result.success && result.data) {
+                    renderIntegrityChecks(result.data);
+                } else {
+                    document.getElementById('integrityTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada rekod integrity check</div></div></td>';
+                }
+            } catch (error) {
+                console.error('Load integrity checks error:', error);
+                document.getElementById('integrityTableBody').innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Gagal memuatkan data</div></div></td>';
+            }
+        }
+
+        function renderIntegrityChecks(checks) {
+            const tbody = document.getElementById('integrityTableBody');
+            if (!checks || checks.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-400">Tiada rekod integrity check</div></div></td>';
+                return;
+            }
+            
+            let html = '';
+            checks.forEach(check => {
+                const timestamp = new Date(check.timestamp).toLocaleString('ms-MY');
+                const faceStatusClass = check.faceVerified ? 'badge-verified' : 'badge-failed';
+                const faceStatusText = check.faceVerified ? '✅ Disahkan' : '❌ Gagal';
+                const geofenceClass = check.inGeofence ? 'text-green-600' : 'text-red-600';
+                const geofenceText = check.inGeofence ? '✅ Dalam' : '❌ Luar';
+                const overallStatusClass = check.status === 'verified' ? 'badge-verified' : 'badge-failed';
+                const overallStatusText = check.status === 'verified' ? 'Lulus' : 'Gagal';
+                const score = Math.round(check.verificationScore * 100);
+                
+                html += `<tr>
+                    <td class="p-3 text-sm">${timestamp}</div>
+                    <td class="p-3 font-bold">${escapeHtml(check.userName)}</div>
+                    <td class="p-3 text-xs">${escapeHtml(check.unit || '-')}</div>
+                    <td class="p-3 text-xs max-w-[200px] truncate" title="${escapeHtml(check.location)}">${escapeHtml(check.location || '-')}</div>
+                    <td class="p-3"><span class="${faceStatusClass} px-2 py-1 rounded-full text-xs font-bold">${faceStatusText}</span></div>
+                    <td class="p-3"><span class="${geofenceClass} font-bold">${geofenceText}</span></div>
+                    <td class="p-3"><div class="w-full bg-gray-200 rounded-full h-2"><div class="bg-blue-600 rounded-full h-2" style="width: ${score}%"></div></div><span class="text-xs">${score}%</span></div>
+                    <td class="p-3"><span class="${overallStatusClass} px-2 py-1 rounded-full text-xs font-bold">${overallStatusText}</span></div>
+                </tr>`;
             });
             tbody.innerHTML = html;
         }
@@ -3004,22 +2785,20 @@ Jabatan Imigresen Malaysia`;
                     statusText = '❌ TIADA CLOCK IN';
                 }
                 
-                html += `
-                    <tr>
-                        <td><div class="font-black text-gray-800">${escapeHtml(u.name)}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.email)}</div></div></td>
-                        <td><div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.branch)}</div></div></td>
-                        <td>${u.faceDescriptor ? '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full">TIADA REKOD</span>'}</div></td>
-                        <td><div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${escapeHtml(u.location || 'Pejabat Am')}</div><div class="text-[10px] text-blue-500">${u.radius || 500}m Radius</div></div></td>
-                        <td>${u.registeredPlatform ? `<span class="badge ${u.registeredPlatform === 'Android' ? 'badge-android' : (u.registeredPlatform === 'iOS' ? 'badge-ios' : 'badge-web')}">${u.registeredPlatform === 'Android' ? '📱' : (u.registeredPlatform === 'iOS' ? '🍎' : '💻')} ${u.registeredPlatform || 'Web'}</span>` : '<span class="text-xs text-gray-400">Belum daftar</span>'}</div></td>
-                        <td class="p-3"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></div></td>
-                        <td><div class="flex gap-2 justify-center">
-                            <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100"><span class="material-symbols-rounded text-xl">visibility</span></button>
-                            <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100"><span class="material-symbols-rounded text-xl">edit</span></button>
-                            ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100"><span class="material-symbols-rounded text-xl">face_4</span></button>` : ''}
-                            <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100"><span class="material-symbols-rounded text-xl">delete</span></button>
-                        </div></div></td>
-                    </tr>
-                `;
+                html += `<tr>
+                    <td><div class="font-black text-gray-800">${escapeHtml(u.name)}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.email)}</div></div>
+                    <td><div class="text-xs font-bold text-gray-600">${escapeHtml(u.unit || '-')}</div><div class="text-[10px] text-gray-400">${escapeHtml(u.branch)}</div></div>
+                    <td>${u.faceDescriptor ? '<span class="bg-green-50 text-green-600 text-[10px] font-black px-4 py-1.5 rounded-full">DIDAFTAR</span>' : '<span class="bg-red-50 text-red-500 text-[10px] font-black px-4 py-1.5 rounded-full">TIADA REKOD</span>'}</div>
+                    <td><div class="text-xs font-bold text-gray-600 truncate max-w-[150px]">${escapeHtml(u.location || 'Pejabat Am')}</div><div class="text-[10px] text-blue-500">${u.radius || 500}m Radius</div></div>
+                    <td>${u.registeredPlatform ? `<span class="badge ${u.registeredPlatform === 'Android' ? 'badge-android' : (u.registeredPlatform === 'iOS' ? 'badge-ios' : 'badge-web')}">${u.registeredPlatform === 'Android' ? '📱' : (u.registeredPlatform === 'iOS' ? '🍎' : '💻')} ${u.registeredPlatform || 'Web'}</span>` : '<span class="text-xs text-gray-400">Belum daftar</span>'}</div>
+                    <td><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></div>
+                    <td><div class="flex gap-2 justify-center">
+                        <button onclick="viewUserDetails('${u.uid}')" class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100"><span class="material-symbols-rounded text-xl">visibility</span></button>
+                        <button onclick="editUser('${u.uid}')" class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center hover:bg-blue-100"><span class="material-symbols-rounded text-xl">edit</span></button>
+                        ${u.faceDescriptor ? `<button onclick="openResetModal('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100"><span class="material-symbols-rounded text-xl">face_4</span></button>` : ''}
+                        <button onclick="confirmDelete('${u.uid}', '${escapeHtml(u.name)}')" class="w-10 h-10 bg-red-50 text-red-500 rounded-xl flex items-center justify-center hover:bg-red-100"><span class="material-symbols-rounded text-xl">delete</span></button>
+                    </div></div>
+                </tr>`;
             }
             tbody.innerHTML = html;
         }
@@ -3097,14 +2876,10 @@ Jabatan Imigresen Malaysia`;
                     
                     let jamMasuk = '-', jamKeluar = '-';
                     if (record.clockIn) {
-                        try { 
-                            jamMasuk = new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: false }); 
-                        } catch(e) { jamMasuk = record.clockIn; }
+                        try { jamMasuk = new Date(record.clockIn).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: false }); } catch(e) { jamMasuk = record.clockIn; }
                     }
                     if (record.clockOut) {
-                        try { 
-                            jamKeluar = new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: false }); 
-                        } catch(e) { jamKeluar = record.clockOut; }
+                        try { jamKeluar = new Date(record.clockOut).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: false }); } catch(e) { jamKeluar = record.clockOut; }
                     }
                     
                     const jumlahJam = record.totalHours ? formatJam(record.totalHours) : '-';
@@ -3122,7 +2897,6 @@ Jabatan Imigresen Malaysia`;
                         statusClass = 'bg-gray-100 text-gray-600';
                     }
                     
-                    // Display remark if any
                     let remarkHtml = '';
                     if (record.remark) {
                         let remarkClass = '';
@@ -3132,16 +2906,7 @@ Jabatan Imigresen Malaysia`;
                         remarkHtml = `<div class="${remarkClass} mt-1">${escapeHtml(record.remark)} ${record.remarkStatus === 'approved' ? '(Lulus)' : (record.remarkStatus === 'pending' ? '(Menunggu)' : '')}</div>`;
                     }
                     
-                    html += `<tr>
-                        <td class="p-3">${tarikh}</div></td>
-                        <td class="p-3">${hari}</div></td>
-                        <td class="p-3 text-center">${jamMasuk}</div></td>
-                        <td class="p-3 text-center">${jamKeluar}</div></td>
-                        <td class="p-3 text-center">${jumlahJam}</div></td>
-                        <td class="p-3 text-center">${jumlahOT}</div></td>
-                        <td class="p-3 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></div></td>
-                        <td class="p-3">${remarkHtml}</div></td>
-                    </tr>`;
+                    html += `<tr><td class="p-3">${tarikh}</td><td class="p-3">${hari}</td><td class="p-3 text-center">${jamMasuk}</td><td class="p-3 text-center">${jamKeluar}</td><td class="p-3 text-center">${jumlahJam}</td><td class="p-3 text-center">${jumlahOT}</td><td class="p-3 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${statusText}</span></td><td class="p-3">${remarkHtml}</td></tr>`;
                 });
                 tbody.innerHTML = html;
                 
@@ -3504,6 +3269,14 @@ Jabatan Imigresen Malaysia`;
             if (tab === 'devicerequests') loadDeviceRequests();
             if (tab === 'audit') loadAuditLogs();
             if (tab === 'locationoff') loadLocationOffLogs();
+            if (tab === 'livemap') {
+                setTimeout(() => {
+                    initLiveMap();
+                }, 100);
+            } else {
+                cleanupLiveMap();
+            }
+            if (tab === 'integrity') loadIntegrityChecks();
         };
         window.nextStep = function() {
             if (currentStep === 1) {
@@ -3624,6 +3397,7 @@ Jabatan Imigresen Malaysia`;
         window.handleLogout = function() {
             if (locationWatchId) navigator.geolocation.clearWatch(locationWatchId);
             stopCamera();
+            cleanupLiveMap();
             const btn = document.getElementById('loginBtn');
             btn.style.backgroundColor = '';
             btn.disabled = false;
