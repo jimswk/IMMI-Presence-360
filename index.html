@@ -1909,7 +1909,7 @@
             return callAPI('clockIn', { 
                 uid: uid, 
                 location: JSON.stringify(location), 
-                clientIP: await getClientIP(),
+                clientIP: ''),
                 requestingUser: JSON.stringify(user)
             });
         }
@@ -1918,7 +1918,7 @@
             return callAPI('clockOut', { 
                 uid: uid, 
                 location: JSON.stringify(location), 
-                clientIP: await getClientIP(),
+                clientIP: '',
                 requestingUser: JSON.stringify(user)
             });
         }
