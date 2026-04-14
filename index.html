@@ -1924,13 +1924,9 @@
         }
         
         async function getClientIP() {
-            try {
-                const response = await fetch('https://api.ipify.org?format=json');
-                const data = await response.json();
-                return data.ip;
-            } catch (error) {
-                return 'unknown';
-            }
+            // IP address tidak diperlukan untuk clock in/out
+            // Buang terus untuk elak timeout
+            return 'not_required';
         }
         
         // ============================================
