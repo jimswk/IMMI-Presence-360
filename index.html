@@ -1908,18 +1908,14 @@
         async function clockIn(uid, location, user) {
             return callAPI('clockIn', { 
                 uid: uid, 
-                location: JSON.stringify(location), 
-                clientIP: ''),
-                requestingUser: JSON.stringify(user)
+                location: JSON.stringify(location)
             });
         }
         
         async function clockOut(uid, location, user) {
             return callAPI('clockOut', { 
                 uid: uid, 
-                location: JSON.stringify(location), 
-                clientIP: '',
-                requestingUser: JSON.stringify(user)
+                location: JSON.stringify(location)
             });
         }
         
