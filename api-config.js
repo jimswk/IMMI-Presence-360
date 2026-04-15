@@ -1,10 +1,10 @@
 // ============================================
 // API CONFIGURATION - IMMI PRESENCE 360
-// VERSION: 6.0 (PocketBase Backend with callAPI)
+// VERSION: 6.0 (PocketBase Backend - Complete)
 // LAST UPDATED: 15 April 2026
 // ============================================
 
-// PocketBase Configuration
+// PocketBase Configuration - GANTI DENGAN URL ANDA
 const PB_URL = 'http://100.107.138.113:8080';
 
 // APK Configuration
@@ -20,6 +20,14 @@ function getToken() {
     return localStorage.getItem('adminToken') || localStorage.getItem('userToken');
 }
 
+function setToken(token, isAdmin = true) {
+    if (isAdmin) {
+        localStorage.setItem('adminToken', token);
+    } else {
+        localStorage.setItem('userToken', token);
+    }
+}
+
 function clearTokens() {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('userToken');
@@ -28,7 +36,7 @@ function clearTokens() {
 }
 
 // ============================================
-// AUTHENTICATION
+// AUTHENTICATION FUNCTIONS
 // ============================================
 
 async function login(email, password) {
@@ -79,12 +87,14 @@ async function userLogin(email, password) {
 
 async function getUsers(branch, unit, requestingUser) {
     const token = getToken();
-    if (!token) return { success: true, data: [] };
+    if (!token) return { success: false, error: 'No token', data: [] };
     
     let filter = '';
     if (requestingUser && requestingUser.role !== 'superadmin') {
         filter = `branch="${branch}"`;
-        if (unit && unit !== 'all') filter += ` && unit="${unit}"`;
+        if (unit && unit !== 'all') {
+            filter += ` && unit="${unit}"`;
+        }
     }
     
     const url = `${PB_URL}/api/collections/users/records${filter ? `?filter=${encodeURIComponent(filter)}&sort=-created` : '?sort=-created'}`;
@@ -94,7 +104,7 @@ async function getUsers(branch, unit, requestingUser) {
         const data = await response.json();
         return { success: true, data: data.items || [] };
     } catch (error) {
-        return { success: true, data: [] };
+        return { success: false, error: error.toString(), data: [] };
     }
 }
 
@@ -170,6 +180,7 @@ async function updateUser(data, requestingUser) {
             headers: { 'Content-Type': 'application/json', 'Authorization': token },
             body: JSON.stringify(updateData)
         });
+        
         return await response.json();
     } catch (error) {
         return { success: false, error: error.toString() };
@@ -191,10 +202,12 @@ async function deleteUser(data, requestingUser) {
         }
         
         const userId = users.items[0].id;
+        
         const response = await fetch(`${PB_URL}/api/collections/users/records/${userId}`, {
             method: 'DELETE',
             headers: { 'Authorization': token }
         });
+        
         return { success: response.status === 204 };
     } catch (error) {
         return { success: false, error: error.toString() };
@@ -216,11 +229,13 @@ async function updateUserFace(uid, faceDescriptor) {
         }
         
         const userId = users.items[0].id;
+        
         const response = await fetch(`${PB_URL}/api/collections/users/records/${userId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', 'Authorization': token },
             body: JSON.stringify({ face_descriptor: faceDescriptor })
         });
+        
         return await response.json();
     } catch (error) {
         return { success: false, error: error.toString() };
@@ -250,6 +265,7 @@ async function getAttendance(uid, startDate, endDate, requestingUser = null) {
         const response = await fetch(`${PB_URL}/api/collections/attendance/records?filter=${encodeURIComponent(filter)}&sort=-date`, {
             headers: { 'Authorization': token }
         });
+        
         const data = await response.json();
         return { success: true, data: data.items || [] };
     } catch (error) {
@@ -291,6 +307,7 @@ async function clockIn(uid, location, user) {
             headers: { 'Content-Type': 'application/json', 'Authorization': token },
             body: JSON.stringify(data)
         });
+        
         return await response.json();
     } catch (error) {
         return { success: false, error: error.toString() };
@@ -342,6 +359,7 @@ async function clockOut(uid, location, user) {
             headers: { 'Content-Type': 'application/json', 'Authorization': token },
             body: JSON.stringify(data)
         });
+        
         const result = await response.json();
         return { success: true, totalHours: totalHours.toFixed(2), overtime: overtime.toFixed(2), ...result };
     } catch (error) {
@@ -350,7 +368,7 @@ async function clockOut(uid, location, user) {
 }
 
 // ============================================
-// DEVICE LOCATIONS
+// DEVICE LOCATIONS (For Admin Devices Tab)
 // ============================================
 
 async function getAllUserLocations(requestingUser) {
@@ -392,6 +410,10 @@ async function getAllUserLocations(requestingUser) {
     }
 }
 
+// ============================================
+// FORCE LOGOUT USER
+// ============================================
+
 async function forceLogoutUser(uid, requestingUser) {
     const token = getToken();
     if (!token) return { success: false, error: 'No token' };
@@ -407,12 +429,21 @@ async function forceLogoutUser(uid, requestingUser) {
         }
         
         const userId = users.items[0].id;
-        await fetch(`${PB_URL}/api/collections/users/records/${userId}`, {
+        
+        const response = await fetch(`${PB_URL}/api/collections/users/records/${userId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', 'Authorization': token },
-            body: JSON.stringify({ registered_device_id: '', registered_platform: '', registered_brand: '' })
+            body: JSON.stringify({
+                registered_device_id: '',
+                registered_platform: '',
+                registered_brand: ''
+            })
         });
-        return { success: true, message: 'User has been force logged out' };
+        
+        if (response.ok) {
+            return { success: true, message: 'User has been force logged out' };
+        }
+        return { success: false, error: 'Failed to force logout' };
     } catch (error) {
         return { success: false, error: error.toString() };
     }
@@ -528,6 +559,28 @@ async function getPendingLeaveRequests(requestingUser) {
     }
 }
 
+async function getUserLeaveRequests(uid) {
+    const token = getToken();
+    if (!token) return { success: true, data: [] };
+    
+    try {
+        const userResponse = await fetch(`${PB_URL}/api/collections/users/records?filter=uid="${uid}"`, {
+            headers: { 'Authorization': token }
+        });
+        const users = await userResponse.json();
+        if (!users.items || users.items.length === 0) return { success: true, data: [] };
+        
+        const userId = users.items[0].id;
+        const response = await fetch(`${PB_URL}/api/collections/leave_requests/records?filter=uid="${userId}"&sort=-timestamp`, {
+            headers: { 'Authorization': token }
+        });
+        const data = await response.json();
+        return { success: true, data: data.items || [] };
+    } catch (error) {
+        return { success: true, data: [] };
+    }
+}
+
 async function updateLeaveRequestStatus(requestId, status, adminResponse) {
     const token = getToken();
     if (!token) return { success: false, error: 'No token' };
@@ -589,6 +642,28 @@ async function getPendingDiaries(requestingUser) {
     
     try {
         const response = await fetch(`${PB_URL}/api/collections/course_diaries/records?filter=status="pending"&sort=-timestamp`, {
+            headers: { 'Authorization': token }
+        });
+        const data = await response.json();
+        return { success: true, data: data.items || [] };
+    } catch (error) {
+        return { success: true, data: [] };
+    }
+}
+
+async function getUserDiaries(uid) {
+    const token = getToken();
+    if (!token) return { success: true, data: [] };
+    
+    try {
+        const userResponse = await fetch(`${PB_URL}/api/collections/users/records?filter=uid="${uid}"`, {
+            headers: { 'Authorization': token }
+        });
+        const users = await userResponse.json();
+        if (!users.items || users.items.length === 0) return { success: true, data: [] };
+        
+        const userId = users.items[0].id;
+        const response = await fetch(`${PB_URL}/api/collections/course_diaries/records?filter=uid="${userId}"&sort=-timestamp`, {
             headers: { 'Authorization': token }
         });
         const data = await response.json();
@@ -683,31 +758,150 @@ async function updateExceptionStatus(exceptionId, status, adminResponse) {
 }
 
 // ============================================
-// LOCATION OFF
+// LOCATION OFF TRACKING
 // ============================================
 
 async function reportLocationOff(uid, duration) {
-    return { success: true };
+    const token = getToken();
+    if (!token) return { success: true };
+    
+    try {
+        const userResponse = await fetch(`${PB_URL}/api/collections/users/records?filter=uid="${uid}"`, {
+            headers: { 'Authorization': token }
+        });
+        const users = await userResponse.json();
+        if (!users.items || users.items.length === 0) return { success: true };
+        
+        const userId = users.items[0].id;
+        const data = {
+            uid: userId,
+            user_name: users.items[0].name,
+            branch: users.items[0].branch,
+            unit: users.items[0].unit || '',
+            duration: duration,
+            status: 'pending',
+            timestamp: new Date().toISOString()
+        };
+        
+        await fetch(`${PB_URL}/api/collections/location_off_logs/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify(data)
+        });
+        return { success: true };
+    } catch (error) {
+        return { success: true };
+    }
 }
 
 async function getLocationOffLogs(requestingUser, startDate, endDate) {
-    return { success: true, data: [] };
+    const token = getToken();
+    if (!token) return { success: true, data: [] };
+    
+    try {
+        let filter = '';
+        if (startDate && endDate) filter = `timestamp >= "${startDate}" && timestamp <= "${endDate}"`;
+        const url = `${PB_URL}/api/collections/location_off_logs/records${filter ? `?filter=${encodeURIComponent(filter)}&sort=-timestamp` : '?sort=-timestamp'}`;
+        const response = await fetch(url, { headers: { 'Authorization': token } });
+        const data = await response.json();
+        return { success: true, data: data.items || [] };
+    } catch (error) {
+        return { success: true, data: [] };
+    }
 }
 
 // ============================================
-// DEVICE REQUESTS
+// DEVICE REPLACEMENT REQUESTS
 // ============================================
 
+async function requestDeviceReplacement(uid, newDeviceId, reason) {
+    const token = getToken();
+    if (!token) return { success: false, error: 'No token' };
+    
+    try {
+        const userResponse = await fetch(`${PB_URL}/api/collections/users/records?filter=uid="${uid}"`, {
+            headers: { 'Authorization': token }
+        });
+        const users = await userResponse.json();
+        if (!users.items || users.items.length === 0) return { success: false, error: 'User not found' };
+        
+        const userId = users.items[0].id;
+        const data = {
+            uid: userId,
+            user_name: users.items[0].name,
+            user_email: users.items[0].email,
+            old_device_id: users.items[0].registered_device_id || '',
+            new_device_id: newDeviceId,
+            reason: reason,
+            status: 'pending',
+            requested_at: new Date().toISOString()
+        };
+        
+        const response = await fetch(`${PB_URL}/api/collections/device_requests/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify(data)
+        });
+        return await response.json();
+    } catch (error) {
+        return { success: false, error: error.toString() };
+    }
+}
+
 async function getPendingDeviceRequests(requestingUser) {
-    return { success: true, data: [] };
+    const token = getToken();
+    if (!token) return { success: true, data: [] };
+    
+    try {
+        const response = await fetch(`${PB_URL}/api/collections/device_requests/records?filter=status="pending"&sort=-requested_at`, {
+            headers: { 'Authorization': token }
+        });
+        const data = await response.json();
+        return { success: true, data: data.items || [] };
+    } catch (error) {
+        return { success: true, data: [] };
+    }
 }
 
 async function approveDeviceReplacement(requestId, requestingUser) {
-    return { success: true };
+    const token = getToken();
+    if (!token) return { success: false, error: 'No token' };
+    
+    try {
+        const response = await fetch(`${PB_URL}/api/collections/device_requests/records/${requestId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify({ status: 'approved', approved_by: requestingUser?.name || 'Admin', approved_at: new Date().toISOString() })
+        });
+        const result = await response.json();
+        
+        if (result.uid) {
+            await fetch(`${PB_URL}/api/collections/users/records/${result.uid}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                body: JSON.stringify({ registered_device_id: result.new_device_id, registered_platform: 'Android' })
+            });
+        }
+        return { success: true };
+    } catch (error) {
+        return { success: false, error: error.toString() };
+    }
 }
 
 async function rejectDeviceReplacement(requestId, reason, requestingUser) {
-    return { success: true };
+    const token = getToken();
+    if (!token) return { success: false, error: 'No token' };
+    
+    try {
+        const response = await fetch(`${PB_URL}/api/collections/device_requests/records/${requestId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify({ status: 'rejected', rejection_reason: reason, rejected_by: requestingUser?.name || 'Admin', rejected_at: new Date().toISOString() })
+        });
+        return { success: response.ok };
+    } catch (error) {
+        return { success: false, error: error.toString() };
+    }
 }
 
 // ============================================
@@ -715,39 +909,138 @@ async function rejectDeviceReplacement(requestId, reason, requestingUser) {
 // ============================================
 
 async function getAuditLogs(requestingUser, filters) {
-    return { success: true, data: [] };
+    const token = getToken();
+    if (!token) return { success: true, data: [] };
+    
+    try {
+        let filter = '';
+        if (filters) {
+            if (filters.startDate) filter += `timestamp >= "${filters.startDate}"`;
+            if (filters.endDate) filter += filter ? ` && timestamp <= "${filters.endDate}"` : `timestamp <= "${filters.endDate}"`;
+            if (filters.action && filters.action !== '') filter += filter ? ` && action = "${filters.action}"` : `action = "${filters.action}"`;
+            if (filters.userName && filters.userName !== '') filter += filter ? ` && user_name ~ "${filters.userName}"` : `user_name ~ "${filters.userName}"`;
+        }
+        const url = `${PB_URL}/api/collections/audit_logs/records${filter ? `?filter=${encodeURIComponent(filter)}&sort=-timestamp` : '?sort=-timestamp'}`;
+        const response = await fetch(url, { headers: { 'Authorization': token } });
+        const data = await response.json();
+        return { success: true, data: data.items || [] };
+    } catch (error) {
+        return { success: true, data: [] };
+    }
 }
 
 // ============================================
-// INBOX
+// INBOX FUNCTIONS
 // ============================================
 
 async function getUserInbox(uid) {
-    return { success: true, data: [] };
+    const token = getToken();
+    if (!token) return { success: true, data: [] };
+    
+    try {
+        const userResponse = await fetch(`${PB_URL}/api/collections/users/records?filter=uid="${uid}"`, {
+            headers: { 'Authorization': token }
+        });
+        const users = await userResponse.json();
+        if (!users.items || users.items.length === 0) return { success: true, data: [] };
+        
+        const userId = users.items[0].id;
+        const response = await fetch(`${PB_URL}/api/collections/user_inbox/records?filter=uid="${userId}"&sort=-timestamp`, {
+            headers: { 'Authorization': token }
+        });
+        const data = await response.json();
+        return { success: true, data: data.items || [] };
+    } catch (error) {
+        return { success: true, data: [] };
+    }
 }
 
 async function markInboxAsRead(inboxId, uid) {
-    return { success: true };
+    const token = getToken();
+    if (!token) return { success: false };
+    
+    try {
+        await fetch(`${PB_URL}/api/collections/user_inbox/records/${inboxId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify({ is_read: true, read_at: new Date().toISOString() })
+        });
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
 }
 
 async function sendToInbox(uid, title, message, type, referenceId, status) {
-    return { success: true };
+    const token = getToken();
+    if (!token) return { success: false };
+    
+    try {
+        const userResponse = await fetch(`${PB_URL}/api/collections/users/records?filter=uid="${uid}"`, {
+            headers: { 'Authorization': token }
+        });
+        const users = await userResponse.json();
+        if (!users.items || users.items.length === 0) return { success: false };
+        
+        const userId = users.items[0].id;
+        const data = {
+            uid: userId,
+            title: title,
+            message: message,
+            type: type,
+            reference_id: referenceId,
+            status: status || 'info',
+            is_read: false,
+            timestamp: new Date().toISOString()
+        };
+        
+        await fetch(`${PB_URL}/api/collections/user_inbox/records`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify(data)
+        });
+        return { success: true };
+    } catch (error) {
+        return { success: false };
+    }
 }
 
 // ============================================
-// UPLOAD & EMAIL (Fallback)
+// UPLOAD FILE (Fallback - Base64 untuk fail kecil)
 // ============================================
 
 async function uploadFileToDrive(fileName, fileBase64, folderId, mimeType) {
-    if (fileBase64 && fileBase64.length < 500000) {
-        return { success: true, fileUrl: `data:${mimeType || 'application/octet-stream'};base64,${fileBase64}` };
+    try {
+        const byteCharacters = atob(fileBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) byteNumbers[i] = byteCharacters.charCodeAt(i);
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: mimeType || 'application/octet-stream' });
+        
+        const MAX_FILE_SIZE = 2 * 1024 * 1024;
+        if (blob.size > MAX_FILE_SIZE) {
+            return { success: false, error: `Saiz fail melebihi 2MB.` };
+        }
+        
+        if (blob.size < 500 * 1024) {
+            return { success: true, fileUrl: `data:${mimeType || 'application/octet-stream'};base64,${fileBase64}` };
+        }
+        return { success: false, error: 'File terlalu besar untuk sistem web.' };
+    } catch (error) {
+        if (fileBase64 && fileBase64.length < 500000) {
+            return { success: true, fileUrl: `data:${mimeType || 'application/octet-stream'};base64,${fileBase64}` };
+        }
+        return { success: false, error: error.toString() };
     }
-    return { success: false, error: 'File too large' };
 }
 
+// ============================================
+// EMAIL (Fallback - Notifikasi sahaja)
+// ============================================
+
 async function sendEmail(to, subject, body) {
-    if (typeof showNotif === 'function') showNotif('Makluman', `Notifikasi: ${subject}`, false);
-    return { success: true };
+    if (typeof showNotif === 'function') showNotif('Makluman', `Notifikasi akan dihantar kepada ${to}: ${subject}`, false);
+    return { success: true, message: 'Notifikasi direkodkan' };
 }
 
 // ============================================
@@ -755,18 +1048,62 @@ async function sendEmail(to, subject, body) {
 // ============================================
 
 async function getAdmins(requestingUser) { return { success: true, data: [] }; }
-async function createAdmin(data, requestingUser) { return { success: false, error: 'Guna PocketBase Settings' }; }
-async function updateAdmin(data, requestingUser) { return { success: false, error: 'Guna PocketBase Settings' }; }
-async function deleteAdmin(data, requestingUser) { return { success: false, error: 'Guna PocketBase Settings' }; }
-async function getBlockedUsers(requestingUser) { return { success: true, data: [] }; }
-async function reactivateUser(uid, requestingUser) { return { success: true }; }
+async function createAdmin(data, requestingUser) { return { success: false, error: 'Guna PocketBase Settings > Admins' }; }
+async function updateAdmin(data, requestingUser) { return { success: false, error: 'Guna PocketBase Settings > Admins' }; }
+async function deleteAdmin(data, requestingUser) { return { success: false, error: 'Guna PocketBase Settings > Admins' }; }
+
+// ============================================
+// BLOCKED USERS
+// ============================================
+
+async function getBlockedUsers(requestingUser) {
+    const token = getToken();
+    if (!token) return { success: true, data: [] };
+    try {
+        const response = await fetch(`${PB_URL}/api/collections/users/records?filter=is_blocked=true`, { headers: { 'Authorization': token } });
+        const data = await response.json();
+        return { success: true, data: data.items || [] };
+    } catch (error) { return { success: true, data: [] }; }
+}
+
+async function reactivateUser(uid, requestingUser) {
+    const token = getToken();
+    if (!token) return { success: false };
+    try {
+        const userResponse = await fetch(`${PB_URL}/api/collections/users/records?filter=uid="${uid}"`, { headers: { 'Authorization': token } });
+        const users = await userResponse.json();
+        if (!users.items || users.items.length === 0) return { success: false };
+        const userId = users.items[0].id;
+        await fetch(`${PB_URL}/api/collections/users/records/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': token },
+            body: JSON.stringify({ is_blocked: false, block_reason: '', block_date: null })
+        });
+        return { success: true };
+    } catch (error) { return { success: false }; }
+}
+
+// ============================================
+// OTHER FUNCTIONS (Placeholders)
+// ============================================
+
 async function autoBlockInactiveUsers() { return { success: true }; }
 async function saveStepCount(uid, stepCount) { return { success: true }; }
 async function getLastStepCount(uid) { return { success: true, lastStepCount: 0 }; }
 async function validateStepCount(uid, currentStepCount) { return { success: true, isValid: true }; }
 async function confirmOvertime(uid, status) { return { success: true }; }
 async function isExemptFromAttendance(uid, date) { return { exempt: false }; }
-async function getAllPendingRequests(requestingUser) { return { success: true, data: [] }; }
+async function getAllPendingRequests(requestingUser) {
+    const leaves = await getPendingLeaveRequests(requestingUser);
+    const exceptions = await getPendingExceptions(requestingUser);
+    const diaries = await getPendingDiaries(requestingUser);
+    const allRequests = [];
+    if (leaves.data) leaves.data.forEach(r => { r.requestType = 'leave'; allRequests.push(r); });
+    if (exceptions.data) exceptions.data.forEach(r => { r.requestType = 'exception'; allRequests.push(r); });
+    if (diaries.data) diaries.data.forEach(r => { r.requestType = 'diary'; allRequests.push(r); });
+    allRequests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    return { success: true, data: allRequests };
+}
 async function setupSheets() { return { success: true }; }
 async function runMigration() { return { success: true }; }
 async function fixInconsistentData() { return { success: true }; }
@@ -789,7 +1126,7 @@ async function getClientIP() {
 async function getDeviceInfo() { return { deviceId: 'web_' + Date.now(), deviceName: 'Web Browser', platform: 'Web', userAgent: navigator.userAgent }; }
 
 // ============================================
-// NATIVE BRIDGE
+// NATIVE ANDROID BRIDGE
 // ============================================
 
 function getNativeAppVersion() {
@@ -814,105 +1151,8 @@ function isFromNativeApp() { return navigator.userAgent.includes('IMMI-Android-A
 function showAlert(title, message, icon, callback) { alert(`${title}: ${message}`); if (callback) callback(); }
 
 // ============================================
-// LEGACY callAPI FUNCTION (Compatibility)
-// ============================================
-
-async function callAPI(method, params = {}) {
-    console.log(`callAPI: ${method}`);
-    
-    try {
-        switch(method) {
-            case 'login':
-                return await login(params.email, params.password);
-            case 'userLogin':
-                return await userLogin(params.email, params.password);
-            case 'getUsers':
-                return await getUsers(params.branch, params.unit, params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'createUser':
-                return await createUser(JSON.parse(params.data), params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'updateUser':
-                return await updateUser(JSON.parse(params.data), params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'deleteUser':
-                return await deleteUser(JSON.parse(params.data), params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'updateUserFace':
-                return await updateUserFace(params.uid, params.faceDescriptor);
-            case 'getAttendance':
-                return await getAttendance(params.uid, params.startDate, params.endDate, params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'getAttendanceWithRemarks':
-                return await getAttendanceWithRemarks(params.uid, params.startDate, params.endDate, params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'clockIn':
-                return await clockIn(params.uid, JSON.parse(params.location), null);
-            case 'clockOut':
-                return await clockOut(params.uid, JSON.parse(params.location), null);
-            case 'getAllUserLocations':
-                return await getAllUserLocations(params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'forceLogoutUser':
-                return await forceLogoutUser(params.uid, params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'getTodayAttendanceWithColor':
-                return await getTodayAttendanceWithColor(params.uid, params.date);
-            case 'getPendingExceptions':
-                return await getPendingExceptions(params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'getPendingLeaveRequests':
-                return await getPendingLeaveRequests(params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'getPendingDiaries':
-                return await getPendingDiaries(params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'updateExceptionStatus':
-                return await updateExceptionStatus(params.exceptionId, params.status, params.adminResponse);
-            case 'updateLeaveRequestStatus':
-                return await updateLeaveRequestStatus(params.requestId, params.status, params.adminResponse);
-            case 'updateDiaryStatus':
-                return await updateDiaryStatus(params.diaryId, params.status, params.adminNotes);
-            case 'getAuditLogs':
-                return await getAuditLogs(params.requestingUser ? JSON.parse(params.requestingUser) : null, params.filters ? JSON.parse(params.filters) : null);
-            case 'getLocationOffLogs':
-                return await getLocationOffLogs(params.requestingUser ? JSON.parse(params.requestingUser) : null, params.startDate, params.endDate);
-            case 'getPendingDeviceRequests':
-                return await getPendingDeviceRequests(params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'approveDeviceReplacement':
-                return await approveDeviceReplacement(params.requestId, params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'rejectDeviceReplacement':
-                return await rejectDeviceReplacement(params.requestId, params.reason, params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'submitLeaveRequest':
-                return await submitLeaveRequest(params.uid, params.userName, params.type, params.startDate, params.endDate, params.reason, params.fileUrl);
-            case 'submitException':
-                return await submitException(params.uid, params.userName, params.date, params.reason, params.fileUrl);
-            case 'submitCourseDiary':
-                return await submitCourseDiary(params.uid, params.userName, params.date, params.type, params.title, params.description, params.fileUrl);
-            case 'sendEmail':
-                return await sendEmail(params.to, params.subject, params.body);
-            case 'getAdmins':
-                return await getAdmins(params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'getAllUsers':
-                return await getAllUsers(params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'getBlockedUsers':
-                return await getBlockedUsers(params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'reactivateUser':
-                return await reactivateUser(params.uid, params.requestingUser ? JSON.parse(params.requestingUser) : null);
-            case 'recalculateOvertime':
-                return await recalculateOvertime(params.startDate, params.endDate);
-            case 'getUserInbox':
-                return await getUserInbox(params.uid);
-            case 'markInboxAsRead':
-                return await markInboxAsRead(params.inboxId, params.uid);
-            case 'sendToInbox':
-                return await sendToInbox(params.uid, params.title, params.message, params.type, params.referenceId, params.status);
-            case 'uploadFileToDrive':
-                return await uploadFileToDrive(params.fileName, params.fileBase64, params.folderId, params.mimeType);
-            case 'checkForAppUpdate':
-                return await checkForAppUpdate(params.currentVersion);
-            case 'getApkDownloadInfo':
-                return await getApkDownloadInfo();
-            default:
-                return { success: false, error: `Method ${method} not implemented` };
-        }
-    } catch (error) {
-        return { success: false, error: error.toString() };
-    }
-}
-
-// ============================================
 // INITIALIZATION
 // ============================================
 
-console.log('✅ api-config.js v6.0 loaded - PocketBase Backend with callAPI');
+console.log('✅ api-config.js v6.0 loaded - PocketBase Backend');
 console.log(`📡 API URL: ${PB_URL}`);
