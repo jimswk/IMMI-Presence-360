@@ -1,7 +1,7 @@
 // ============================================
 // API CONFIGURATION - IMMI PRESENCE 360
-// VERSION: 5.3 (Optimized for 400 Users - No Live Map/Integrity)
-// LAST UPDATED: 14 April 2026
+// VERSION: 5.4 (No IP - Performance Optimized)
+// LAST UPDATED: 15 April 2026
 // ============================================
 
 const CONFIG = {
@@ -549,102 +549,6 @@ async function getDeviceInfo() {
 }
 
 // ============================================
-// IP LOCATION FUNCTIONS
-// ============================================
-
-async function getIPLocation() {
-    try {
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json();
-        
-        if (data && data.latitude && data.longitude) {
-            return {
-                success: true,
-                ip: data.ip,
-                city: data.city,
-                region: data.region,
-                country: data.country_name,
-                postal: data.postal,
-                lat: data.latitude,
-                lng: data.longitude,
-                org: data.org,
-                timezone: data.timezone
-            };
-        }
-        return { success: false, error: 'Invalid response from ipapi' };
-    } catch (error) {
-        console.error('IP geolocation error:', error);
-        return { success: false, error: error.toString() };
-    }
-}
-
-async function saveMyLocation() {
-    try {
-        const ipLocation = await getIPLocation();
-        if (!ipLocation.success) {
-            console.warn('Failed to get IP location:', ipLocation.error);
-            return { success: false, error: ipLocation.error };
-        }
-        
-        const deviceInfo = await getDeviceInfo();
-        
-        const ipData = {
-            ip: ipLocation.ip,
-            userAgent: deviceInfo.userAgent
-        };
-        
-        const locationData = {
-            city: ipLocation.city,
-            region: ipLocation.region,
-            country: ipLocation.country,
-            lat: ipLocation.lat,
-            lng: ipLocation.lng,
-            postal: ipLocation.postal
-        };
-        
-        const currentUserStr = localStorage.getItem('currentUser');
-        if (!currentUserStr) return { success: false, error: 'No user logged in' };
-        
-        const currentUser = JSON.parse(currentUserStr);
-        
-        return await callAPI('saveUserIPLocation', {
-            uid: currentUser.uid,
-            ipData: JSON.stringify(ipData),
-            locationData: JSON.stringify(locationData),
-            source: deviceInfo.platform
-        });
-    } catch (error) {
-        console.error('Save location error:', error);
-        return { success: false, error: error.toString() };
-    }
-}
-
-let locationTrackingInterval = null;
-
-function startPeriodicLocationTracking() {
-    if (locationTrackingInterval) {
-        clearInterval(locationTrackingInterval);
-    }
-    
-    saveMyLocation();
-    
-    locationTrackingInterval = setInterval(async () => {
-        const currentUserStr = localStorage.getItem('currentUser');
-        if (currentUserStr) {
-            await saveMyLocation();
-            console.log('Periodic location saved at', new Date().toLocaleTimeString());
-        }
-    }, 5 * 60 * 1000);
-}
-
-function stopPeriodicLocationTracking() {
-    if (locationTrackingInterval) {
-        clearInterval(locationTrackingInterval);
-        locationTrackingInterval = null;
-    }
-}
-
-// ============================================
 // AUTHENTICATION FUNCTIONS
 // ============================================
 
@@ -803,7 +707,7 @@ async function clockIn(uid, location, user) {
     return await callAPI('clockIn', {
         uid: uid,
         location: JSON.stringify(location),
-        clientIP: await getClientIP()
+        clientIP: ''
     });
 }
 
@@ -811,27 +715,13 @@ async function clockOut(uid, location, user) {
     return await callAPI('clockOut', {
         uid: uid,
         location: JSON.stringify(location),
-        clientIP: await getClientIP()
+        clientIP: ''
     });
-}
-
-async function getClientIP() {
-    try {
-        const response = await fetch('https://api.ipify.org?format=json');
-        const data = await response.json();
-        return data.ip;
-    } catch (error) {
-        return 'unknown';
-    }
 }
 
 // ============================================
 // MONITORING FUNCTIONS
 // ============================================
-
-async function getAllUserLocations(requestingUser) {
-    return await callAPI('getAllUserLocations', { requestingUser: JSON.stringify(requestingUser) });
-}
 
 async function forceLogoutUser(uid, requestingUser) {
     return await callAPI('forceLogoutUser', { uid: uid, requestingUser: JSON.stringify(requestingUser) });
@@ -1115,10 +1005,6 @@ async function resetTodayAttendance(data) {
     return await callAPI('resetTodayAttendance', { uid: data.uid, date: data.date });
 }
 
-async function getCurrentIPLocation() {
-    return await getIPLocation();
-}
-
 // ============================================
 // CRASH REPORT FUNCTIONS (Emergency)
 // ============================================
@@ -1210,7 +1096,7 @@ async function debugDeviceInfo() {
 // INITIALIZATION
 // ============================================
 
-console.log('✅ api-config.js v5.3 loaded - Optimized for 400 Users');
+console.log('✅ api-config.js v5.4 loaded - No IP, Performance Optimized');
 
 // Run check on page load
 window.addEventListener('DOMContentLoaded', async () => {
@@ -1221,4 +1107,3 @@ window.addEventListener('DOMContentLoaded', async () => {
         await checkAndBlockAndroidWeb();
     }
 });
-
