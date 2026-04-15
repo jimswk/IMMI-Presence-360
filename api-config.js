@@ -5,7 +5,7 @@
 // ============================================
 
 // PocketBase Configuration - GANTI DENGAN URL ANDA
-const PB_URL = 'http://100.107.138.113:8080';
+const PB_URL = 'https://amanda-fonts-venice-result.trycloudflare.com';
 
 // APK Configuration
 const APK_DOWNLOAD_URL = 'https://github.com/jimswk/IMMI-Presence-360/releases/latest/download/app-release.apk';
